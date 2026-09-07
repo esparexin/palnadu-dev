@@ -68,6 +68,17 @@ const defaultProjectTypes = [
   'Other',
 ];
 
+const helpTypeMapping: Record<string, CreateLeadInput['requiredHelp']> = {
+  'Web Application': 'WEB_APPLICATION',
+  'Mobile App': 'MOBILE_APPLICATION',
+  'MVP Development': 'MVP_DEVELOPMENT',
+  'Custom Software': 'CUSTOM_SOFTWARE',
+  'Business Automation': 'AUTOMATION',
+  'Technical Consulting': 'TECHNICAL_CONSULTING',
+  'Idea Validation': 'IDEA_VALIDATION',
+  'Other': 'NOT_SURE',
+};
+
 export const ContactSection: React.FC<ContactSectionProps> = ({
   title = "We turn real-world problems into practical digital solutions",
   mainMessage = "Let's talk! 👋",
@@ -97,6 +108,8 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
       name: '',
       email: '',
       phone: '',
+      company: '',
+      budget: '',
       problemDescription: '',
       projectStage: 'JUST_AN_IDEA',
       requiredHelp: 'NOT_SURE',
@@ -108,10 +121,16 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
       const updated = prev.includes(type)
         ? prev.filter((t) => t !== type)
         : [...prev, type];
-      setValue(
-        'additionalInfo',
-        updated.length > 0 ? `Interested in: ${updated.join(', ')}` : undefined
-      );
+      
+      // Auto-assign primary help category and additional info
+      if (updated.length > 0) {
+        const primaryHelp = helpTypeMapping[updated[0]] || 'NOT_SURE';
+        setValue('requiredHelp', primaryHelp);
+        setValue('additionalInfo', `Interested in: ${updated.join(', ')}`);
+      } else {
+        setValue('requiredHelp', 'NOT_SURE');
+        setValue('additionalInfo', undefined);
+      }
       return updated;
     });
   };
@@ -203,11 +222,11 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
         {/* Main Section - Grid Layout */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 w-full max-w-7xl pt-2 sm:pt-4 pb-8" id="contact-card">
           {/* Left Side: Headline & Brand Statement */}
-          <div className="lg:col-span-6 flex flex-col justify-center p-2 sm:p-4 lg:p-8 space-y-4">
+          <div className="lg:col-span-5 flex flex-col justify-center p-2 sm:p-4 lg:p-8 space-y-4">
             <p className="text-xs font-mono uppercase tracking-widest text-palnadu-light-blue font-bold">
               Start With The Problem
             </p>
-            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black text-white leading-tight drop-shadow-md max-w-xl">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-white leading-tight drop-shadow-md max-w-xl">
               {title}
             </h1>
             <p className="text-sm sm:text-base text-palnadu-light-blue/90 leading-relaxed max-w-lg">
@@ -215,8 +234,8 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
             </p>
           </div>
 
-          {/* Right Side: Contact Form Card with full field validation */}
-          <div className="lg:col-span-6 bg-white/95 backdrop-blur-md p-6 sm:p-8 rounded-2xl shadow-2xl border border-palnadu-border">
+          {/* Right Side: Contact Form Card with full details and validation */}
+          <div className="lg:col-span-7 bg-white/95 backdrop-blur-md p-6 sm:p-8 rounded-2xl shadow-2xl border border-palnadu-border">
             {submitted ? (
               <div className="py-12 text-center space-y-4 animate-fade-in">
                 <div className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-palnadu-light-blue text-palnadu-teal mx-auto">
@@ -228,7 +247,10 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
                 </p>
                 <div className="pt-3">
                   <Button
-                    onClick={() => setSubmitted(false)}
+                    onClick={() => {
+                      setSubmitted(false);
+                      setSelectedTypes([]);
+                    }}
                     variant="outline"
                     className="border-palnadu-blue text-palnadu-blue hover:bg-palnadu-light-blue rounded-md text-xs px-5"
                   >
@@ -272,10 +294,10 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
 
                 <hr className="my-5 border-palnadu-border" />
 
-                {/* Form with Zod Validation */}
+                {/* Form with Zod Validation & Rich Details */}
                 <form onSubmit={handleSubmit(onFormSubmit)} noValidate className="space-y-4">
                   <p className="text-xs text-palnadu-secondary font-semibold uppercase tracking-wider">
-                    Leave us a brief message
+                    Inquiry Details
                   </p>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
@@ -325,27 +347,80 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
                     </div>
                   </div>
 
-                  {/* Phone Field */}
-                  <div className="space-y-1">
-                    <Label htmlFor="phone" className="text-xs font-semibold text-palnadu-dark">
-                      Phone or WhatsApp
-                    </Label>
-                    <Input
-                      id="phone"
-                      type="tel"
-                      placeholder="+91 98765 43210"
-                      aria-invalid={!!errors.phone}
-                      className={cn(
-                        "bg-white text-palnadu-body text-xs h-9 rounded-md transition-colors",
-                        errors.phone
-                          ? "border-palnadu-error focus-visible:ring-palnadu-error"
-                          : "border-palnadu-border focus-visible:ring-palnadu-blue"
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                    {/* Phone Field */}
+                    <div className="space-y-1">
+                      <Label htmlFor="phone" className="text-xs font-semibold text-palnadu-dark">
+                        Phone or WhatsApp
+                      </Label>
+                      <Input
+                        id="phone"
+                        type="tel"
+                        placeholder="+91 98765 43210"
+                        aria-invalid={!!errors.phone}
+                        className={cn(
+                          "bg-white text-palnadu-body text-xs h-9 rounded-md transition-colors",
+                          errors.phone
+                            ? "border-palnadu-error focus-visible:ring-palnadu-error"
+                            : "border-palnadu-border focus-visible:ring-palnadu-blue"
+                        )}
+                        {...register('phone')}
+                      />
+                      {errors.phone && (
+                        <p className="text-xs text-palnadu-error font-medium">{errors.phone.message}</p>
                       )}
-                      {...register('phone')}
-                    />
-                    {errors.phone && (
-                      <p className="text-xs text-palnadu-error font-medium">{errors.phone.message}</p>
-                    )}
+                    </div>
+
+                    {/* Company Field */}
+                    <div className="space-y-1">
+                      <Label htmlFor="company" className="text-xs font-semibold text-palnadu-dark">
+                        Company or Startup Name
+                      </Label>
+                      <Input
+                        id="company"
+                        placeholder="e.g. Acme Corp / Stealth"
+                        className="bg-white border-palnadu-border text-palnadu-body text-xs h-9 rounded-md focus-visible:ring-palnadu-blue"
+                        {...register('company')}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                    {/* Project Stage */}
+                    <div className="space-y-1">
+                      <Label htmlFor="projectStage" className="text-xs font-semibold text-palnadu-dark">
+                        Project Stage
+                      </Label>
+                      <select
+                        id="projectStage"
+                        className="w-full bg-white border border-palnadu-border text-palnadu-body text-xs h-9 rounded-md px-2.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-palnadu-blue cursor-pointer"
+                        {...register('projectStage')}
+                      >
+                        <option value="JUST_AN_IDEA">Just an idea / Raw concept</option>
+                        <option value="EXISTING_BUSINESS">Existing business workflow</option>
+                        <option value="EXISTING_PRODUCT">Existing software / MVP update</option>
+                        <option value="MANUAL_PROCESS">Manual process automation</option>
+                        <option value="NEED_TECHNICAL_HELP">Need technical consulting</option>
+                      </select>
+                    </div>
+
+                    {/* Budget Range */}
+                    <div className="space-y-1">
+                      <Label htmlFor="budget" className="text-xs font-semibold text-palnadu-dark">
+                        Estimated Budget
+                      </Label>
+                      <select
+                        id="budget"
+                        className="w-full bg-white border border-palnadu-border text-palnadu-body text-xs h-9 rounded-md px-2.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-palnadu-blue cursor-pointer"
+                        {...register('budget')}
+                      >
+                        <option value="">Flexible / Exploring options</option>
+                        <option value="Under ₹1 Lakh / $1.2k">Under ₹1 Lakh (&lt; $1.2k)</option>
+                        <option value="₹1L - ₹3L / $1.2k-$3.5k">₹1 Lakh – ₹3 Lakh ($1.2k–$3.5k)</option>
+                        <option value="₹3L - ₹8L / $3.5k-$10k">₹3 Lakh – ₹8 Lakh ($3.5k–$10k)</option>
+                        <option value="₹8L+ / $10k+">₹8 Lakh+ ($10k+)</option>
+                      </select>
+                    </div>
                   </div>
 
                   {/* Message Field */}
