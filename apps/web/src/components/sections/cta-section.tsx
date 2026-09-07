@@ -4,9 +4,12 @@ import { ArrowRight } from 'lucide-react';
 
 export function CtaSection() {
   return (
-    <section className="py-24 sm:py-32 relative border-t border-slate-900" id="cta">
-      <div className="container max-w-4xl text-center">
+    <section className="py-12 sm:py-20 relative w-full flex flex-col justify-between" id="cta">
+      <div className="container max-w-4xl text-center my-auto">
         <div className="space-y-6">
+          <p className="text-xs font-mono uppercase tracking-widest text-cyan-400">
+            Next steps
+          </p>
           <h2 className="text-3xl sm:text-5xl md:text-6xl font-bold tracking-tight text-white text-balance leading-[1.1]">
             Have a problem that needs solving?
           </h2>
@@ -39,6 +42,24 @@ export function CtaSection() {
           <p className="text-xs text-slate-500 pt-2">
             No sales pitches. Straightforward engineering conversations.
           </p>
+        </div>
+      </div>
+
+      {/* Slide 8 Bottom Footer Links */}
+      <div className="container max-w-4xl mt-12 pt-6 border-t border-slate-900/80 text-xs text-slate-500 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div>
+          &copy; {new Date().getFullYear()} Palnadu.dev • Built by Palnadu. Built with pride.
+        </div>
+        <div className="flex items-center gap-6">
+          <Link href="/privacy" className="hover:text-slate-300 transition-colors">
+            Privacy Policy
+          </Link>
+          <Link href="/terms" className="hover:text-slate-300 transition-colors">
+            Terms of Service
+          </Link>
+          <a href="mailto:hello@palnadu.dev" className="text-cyan-400 hover:underline">
+            hello@palnadu.dev
+          </a>
         </div>
       </div>
     </section>
