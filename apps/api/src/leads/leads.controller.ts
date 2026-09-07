@@ -10,8 +10,10 @@ import {
   HttpCode,
   HttpStatus,
   NotFoundException,
+  BadRequestException,
 } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
+import { createLeadSchema } from '@palnadu/validation';
 import { LeadsService } from './leads.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
@@ -26,32 +28,27 @@ export class LeadsController {
   @Post('leads')
   @Throttle({ default: { ttl: 60000, limit: 5 } })
   @HttpCode(HttpStatus.CREATED)
-  async createLead(
-    @Body()
-    body: {
-      name: string;
-      email: string;
-      phone?: string;
-      company?: string;
-      problemDescription: string;
-      currentSituation?: string;
-      projectStage: string;
-      requiredHelp: string;
-      budget?: string;
-      additionalInfo?: string;
-    },
-  ) {
+  async createLead(@Body() body: unknown) {
+    const parseResult = createLeadSchema.safeParse(body);
+    if (!parseResult.success) {
+      const errorMsg = parseResult.error.issues
+        .map((i) => `${i.path.join('.')}: ${i.message}`)
+        .join(', ');
+      throw new BadRequestException(errorMsg);
+    }
+
+    const validData = parseResult.data;
     const lead = await this.leadsService.create({
-      name: body.name,
-      email: body.email,
-      phone: body.phone,
-      company: body.company,
-      problemDescription: body.problemDescription,
-      currentSituation: body.currentSituation,
-      projectStage: body.projectStage as any,
-      requiredHelp: body.requiredHelp as any,
-      budget: body.budget,
-      additionalInfo: body.additionalInfo,
+      name: validData.name,
+      email: validData.email,
+      phone: validData.phone || undefined,
+      company: validData.company || undefined,
+      problemDescription: validData.problemDescription,
+      currentSituation: validData.currentSituation || undefined,
+      projectStage: validData.projectStage,
+      requiredHelp: validData.requiredHelp,
+      budget: validData.budget || undefined,
+      additionalInfo: validData.additionalInfo || undefined,
     });
 
     return {

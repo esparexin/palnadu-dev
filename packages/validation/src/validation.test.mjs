@@ -6,7 +6,7 @@ import {
   createServiceSchema,
 } from '../dist/index.js';
 
-describe('Validation Schemas', () => {
+describe('Validation Schemas Audit', () => {
   describe('createLeadSchema', () => {
     it('should validate a complete valid lead submission', () => {
       const validLead = {
@@ -26,26 +26,28 @@ describe('Validation Schemas', () => {
       assert.equal(result.success, true);
     });
 
-    it('should allow "NOT_SURE" for requiredHelp (problem-first philosophy)', () => {
+    it('should trim inputs and accept clean values', () => {
       const lead = {
-        name: 'John Smith',
-        email: 'john@example.com',
-        problemDescription: 'We lose track of orders between our WhatsApp and store.',
-        projectStage: 'JUST_AN_IDEA',
-        requiredHelp: 'NOT_SURE',
+        name: '  John Smith  ',
+        email: '  JOHN.SMITH@EXAMPLE.COM  ',
+        problemDescription: '  We lose track of orders between our WhatsApp and store.  ',
       };
 
       const result = createLeadSchema.safeParse(lead);
       assert.equal(result.success, true);
+      if (result.success) {
+        assert.equal(result.data.name, 'John Smith');
+        assert.equal(result.data.email, 'john.smith@example.com');
+        assert.equal(result.data.projectStage, 'JUST_AN_IDEA');
+        assert.equal(result.data.requiredHelp, 'NOT_SURE');
+      }
     });
 
-    it('should reject invalid email', () => {
+    it('should reject invalid email formats', () => {
       const invalid = {
         name: 'Bad Email',
         email: 'not-an-email',
         problemDescription: 'Testing invalid email parsing',
-        projectStage: 'JUST_AN_IDEA',
-        requiredHelp: 'IDEA_VALIDATION',
       };
 
       const result = createLeadSchema.safeParse(invalid);
@@ -55,13 +57,35 @@ describe('Validation Schemas', () => {
       }
     });
 
-    it('should reject problem description that is too short', () => {
+    it('should reject invalid phone numbers if provided', () => {
       const invalid = {
-        name: 'Short',
+        name: 'Bad Phone',
+        email: 'valid@example.com',
+        phone: 'invalid-letters-123',
+        problemDescription: 'Testing invalid phone parsing',
+      };
+
+      const result = createLeadSchema.safeParse(invalid);
+      assert.equal(result.success, false);
+    });
+
+    it('should allow empty phone number since it is optional', () => {
+      const valid = {
+        name: 'No Phone',
+        email: 'valid@example.com',
+        phone: '',
+        problemDescription: 'Testing empty phone number handling',
+      };
+
+      const result = createLeadSchema.safeParse(valid);
+      assert.equal(result.success, true);
+    });
+
+    it('should reject problem description shorter than 10 characters', () => {
+      const invalid = {
+        name: 'Short Problem',
         email: 'short@example.com',
         problemDescription: 'Too short',
-        projectStage: 'JUST_AN_IDEA',
-        requiredHelp: 'IDEA_VALIDATION',
       };
 
       const result = createLeadSchema.safeParse(invalid);
@@ -70,12 +94,15 @@ describe('Validation Schemas', () => {
   });
 
   describe('loginSchema', () => {
-    it('should accept valid admin credentials', () => {
+    it('should accept valid admin credentials and normalize email', () => {
       const result = loginSchema.safeParse({
-        email: 'admin@palnadu.dev',
+        email: ' ADMIN@palnadu.dev ',
         password: 'securePassword123!',
       });
       assert.equal(result.success, true);
+      if (result.success) {
+        assert.equal(result.data.email, 'admin@palnadu.dev');
+      }
     });
 
     it('should reject short password (< 8 chars)', () => {

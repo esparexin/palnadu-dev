@@ -35,20 +35,59 @@ export const leadStatusValues = [
   'ON_HOLD',
 ] as const;
 
+export const phoneRegex = /^[+]?[(]?[0-9]{1,4}[)]?[-\s./0-9]{6,16}$/;
+
 export const createLeadSchema = z.object({
-  name: z.string().min(2, 'Name must be at least 2 characters').max(100),
-  email: z.string().email('Please enter a valid email'),
-  phone: z.string().max(20).optional().or(z.literal('')),
-  company: z.string().max(200).optional().or(z.literal('')),
-  problemDescription: z
+  name: z
+    .string({ required_error: 'Please enter your name' })
+    .trim()
+    .min(2, 'Name must be at least 2 characters')
+    .max(100, 'Name cannot exceed 100 characters'),
+  email: z
+    .string({ required_error: 'Please enter your email address' })
+    .trim()
+    .toLowerCase()
+    .email('Please enter a valid email address (e.g. name@domain.com)'),
+  phone: z
     .string()
-    .min(10, 'Please describe your problem in at least 10 characters')
-    .max(5000),
-  currentSituation: z.string().max(2000).optional().or(z.literal('')),
-  projectStage: z.enum(projectStageValues),
-  requiredHelp: z.enum(requiredHelpValues),
-  budget: z.string().max(100).optional().or(z.literal('')),
-  additionalInfo: z.string().max(3000).optional().or(z.literal('')),
+    .trim()
+    .max(25, 'Phone number cannot exceed 25 characters')
+    .refine((val) => !val || phoneRegex.test(val), {
+      message: 'Please enter a valid phone number',
+    })
+    .optional()
+    .or(z.literal('')),
+  company: z
+    .string()
+    .trim()
+    .max(200, 'Company name cannot exceed 200 characters')
+    .optional()
+    .or(z.literal('')),
+  problemDescription: z
+    .string({ required_error: 'Please describe your idea or problem' })
+    .trim()
+    .min(10, 'Please share at least 10 characters about what you want to build or solve')
+    .max(5000, 'Description cannot exceed 5000 characters'),
+  currentSituation: z
+    .string()
+    .trim()
+    .max(2000, 'Current situation cannot exceed 2000 characters')
+    .optional()
+    .or(z.literal('')),
+  projectStage: z.enum(projectStageValues).default('JUST_AN_IDEA'),
+  requiredHelp: z.enum(requiredHelpValues).default('NOT_SURE'),
+  budget: z
+    .string()
+    .trim()
+    .max(100, 'Budget description cannot exceed 100 characters')
+    .optional()
+    .or(z.literal('')),
+  additionalInfo: z
+    .string()
+    .trim()
+    .max(3000, 'Additional information cannot exceed 3000 characters')
+    .optional()
+    .or(z.literal('')),
 });
 
 export type CreateLeadInput = z.infer<typeof createLeadSchema>;
@@ -64,8 +103,15 @@ export type UpdateLeadInput = z.infer<typeof updateLeadSchema>;
 // ─── Auth ─────────────────────────────────────────────────────
 
 export const loginSchema = z.object({
-  email: z.string().email('Please enter a valid email'),
-  password: z.string().min(8, 'Password must be at least 8 characters'),
+  email: z
+    .string({ required_error: 'Please enter your email' })
+    .trim()
+    .toLowerCase()
+    .email('Please enter a valid email address'),
+  password: z
+    .string({ required_error: 'Please enter your password' })
+    .min(8, 'Password must be at least 8 characters')
+    .max(128, 'Password cannot exceed 128 characters'),
 });
 
 export type LoginInput = z.infer<typeof loginSchema>;
@@ -81,9 +127,9 @@ export const userRoleValues = [
 ] as const;
 
 export const createUserSchema = z.object({
-  email: z.string().email(),
+  email: z.string().trim().toLowerCase().email(),
   password: z.string().min(8).max(128),
-  name: z.string().min(2).max(100),
+  name: z.string().trim().min(2).max(100),
   role: z.enum(userRoleValues),
 });
 
@@ -94,14 +140,15 @@ export type CreateUserInput = z.infer<typeof createUserSchema>;
 export const publishStatusValues = ['DRAFT', 'PUBLISHED', 'ARCHIVED'] as const;
 
 export const createServiceSchema = z.object({
-  title: z.string().min(2).max(200),
+  title: z.string().trim().min(2).max(200),
   slug: z
     .string()
+    .trim()
     .min(2)
     .max(200)
     .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, 'Slug must be lowercase with hyphens'),
-  shortDescription: z.string().min(10).max(500),
-  content: z.string().min(20),
+  shortDescription: z.string().trim().min(10).max(500),
+  content: z.string().trim().min(20),
   icon: z.string().max(100).optional(),
   heroImage: z.string().url().optional().or(z.literal('')),
   seoTitle: z.string().max(70).optional().or(z.literal('')),
@@ -124,17 +171,18 @@ export type CreateServiceInput = z.infer<typeof createServiceSchema>;
 // ─── Case Study ───────────────────────────────────────────────
 
 export const createCaseStudySchema = z.object({
-  title: z.string().min(2).max(200),
+  title: z.string().trim().min(2).max(200),
   slug: z
     .string()
+    .trim()
     .min(2)
     .max(200)
     .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
   clientId: z.string().uuid().optional(),
-  problem: z.string().min(20),
-  solution: z.string().min(20),
+  problem: z.string().trim().min(20),
+  solution: z.string().trim().min(20),
   technology: z.array(z.string()).min(1),
-  result: z.string().min(20),
+  result: z.string().trim().min(20),
   images: z.array(z.string().url()).optional(),
   content: z.string().optional(),
   seoTitle: z.string().max(70).optional().or(z.literal('')),
@@ -147,14 +195,15 @@ export type CreateCaseStudyInput = z.infer<typeof createCaseStudySchema>;
 // ─── Blog ─────────────────────────────────────────────────────
 
 export const createBlogPostSchema = z.object({
-  title: z.string().min(2).max(300),
+  title: z.string().trim().min(2).max(300),
   slug: z
     .string()
+    .trim()
     .min(2)
     .max(300)
     .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
-  excerpt: z.string().max(500).optional().or(z.literal('')),
-  content: z.string().min(50),
+  excerpt: z.string().trim().max(500).optional().or(z.literal('')),
+  content: z.string().trim().min(50),
   coverImage: z.string().url().optional().or(z.literal('')),
   categoryId: z.string().uuid().optional(),
   seoTitle: z.string().max(70).optional().or(z.literal('')),
@@ -168,13 +217,14 @@ export const createBlogPostSchema = z.object({
 export type CreateBlogPostInput = z.infer<typeof createBlogPostSchema>;
 
 export const createBlogCategorySchema = z.object({
-  name: z.string().min(2).max(100),
+  name: z.string().trim().min(2).max(100),
   slug: z
     .string()
+    .trim()
     .min(2)
     .max(100)
     .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
-  description: z.string().max(500).optional(),
+  description: z.string().trim().max(500).optional(),
 });
 
 export type CreateBlogCategoryInput = z.infer<typeof createBlogCategorySchema>;
@@ -182,12 +232,12 @@ export type CreateBlogCategoryInput = z.infer<typeof createBlogCategorySchema>;
 // ─── Client ───────────────────────────────────────────────────
 
 export const createClientSchema = z.object({
-  name: z.string().min(2).max(100),
-  company: z.string().max(200).optional().or(z.literal('')),
-  email: z.string().email(),
-  phone: z.string().max(20).optional().or(z.literal('')),
-  address: z.string().max(500).optional().or(z.literal('')),
-  notes: z.string().max(3000).optional().or(z.literal('')),
+  name: z.string().trim().min(2).max(100),
+  company: z.string().trim().max(200).optional().or(z.literal('')),
+  email: z.string().trim().toLowerCase().email(),
+  phone: z.string().trim().max(25).optional().or(z.literal('')),
+  address: z.string().trim().max(500).optional().or(z.literal('')),
+  notes: z.string().trim().max(3000).optional().or(z.literal('')),
   leadId: z.string().uuid().optional(),
 });
 
@@ -204,15 +254,15 @@ export const projectStatusValues = [
 ] as const;
 
 export const createProjectSchema = z.object({
-  name: z.string().min(2).max(200),
+  name: z.string().trim().min(2).max(200),
   clientId: z.string().uuid(),
-  description: z.string().max(5000).optional().or(z.literal('')),
+  description: z.string().trim().max(5000).optional().or(z.literal('')),
   status: z.enum(projectStatusValues).default('PLANNING'),
   startDate: z.string().datetime().optional(),
   expectedCompletion: z.string().datetime().optional(),
   technology: z.array(z.string()).optional(),
-  budget: z.string().max(100).optional().or(z.literal('')),
-  notes: z.string().max(5000).optional().or(z.literal('')),
+  budget: z.string().trim().max(100).optional().or(z.literal('')),
+  notes: z.string().trim().max(5000).optional().or(z.literal('')),
 });
 
 export type CreateProjectInput = z.infer<typeof createProjectSchema>;
@@ -220,11 +270,10 @@ export type CreateProjectInput = z.infer<typeof createProjectSchema>;
 // ─── Media ────────────────────────────────────────────────────
 
 export const updateMediaSchema = z.object({
-  alt: z.string().max(300).optional(),
+  alt: z.string().trim().max(300).optional(),
   metadata: z.record(z.unknown()).optional(),
 });
 
 export type UpdateMediaInput = z.infer<typeof updateMediaSchema>;
 
-// Re-export zod
 export { z };
