@@ -1,0 +1,308 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Enums ────────────────────────────────────────────────────
+
+enum UserRole {
+  SUPER_ADMIN
+  ADMIN
+  EDITOR
+  PROJECT_MANAGER
+  DEVELOPER
+}
+
+enum LeadStatus {
+  NEW
+  CONTACTED
+  DISCOVERY
+  PROPOSAL
+  NEGOTIATION
+  WON
+  LOST
+  NOT_QUALIFIED
+  ON_HOLD
+}
+
+enum ProjectStatus {
+  PLANNING
+  ACTIVE
+  ON_HOLD
+  COMPLETED
+  CANCELLED
+}
+
+enum PublishStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum ProjectStage {
+  JUST_AN_IDEA
+  EXISTING_BUSINESS
+  EXISTING_PRODUCT
+  EXISTING_WEBSITE
+  MANUAL_PROCESS
+  NEED_TECHNICAL_HELP
+  OTHER
+}
+
+enum RequiredHelp {
+  IDEA_VALIDATION
+  WEB_APPLICATION
+  MOBILE_APPLICATION
+  CUSTOM_SOFTWARE
+  AUTOMATION
+  TECHNICAL_CONSULTING
+  MVP_DEVELOPMENT
+  NOT_SURE
+}
+
+// ─── Models ───────────────────────────────────────────────────
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  name      String
+  role      UserRole @default(DEVELOPER)
+  avatar    String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  assignedLeads Lead[]        @relation("AssignedLeads")
+  blogPosts     BlogPost[]
+  projectMembers ProjectMember[]
+  notifications Notification[]
+
+  @@map("users")
+}
+
+model Lead {
+  id                 String       @id @default(uuid())
+  name               String
+  email              String
+  phone              String?
+  company            String?
+  problemDescription String       @db.Text
+  currentSituation   String?      @db.Text
+  projectStage       ProjectStage
+  requiredHelp       RequiredHelp
+  budget             String?
+  additionalInfo     String?      @db.Text
+  status             LeadStatus   @default(NEW)
+  assignedToId       String?
+  assignedTo         User?        @relation("AssignedLeads", fields: [assignedToId], references: [id])
+  notes              String?      @db.Text
+  convertedClientId  String?
+  convertedClient    Client?      @relation("ConvertedFromLead", fields: [convertedClientId], references: [id])
+  createdAt          DateTime     @default(now())
+  updatedAt          DateTime     @updatedAt
+
+  @@index([status])
+  @@index([email])
+  @@index([createdAt])
+  @@map("leads")
+}
+
+model Client {
+  id        String   @id @default(uuid())
+  name      String
+  company   String?
+  email     String
+  phone     String?
+  address   String?  @db.Text
+  notes     String?  @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  leads      Lead[]      @relation("ConvertedFromLead")
+  projects   Project[]
+  caseStudies CaseStudy[]
+
+  @@index([email])
+  @@map("clients")
+}
+
+model Project {
+  id                 String        @id @default(uuid())
+  name               String
+  clientId           String
+  client             Client        @relation(fields: [clientId], references: [id])
+  description        String?       @db.Text
+  status             ProjectStatus @default(PLANNING)
+  startDate          DateTime?
+  expectedCompletion DateTime?
+  technology         String[]
+  budget             String?
+  notes              String?       @db.Text
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+
+  members ProjectMember[]
+
+  @@index([status])
+  @@index([clientId])
+  @@map("projects")
+}
+
+model ProjectMember {
+  id        String  @id @default(uuid())
+  projectId String
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User    @relation(fields: [userId], references: [id])
+  role      String  @default("DEVELOPER")
+
+  @@unique([projectId, userId])
+  @@map("project_members")
+}
+
+model Service {
+  id               String        @id @default(uuid())
+  title            String
+  slug             String        @unique
+  shortDescription String
+  content          String        @db.Text
+  icon             String?
+  heroImage        String?
+  seoTitle         String?
+  seoDescription   String?
+  canonicalUrl     String?
+  faqs             Json?
+  status           PublishStatus @default(DRAFT)
+  order            Int           @default(0)
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  @@index([status])
+  @@index([slug])
+  @@map("services")
+}
+
+model CaseStudy {
+  id             String        @id @default(uuid())
+  title          String
+  slug           String        @unique
+  clientId       String?
+  client         Client?       @relation(fields: [clientId], references: [id])
+  problem        String        @db.Text
+  solution       String        @db.Text
+  technology     String[]
+  result         String        @db.Text
+  images         String[]
+  content        String?       @db.Text
+  seoTitle       String?
+  seoDescription String?
+  status         PublishStatus @default(DRAFT)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  @@index([status])
+  @@index([slug])
+  @@map("case_studies")
+}
+
+model BlogPost {
+  id             String        @id @default(uuid())
+  title          String
+  slug           String        @unique
+  excerpt        String?
+  content        String        @db.Text
+  coverImage     String?
+  categoryId     String?
+  category       BlogCategory? @relation(fields: [categoryId], references: [id])
+  authorId       String
+  author         User          @relation(fields: [authorId], references: [id])
+  seoTitle       String?
+  seoDescription String?
+  canonicalUrl   String?
+  ogImage        String?
+  publishDate    DateTime?
+  status         PublishStatus @default(DRAFT)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  @@index([status])
+  @@index([slug])
+  @@index([authorId])
+  @@index([publishDate])
+  @@map("blog_posts")
+}
+
+model BlogCategory {
+  id          String   @id @default(uuid())
+  name        String
+  slug        String   @unique
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  posts BlogPost[]
+
+  @@map("blog_categories")
+}
+
+model Media {
+  id           String   @id @default(uuid())
+  filename     String
+  originalName String
+  mimeType     String
+  size         Int
+  url          String
+  alt          String?
+  metadata     Json?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("media")
+}
+
+model ContactSubmission {
+  id                 String       @id @default(uuid())
+  name               String
+  email              String
+  phone              String?
+  company            String?
+  problemDescription String       @db.Text
+  currentSituation   String?      @db.Text
+  projectStage       ProjectStage
+  requiredHelp       RequiredHelp
+  budget             String?
+  additionalInfo     String?      @db.Text
+  createdAt          DateTime     @default(now())
+
+  @@map("contact_submissions")
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id])
+  title     String
+  message   String
+  type      String
+  read      Boolean  @default(false)
+  data      Json?
+  createdAt DateTime @default(now())
+
+  @@index([userId, read])
+  @@map("notifications")
+}
+
+model Setting {
+  id          String   @id @default(uuid())
+  key         String   @unique
+  value       String   @db.Text
+  description String?
+  updatedAt   DateTime @updatedAt
+
+  @@map("settings")
+}

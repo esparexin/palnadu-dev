@@ -1,0 +1,25 @@
+{
+  "name": "palnadu-dev",
+  "private": true,
+  "scripts": {
+    "dev": "turbo dev",
+    "build": "turbo build",
+    "lint": "turbo lint",
+    "test": "turbo test",
+    "clean": "turbo clean",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
+    "db:generate": "pnpm --filter @palnadu/api db:generate",
+    "db:push": "pnpm --filter @palnadu/api db:push",
+    "db:migrate": "pnpm --filter @palnadu/api db:migrate",
+    "db:seed": "pnpm --filter @palnadu/api db:seed"
+  },
+  "engines": {
+    "node": ">=20",
+    "pnpm": ">=9"
+  },
+  "packageManager": "pnpm@11.2.2",
+  "devDependencies": {
+    "prettier": "^3.3.3",
+    "turbo": "^2.3.0"
+  }
+}
