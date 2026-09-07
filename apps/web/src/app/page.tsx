@@ -6,7 +6,6 @@ import { TransparencySection } from '@/components/sections/transparency-section'
 import { AffordabilitySection } from '@/components/sections/affordability-section';
 import { IdentitySection } from '@/components/sections/identity-section';
 import { CtaSection } from '@/components/sections/cta-section';
-import { PresentationDeck } from '@/components/presentation/presentation-deck';
 import { siteConfig } from '@palnadu/config';
 
 // Comprehensive Google SEO Structured Data (JSON-LD)
@@ -118,61 +117,17 @@ function JsonLd() {
 }
 
 export default function HomePage() {
-  const slides = [
-    {
-      id: 'hero',
-      title: 'Start with the Problem',
-      shortName: '01. The Problem',
-      component: <HeroSection />,
-    },
-    {
-      id: 'philosophy',
-      title: 'Our Core Philosophy',
-      shortName: '02. Philosophy',
-      component: <PhilosophySection />,
-    },
-    {
-      id: 'services',
-      title: 'What We Build',
-      shortName: '03. Services',
-      component: <ServicesSection />,
-    },
-    {
-      id: 'process',
-      title: 'The 7-Step Process',
-      shortName: '04. Process',
-      component: <ProcessSection />,
-    },
-    {
-      id: 'transparency',
-      title: 'No Hidden Surprises',
-      shortName: '05. Transparency',
-      component: <TransparencySection />,
-    },
-    {
-      id: 'affordability',
-      title: 'Boundaries on Price, Not Quality',
-      shortName: '06. Pricing',
-      component: <AffordabilitySection />,
-    },
-    {
-      id: 'identity',
-      title: 'Built by Palnadu',
-      shortName: '07. Identity',
-      component: <IdentitySection />,
-    },
-    {
-      id: 'cta',
-      title: 'Tell Us Your Problem',
-      shortName: '08. Get In Touch',
-      component: <CtaSection />,
-    },
-  ];
-
   return (
     <>
       <JsonLd />
-      <PresentationDeck slides={slides} />
+      <HeroSection />
+      <PhilosophySection />
+      <ServicesSection />
+      <ProcessSection />
+      <TransparencySection />
+      <AffordabilitySection />
+      <IdentitySection />
+      <CtaSection />
     </>
   );
 }

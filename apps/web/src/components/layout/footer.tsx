@@ -1,20 +1,11 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
 import { siteConfig, footerNavItems } from '@palnadu/config';
 import { Separator } from '@/components/ui/separator';
 import { ArrowUpRight } from 'lucide-react';
 
 export function Footer() {
-  const pathname = usePathname();
-
-  // The homepage uses the full-height presentation deck.
-  // The footer is shown on all subpages (about, services, blog, etc.)
-  if (pathname === '/') {
-    return null;
-  }
-
   return (
     <footer className="border-t border-slate-800/80 bg-slate-950 text-slate-300" role="contentinfo">
       <div className="container py-12 md:py-16">

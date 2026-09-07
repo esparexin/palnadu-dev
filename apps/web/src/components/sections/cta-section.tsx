@@ -44,24 +44,6 @@ export function CtaSection() {
           </p>
         </div>
       </div>
-
-      {/* Slide 8 Bottom Footer Links */}
-      <div className="container max-w-4xl mt-12 pt-6 border-t border-slate-900/80 text-xs text-slate-500 flex flex-col sm:flex-row items-center justify-between gap-4">
-        <div>
-          &copy; {new Date().getFullYear()} Palnadu.dev • Built by Palnadu. Built with pride.
-        </div>
-        <div className="flex items-center gap-6">
-          <Link href="/privacy" className="hover:text-slate-300 transition-colors">
-            Privacy Policy
-          </Link>
-          <Link href="/terms" className="hover:text-slate-300 transition-colors">
-            Terms of Service
-          </Link>
-          <a href="mailto:hello@palnadu.dev" className="text-cyan-400 hover:underline">
-            hello@palnadu.dev
-          </a>
-        </div>
-      </div>
     </section>
   );
 }
