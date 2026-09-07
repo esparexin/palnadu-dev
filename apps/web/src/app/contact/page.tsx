@@ -3,9 +3,9 @@ import { siteConfig } from '@palnadu/config';
 import { ContactForm } from './contact-form';
 
 export const metadata: Metadata = {
-  title: 'Contact',
+  title: 'Discuss Your Idea or Process',
   description:
-    'Tell us your problem. We help startups, businesses, and individuals find the right digital solution.',
+    'Have a business idea or need to automate a manual process? Talk directly to the engineers at Palnadu.dev for honest, practical digital solutions.',
 };
 
 export default function ContactPage() {
@@ -28,37 +28,32 @@ export default function ContactPage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
 
-      <section className="py-20 md:py-28">
-        <div className="container">
-          <div className="mx-auto max-w-3xl">
-            <div className="space-y-4 text-center">
-              <p className="text-sm font-medium uppercase tracking-widest text-muted-foreground">
-                Get in touch
-              </p>
-              <h1 className="text-3xl font-bold tracking-tight sm:text-4xl lg:text-5xl">
-                Tell us your problem
-              </h1>
-              <p className="mx-auto max-w-xl text-lg text-muted-foreground leading-relaxed">
-                Describe what you&apos;re dealing with. We&apos;ll listen, understand, and let you
-                know how we can help.
-              </p>
-            </div>
+      <section className="py-8 sm:py-12 md:py-16 relative">
+        <div className="container max-w-3xl">
+          <div className="space-y-3 text-center mb-6 sm:mb-8">
+            <p className="text-xs font-mono uppercase tracking-widest text-cyan-400">
+              Direct Engineering Consultation
+            </p>
+            <h1 className="text-2xl sm:text-4xl md:text-5xl font-bold tracking-tight text-white leading-tight text-balance">
+              Have a business idea, or need a digital solution for a manual problem?
+            </h1>
+            <p className="mx-auto max-w-xl text-xs sm:text-sm md:text-base text-slate-300 leading-relaxed">
+              Tell us what you want to build or what manual process you want to automate. We review your requirements and respond directly with honest technical advice.
+            </p>
+          </div>
 
-            <div className="mt-12">
-              <ContactForm />
-            </div>
+          <ContactForm />
 
-            <div className="mt-12 text-center">
-              <p className="text-sm text-muted-foreground">
-                You can also email us directly at{' '}
-                <a
-                  href={`mailto:${siteConfig.contact.email}`}
-                  className="font-medium text-foreground hover:underline"
-                >
-                  {siteConfig.contact.email}
-                </a>
-              </p>
-            </div>
+          <div className="mt-6 text-center">
+            <p className="text-xs text-slate-400">
+              Prefer direct email?{' '}
+              <a
+                href={`mailto:${siteConfig.contact.email}`}
+                className="font-medium text-cyan-400 hover:underline"
+              >
+                {siteConfig.contact.email}
+              </a>
+            </p>
           </div>
         </div>
       </section>

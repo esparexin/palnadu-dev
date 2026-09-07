@@ -34,7 +34,7 @@ export function MobileStickyCta() {
       >
         <div className="flex items-center gap-2.5">
           <MessageSquareCode className="h-5 w-5" />
-          <span>Tell us your problem</span>
+          <span>Discuss your idea or process</span>
         </div>
         <div className="flex items-center gap-1 text-xs font-mono font-medium">
           <span>Get advice</span>

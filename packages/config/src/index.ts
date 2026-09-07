@@ -41,6 +41,7 @@ export interface NavItem {
 }
 
 export const mainNavItems: NavItem[] = [
+  { title: 'Home', href: '/' },
   { title: 'About', href: '/about' },
   {
     title: 'Services',

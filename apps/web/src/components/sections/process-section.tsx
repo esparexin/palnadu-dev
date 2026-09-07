@@ -6,7 +6,7 @@ const steps = [
     title: 'Understand',
     summary: "We don't talk tech stacks first. We listen to where your work gets stuck.",
     detail:
-      'We sit down with you and figure out the exact bottleneck. Who is using the software? What takes hours today that should take seconds? Where do orders or customer inquiries get dropped? We find the real problem first.',
+      'We sit down with you and figure out the exact bottleneck. Who is using the software? What takes hours today that should take seconds? Where do orders or inquiries get dropped? We find the real problem first.',
   },
   {
     number: '02',
@@ -27,7 +27,7 @@ const steps = [
     title: 'Plan',
     summary: 'Setting clean milestones, architecture, and delivery dates.',
     detail:
-      'We define the technical roadmap in clear, understandable phases. You know exactly what gets delivered each week, how data is stored, and what success looks like at every checkpoint.',
+      'We define the technical roadmap in clear phases. You know exactly what gets delivered each week, how data is stored, and what success looks like at every checkpoint.',
   },
   {
     number: '05',
@@ -54,38 +54,38 @@ const steps = [
 
 export function ProcessSection() {
   return (
-    <section className="py-24 sm:py-32 relative border-t border-slate-900" id="process">
+    <section className="py-12 sm:py-20 md:py-28 relative border-t border-slate-900" id="process">
       <div className="container max-w-4xl">
-        <div className="mb-16">
-          <p className="text-xs font-mono uppercase tracking-widest text-cyan-400 mb-3">
+        <div className="mb-8 sm:mb-12">
+          <p className="text-xs font-mono uppercase tracking-widest text-cyan-400 mb-2 sm:mb-3">
             How we work
           </p>
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight text-white">
+          <h2 className="text-2xl sm:text-4xl md:text-5xl font-bold tracking-tight text-white leading-tight">
             A clear process. No guessing.
           </h2>
-          <p className="mt-4 text-base sm:text-lg text-slate-400 leading-relaxed">
+          <p className="mt-2 sm:mt-4 text-sm sm:text-base text-slate-400 leading-relaxed">
             From the first phone call until your software has been running in production for years.
           </p>
         </div>
 
-        {/* Clean Apple-style editorial timeline */}
-        <div className="space-y-12">
+        {/* Clean, compact editorial timeline */}
+        <div className="space-y-6 sm:space-y-8">
           {steps.map((step) => (
             <div
               key={step.number}
-              className="grid gap-4 sm:grid-cols-[80px_1fr] sm:gap-8 pb-10 border-b border-slate-900/90 last:border-0"
+              className="grid gap-2 sm:grid-cols-[60px_1fr] sm:gap-6 pb-6 border-b border-slate-900/90 last:border-0"
             >
-              <div className="font-mono text-xl sm:text-2xl font-bold text-slate-600">
+              <div className="font-mono text-lg sm:text-xl font-bold text-slate-600">
                 {step.number}
               </div>
-              <div className="space-y-2">
-                <h3 className="text-xl sm:text-2xl font-semibold text-white">
+              <div className="space-y-1 sm:space-y-2">
+                <h3 className="text-lg sm:text-xl font-semibold text-white">
                   {step.title}
                 </h3>
-                <p className="text-sm sm:text-base font-medium text-cyan-300/90">
+                <p className="text-xs sm:text-sm font-medium text-cyan-300/90">
                   {step.summary}
                 </p>
-                <p className="text-sm sm:text-base text-slate-400 leading-relaxed pt-1">
+                <p className="text-xs sm:text-sm text-slate-400 leading-relaxed pt-0.5">
                   {step.detail}
                 </p>
               </div>

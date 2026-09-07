@@ -74,7 +74,7 @@ export function Navbar() {
             className="bg-cyan-400 text-slate-950 hover:bg-cyan-300 shadow-md shadow-cyan-500/20 font-medium"
           >
             <Link href="/contact" className="flex items-center gap-1.5">
-              <span>Tell us your problem</span>
+              <span>Discuss your idea</span>
               <ArrowRight className="h-3.5 w-3.5" />
             </Link>
           </Button>
@@ -136,7 +136,7 @@ export function Navbar() {
             <div className="pt-4">
               <Button asChild className="w-full bg-cyan-400 text-slate-950 hover:bg-cyan-300 font-semibold py-5">
                 <Link href="/contact" onClick={() => setMobileOpen(false)} className="flex items-center justify-center gap-2">
-                  <span>Tell us your problem</span>
+                  <span>Discuss your idea or process</span>
                   <ArrowRight className="h-4 w-4" />
                 </Link>
               </Button>
