@@ -5,15 +5,23 @@ import Lenis from 'lenis';
 
 export function SmoothScrollProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
-    // Apple-style smooth momentum inertia scrolling
+    // Mobile Touch Devices: Native 120Hz iOS/Android momentum scroll is best.
+    // Desktop: Lenis provides Apple-style buttery wheel inertia.
+    const isTouchDevice =
+      typeof window !== 'undefined' &&
+      ('ontouchstart' in window || navigator.maxTouchPoints > 0);
+
+    if (isTouchDevice) {
+      return; // Preserve 100% native frictionless touch scroll on mobile
+    }
+
     const lenis = new Lenis({
       duration: 1.2,
-      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)), // Exponential deceleration
+      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
       orientation: 'vertical',
       gestureOrientation: 'vertical',
       smoothWheel: true,
       wheelMultiplier: 0.95,
-      touchMultiplier: 1.3,
       infinite: false,
     });
 

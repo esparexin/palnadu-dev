@@ -172,11 +172,25 @@ export function HeroScene() {
     const resizeObserver = new ResizeObserver(handleResize);
     resizeObserver.observe(container);
 
+    // ─── Off-Screen Auto-Pause (Saves Mobile GPU & Battery) ───
+    let isVisible = true;
+    let animationFrameId: number = 0;
+    const visibilityObserver = new IntersectionObserver(([entry]) => {
+      isVisible = entry.isIntersecting;
+      if (isVisible && !animationFrameId) {
+        animate();
+      }
+    });
+    visibilityObserver.observe(container);
+
     // ─── Apple-Style Smooth Animation Loop ──────────────────────
-    let animationFrameId: number;
     const clock = new THREE.Clock();
 
     const animate = () => {
+      if (!isVisible) {
+        animationFrameId = 0;
+        return;
+      }
       animationFrameId = requestAnimationFrame(animate);
       const time = clock.getElapsedTime();
 
@@ -274,12 +288,15 @@ export function HeroScene() {
     animate();
 
     return () => {
-      cancelAnimationFrame(animationFrameId);
+      if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
+      }
       window.removeEventListener('scroll', onScroll);
       window.removeEventListener('mousemove', onMouseMove);
       window.removeEventListener('touchstart', onTouchStart);
       window.removeEventListener('touchmove', onTouchMove);
       resizeObserver.disconnect();
+      visibilityObserver.disconnect();
 
       pointsGeometry.dispose();
       pointsMaterial.dispose();
