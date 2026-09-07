@@ -3,9 +3,9 @@ import { siteConfig } from '@palnadu/config';
 import { ContactForm } from './contact-form';
 
 export const metadata: Metadata = {
-  title: 'Discuss Your Idea or Process',
+  title: 'Contact',
   description:
-    'Have a business idea or need to automate a manual process? Talk directly to the engineers at Palnadu.dev for honest, practical digital solutions.',
+    'Share your business idea or the manual process you want to solve. We reply with direct, honest technical advice.',
 };
 
 export default function ContactPage() {
@@ -28,32 +28,27 @@ export default function ContactPage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
 
-      <section className="py-8 sm:py-12 md:py-16 relative">
-        <div className="container max-w-3xl">
-          <div className="space-y-3 text-center mb-6 sm:mb-8">
-            <p className="text-xs font-mono uppercase tracking-widest text-cyan-400">
-              Direct Engineering Consultation
-            </p>
-            <h1 className="text-2xl sm:text-4xl md:text-5xl font-bold tracking-tight text-white leading-tight text-balance">
-              Have a business idea, or need a digital solution for a manual problem?
+      <section className="py-8 sm:py-12 md:py-16">
+        <div className="container max-w-xl">
+          <div className="space-y-2 text-center mb-6">
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-white">
+              Contact Us
             </h1>
-            <p className="mx-auto max-w-xl text-xs sm:text-sm md:text-base text-slate-300 leading-relaxed">
-              Tell us what you want to build or what manual process you want to automate. We review your requirements and respond directly with honest technical advice.
+            <p className="text-sm text-slate-400">
+              Have a business idea or a manual process you want to automate? Tell us below.
             </p>
           </div>
 
           <ContactForm />
 
-          <div className="mt-6 text-center">
-            <p className="text-xs text-slate-400">
-              Prefer direct email?{' '}
-              <a
-                href={`mailto:${siteConfig.contact.email}`}
-                className="font-medium text-cyan-400 hover:underline"
-              >
-                {siteConfig.contact.email}
-              </a>
-            </p>
+          <div className="mt-6 text-center text-xs text-slate-500">
+            You can also email us directly at{' '}
+            <a
+              href={`mailto:${siteConfig.contact.email}`}
+              className="text-slate-300 hover:underline"
+            >
+              {siteConfig.contact.email}
+            </a>
           </div>
         </div>
       </section>
