@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
 import {
   LayoutDashboard,
@@ -10,8 +11,7 @@ import {
   Briefcase,
   FileText,
   PenSquare,
-  Image,
-  MessageSquareQuote,
+  Image as ImageIcon,
   Settings,
   LogOut,
   Menu,
@@ -28,8 +28,7 @@ const sidebarItems = [
   { title: 'Services', href: '/services', icon: Briefcase },
   { title: 'Case Studies', href: '/case-studies', icon: FileText },
   { title: 'Blog', href: '/blog', icon: PenSquare },
-  { title: 'Media', href: '/media', icon: Image },
-  { title: 'Testimonials', href: '/testimonials', icon: MessageSquareQuote },
+  { title: 'Media', href: '/media', icon: ImageIcon },
   { title: 'Users', href: '/users', icon: Users },
   { title: 'Settings', href: '/settings', icon: Settings },
 ];
@@ -46,14 +45,23 @@ export function AdminSidebar() {
   };
 
   const SidebarContent = () => (
-    <div className="flex h-full flex-col">
-      <div className="flex h-16 items-center border-b px-6">
-        <Link href="/dashboard" className="text-lg font-bold">
-          Palnadu<span className="text-muted-foreground">.dev</span>
+    <div className="flex h-full flex-col bg-white">
+      {/* Brand Header */}
+      <div className="flex h-16 items-center border-b border-palnadu-border px-6">
+        <Link href="/dashboard" className="flex items-center gap-2">
+          <Image
+            src="/palnadu-logo-horizontal.svg"
+            alt="Palnadu.dev"
+            width={140}
+            height={32}
+            priority
+            className="h-7 w-auto"
+          />
         </Link>
       </div>
 
-      <nav className="flex-1 space-y-1 p-4" aria-label="Admin navigation">
+      {/* Navigation Links */}
+      <nav className="flex-1 space-y-1 p-3.5 overflow-y-auto" aria-label="Admin navigation">
         {sidebarItems.map((item) => {
           const Icon = item.icon;
           const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
@@ -63,26 +71,27 @@ export function AdminSidebar() {
               href={item.href}
               onClick={() => setMobileOpen(false)}
               className={cn(
-                'flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors',
+                'flex items-center gap-3 rounded-md px-3 py-2 text-xs font-semibold transition-colors',
                 isActive
-                  ? 'bg-primary text-primary-foreground'
-                  : 'text-muted-foreground hover:bg-muted hover:text-foreground',
+                  ? 'bg-palnadu-blue text-white shadow-2xs'
+                  : 'text-palnadu-body hover:bg-palnadu-light-blue hover:text-palnadu-blue',
               )}
             >
-              <Icon className="h-4 w-4" />
-              {item.title}
+              <Icon className="h-4 w-4 shrink-0" />
+              <span>{item.title}</span>
             </Link>
           );
         })}
       </nav>
 
-      <div className="border-t p-4">
+      {/* Logout & Profile Footer */}
+      <div className="border-t border-palnadu-border p-3.5">
         <button
           onClick={handleLogout}
-          className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+          className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-xs font-semibold text-palnadu-body hover:bg-red-50 hover:text-palnadu-error transition-colors cursor-pointer"
         >
-          <LogOut className="h-4 w-4" />
-          Sign out
+          <LogOut className="h-4 w-4 shrink-0" />
+          <span>Sign out</span>
         </button>
       </div>
     </div>
@@ -92,25 +101,25 @@ export function AdminSidebar() {
     <>
       {/* Mobile trigger */}
       <button
-        className="fixed left-4 top-4 z-50 rounded-md border bg-background p-2 lg:hidden"
+        className="fixed left-4 top-4 z-50 rounded-md border border-palnadu-border bg-white p-2 lg:hidden shadow-xs cursor-pointer"
         onClick={() => setMobileOpen(!mobileOpen)}
         aria-label="Toggle sidebar"
       >
-        {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+        {mobileOpen ? <X className="h-5 w-5 text-palnadu-blue" /> : <Menu className="h-5 w-5 text-palnadu-dark" />}
       </button>
 
       {/* Mobile overlay */}
       {mobileOpen && (
         <div
-          className="fixed inset-0 z-40 bg-black/50 lg:hidden"
+          className="fixed inset-0 z-40 bg-black/40 backdrop-blur-xs lg:hidden"
           onClick={() => setMobileOpen(false)}
         />
       )}
 
-      {/* Sidebar */}
+      {/* Sidebar Container */}
       <aside
         className={cn(
-          'fixed left-0 top-0 z-40 h-screen w-64 border-r bg-card transition-transform lg:translate-x-0',
+          'fixed left-0 top-0 z-40 h-screen w-60 border-r border-palnadu-border bg-white transition-transform lg:translate-x-0',
           mobileOpen ? 'translate-x-0' : '-translate-x-full',
         )}
       >
