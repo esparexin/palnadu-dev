@@ -2,67 +2,44 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { Menu, X, ChevronDown, ArrowRight } from 'lucide-react';
+import Image from 'next/image';
+import { Menu, X, ArrowRight } from 'lucide-react';
 import { mainNavItems } from '@palnadu/config';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
 export function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-slate-800/80 bg-slate-950/80 backdrop-blur-xl supports-[backdrop-filter]:bg-slate-950/60">
+    <header className="sticky top-0 z-50 w-full border-b border-palnadu-border bg-white/95 backdrop-blur-md supports-[backdrop-filter]:bg-white/80">
+      {/* Accent top line */}
+      <div className="h-0.5 w-full bg-palnadu-blue" />
       <nav className="container flex h-16 items-center justify-between" aria-label="Main navigation">
         {/* Logo */}
         <Link href="/" className="flex items-center space-x-2 group" aria-label="Palnadu.dev Home">
-          <span className="text-xl font-bold tracking-tight text-white transition-colors">
-            Palnadu<span className="text-cyan-400 group-hover:text-cyan-300 transition-colors">.dev</span>
-          </span>
+          <Image
+            src="/palnadu-logo-horizontal.svg"
+            alt="Palnadu.dev"
+            width={170}
+            height={36}
+            priority
+            className="h-8 w-auto"
+          />
         </Link>
 
-        {/* Desktop Navigation */}
+        {/* Desktop Navigation — Direct links, no dropdown */}
         <div className="hidden items-center gap-1 md:flex">
           {mainNavItems.map((item) => (
-            <div
+            <Link
               key={item.href}
-              className="relative"
-              onMouseEnter={() => item.children && setOpenDropdown(item.href)}
-              onMouseLeave={() => setOpenDropdown(null)}
-            >
-              <Link
-                href={item.href}
-                className={cn(
-                  'inline-flex items-center gap-1.5 rounded-md px-3.5 py-2 text-sm font-medium text-slate-300 transition-all hover:text-white hover:bg-slate-900/60',
-                )}
-              >
-                {item.title}
-                {item.children && <ChevronDown className="h-3 w-3 opacity-60" />}
-              </Link>
-
-              {/* Dropdown */}
-              {item.children && openDropdown === item.href && (
-                <div className="absolute left-0 top-full z-50 w-80 rounded-xl border border-slate-800 bg-slate-950/95 p-2 shadow-2xl backdrop-blur-xl animate-fade-in">
-                  {item.children.map((child) => (
-                    <Link
-                      key={child.href}
-                      href={child.href}
-                      className="block rounded-lg px-3.5 py-2.5 transition-colors hover:bg-slate-900 group"
-                      onClick={() => setOpenDropdown(null)}
-                    >
-                      <div className="text-sm font-medium text-slate-200 group-hover:text-cyan-400 transition-colors">
-                        {child.title}
-                      </div>
-                      {child.description && (
-                        <div className="mt-0.5 text-xs text-slate-400 leading-snug">
-                          {child.description}
-                        </div>
-                      )}
-                    </Link>
-                  ))}
-                </div>
+              href={item.href}
+              className={cn(
+                'inline-flex items-center rounded-md px-3.5 py-2 text-sm font-semibold text-palnadu-dark transition-all hover:text-palnadu-blue hover:bg-palnadu-light-blue',
               )}
-            </div>
+            >
+              {item.title}
+            </Link>
           ))}
         </div>
 
@@ -71,7 +48,7 @@ export function Navbar() {
           <Button
             asChild
             size="sm"
-            className="bg-cyan-400 text-slate-950 hover:bg-cyan-300 shadow-md shadow-cyan-500/20 font-medium"
+            className="bg-palnadu-blue text-white hover:bg-[#12487e] shadow-sm font-medium"
           >
             <Link href="/contact" className="flex items-center gap-1.5">
               <span>Discuss your idea</span>
@@ -82,61 +59,38 @@ export function Navbar() {
 
         {/* Mobile menu button */}
         <button
-          className="inline-flex items-center justify-center rounded-lg p-2.5 text-slate-400 hover:text-white hover:bg-slate-900 md:hidden"
+          className="inline-flex items-center justify-center rounded-lg p-2.5 text-palnadu-dark hover:text-palnadu-blue hover:bg-palnadu-light-blue md:hidden cursor-pointer"
           onClick={() => setMobileOpen(!mobileOpen)}
           aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
           aria-expanded={mobileOpen}
         >
-          {mobileOpen ? <X className="h-5 w-5 text-cyan-400" /> : <Menu className="h-5 w-5" />}
+          {mobileOpen ? <X className="h-5 w-5 text-palnadu-blue" /> : <Menu className="h-5 w-5" />}
         </button>
       </nav>
 
-      {/* Mobile Navigation Drawer */}
+      {/* Mobile Navigation Drawer — Direct links, no dropdown */}
       {mobileOpen && (
-        <div className="border-t border-slate-800 bg-slate-950/95 backdrop-blur-2xl md:hidden animate-fade-in">
-          <div className="container space-y-2 py-5">
+        <div className="border-t border-palnadu-border bg-white shadow-xl md:hidden animate-fade-in">
+          <div className="container space-y-1.5 py-4">
             {mainNavItems.map((item) => (
-              <div key={item.href} className="border-b border-slate-900/80 pb-2">
+              <div key={item.href} className="border-b border-palnadu-border/50 pb-1.5">
                 <Link
                   href={item.href}
-                  className="block rounded-md px-3 py-2 text-base font-medium text-slate-200 hover:text-cyan-400 transition-colors"
-                  onClick={() => {
-                    if (!item.children) setMobileOpen(false);
-                    else setOpenDropdown(openDropdown === item.href ? null : item.href);
-                  }}
+                  className="block rounded-md px-3 py-2 text-base font-semibold text-palnadu-dark hover:text-palnadu-blue hover:bg-palnadu-light-blue transition-colors"
+                  onClick={() => setMobileOpen(false)}
                 >
-                  <span className="flex items-center justify-between">
-                    {item.title}
-                    {item.children && (
-                      <ChevronDown
-                        className={cn(
-                          'h-4 w-4 transition-transform text-slate-500',
-                          openDropdown === item.href && 'rotate-180 text-cyan-400',
-                        )}
-                      />
-                    )}
-                  </span>
+                  {item.title}
                 </Link>
-                {item.children && openDropdown === item.href && (
-                  <div className="ml-3 mt-1 space-y-1 border-l border-cyan-500/30 pl-3">
-                    {item.children.map((child) => (
-                      <Link
-                        key={child.href}
-                        href={child.href}
-                        className="block rounded-md px-3 py-2 text-sm text-slate-400 hover:text-white hover:bg-slate-900"
-                        onClick={() => setMobileOpen(false)}
-                      >
-                        {child.title}
-                      </Link>
-                    ))}
-                  </div>
-                )}
               </div>
             ))}
-            <div className="pt-4">
-              <Button asChild className="w-full bg-cyan-400 text-slate-950 hover:bg-cyan-300 font-semibold py-5">
-                <Link href="/contact" onClick={() => setMobileOpen(false)} className="flex items-center justify-center gap-2">
-                  <span>Discuss your idea or process</span>
+            <div className="pt-2">
+              <Button asChild className="w-full bg-palnadu-blue text-white hover:bg-[#12487e] h-10">
+                <Link
+                  href="/contact"
+                  className="flex items-center justify-center gap-1.5"
+                  onClick={() => setMobileOpen(false)}
+                >
+                  <span>Discuss your idea</span>
                   <ArrowRight className="h-4 w-4" />
                 </Link>
               </Button>

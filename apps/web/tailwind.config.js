@@ -1,5 +1,6 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
+  presets: [require('@palnadu/config/tailwind-preset')],
   darkMode: 'class',
   content: [
     './src/**/*.{ts,tsx}',
@@ -87,6 +88,10 @@ module.exports = {
           '0%, 100%': { transform: 'translateY(0)' },
           '50%': { transform: 'translateY(-6px)' },
         },
+        fadeOut: {
+          '0%, 70%': { opacity: '1', transform: 'translateX(0) scale(1)' },
+          '100%': { opacity: '0', transform: 'translateX(0.5rem) scale(0.95)' },
+        },
       },
       animation: {
         'fade-in': 'fade-in 0.5s ease-out forwards',
@@ -95,9 +100,11 @@ module.exports = {
         'pulse-glow': 'pulse-glow 4s ease-in-out infinite',
         shimmer: 'shimmer 2.5s linear infinite',
         float: 'float 5s ease-in-out infinite',
+        fadeOut: 'fadeOut 2s cubic-bezier(0.16, 1, 0.3, 1) forwards',
       },
       backgroundImage: {
         'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
+        'gradient-conic': 'conic-gradient(var(--conic-position, from 180deg at 50% 50%), var(--tw-gradient-stops))',
         'hero-mesh': 'radial-gradient(circle at 50% 30%, rgba(6, 182, 212, 0.15), transparent 70%)',
       },
     },

@@ -10,29 +10,26 @@ export const metadata: Metadata = {
 
 export default function WorkPage() {
   return (
-    <>
-      <section className="py-20 md:py-28">
+    <div className="bg-white">
+      <section className="py-12 sm:py-16">
         <div className="container">
           <SectionHeading
-            label="Our work"
-            title="Problems we've solved"
-            description="Real projects following our problem-first approach. Case studies will be added as projects are completed."
+            label="Our Work"
+            title="Problems We've Solved"
+            description="Real projects following our problem-first approach."
           />
 
-          <div className="mx-auto mt-16 max-w-2xl text-center">
-            <div className="rounded-xl border border-dashed p-12">
-              <p className="text-muted-foreground">
-                Case studies are coming soon. We only showcase real projects with real results —
-                no fabricated examples.
-              </p>
-              <p className="mt-4 text-sm text-muted-foreground">
-                Have a project you&apos;d like to discuss?
+          <div className="mx-auto mt-8 max-w-xl text-center">
+            <div className="rounded-lg border border-palnadu-border bg-palnadu-off-white p-6 shadow-2xs">
+              <h3 className="text-sm font-bold text-palnadu-dark mb-1">Case Studies Coming Soon</h3>
+              <p className="text-xs text-palnadu-body leading-relaxed">
+                We only showcase verified projects with measurable business outcomes.
               </p>
             </div>
           </div>
         </div>
       </section>
       <CtaSection />
-    </>
+    </div>
   );
 }

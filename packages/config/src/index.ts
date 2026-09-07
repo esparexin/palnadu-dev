@@ -1,3 +1,6 @@
+// ─── Color Palette (SSOT) ────────────────────────────────────
+export * from './colors';
+
 // ─── Site Configuration ───────────────────────────────────────
 
 export const siteConfig = {
@@ -43,47 +46,7 @@ export interface NavItem {
 export const mainNavItems: NavItem[] = [
   { title: 'Home', href: '/' },
   { title: 'About', href: '/about' },
-  {
-    title: 'Services',
-    href: '/services',
-    children: [
-      {
-        title: 'Idea Validation',
-        href: '/services/idea-validation',
-        description: 'Validate your idea before building',
-      },
-      {
-        title: 'Web Applications',
-        href: '/services/web-development',
-        description: 'Business platforms, SaaS, and custom web apps',
-      },
-      {
-        title: 'Mobile Applications',
-        href: '/services/mobile-app-development',
-        description: 'iOS, Android, and cross-platform apps',
-      },
-      {
-        title: 'MVP Development',
-        href: '/services/mvp-development',
-        description: 'Launch your minimum viable product',
-      },
-      {
-        title: 'Custom Software',
-        href: '/services/custom-software',
-        description: 'Software built around your business',
-      },
-      {
-        title: 'Business Automation',
-        href: '/services/business-automation',
-        description: 'Reduce manual processes with automation',
-      },
-      {
-        title: 'Technical Consulting',
-        href: '/services/technical-consulting',
-        description: 'Architecture, feasibility, and tech guidance',
-      },
-    ],
-  },
+  { title: 'Services', href: '/services' },
   { title: 'Work', href: '/work' },
   { title: 'Blog', href: '/blog' },
   { title: 'Contact', href: '/contact' },

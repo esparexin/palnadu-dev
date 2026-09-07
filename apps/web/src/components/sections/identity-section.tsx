@@ -1,27 +1,36 @@
 export function IdentitySection() {
   return (
-    <section className="py-12 sm:py-20 md:py-28 relative border-t border-slate-900" id="identity">
-      <div className="container max-w-4xl">
-        <div className="space-y-2 mb-6 sm:mb-8">
-          <p className="text-xs font-mono uppercase tracking-widest text-cyan-400">
-            Our roots
+    <section className="py-12 sm:py-16 bg-white border-t border-palnadu-border" id="identity">
+      <div className="container max-w-3xl">
+        <div className="mb-6">
+          <p className="text-xs font-mono uppercase tracking-widest text-palnadu-blue font-bold mb-1">
+            Our Roots
           </p>
-          <h2 className="text-2xl sm:text-4xl md:text-5xl font-bold tracking-tight text-white leading-tight">
-            Built by Palnadu.<br />
-            <span className="text-slate-400 font-normal">Built with pride.</span>
+          <h2 className="text-xl sm:text-2xl font-extrabold tracking-tight text-palnadu-dark">
+            Built by Palnadu. Built with Pride.
           </h2>
         </div>
 
-        <div className="space-y-3 sm:space-y-4 text-sm sm:text-base md:text-lg text-slate-300 leading-relaxed max-w-3xl">
-          <p>
-            Palnadu.dev was founded by software developers from Palnadu. We grew up here, we code from here, and we build digital products for clients across India and globally.
-          </p>
-          <p>
-            With over eight years of hands-on experience building web platforms, mobile apps, and distributed backends, we know what it takes to build software that runs reliably under pressure.
-          </p>
-          <p>
-            You don&apos;t get corporate bureaucracy or outsourced junior contractors. When you contact us, you speak directly with the engineers who design and write your application.
-          </p>
+        {/* Clean 3-Column Editorial Grid — No Card Boxes */}
+        <div className="grid gap-6 sm:grid-cols-3">
+          <div className="space-y-1">
+            <h3 className="text-xs font-bold font-mono text-palnadu-blue uppercase">Origin</h3>
+            <p className="text-xs text-palnadu-body leading-relaxed">
+              Founded and engineered in Palnadu, building digital products for clients locally and globally.
+            </p>
+          </div>
+          <div className="space-y-1">
+            <h3 className="text-xs font-bold font-mono text-palnadu-blue uppercase">Experience</h3>
+            <p className="text-xs text-palnadu-body leading-relaxed">
+              8+ years building production web platforms, mobile applications, and resilient backends.
+            </p>
+          </div>
+          <div className="space-y-1">
+            <h3 className="text-xs font-bold font-mono text-palnadu-blue uppercase">Direct Access</h3>
+            <p className="text-xs text-palnadu-body leading-relaxed">
+              No outsourcing or intermediaries. You collaborate directly with the engineers writing code.
+            </p>
+          </div>
         </div>
       </div>
     </section>

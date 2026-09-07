@@ -1,11 +1,4 @@
-import { HeroSection } from '@/components/sections/hero-section';
-import { PhilosophySection } from '@/components/sections/philosophy-section';
-import { ServicesSection } from '@/components/sections/services-section';
-import { ProcessSection } from '@/components/sections/process-section';
-import { TransparencySection } from '@/components/sections/transparency-section';
-import { AffordabilitySection } from '@/components/sections/affordability-section';
-import { IdentitySection } from '@/components/sections/identity-section';
-import { CtaSection } from '@/components/sections/cta-section';
+import { ScrollGlobe } from '@/components/ui/landing-page';
 import { siteConfig } from '@palnadu/config';
 
 // Comprehensive Google SEO Structured Data (JSON-LD)
@@ -68,7 +61,7 @@ function JsonLd() {
         name: 'What does Palnadu.dev specialize in?',
         acceptedAnswer: {
           '@type': 'Answer',
-          text: 'Palnadu.dev is a problem-first software studio specializing in web applications, mobile apps (iOS & Android), custom business software, startup MVP development, business automation, and technical consulting.',
+          text: 'Palnadu.dev is a problem-first software studio specializing in web applications, mobile apps, custom business software, startup MVP development, business automation, and technical consulting.',
         },
       },
       {
@@ -77,22 +70,6 @@ function JsonLd() {
         acceptedAnswer: {
           '@type': 'Answer',
           text: 'Instead of pushing unnecessary frameworks or features, we diagnose what is broken in your workflow or idea first. We evaluate feasibility, limitations, and future costs before writing any code.',
-        },
-      },
-      {
-        '@type': 'Question',
-        name: 'How does Palnadu.dev keep development affordable?',
-        acceptedAnswer: {
-          '@type': 'Answer',
-          text: 'We put a boundary on price, not on quality. Affordability comes from choosing practical architecture, avoiding unnecessary features, phased milestone development, and eliminating technical bloat.',
-        },
-      },
-      {
-        '@type': 'Question',
-        name: 'Can I reach out if I am not sure which technology I need?',
-        acceptedAnswer: {
-          '@type': 'Answer',
-          text: 'Yes! You do not need to know whether you need a native app, SaaS platform, or script. Tell us your problem and we will help determine the right solution.',
         },
       },
     ],
@@ -116,18 +93,58 @@ function JsonLd() {
   );
 }
 
+const palnaduHomeSections = [
+  {
+    id: "hero",
+    badge: "Problem-First Studio",
+    title: "Start With The Problem.",
+    subtitle: "We Build The Solution.",
+    description: "Palnadu.dev turns real-world challenges into practical, production-ready software. We validate ideas, eliminate manual business bottlenecks, and engineer what works.",
+    align: "left" as const,
+    actions: [
+      { label: "Discuss Your Idea", variant: "primary" as const, href: "/contact" },
+      { label: "Explore Services", variant: "secondary" as const, href: "/services" },
+    ],
+  },
+  {
+    id: "methodology",
+    badge: "Standards",
+    title: "Truth Before Code",
+    description: "Before writing software, we diagnose where work gets stuck. We look at API dependencies, scalability risks, and realistic costs upfront. If a simple existing tool solves your problem, we tell you directly.",
+    align: "center" as const,
+  },
+  {
+    id: "capabilities",
+    badge: "Capabilities",
+    title: "Practical Engineering",
+    subtitle: "Built Around Your Operations",
+    description: "Software tailored to your actual business operations — eliminating messy spreadsheets, manual paper logs, and rigid off-the-shelf software.",
+    align: "left" as const,
+    features: [
+      { title: "Web Applications", description: "Fast, reliable SaaS, internal management portals, and customer dashboards." },
+      { title: "Mobile Applications", description: "iOS and Android apps designed for everyday field and business workflows." },
+      { title: "Business Automation", description: "Connect orders, inventory, notifications, and repetitive manual tasks." },
+    ],
+  },
+  {
+    id: "cta",
+    badge: "Get Started",
+    title: "Ready To Build What Works?",
+    subtitle: "Direct Access To Engineers",
+    description: "Work directly with the software developers building your solution. Fixed price boundaries, honest engineering advice, and 100% code ownership.",
+    align: "center" as const,
+    actions: [
+      { label: "Tell Us What You Want To Build", variant: "primary" as const, href: "/contact" },
+      { label: "View All Services", variant: "secondary" as const, href: "/services" },
+    ],
+  },
+];
+
 export default function HomePage() {
   return (
     <>
       <JsonLd />
-      <HeroSection />
-      <TransparencySection />
-      <ProcessSection />
-      <PhilosophySection />
-      <ServicesSection />
-      <AffordabilitySection />
-      <IdentitySection />
-      <CtaSection />
+      <ScrollGlobe sections={palnaduHomeSections} />
     </>
   );
 }

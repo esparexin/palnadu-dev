@@ -1,40 +1,97 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
+import { usePathname } from 'next/navigation';
 import Lenis from 'lenis';
 
 export function SmoothScrollProvider({ children }: { children: React.ReactNode }) {
+  const lenisRef = useRef<Lenis | null>(null);
+  const pathname = usePathname();
+
+  // Reset scroll to top on every route navigation
   useEffect(() => {
-    // Mobile Touch Devices: Native 120Hz iOS/Android momentum scroll is best.
-    // Desktop: Lenis provides Apple-style buttery wheel inertia.
-    const isTouchDevice =
-      typeof window !== 'undefined' &&
-      ('ontouchstart' in window || navigator.maxTouchPoints > 0);
-
-    if (isTouchDevice) {
-      return; // Preserve 100% native frictionless touch scroll on mobile
+    if (lenisRef.current) {
+      lenisRef.current.scrollTo(0, { immediate: true });
     }
+    window.scrollTo(0, 0);
+  }, [pathname]);
 
+  useEffect(() => {
+    // Initialize Lenis for smooth transition scrolling
     const lenis = new Lenis({
-      duration: 1.2,
+      duration: 1.1,
       easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
       orientation: 'vertical',
       gestureOrientation: 'vertical',
       smoothWheel: true,
-      wheelMultiplier: 0.95,
+      wheelMultiplier: 1.0,
       infinite: false,
     });
+
+    lenisRef.current = lenis;
 
     let rafId: number;
     function raf(time: number) {
       lenis.raf(time);
       rafId = requestAnimationFrame(raf);
     }
-
     rafId = requestAnimationFrame(raf);
 
+    // Smooth anchor navigation (e.g. href="#services") - scrolls to top of target
+    const handleAnchorClick = (e: MouseEvent) => {
+      const anchor = (e.target as HTMLElement).closest('a');
+      if (!anchor) return;
+
+      const href = anchor.getAttribute('href');
+      if (href && href.startsWith('#') && href.length > 1) {
+        const targetElement = document.querySelector(href);
+        if (targetElement) {
+          e.preventDefault();
+          lenis.scrollTo(targetElement as HTMLElement, {
+            offset: -70,
+            duration: 1.0,
+          });
+        }
+      }
+    };
+
+    document.addEventListener('click', handleAnchorClick);
+
+    // Scroll Reveal Intersection Observer for smooth transition effects
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('is-revealed');
+          }
+        });
+      },
+      {
+        threshold: 0.08,
+        rootMargin: '0px 0px -40px 0px',
+      },
+    );
+
+    const observeElements = () => {
+      const elements = document.querySelectorAll('.scroll-reveal:not(.is-revealed)');
+      elements.forEach((el) => {
+        const rect = el.getBoundingClientRect();
+        if (rect.top < window.innerHeight && rect.bottom > 0) {
+          el.classList.add('is-revealed');
+        } else {
+          observer.observe(el);
+        }
+      });
+    };
+
+    observeElements();
+    const timer = setTimeout(observeElements, 100);
+
     return () => {
+      clearTimeout(timer);
       cancelAnimationFrame(rafId);
+      document.removeEventListener('click', handleAnchorClick);
+      observer.disconnect();
       lenis.destroy();
     };
   }, []);

@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { SectionHeading } from '@/components/layout/section-heading';
+import { CtaSection } from '@/components/sections/cta-section';
 
 export const metadata: Metadata = {
   title: 'Blog',
@@ -9,23 +10,26 @@ export const metadata: Metadata = {
 
 export default function BlogPage() {
   return (
-    <section className="py-20 md:py-28">
-      <div className="container">
-        <SectionHeading
-          label="Blog"
-          title="Insights & Guides"
-          description="Practical articles on technology, startups, and building digital products."
-        />
+    <div className="bg-white">
+      <section className="py-12 sm:py-16">
+        <div className="container">
+          <SectionHeading
+            label="Articles"
+            title="Insights & Guides"
+            description="Practical articles on technology, software architecture, and product validation."
+          />
 
-        <div className="mx-auto mt-16 max-w-2xl text-center">
-          <div className="rounded-xl border border-dashed p-12">
-            <p className="text-muted-foreground">
-              Articles are coming soon. We are preparing genuinely useful content — not keyword
-              filler.
-            </p>
+          <div className="mx-auto mt-8 max-w-xl text-center">
+            <div className="rounded-lg border border-palnadu-border bg-palnadu-off-white p-6 shadow-2xs">
+              <h3 className="text-sm font-bold text-palnadu-dark mb-1">Articles In Preparation</h3>
+              <p className="text-xs text-palnadu-body leading-relaxed">
+                We are preparing practical engineering breakdowns and startup guides.
+              </p>
+            </div>
           </div>
         </div>
-      </div>
-    </section>
+      </section>
+      <CtaSection />
+    </div>
   );
 }

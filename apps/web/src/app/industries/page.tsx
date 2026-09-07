@@ -30,7 +30,7 @@ const industries = [
     description: 'Specialized order processing, point-of-sale connectors, and digital catalogs.',
   },
   {
-    name: 'Healthcare & Wellness',
+    name: 'Healthcare & Clinics',
     slug: 'healthcare',
     description: 'Appointment scheduling, patient records, clinic workflows, and notification systems.',
   },
@@ -38,26 +38,29 @@ const industries = [
 
 export default function IndustriesPage() {
   return (
-    <>
-      <section className="py-20 md:py-28">
-        <div className="container">
+    <div className="bg-white">
+      <section className="py-12 sm:py-16">
+        <div className="container max-w-4xl">
           <SectionHeading
-            label="Industries"
-            title="Technology tailored to your sector"
-            description="We apply practical problem-solving to industry-specific operational challenges."
+            label="Sectors"
+            title="Tailored to Your Industry"
           />
 
-          <div className="mx-auto mt-16 grid max-w-4xl gap-6 md:grid-cols-2">
+          {/* Small Boxes Grid */}
+          <div className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {industries.map((ind) => (
-              <div key={ind.slug} className="rounded-xl border bg-card p-6 shadow-sm">
-                <h3 className="text-xl font-semibold mb-2">{ind.name}</h3>
-                <p className="text-sm text-muted-foreground leading-relaxed">{ind.description}</p>
+              <div
+                key={ind.slug}
+                className="rounded-lg border border-palnadu-border bg-palnadu-off-white p-4 shadow-2xs hover:border-palnadu-blue transition-colors"
+              >
+                <h3 className="text-sm font-bold text-palnadu-dark mb-1">{ind.name}</h3>
+                <p className="text-xs text-palnadu-body leading-relaxed">{ind.description}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
       <CtaSection />
-    </>
+    </div>
   );
 }

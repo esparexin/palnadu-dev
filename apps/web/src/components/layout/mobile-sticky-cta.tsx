@@ -2,14 +2,12 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { ArrowRight, MessageSquareCode } from 'lucide-react';
 
 export function MobileStickyCta() {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
-      // Show when scrolled down 400px on mobile
       if (window.scrollY > 400) {
         setVisible(true);
       } else {
@@ -25,21 +23,15 @@ export function MobileStickyCta() {
 
   return (
     <aside
-      aria-label="Quick inquiry action"
-      className="fixed bottom-[max(1rem,env(safe-area-inset-bottom))] inset-x-4 z-40 md:hidden animate-fade-in"
+      aria-label="Quick action"
+      className="fixed bottom-[max(0.75rem,env(safe-area-inset-bottom))] inset-x-4 z-40 md:hidden animate-fade-in"
     >
       <Link
         href="/contact"
-        className="flex items-center justify-between w-full px-5 py-3.5 rounded-2xl bg-cyan-400 text-slate-950 font-bold shadow-2xl shadow-cyan-500/30 border border-cyan-300/40 text-sm active:scale-95 transition-transform"
+        className="flex items-center justify-between w-full max-w-sm mx-auto px-4 py-2.5 rounded-md bg-palnadu-blue text-white font-semibold shadow-md text-xs active:scale-95 transition-transform"
       >
-        <div className="flex items-center gap-2.5">
-          <MessageSquareCode className="h-5 w-5" />
-          <span>Discuss your idea or process</span>
-        </div>
-        <div className="flex items-center gap-1 text-xs font-mono font-medium">
-          <span>Get advice</span>
-          <ArrowRight className="h-4 w-4" />
-        </div>
+        <span>Discuss your idea or process</span>
+        <span className="font-mono text-xs">→</span>
       </Link>
     </aside>
   );

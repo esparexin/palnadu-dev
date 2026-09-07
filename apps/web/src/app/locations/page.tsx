@@ -10,27 +10,25 @@ export const metadata: Metadata = {
 
 export default function LocationsPage() {
   return (
-    <>
-      <section className="py-20 md:py-28">
-        <div className="container">
+    <div className="bg-white">
+      <section className="py-12 sm:py-16">
+        <div className="container max-w-2xl">
           <SectionHeading
-            label="Regional Presence"
-            title="Rooted in Palnadu. Serving Globally."
-            description="Our engineering base is located in the Palnadu region, delivering digital solutions worldwide."
+            label="Presence"
+            title="Rooted in Palnadu, Serving Globally"
           />
 
-          <div className="mx-auto mt-16 max-w-2xl text-center">
-            <div className="rounded-xl border bg-card p-8">
-              <p className="text-muted-foreground leading-relaxed">
+          <div className="mt-8 text-center">
+            <div className="rounded-lg border border-palnadu-border bg-palnadu-off-white p-6 shadow-2xs">
+              <p className="text-xs sm:text-sm text-palnadu-body leading-relaxed">
                 We work with businesses across Narasaraopet, Chilakaluripet, Sattenapalle,
-                Vinukonda, throughout Andhra Pradesh, India, and internationally. Dedicated local
-                hub profiles will be launched as physical community tech initiatives roll out.
+                Vinukonda, throughout Andhra Pradesh, India, and internationally.
               </p>
             </div>
           </div>
         </div>
       </section>
       <CtaSection />
-    </>
+    </div>
   );
 }

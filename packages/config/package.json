@@ -4,6 +4,11 @@
   "private": true,
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "exports": {
+    ".": "./dist/index.js",
+    "./tailwind-preset": "./tailwind-preset.js",
+    "./colors": "./dist/colors.js"
+  },
   "scripts": {
     "build": "tsc",
     "clean": "rm -rf dist",

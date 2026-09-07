@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { LampContainer } from '@/components/ui/lamp';
 import { CtaSection } from '@/components/sections/cta-section';
 
 export const metadata: Metadata = {
@@ -9,44 +10,50 @@ export const metadata: Metadata = {
 
 export default function AboutPage() {
   return (
-    <>
-      <section className="py-24 sm:py-32 relative">
-        <div className="container max-w-4xl">
-          <div className="space-y-4 mb-16">
-            <p className="text-xs font-mono uppercase tracking-widest text-cyan-400">
-              About Palnadu.dev
-            </p>
-            <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight text-white leading-tight">
-              Software engineers,<br />
-              <span className="text-slate-400 font-normal">not commission salespeople.</span>
-            </h1>
-          </div>
+    <div className="bg-white">
+      {/* Lamp Hero Showcase */}
+      <LampContainer className="min-h-[65vh] sm:min-h-[75vh]">
+        <div className="mx-auto max-w-2xl space-y-3.5 text-center">
+          <p className="text-xs font-mono uppercase tracking-widest text-cyan-400 font-bold">
+            About Palnadu.dev
+          </p>
+          <h1 className="bg-gradient-to-br from-white via-slate-100 to-slate-400 py-1 bg-clip-text text-2xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-transparent leading-tight">
+            Software engineers, not commission salespeople.
+          </h1>
+          <p className="mx-auto max-w-lg text-xs sm:text-sm text-slate-300 leading-relaxed font-normal">
+            Built by engineers from Palnadu with 8+ years of experience turning real-world problems into practical software.
+          </p>
+        </div>
+      </LampContainer>
 
-          <div className="space-y-12 text-base sm:text-lg text-slate-300 leading-relaxed">
-            <div className="space-y-4">
-              <h2 className="text-2xl font-bold text-white">Who we are</h2>
+      {/* Main Story Content */}
+      <section className="py-12 sm:py-16 bg-white">
+        <div className="container max-w-3xl">
+          <div className="space-y-8 text-sm sm:text-base text-palnadu-body leading-relaxed">
+            <div className="space-y-2">
+              <h2 className="text-base sm:text-lg font-bold text-palnadu-dark">Who We Are</h2>
               <p>
-                Palnadu.dev was built by software engineers from the Palnadu region. We have spent more than eight years in the industry designing web applications, building mobile platforms, automating manual business operations, and validating startup MVPs.
+                Palnadu.dev was built by software engineers from the Palnadu region. We have spent more than eight years designing web applications, building mobile platforms, automating manual business operations, and validating startup MVPs.
               </p>
               <p>
-                We do not position ourselves as a generic freelance marketplace or an overpriced metropolitan agency with marble lobbies. We are an engineering studio that partners directly with startup founders, small-to-medium businesses, and individuals who have genuine digital challenges.
+                We partner directly with startup founders, small-to-medium businesses, and individuals who have genuine digital challenges.
               </p>
             </div>
 
-            <div className="space-y-4 border-t border-slate-900 pt-10">
-              <h2 className="text-2xl font-bold text-white">Our standard: Truth before code</h2>
+            <div className="space-y-2 border-t border-palnadu-border pt-6">
+              <h2 className="text-base sm:text-lg font-bold text-palnadu-dark">Our Standard: Truth Before Code</h2>
               <p>
-                Before we write a single line of code, we spend time understanding your workflow and where things break down. We look for hidden bottlenecks, assess hosting and database dependencies, and explain the realistic costs upfront.
+                Before we write a single line of code, we spend time understanding your workflow and where things break down. We look for hidden bottlenecks, assess hosting and database dependencies, and explain realistic costs upfront.
               </p>
               <p>
                 If an idea has technical limitations or future scaling traps, we explain them before development starts. If you don&apos;t need custom software, we tell you that honestly and point you to simpler existing tools.
               </p>
             </div>
 
-            <div className="space-y-4 border-t border-slate-900 pt-10">
-              <h2 className="text-2xl font-bold text-white">A boundary on price, not on quality</h2>
+            <div className="space-y-2 border-t border-palnadu-border pt-6">
+              <h2 className="text-base sm:text-lg font-bold text-palnadu-dark">A Boundary on Price, Not on Quality</h2>
               <p>
-                We believe great software should be accessible. Affordable engineering does not come from cutting corners or hiring cheap, unverified contractors. It comes from disciplined scope, sensible architectural choices, avoiding trendy bloat, and shipping in phases.
+                We believe great software should be accessible. Affordable engineering comes from disciplined scope, sensible architectural choices, avoiding trendy bloat, and shipping in phases.
               </p>
               <p>
                 When you partner with us, you work directly with the developers building your product. That means faster communication, honest engineering answers, and software that actually works when your customers use it.
@@ -55,7 +62,8 @@ export default function AboutPage() {
           </div>
         </div>
       </section>
+
       <CtaSection />
-    </>
+    </div>
   );
 }

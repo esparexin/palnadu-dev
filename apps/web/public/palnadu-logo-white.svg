@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260 48" fill="none">
+  <!-- Brand Icon Mark -->
+  <g transform="translate(4, 6)">
+    <rect x="2" y="2" width="32" height="32" rx="8" fill="#185FA5" stroke="#E6F1FB" stroke-width="2"/>
+    <path d="M11 12H21C23.76 12 25 13.5 25 16C25 18.5 23.76 20 21 20H15V26" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="24" cy="24" r="3" fill="#1D9E75"/>
+  </g>
+  <!-- Wordmark -->
+  <text x="48" y="31" font-family="Inter, -apple-system, system-ui, sans-serif" font-size="22" font-weight="800" letter-spacing="-0.5" fill="#FFFFFF">Palnadu<tspan fill="#E6F1FB">.dev</tspan></text>
+</svg>

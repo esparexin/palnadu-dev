@@ -1,65 +1,109 @@
+@import "@palnadu/ui/globals.css";
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   :root {
-    /* Dark Theme Default for High-End Engineering Studio */
-    --background: 222 47% 4%;
-    --foreground: 210 40% 98%;
-    --card: 222 47% 6.5%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222 47% 6.5%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 188 86% 53%;
-    --primary-foreground: 222 47% 4%;
-    --secondary: 217 33% 13%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217 33% 12%;
-    --muted-foreground: 215 20% 65%;
-    --accent: 38 92% 50%;
-    --accent-foreground: 222 47% 4%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217 33% 16%;
-    --input: 217 33% 16%;
-    --ring: 188 86% 53%;
-    --radius: 0.75rem;
+    /* SSOT Variables defined in @palnadu/ui/globals.css */
     --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
     --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
   }
-}
 
-@layer base {
   * {
     @apply border-border;
   }
+
   body {
-    @apply bg-background text-foreground antialiased selection:bg-cyan-500/20 selection:text-cyan-300;
+    background-color: var(--color-white);
+    color: var(--color-body-text);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    color: var(--color-dark);
+    font-weight: 700;
+    letter-spacing: -0.025em;
+  }
+
+  a {
+    color: var(--color-primary-blue);
+    transition: color 0.2s ease;
+  }
+
+  p {
+    color: var(--color-body-text);
+    line-height: 1.7;
   }
 }
 
-/* Smooth scrolling with optimal scroll behavior */
-html {
-  scroll-behavior: smooth;
-  color-scheme: dark;
+/* ── Lenis Smooth Scrolling Engine ── */
+html.lenis, html.lenis-smooth {
+  height: auto;
+}
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+.lenis.lenis-scrolling iframe {
+  pointer-events: none;
 }
 
+/* ── Smooth Scroll Reveal Transitions ── */
+.scroll-reveal {
+  opacity: 0;
+  transform: translateY(22px);
+  transition: opacity 0.75s cubic-bezier(0.16, 1, 0.3, 1), transform 0.75s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: opacity, transform;
+}
+
+.scroll-reveal.is-revealed {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.delay-100 { transition-delay: 100ms; }
+.delay-200 { transition-delay: 200ms; }
+.delay-300 { transition-delay: 300ms; }
+.delay-400 { transition-delay: 400ms; }
+
+/* ── ScrollGlobe auto-hiding navigation label ── */
+@keyframes fadeOutLabel {
+  0%, 70% {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(0.5rem) scale(0.95);
+  }
+}
+
+.animate-fadeOut {
+  animation: fadeOutLabel 2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Reduced motion support */
 @media (prefers-reduced-motion: reduce) {
+  .scroll-reveal {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
   html {
     scroll-behavior: auto;
   }
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
-  }
 }
 
-/* WebGL Canvas Layer */
+/* Three.js canvas layer for Hero */
 .three-canvas-container {
   position: absolute;
   inset: 0;
@@ -71,99 +115,31 @@ html {
   pointer-events: auto;
 }
 
-/* Glassmorphism & High-End Tech Surfaces */
-.glass-panel {
-  background: rgba(13, 18, 30, 0.75);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+/* ── Form Inputs ── */
+input, textarea, select {
+  background-color: var(--color-white);
+  border: 1px solid var(--color-border);
+  color: var(--color-body-text);
 }
 
-.glass-card {
-  background: rgba(15, 23, 42, 0.65);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.07);
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+input:focus, textarea:focus, select:focus {
+  border-color: var(--color-primary-blue);
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(24, 95, 165, 0.2);
 }
 
-.glass-card:hover {
-  background: rgba(20, 30, 55, 0.75);
-  border-color: rgba(6, 182, 212, 0.35);
-  box-shadow: 0 12px 30px -10px rgba(6, 182, 212, 0.15);
-  transform: translateY(-3px);
-}
-
-/* Glowing text gradients */
-.text-gradient-cyan {
-  background: linear-gradient(135deg, #ffffff 0%, #a5f3fc 50%, #06b6d4 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-
-.text-gradient-amber {
-  background: linear-gradient(135deg, #fef3c7 0%, #fbbf24 60%, #d97706 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-
-/* Ambient glow backdrops */
-.ambient-glow-cyan {
-  position: absolute;
-  border-radius: 9999px;
-  background: radial-gradient(circle, rgba(6, 182, 212, 0.12) 0%, transparent 70%);
-  filter: blur(60px);
-  pointer-events: none;
-}
-
-.ambient-glow-amber {
-  position: absolute;
-  border-radius: 9999px;
-  background: radial-gradient(circle, rgba(245, 158, 11, 0.1) 0%, transparent 70%);
-  filter: blur(60px);
-  pointer-events: none;
-}
-
-/* Scroll reveal animations */
-.scroll-reveal {
-  opacity: 0;
-  transform: translateY(24px);
-  transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1), transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
-  will-change: opacity, transform;
-}
-
-.scroll-reveal.is-revealed {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-/* Stagger delays */
-.delay-100 { transition-delay: 100ms; }
-.delay-200 { transition-delay: 200ms; }
-.delay-300 { transition-delay: 300ms; }
-.delay-400 { transition-delay: 400ms; }
-.delay-500 { transition-delay: 500ms; }
-
-.scrollbar-none {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
-.scrollbar-none::-webkit-scrollbar {
-  display: none;
-}
-
-/* Custom responsive scrollbar */
+/* Custom scrollbars */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
 ::-webkit-scrollbar-track {
-  background: hsl(222 47% 4%);
+  background: var(--color-off-white);
 }
 ::-webkit-scrollbar-thumb {
-  background: hsl(217 33% 20%);
+  background: var(--color-border);
   border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: hsl(188 86% 53% / 0.4);
+  background: var(--color-primary-blue);
 }

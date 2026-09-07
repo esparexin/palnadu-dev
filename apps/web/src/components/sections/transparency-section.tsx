@@ -3,70 +3,50 @@ export function TransparencySection() {
     {
       rule: '01',
       quote: "If we see a problem, we'll tell you.",
-      explanation:
-        'If an architecture will get expensive when you scale, or if a third-party API is unstable, we warn you before you spend any money on it.',
+      explanation: 'We flag scaling costs and unstable APIs upfront before you spend money.',
     },
     {
       rule: '02',
-      quote: "If something doesn't need to be built, we'll tell you.",
-      explanation:
-        'We actively talk you out of unnecessary features, complex microservices, and bloated tools that drain your budget without adding value.',
+      quote: "If not needed, we don't build it.",
+      explanation: 'We eliminate bloated features and complex tooling that drain budget.',
     },
     {
       rule: '03',
-      quote: "If there is a better approach, we'll explain it.",
-      explanation:
-        'We explain technical trade-offs in plain language so you always understand what is being built, why it was chosen, and what it costs.',
+      quote: "If there's a better way, we'll say it.",
+      explanation: 'Clear trade-offs explained in plain language so you stay in control.',
     },
   ];
 
   return (
-    <section className="py-12 sm:py-16 md:py-20 relative border-t border-slate-900" id="transparency">
-      <div className="container max-w-5xl">
-        {/* Highlighted Banner Box */}
-        <div className="rounded-2xl sm:rounded-3xl border border-cyan-500/30 bg-gradient-to-b from-slate-900/90 to-slate-950/90 p-6 sm:p-10 md:p-12 shadow-2xl backdrop-blur-xl">
-          <div className="space-y-3 mb-8 sm:mb-10 text-center sm:text-left">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-cyan-500/30 bg-cyan-950/40 text-cyan-300 text-xs font-mono uppercase tracking-wider">
-              <span className="h-1.5 w-1.5 rounded-full bg-cyan-400" />
-              <span>Honest Engineering Standards</span>
+    <section className="py-12 sm:py-16 bg-white border-t border-palnadu-border" id="transparency">
+      <div className="container max-w-3xl">
+        <div className="mb-6">
+          <p className="text-xs font-mono uppercase tracking-widest text-palnadu-blue font-bold mb-1">
+            Commitment
+          </p>
+          <h2 className="text-xl sm:text-2xl font-extrabold tracking-tight text-palnadu-dark">
+            No Hidden Surprises
+          </h2>
+        </div>
+
+        {/* Clean Typographic Commitments — No Card Boxes */}
+        <div className="grid gap-6 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-palnadu-border">
+          {commitments.map((item, idx) => (
+            <div
+              key={item.rule}
+              className={`space-y-1.5 ${idx > 0 ? 'pt-4 sm:pt-0 sm:pl-6' : ''}`}
+            >
+              <span className="font-mono text-xs text-palnadu-blue font-bold block">
+                Rule {item.rule}
+              </span>
+              <h3 className="text-sm font-bold text-palnadu-dark leading-snug">
+                &ldquo;{item.quote}&rdquo;
+              </h3>
+              <p className="text-xs text-palnadu-body leading-relaxed">
+                {item.explanation}
+              </p>
             </div>
-
-            <h2 className="text-2xl sm:text-4xl md:text-5xl font-bold tracking-tight text-white leading-tight">
-              No hidden surprises.
-            </h2>
-
-            <p className="text-sm sm:text-base text-slate-300 max-w-2xl leading-relaxed">
-              Before you spend a single rupee or dollar, here are the three commitments we make to every client:
-            </p>
-          </div>
-
-          {/* 3 Prominent Highlighted Commitments */}
-          <div className="grid gap-4 sm:gap-6 md:grid-cols-3">
-            {commitments.map((item) => (
-              <div
-                key={item.rule}
-                className="flex flex-col justify-between rounded-xl sm:rounded-2xl border border-slate-800 bg-slate-950/80 p-5 sm:p-6 transition-all hover:border-cyan-500/40"
-              >
-                <div>
-                  <span className="font-mono text-xs text-cyan-400 font-semibold block mb-2 sm:mb-3">
-                    Rule {item.rule}
-                  </span>
-                  <h3 className="text-base sm:text-lg font-bold text-white leading-snug">
-                    &ldquo;{item.quote}&rdquo;
-                  </h3>
-                </div>
-                <p className="mt-3 sm:mt-4 text-xs sm:text-sm text-slate-400 leading-relaxed border-t border-slate-900 pt-3">
-                  {item.explanation}
-                </p>
-              </div>
-            ))}
-          </div>
-
-          <div className="mt-8 text-center sm:text-left">
-            <p className="text-xs text-slate-400 font-mono">
-              You receive fixed price boundaries, risk disclosures, and honest scope before development starts.
-            </p>
-          </div>
+          ))}
         </div>
       </div>
     </section>

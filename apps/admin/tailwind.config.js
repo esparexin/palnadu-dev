@@ -1,5 +1,6 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
+  presets: [require('@palnadu/config/tailwind-preset')],
   darkMode: 'class',
   content: [
     './src/**/*.{ts,tsx}',

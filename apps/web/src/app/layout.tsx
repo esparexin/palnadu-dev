@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next';
-import { Inter, JetBrains_Mono } from 'next/font/google';
+import { Plus_Jakarta_Sans, JetBrains_Mono } from 'next/font/google';
 import { siteConfig } from '@palnadu/config';
 import { Navbar } from '@/components/layout/navbar';
 import { Footer } from '@/components/layout/footer';
@@ -7,20 +7,21 @@ import { MobileStickyCta } from '@/components/layout/mobile-sticky-cta';
 import { SmoothScrollProvider } from '@/components/providers/smooth-scroll-provider';
 import './globals.css';
 
-const inter = Inter({
+const fontSans = Plus_Jakarta_Sans({
   subsets: ['latin'],
   variable: '--font-sans',
   display: 'swap',
+  weight: ['400', '500', '600', '700', '800'],
 });
 
-const jetbrainsMono = JetBrains_Mono({
+const fontMono = JetBrains_Mono({
   subsets: ['latin'],
   variable: '--font-mono',
   display: 'swap',
 });
 
 export const viewport: Viewport = {
-  themeColor: '#030712',
+  themeColor: '#042C53',
   width: 'device-width',
   initialScale: 1,
   maximumScale: 5,
@@ -69,17 +70,17 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html
       lang="en"
-      className={`dark ${inter.variable} ${jetbrainsMono.variable}`}
+      className={`${fontSans.variable} ${fontMono.variable}`}
       suppressHydrationWarning
     >
       <head>
         <link rel="canonical" href={siteConfig.url} />
       </head>
-      <body className="min-h-screen font-sans antialiased bg-[#030712] text-slate-100 selection:bg-cyan-500/20 selection:text-cyan-300">
+      <body className="min-h-screen font-sans antialiased bg-white text-palnadu-body selection:bg-palnadu-light-blue selection:text-palnadu-blue">
         <SmoothScrollProvider>
-          <div className="relative flex min-h-screen flex-col">
+          <div className="relative flex min-h-screen flex-col bg-white">
             <Navbar />
-            <main className="flex-1">{children}</main>
+            <main className="flex-1 bg-white">{children}</main>
             <Footer />
             <MobileStickyCta />
           </div>

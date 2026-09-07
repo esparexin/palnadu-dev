@@ -204,43 +204,41 @@ export default async function ServicePage({ params }: Props) {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
       />
 
-      <section className="py-20 md:py-28 relative overflow-hidden">
-        <div className="ambient-glow-cyan top-1/4 right-1/4 w-[400px] h-[400px] opacity-15" />
+      <section className="py-12 sm:py-16 relative bg-white">
         <div className="container relative z-10">
-          <div className="mx-auto max-w-3xl">
+          <div className="mx-auto max-w-2xl">
             <Link
               href="/services"
-              className="mb-8 inline-flex items-center gap-2 text-xs font-mono uppercase tracking-wider text-slate-400 hover:text-cyan-400 transition-colors"
+              className="mb-6 inline-flex items-center gap-1.5 text-xs font-mono uppercase tracking-wider text-palnadu-secondary hover:text-palnadu-blue transition-colors"
             >
-              <ArrowLeft className="h-4 w-4" />
-              All Services
+              ← All Services
             </Link>
 
-            <h1 className="text-3xl font-extrabold tracking-tight text-white sm:text-4xl lg:text-5xl">
+            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-palnadu-dark">
               {service.title}
             </h1>
-            <p className="mt-4 text-lg text-slate-300 leading-relaxed">
+            <p className="mt-2 text-sm sm:text-base text-palnadu-body leading-relaxed">
               {service.shortDescription}
             </p>
 
             {content && (
               <>
-                <div className="mt-12 space-y-6">
+                <div className="mt-8 space-y-3.5">
                   {content.content.map((para, i) => (
-                    <p key={i} className="text-slate-300 leading-relaxed text-base sm:text-lg">
+                    <p key={i} className="text-palnadu-body leading-relaxed text-xs sm:text-sm">
                       {para}
                     </p>
                   ))}
                 </div>
 
                 {content.benefits && (
-                  <div className="mt-12 rounded-2xl border border-slate-800 bg-slate-950/70 p-8 backdrop-blur-xl">
-                    <h2 className="text-xl font-bold text-white mb-6">What this service covers</h2>
-                    <ul className="grid gap-4 sm:grid-cols-2">
+                  <div className="mt-8 pt-6 border-t border-palnadu-border">
+                    <h2 className="text-sm font-bold text-palnadu-dark uppercase tracking-wider font-mono text-xs mb-3">Coverage</h2>
+                    <ul className="grid gap-2 sm:grid-cols-2">
                       {content.benefits.map((benefit) => (
-                        <li key={benefit} className="flex items-start gap-3">
-                          <div className="mt-1.5 h-1.5 w-1.5 rounded-full bg-cyan-400 flex-shrink-0" />
-                          <span className="text-sm text-slate-300 font-medium">{benefit}</span>
+                        <li key={benefit} className="text-xs text-palnadu-body font-medium flex items-baseline gap-2">
+                          <span className="text-palnadu-blue font-bold text-[10px]">/</span>
+                          <span>{benefit}</span>
                         </li>
                       ))}
                     </ul>
@@ -249,15 +247,14 @@ export default async function ServicePage({ params }: Props) {
               </>
             )}
 
-            <div className="mt-16 rounded-3xl border border-cyan-500/30 bg-gradient-to-b from-slate-900/80 to-slate-950/90 p-8 sm:p-12 text-center backdrop-blur-2xl shadow-2xl">
-              <h2 className="text-2xl sm:text-3xl font-bold text-white">Need help with {service.title.toLowerCase()}?</h2>
-              <p className="mt-3 text-slate-300 max-w-md mx-auto text-sm sm:text-base">
-                Tell us your current challenge and we&apos;ll explain our honest technical recommendations before you spend anything.
+            <div className="mt-10 pt-8 border-t border-palnadu-border text-center">
+              <h2 className="text-base sm:text-lg font-bold text-palnadu-dark">Need help with {service.title.toLowerCase()}?</h2>
+              <p className="mt-1 text-palnadu-body max-w-md mx-auto text-xs">
+                Tell us your challenge and we&apos;ll explain our honest technical recommendations.
               </p>
-              <Button asChild size="xl" className="mt-6 bg-cyan-400 text-slate-950 hover:bg-cyan-300 font-semibold shadow-lg shadow-cyan-500/25">
-                <Link href="/contact" className="flex items-center gap-2">
-                  <span>Tell us your problem</span>
-                  <ArrowRight className="h-4 w-4" />
+              <Button asChild size="sm" className="mt-3 bg-palnadu-blue text-white hover:bg-[#12487e] font-semibold text-xs h-8 rounded-md px-4 shadow-xs">
+                <Link href="/contact">
+                  Tell us your problem →
                 </Link>
               </Button>
             </div>

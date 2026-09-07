@@ -18,24 +18,21 @@ export function SectionHeading({
   return (
     <div
       className={cn(
-        'max-w-3xl space-y-4',
+        'max-w-2xl space-y-2',
         align === 'center' && 'mx-auto text-center',
         className,
       )}
     >
       {label && (
-        <div className={cn('flex', align === 'center' && 'justify-center')}>
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-cyan-500/25 bg-cyan-950/40 text-cyan-300 text-xs font-mono uppercase tracking-widest backdrop-blur-md">
-            <span className="h-1 w-1 rounded-full bg-cyan-400" />
-            {label}
-          </span>
-        </div>
+        <p className="text-xs font-mono uppercase tracking-widest text-palnadu-blue font-bold">
+          {label}
+        </p>
       )}
-      <h2 className="text-3xl font-extrabold tracking-tight text-white sm:text-4xl lg:text-5xl text-balance leading-[1.15]">
+      <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight text-palnadu-dark text-balance leading-tight">
         {title}
       </h2>
       {description && (
-        <p className="text-base sm:text-lg text-slate-300 leading-relaxed text-balance">
+        <p className="text-sm sm:text-base text-palnadu-body leading-relaxed text-balance">
           {description}
         </p>
       )}
