@@ -121,10 +121,10 @@ export default function HomePage() {
     <>
       <JsonLd />
       <HeroSection />
+      <TransparencySection />
+      <ProcessSection />
       <PhilosophySection />
       <ServicesSection />
-      <ProcessSection />
-      <TransparencySection />
       <AffordabilitySection />
       <IdentitySection />
       <CtaSection />
