@@ -4,6 +4,7 @@ import { siteConfig } from '@palnadu/config';
 import { Navbar } from '@/components/layout/navbar';
 import { Footer } from '@/components/layout/footer';
 import { MobileStickyCta } from '@/components/layout/mobile-sticky-cta';
+import { SmoothScrollProvider } from '@/components/providers/smooth-scroll-provider';
 import './globals.css';
 
 const inter = Inter({
@@ -75,12 +76,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="canonical" href={siteConfig.url} />
       </head>
       <body className="min-h-screen font-sans antialiased bg-[#030712] text-slate-100 selection:bg-cyan-500/20 selection:text-cyan-300">
-        <div className="relative flex min-h-screen flex-col">
-          <Navbar />
-          <main className="flex-1">{children}</main>
-          <Footer />
-          <MobileStickyCta />
-        </div>
+        <SmoothScrollProvider>
+          <div className="relative flex min-h-screen flex-col">
+            <Navbar />
+            <main className="flex-1">{children}</main>
+            <Footer />
+            <MobileStickyCta />
+          </div>
+        </SmoothScrollProvider>
       </body>
     </html>
   );

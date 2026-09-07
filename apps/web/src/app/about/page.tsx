@@ -1,74 +1,55 @@
 import type { Metadata } from 'next';
-import { SectionHeading } from '@/components/layout/section-heading';
 import { CtaSection } from '@/components/sections/cta-section';
 
 export const metadata: Metadata = {
-  title: 'About',
+  title: 'About Us',
   description:
-    'Palnadu.dev is a technology company built by developers from Palnadu. We help startups, businesses, and individuals solve real-world problems with practical digital solutions.',
+    'Palnadu.dev is a technology company built by developers from Palnadu with 8+ years of experience. We turn real-world problems into practical software.',
 };
 
 export default function AboutPage() {
   return (
     <>
-      <section className="py-20 md:py-28">
-        <div className="container">
-          <SectionHeading
-            label="About us"
-            title="Technology partner, not just a vendor."
-            description="We are a technology company built by developers from Palnadu with 8+ years of experience in solving real-world problems."
-          />
+      <section className="py-24 sm:py-32 relative">
+        <div className="container max-w-4xl">
+          <div className="space-y-4 mb-16">
+            <p className="text-xs font-mono uppercase tracking-widest text-cyan-400">
+              About Palnadu.dev
+            </p>
+            <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight text-white leading-tight">
+              Software engineers,<br />
+              <span className="text-slate-400 font-normal">not commission salespeople.</span>
+            </h1>
+          </div>
 
-          <div className="mx-auto mt-16 max-w-3xl space-y-8 text-muted-foreground">
+          <div className="space-y-12 text-base sm:text-lg text-slate-300 leading-relaxed">
             <div className="space-y-4">
-              <h3 className="text-xl font-semibold text-foreground">Who we are</h3>
-              <p className="leading-relaxed">
-                Palnadu.dev is a technology company that helps startups, small and medium
-                businesses, individuals, and existing product owners turn real-world problems and
-                ideas into practical digital solutions.
+              <h2 className="text-2xl font-bold text-white">Who we are</h2>
+              <p>
+                Palnadu.dev was built by software engineers from the Palnadu region. We have spent more than eight years in the industry designing web applications, building mobile platforms, automating manual business operations, and validating startup MVPs.
               </p>
-              <p className="leading-relaxed">
-                We build web applications, mobile applications, custom software, SaaS products,
-                MVPs, and business automation systems. We also provide technical consulting, startup
-                idea validation, and ongoing development support.
-              </p>
-            </div>
-
-            <div className="space-y-4">
-              <h3 className="text-xl font-semibold text-foreground">How we work</h3>
-              <p className="leading-relaxed">
-                We start with understanding the problem — not selling technology. Before writing
-                a single line of code, we analyze requirements, identify limitations, evaluate
-                risks, and explain everything clearly including expected costs and future
-                considerations.
-              </p>
-              <p className="leading-relaxed">
-                If a proposed solution has technical limitations, unnecessary features, or
-                additional costs, we explain them before development begins. We believe customers
-                should understand what is being built, why, and what it will cost.
+              <p>
+                We do not position ourselves as a generic freelance marketplace or an overpriced metropolitan agency with marble lobbies. We are an engineering studio that partners directly with startup founders, small-to-medium businesses, and individuals who have genuine digital challenges.
               </p>
             </div>
 
-            <div className="space-y-4">
-              <h3 className="text-xl font-semibold text-foreground">What we believe</h3>
-              <ul className="list-disc space-y-2 pl-5">
-                <li>Customer understanding comes first</li>
-                <li>Transparent communication throughout</li>
-                <li>Affordable pricing through correct scope</li>
-                <li>No unnecessary complexity</li>
-                <li>No hidden charges</li>
-                <li>Honest technical advice</li>
-                <li>Quality engineering at every level</li>
-                <li>Long-term support and partnership</li>
-              </ul>
+            <div className="space-y-4 border-t border-slate-900 pt-10">
+              <h2 className="text-2xl font-bold text-white">Our standard: Truth before code</h2>
+              <p>
+                Before we write a single line of code, we spend time understanding your workflow and where things break down. We look for hidden bottlenecks, assess hosting and database dependencies, and explain the realistic costs upfront.
+              </p>
+              <p>
+                If an idea has technical limitations or future scaling traps, we explain them before development starts. If you don&apos;t need custom software, we tell you that honestly and point you to simpler existing tools.
+              </p>
             </div>
 
-            <div className="space-y-4">
-              <h3 className="text-xl font-semibold text-foreground">Our roots</h3>
-              <p className="leading-relaxed">
-                Built by developers from Palnadu with the ambition of creating high-quality digital
-                products from the region for customers everywhere. We bring real engineering depth
-                to every project.
+            <div className="space-y-4 border-t border-slate-900 pt-10">
+              <h2 className="text-2xl font-bold text-white">A boundary on price, not on quality</h2>
+              <p>
+                We believe great software should be accessible. Affordable engineering does not come from cutting corners or hiring cheap, unverified contractors. It comes from disciplined scope, sensible architectural choices, avoiding trendy bloat, and shipping in phases.
+              </p>
+              <p>
+                When you partner with us, you work directly with the developers building your product. That means faster communication, honest engineering answers, and software that actually works when your customers use it.
               </p>
             </div>
           </div>

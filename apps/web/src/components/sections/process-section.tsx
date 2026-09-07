@@ -1,193 +1,96 @@
 'use client';
 
-import { useState } from 'react';
-import { processSteps } from '@palnadu/config';
-import { SectionHeading } from '@/components/layout/section-heading';
-import { cn } from '@/lib/utils';
-import {
-  Search,
-  Cpu,
-  MessageSquare,
-  Compass,
-  Code2,
-  CheckCircle2,
-  LifeBuoy,
-  ArrowRight,
-} from 'lucide-react';
-import Link from 'next/link';
-
-const stepIcons = [
-  Search,
-  Cpu,
-  MessageSquare,
-  Compass,
-  Code2,
-  CheckCircle2,
-  LifeBuoy,
+const steps = [
+  {
+    number: '01',
+    title: 'Understand',
+    summary: "We don't talk tech stacks first. We listen to where your work gets stuck.",
+    detail:
+      'We sit down with you and figure out the exact bottleneck. Who is using the software? What takes hours today that should take seconds? Where do orders or customer inquiries get dropped? We find the real problem first.',
+  },
+  {
+    number: '02',
+    title: 'Analyze',
+    summary: 'Uncovering dependencies, technical limitations, and hidden traps before writing code.',
+    detail:
+      'Every project has hidden complexity — legacy databases, third-party API reliability, mobile network connectivity, or hosting costs. We evaluate these upfront so nobody gets blindsided two months later.',
+  },
+  {
+    number: '03',
+    title: 'Explain',
+    summary: 'Straight talk on what needs to be built, what doesn’t, and what it will actually cost.',
+    detail:
+      "We give you our honest assessment before taking a rupee or dollar. If something in your wish list is unnecessary or overly expensive, we tell you directly. If there's a simpler existing tool that solves it, we recommend that instead.",
+  },
+  {
+    number: '04',
+    title: 'Plan',
+    summary: 'Setting clean milestones, architecture, and delivery dates.',
+    detail:
+      'We define the technical roadmap in clear, understandable phases. You know exactly what gets delivered each week, how data is stored, and what success looks like at every checkpoint.',
+  },
+  {
+    number: '05',
+    title: 'Build',
+    summary: 'Quality engineering with continuous visibility.',
+    detail:
+      'We write strictly typed, well-architected code that is built to last. You get regular access to a working staging environment where you can click through features as they are completed.',
+  },
+  {
+    number: '06',
+    title: 'Deliver',
+    summary: 'Thorough testing, clean handoff, and zero lock-in.',
+    detail:
+      'We run end-to-end tests, verify security, configure production deployment, and walk your team through the system. You own 100% of your code, data, and infrastructure.',
+  },
+  {
+    number: '07',
+    title: 'Support',
+    summary: 'Standing behind what we ship for the long haul.',
+    detail:
+      'Good software evolves. We provide ongoing support, monitor uptime, patch dependencies, and help you build phase two once real customer feedback comes in.',
+  },
 ];
 
-const stepDetails: Record<string, string[]> = {
-  '01': [
-    'Direct founder-to-engineer conversation',
-    'Root problem identification before proposing tools',
-    'User journey and existing friction mapping',
-  ],
-  '02': [
-    'Architectural and technical feasibility analysis',
-    'Third-party dependency and integration risks',
-    'Scalability and maintainability assessment',
-  ],
-  '03': [
-    'Clear scope, realistic timeline, and transparent cost breakdown',
-    'Explaining future risks and potential technical debt before coding',
-    'Calling out unnecessary features that shouldn’t be built',
-  ],
-  '04': [
-    'Technology stack selection best suited to your requirements',
-    'Database schema, API contracts, and modular milestones',
-    'Sprint cadence and delivery schedule alignment',
-  ],
-  '05': [
-    'Production-grade TypeScript, robust tests, and strict linting',
-    'Weekly progress visibility with staging access',
-    'Security, performance, and accessibility standards enforced',
-  ],
-  '06': [
-    'Rigorous end-to-end testing and QA',
-    'Production infrastructure and CI/CD deployment',
-    'Clean codebase handover and documentation',
-  ],
-  '07': [
-    'SLA-backed technical support and system monitoring',
-    'Iterative enhancements driven by real user feedback',
-    'Long-term engineering partnership',
-  ],
-};
-
 export function ProcessSection() {
-  const [activeStep, setActiveStep] = useState(0);
-  const CurrentIcon = stepIcons[activeStep] || Search;
-  const currentStepData = processSteps[activeStep];
-  const deliverables = stepDetails[currentStepData.number] || [];
-
   return (
-    <section className="py-20 md:py-28 relative overflow-hidden" id="process">
-      {/* Ambient glow */}
-      <div className="ambient-glow-cyan top-1/2 left-1/3 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] opacity-15" />
+    <section className="py-24 sm:py-32 relative border-t border-slate-900" id="process">
+      <div className="container max-w-4xl">
+        <div className="mb-16">
+          <p className="text-xs font-mono uppercase tracking-widest text-cyan-400 mb-3">
+            How we work
+          </p>
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight text-white">
+            A clear process. No guessing.
+          </h2>
+          <p className="mt-4 text-base sm:text-lg text-slate-400 leading-relaxed">
+            From the first phone call until your software has been running in production for years.
+          </p>
+        </div>
 
-      <div className="container relative z-10">
-        <SectionHeading
-          label="Our Engineering Methodology"
-          title="Problem → Understanding → Solution"
-          description="A clear, transparent 7-step journey from initial problem to production-ready software."
-        />
-
-        <div className="mx-auto mt-14 max-w-5xl">
-          {/* Methodology Progress Bar */}
-          <div className="mb-8 hidden md:block">
-            <div className="flex items-center justify-between text-xs font-mono text-slate-400 mb-2">
-              <span className="text-cyan-400">Phase {activeStep + 1} of {processSteps.length}</span>
-              <span>{Math.round(((activeStep + 1) / processSteps.length) * 100)}% Complete</span>
-            </div>
-            <div className="h-1.5 w-full bg-slate-900 rounded-full overflow-hidden border border-slate-800">
-              <div
-                className="h-full bg-gradient-to-r from-cyan-500 to-blue-500 transition-all duration-500 ease-out"
-                style={{ width: `${((activeStep + 1) / processSteps.length) * 100}%` }}
-              />
-            </div>
-          </div>
-
-          <div className="grid gap-8 md:grid-cols-[290px_1fr]">
-            {/* Step Selector List with horizontal scroll on mobile */}
-            <div className="flex flex-row gap-2 overflow-x-auto pb-2 md:flex-col md:gap-1.5 md:overflow-visible md:pb-0 scrollbar-none">
-              {processSteps.map((step, index) => {
-                const Icon = stepIcons[index] || Search;
-                const isActive = activeStep === index;
-                return (
-                  <button
-                    key={step.number}
-                    onClick={() => setActiveStep(index)}
-                    className={cn(
-                      'flex items-center gap-3.5 rounded-xl px-4 py-3.5 text-left text-sm font-medium transition-all whitespace-nowrap md:whitespace-normal border',
-                      isActive
-                        ? 'border-cyan-500/40 bg-cyan-950/40 text-white shadow-md shadow-cyan-500/10'
-                        : 'border-transparent text-slate-400 hover:border-slate-800 hover:bg-slate-900/60 hover:text-slate-200',
-                    )}
-                  >
-                    <div
-                      className={cn(
-                        'flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-xs font-mono transition-colors',
-                        isActive
-                          ? 'bg-cyan-400 text-slate-950 font-bold'
-                          : 'bg-slate-900 text-slate-400',
-                      )}
-                    >
-                      {step.number}
-                    </div>
-                    <div className="flex flex-col">
-                      <span className={cn('text-sm font-semibold', isActive ? 'text-cyan-300' : 'text-slate-300')}>
-                        {step.title}
-                      </span>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* Step Detail Card with glassmorphism */}
-            <div className="flex flex-col justify-between rounded-2xl border border-slate-800/90 bg-slate-950/70 backdrop-blur-xl p-6 sm:p-10 shadow-xl">
-              <div className="space-y-6">
-                <div className="flex items-center justify-between border-b border-slate-800 pb-5">
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-400">
-                      <CurrentIcon className="h-6 w-6" />
-                    </div>
-                    <div>
-                      <span className="font-mono text-xs text-cyan-400 font-semibold uppercase tracking-wider">
-                        Step {currentStepData.number}
-                      </span>
-                      <h3 className="text-2xl sm:text-3xl font-bold text-white">
-                        {currentStepData.title}
-                      </h3>
-                    </div>
-                  </div>
-                </div>
-
-                <p className="text-base sm:text-lg text-slate-300 leading-relaxed">
-                  {currentStepData.description}
+        {/* Clean Apple-style editorial timeline */}
+        <div className="space-y-12">
+          {steps.map((step) => (
+            <div
+              key={step.number}
+              className="grid gap-4 sm:grid-cols-[80px_1fr] sm:gap-8 pb-10 border-b border-slate-900/90 last:border-0"
+            >
+              <div className="font-mono text-xl sm:text-2xl font-bold text-slate-600">
+                {step.number}
+              </div>
+              <div className="space-y-2">
+                <h3 className="text-xl sm:text-2xl font-semibold text-white">
+                  {step.title}
+                </h3>
+                <p className="text-sm sm:text-base font-medium text-cyan-300/90">
+                  {step.summary}
                 </p>
-
-                {deliverables.length > 0 && (
-                  <div className="space-y-3 pt-2">
-                    <p className="text-xs uppercase tracking-widest text-slate-400 font-mono">
-                      What happens here:
-                    </p>
-                    <ul className="space-y-2.5">
-                      {deliverables.map((item, idx) => (
-                        <li key={idx} className="flex items-start gap-3 text-sm text-slate-300">
-                          <CheckCircle2 className="h-4 w-4 text-cyan-400 shrink-0 mt-0.5" />
-                          <span>{item}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-              </div>
-
-              <div className="mt-8 pt-5 border-t border-slate-800/80 flex flex-col sm:flex-row items-center justify-between gap-4">
-                <span className="text-xs text-slate-400">
-                  Ready to solve your challenge?
-                </span>
-                <Link
-                  href="/contact"
-                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-cyan-400 hover:text-cyan-300 transition-colors"
-                >
-                  <span>Discuss your problem</span>
-                  <ArrowRight className="h-3.5 w-3.5" />
-                </Link>
+                <p className="text-sm sm:text-base text-slate-400 leading-relaxed pt-1">
+                  {step.detail}
+                </p>
               </div>
             </div>
-          </div>
+          ))}
         </div>
       </div>
     </section>
