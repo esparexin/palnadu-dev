@@ -16,27 +16,27 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { api } from '@/lib/api';
-import { CheckCircle, Loader2 } from 'lucide-react';
+import { CheckCircle2, Loader2, ArrowRight } from 'lucide-react';
 
 const projectStageLabels: Record<string, string> = {
-  JUST_AN_IDEA: 'Just an idea',
-  EXISTING_BUSINESS: 'Existing business',
-  EXISTING_PRODUCT: 'Existing product',
-  EXISTING_WEBSITE: 'Existing website',
-  MANUAL_PROCESS: 'Manual process',
-  NEED_TECHNICAL_HELP: 'Need technical help',
-  OTHER: 'Other',
+  JUST_AN_IDEA: 'Just an idea / Concept',
+  EXISTING_BUSINESS: 'Existing business process',
+  EXISTING_PRODUCT: 'Existing product needing improvement',
+  EXISTING_WEBSITE: 'Existing website needing overhaul',
+  MANUAL_PROCESS: 'Manual workflow needing automation',
+  NEED_TECHNICAL_HELP: 'Need technical guidance / audit',
+  OTHER: 'Other / Not sure',
 };
 
 const requiredHelpLabels: Record<string, string> = {
-  IDEA_VALIDATION: 'Idea validation',
+  NOT_SURE: 'Not sure (Help diagnose)',
+  IDEA_VALIDATION: 'Idea validation & research',
+  MVP_DEVELOPMENT: 'MVP development',
   WEB_APPLICATION: 'Web application',
   MOBILE_APPLICATION: 'Mobile application',
   CUSTOM_SOFTWARE: 'Custom software',
-  AUTOMATION: 'Automation',
-  TECHNICAL_CONSULTING: 'Technical consulting',
-  MVP_DEVELOPMENT: 'MVP development',
-  NOT_SURE: 'Not sure',
+  AUTOMATION: 'Business automation',
+  TECHNICAL_CONSULTING: 'Technical consulting & architecture',
 };
 
 export function ContactForm() {
@@ -62,81 +62,122 @@ export function ContactForm() {
       await api.leads.create(data);
       setSubmitted(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
+      setError(err instanceof Error ? err.message : 'Failed to submit. Please check connection.');
     }
   };
 
   if (submitted) {
     return (
-      <div className="rounded-xl border bg-card p-12 text-center">
-        <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-green-100">
-          <CheckCircle className="h-6 w-6 text-green-600" />
+      <div className="rounded-3xl border border-cyan-500/40 bg-slate-950/80 p-8 sm:p-14 text-center backdrop-blur-2xl shadow-2xl animate-fade-in">
+        <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-cyan-400/10 border border-cyan-400/30 text-cyan-400">
+          <CheckCircle2 className="h-8 w-8" />
         </div>
-        <h3 className="text-xl font-semibold">Thank you for reaching out</h3>
-        <p className="mt-2 text-muted-foreground">
-          We&apos;ve received your message and will get back to you soon.
+        <h3 className="text-2xl sm:text-3xl font-bold text-white">We&apos;ve received your message</h3>
+        <p className="mx-auto mt-3 max-w-md text-sm sm:text-base text-slate-300 leading-relaxed">
+          An engineer from our team will review your problem and respond directly within 1-2 business days with honest advice.
         </p>
+        <div className="mt-8">
+          <Button
+            onClick={() => setSubmitted(false)}
+            variant="outline"
+            className="border-slate-800 text-slate-300 hover:bg-slate-900"
+          >
+            Submit another message
+          </Button>
+        </div>
       </div>
     );
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 rounded-xl border bg-card p-8">
+    <form
+      onSubmit={handleSubmit(onSubmit)}
+      className="space-y-6 rounded-3xl border border-slate-800/90 bg-slate-950/80 p-6 sm:p-10 backdrop-blur-2xl shadow-2xl"
+    >
       <div className="grid gap-6 md:grid-cols-2">
         {/* Name */}
         <div className="space-y-2">
-          <Label htmlFor="name">
-            Name <span className="text-destructive">*</span>
+          <Label htmlFor="name" className="text-xs font-mono uppercase tracking-wider text-slate-300">
+            Your Name <span className="text-cyan-400">*</span>
           </Label>
-          <Input id="name" placeholder="Your name" {...register('name')} />
-          {errors.name && <p className="text-sm text-destructive">{errors.name.message}</p>}
+          <Input
+            id="name"
+            placeholder="John Doe"
+            className="bg-slate-900/60 border-slate-800 focus-visible:ring-cyan-400 text-white placeholder:text-slate-600 h-11"
+            {...register('name')}
+          />
+          {errors.name && <p className="text-xs text-rose-400">{errors.name.message}</p>}
         </div>
 
         {/* Email */}
         <div className="space-y-2">
-          <Label htmlFor="email">
-            Email <span className="text-destructive">*</span>
+          <Label htmlFor="email" className="text-xs font-mono uppercase tracking-wider text-slate-300">
+            Email Address <span className="text-cyan-400">*</span>
           </Label>
-          <Input id="email" type="email" placeholder="your@email.com" {...register('email')} />
-          {errors.email && <p className="text-sm text-destructive">{errors.email.message}</p>}
+          <Input
+            id="email"
+            type="email"
+            placeholder="john@example.com"
+            className="bg-slate-900/60 border-slate-800 focus-visible:ring-cyan-400 text-white placeholder:text-slate-600 h-11"
+            {...register('email')}
+          />
+          {errors.email && <p className="text-xs text-rose-400">{errors.email.message}</p>}
         </div>
 
         {/* Phone */}
         <div className="space-y-2">
-          <Label htmlFor="phone">Phone</Label>
-          <Input id="phone" placeholder="Your phone number" {...register('phone')} />
+          <Label htmlFor="phone" className="text-xs font-mono uppercase tracking-wider text-slate-300">
+            Phone / WhatsApp <span className="text-slate-500 font-normal">(Optional)</span>
+          </Label>
+          <Input
+            id="phone"
+            placeholder="+91 9876543210"
+            className="bg-slate-900/60 border-slate-800 focus-visible:ring-cyan-400 text-white placeholder:text-slate-600 h-11"
+            {...register('phone')}
+          />
         </div>
 
         {/* Company */}
         <div className="space-y-2">
-          <Label htmlFor="company">Company / Organization</Label>
-          <Input id="company" placeholder="Your company name" {...register('company')} />
+          <Label htmlFor="company" className="text-xs font-mono uppercase tracking-wider text-slate-300">
+            Company / Project Name <span className="text-slate-500 font-normal">(Optional)</span>
+          </Label>
+          <Input
+            id="company"
+            placeholder="Acme Inc."
+            className="bg-slate-900/60 border-slate-800 focus-visible:ring-cyan-400 text-white placeholder:text-slate-600 h-11"
+            {...register('company')}
+          />
         </div>
       </div>
 
       {/* Problem Description */}
       <div className="space-y-2">
-        <Label htmlFor="problemDescription">
-          What problem are you trying to solve? <span className="text-destructive">*</span>
+        <Label htmlFor="problemDescription" className="text-xs font-mono uppercase tracking-wider text-slate-300">
+          What is the problem you want solved? <span className="text-cyan-400">*</span>
         </Label>
         <Textarea
           id="problemDescription"
-          placeholder="Describe the problem you're facing or the idea you want to explore..."
+          placeholder="Describe the bottleneck, pain point, or idea you're trying to solve..."
           rows={5}
+          className="bg-slate-900/60 border-slate-800 focus-visible:ring-cyan-400 text-white placeholder:text-slate-600"
           {...register('problemDescription')}
         />
         {errors.problemDescription && (
-          <p className="text-sm text-destructive">{errors.problemDescription.message}</p>
+          <p className="text-xs text-rose-400">{errors.problemDescription.message}</p>
         )}
       </div>
 
       {/* Current Situation */}
       <div className="space-y-2">
-        <Label htmlFor="currentSituation">Current situation</Label>
+        <Label htmlFor="currentSituation" className="text-xs font-mono uppercase tracking-wider text-slate-300">
+          How are you currently handling it? <span className="text-slate-500 font-normal">(Optional)</span>
+        </Label>
         <Textarea
           id="currentSituation"
-          placeholder="How are you currently handling this? What's not working?"
+          placeholder="e.g. Using Excel spreadsheets, manual WhatsApp messages, or existing legacy software that is slow..."
           rows={3}
+          className="bg-slate-900/60 border-slate-800 focus-visible:ring-cyan-400 text-white placeholder:text-slate-600"
           {...register('currentSituation')}
         />
       </div>
@@ -144,17 +185,17 @@ export function ContactForm() {
       <div className="grid gap-6 md:grid-cols-2">
         {/* Project Stage */}
         <div className="space-y-2">
-          <Label>
-            Project stage <span className="text-destructive">*</span>
+          <Label className="text-xs font-mono uppercase tracking-wider text-slate-300">
+            Current Stage <span className="text-cyan-400">*</span>
           </Label>
           <Select
             defaultValue="JUST_AN_IDEA"
             onValueChange={(val) => setValue('projectStage', val as CreateLeadInput['projectStage'])}
           >
-            <SelectTrigger>
-              <SelectValue placeholder="Select stage" />
+            <SelectTrigger className="bg-slate-900/60 border-slate-800 text-white h-11">
+              <SelectValue placeholder="Select current stage" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="bg-slate-950 border-slate-800 text-slate-200">
               {Object.entries(projectStageLabels).map(([value, label]) => (
                 <SelectItem key={value} value={value}>
                   {label}
@@ -162,15 +203,12 @@ export function ContactForm() {
               ))}
             </SelectContent>
           </Select>
-          {errors.projectStage && (
-            <p className="text-sm text-destructive">{errors.projectStage.message}</p>
-          )}
         </div>
 
         {/* Required Help */}
         <div className="space-y-2">
-          <Label>
-            What help do you need? <span className="text-destructive">*</span>
+          <Label className="text-xs font-mono uppercase tracking-wider text-slate-300">
+            Required Help <span className="text-cyan-400">*</span>
           </Label>
           <Select
             defaultValue="NOT_SURE"
@@ -178,10 +216,10 @@ export function ContactForm() {
               setValue('requiredHelp', val as CreateLeadInput['requiredHelp'])
             }
           >
-            <SelectTrigger>
-              <SelectValue placeholder="Select type" />
+            <SelectTrigger className="bg-slate-900/60 border-slate-800 text-white h-11">
+              <SelectValue placeholder="Select required help" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="bg-slate-950 border-slate-800 text-slate-200">
               {Object.entries(requiredHelpLabels).map(([value, label]) => (
                 <SelectItem key={value} value={value}>
                   {label}
@@ -194,42 +232,58 @@ export function ContactForm() {
 
       {/* Budget */}
       <div className="space-y-2">
-        <Label htmlFor="budget">Budget (optional)</Label>
+        <Label htmlFor="budget" className="text-xs font-mono uppercase tracking-wider text-slate-300">
+          Estimated Budget Range <span className="text-slate-500 font-normal">(Optional)</span>
+        </Label>
         <Input
           id="budget"
-          placeholder="Approximate budget range"
+          placeholder="e.g. ₹50,000 - ₹2 Lakhs, $3k - $10k, or Not Sure"
+          className="bg-slate-900/60 border-slate-800 focus-visible:ring-cyan-400 text-white placeholder:text-slate-600 h-11"
           {...register('budget')}
         />
       </div>
 
       {/* Additional Info */}
       <div className="space-y-2">
-        <Label htmlFor="additionalInfo">Additional information</Label>
+        <Label htmlFor="additionalInfo" className="text-xs font-mono uppercase tracking-wider text-slate-300">
+          Any other constraints or notes? <span className="text-slate-500 font-normal">(Optional)</span>
+        </Label>
         <Textarea
           id="additionalInfo"
-          placeholder="Anything else you'd like us to know?"
+          placeholder="Deadlines, third-party services you already use, technical preferences, etc."
           rows={3}
+          className="bg-slate-900/60 border-slate-800 focus-visible:ring-cyan-400 text-white placeholder:text-slate-600"
           {...register('additionalInfo')}
         />
       </div>
 
       {error && (
-        <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">{error}</div>
+        <div className="rounded-xl border border-rose-500/30 bg-rose-950/40 p-3.5 text-xs text-rose-300">
+          {error}
+        </div>
       )}
 
-      <Button type="submit" size="lg" className="w-full" disabled={isSubmitting}>
+      <Button
+        type="submit"
+        size="xl"
+        className="w-full bg-cyan-400 text-slate-950 hover:bg-cyan-300 font-bold shadow-lg shadow-cyan-500/25 transition-all text-base h-12"
+        disabled={isSubmitting}
+      >
         {isSubmitting ? (
           <>
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            Sending...
+            Submitting your problem...
           </>
         ) : (
-          'Tell us your problem'
+          <span className="flex items-center justify-center gap-2">
+            <span>Tell us your problem</span>
+            <ArrowRight className="h-4 w-4" />
+          </span>
         )}
       </Button>
 
-      <p className="text-center text-xs text-muted-foreground">
-        We&apos;ll review your message and respond within 1-2 business days.
+      <p className="text-center text-xs text-slate-500">
+        No sales spam. We review your requirements and reply with genuine technical advice.
       </p>
     </form>
   );

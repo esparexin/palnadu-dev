@@ -155,10 +155,42 @@ export default async function ServicePage({ params }: Props) {
     name: service.title,
     description: service.shortDescription,
     provider: {
-      '@type': 'Organization',
+      '@type': 'ProfessionalService',
       name: 'Palnadu.dev',
       url: siteConfig.url,
+      telephone: '+91',
+      address: {
+        '@type': 'PostalAddress',
+        addressRegion: 'Andhra Pradesh',
+        addressCountry: 'IN',
+        addressLocality: 'Palnadu',
+      },
     },
+  };
+
+  const breadcrumbJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      {
+        '@type': 'ListItem',
+        position: 1,
+        name: 'Home',
+        item: siteConfig.url,
+      },
+      {
+        '@type': 'ListItem',
+        position: 2,
+        name: 'Services',
+        item: `${siteConfig.url}/services`,
+      },
+      {
+        '@type': 'ListItem',
+        position: 3,
+        name: service.title,
+        item: `${siteConfig.url}/services/${slug}`,
+      },
+    ],
   };
 
   return (
@@ -167,22 +199,27 @@ export default async function ServicePage({ params }: Props) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
+      />
 
-      <section className="py-20 md:py-28">
-        <div className="container">
+      <section className="py-20 md:py-28 relative overflow-hidden">
+        <div className="ambient-glow-cyan top-1/4 right-1/4 w-[400px] h-[400px] opacity-15" />
+        <div className="container relative z-10">
           <div className="mx-auto max-w-3xl">
             <Link
               href="/services"
-              className="mb-8 inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+              className="mb-8 inline-flex items-center gap-2 text-xs font-mono uppercase tracking-wider text-slate-400 hover:text-cyan-400 transition-colors"
             >
               <ArrowLeft className="h-4 w-4" />
               All Services
             </Link>
 
-            <h1 className="text-3xl font-bold tracking-tight sm:text-4xl lg:text-5xl">
+            <h1 className="text-3xl font-extrabold tracking-tight text-white sm:text-4xl lg:text-5xl">
               {service.title}
             </h1>
-            <p className="mt-4 text-lg text-muted-foreground leading-relaxed">
+            <p className="mt-4 text-lg text-slate-300 leading-relaxed">
               {service.shortDescription}
             </p>
 
@@ -190,20 +227,20 @@ export default async function ServicePage({ params }: Props) {
               <>
                 <div className="mt-12 space-y-6">
                   {content.content.map((para, i) => (
-                    <p key={i} className="text-muted-foreground leading-relaxed">
+                    <p key={i} className="text-slate-300 leading-relaxed text-base sm:text-lg">
                       {para}
                     </p>
                   ))}
                 </div>
 
                 {content.benefits && (
-                  <div className="mt-12">
-                    <h2 className="text-xl font-semibold mb-6">What this includes</h2>
-                    <ul className="grid gap-3 sm:grid-cols-2">
+                  <div className="mt-12 rounded-2xl border border-slate-800 bg-slate-950/70 p-8 backdrop-blur-xl">
+                    <h2 className="text-xl font-bold text-white mb-6">What this service covers</h2>
+                    <ul className="grid gap-4 sm:grid-cols-2">
                       {content.benefits.map((benefit) => (
                         <li key={benefit} className="flex items-start gap-3">
-                          <div className="mt-1.5 h-1.5 w-1.5 rounded-full bg-primary flex-shrink-0" />
-                          <span className="text-sm text-muted-foreground">{benefit}</span>
+                          <div className="mt-1.5 h-1.5 w-1.5 rounded-full bg-cyan-400 flex-shrink-0" />
+                          <span className="text-sm text-slate-300 font-medium">{benefit}</span>
                         </li>
                       ))}
                     </ul>
@@ -212,15 +249,15 @@ export default async function ServicePage({ params }: Props) {
               </>
             )}
 
-            <div className="mt-16 rounded-xl border bg-card p-8 text-center">
-              <h2 className="text-2xl font-bold">Need help with {service.title.toLowerCase()}?</h2>
-              <p className="mt-2 text-muted-foreground">
-                Tell us your problem and we&apos;ll help you find the right solution.
+            <div className="mt-16 rounded-3xl border border-cyan-500/30 bg-gradient-to-b from-slate-900/80 to-slate-950/90 p-8 sm:p-12 text-center backdrop-blur-2xl shadow-2xl">
+              <h2 className="text-2xl sm:text-3xl font-bold text-white">Need help with {service.title.toLowerCase()}?</h2>
+              <p className="mt-3 text-slate-300 max-w-md mx-auto text-sm sm:text-base">
+                Tell us your current challenge and we&apos;ll explain our honest technical recommendations before you spend anything.
               </p>
-              <Button asChild size="lg" className="mt-6">
-                <Link href="/contact">
-                  Tell us your problem
-                  <ArrowRight className="ml-2 h-4 w-4" />
+              <Button asChild size="xl" className="mt-6 bg-cyan-400 text-slate-950 hover:bg-cyan-300 font-semibold shadow-lg shadow-cyan-500/25">
+                <Link href="/contact" className="flex items-center gap-2">
+                  <span>Tell us your problem</span>
+                  <ArrowRight className="h-4 w-4" />
                 </Link>
               </Button>
             </div>
