@@ -1,10 +1,67 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, BadRequestException, OnModuleInit } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
 import { Prisma } from '@prisma/client';
+import { v2 as cloudinary, UploadApiResponse } from 'cloudinary';
 
 @Injectable()
-export class MediaService {
+export class MediaService implements OnModuleInit {
   constructor(private prisma: PrismaService) {}
+
+  onModuleInit() {
+    if (process.env.CLOUDINARY_CLOUD_NAME) {
+      cloudinary.config({
+        cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+        api_key: process.env.CLOUDINARY_API_KEY,
+        api_secret: process.env.CLOUDINARY_API_SECRET,
+      });
+    }
+  }
+
+  async uploadFile(file: Express.Multer.File) {
+    if (!process.env.CLOUDINARY_CLOUD_NAME || !process.env.CLOUDINARY_API_KEY || !process.env.CLOUDINARY_API_SECRET) {
+      throw new BadRequestException(
+        'Cloudinary is not configured. Please set CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, and CLOUDINARY_API_SECRET in apps/api/.env',
+      );
+    }
+
+    return new Promise((resolve, reject) => {
+      const uploadStream = cloudinary.uploader.upload_stream(
+        {
+          folder: 'palnadu-dev',
+          resource_type: 'auto',
+        },
+        async (error, result?: UploadApiResponse) => {
+          if (error || !result) {
+            return reject(error || new Error('Upload failed'));
+          }
+
+          try {
+            const media = await this.prisma.media.create({
+              data: {
+                filename: result.public_id,
+                originalName: file.originalname,
+                mimeType: file.mimetype,
+                size: file.size,
+                url: result.secure_url,
+                metadata: {
+                  format: result.format,
+                  width: result.width,
+                  height: result.height,
+                  resource_type: result.resource_type,
+                } as Prisma.JsonObject,
+              },
+            });
+
+            resolve(media);
+          } catch (dbErr) {
+            reject(dbErr);
+          }
+        },
+      );
+
+      uploadStream.end(file.buffer);
+    });
+  }
 
   async create(data: {
     filename: string;

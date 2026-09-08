@@ -8,8 +8,12 @@ import {
   Param,
   Query,
   UseGuards,
+  UseInterceptors,
+  UploadedFile,
   NotFoundException,
+  BadRequestException,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { MediaService } from './media.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
@@ -42,6 +46,16 @@ export class MediaController {
     return { success: true, data: item };
   }
 
+  @Post('upload')
+  @UseInterceptors(FileInterceptor('file'))
+  async uploadFile(@UploadedFile() file: Express.Multer.File) {
+    if (!file) {
+      throw new BadRequestException('No file provided for upload');
+    }
+    const media = await this.mediaService.uploadFile(file);
+    return { success: true, data: media };
+  }
+
   @Post()
   async createRecord(
     @Body()
@@ -69,9 +83,8 @@ export class MediaController {
   }
 
   @Delete(':id')
-  @Roles('SUPER_ADMIN', 'ADMIN')
-  async delete(@Param('id') id: string) {
+  async remove(@Param('id') id: string) {
     await this.mediaService.delete(id);
-    return { success: true, message: 'Media deleted' };
+    return { success: true, message: 'Media deleted successfully' };
   }
 }
