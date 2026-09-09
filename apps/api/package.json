@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "prebuild": "pnpm --filter @palnadu/types build && pnpm --filter @palnadu/validation build",
     "dev": "nest start --watch",
     "build": "nest build -p tsconfig.build.json",
     "start": "nest start",

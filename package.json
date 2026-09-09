@@ -6,6 +6,7 @@
     "dev:all": "./run.sh dev",
     "build": "pnpm db:generate && turbo build",
     "build:all": "./run.sh build",
+    "build:api": "pnpm db:generate && pnpm --filter @palnadu/api build",
     "lint": "turbo lint",
     "test": "turbo test",
     "clean": "turbo clean",

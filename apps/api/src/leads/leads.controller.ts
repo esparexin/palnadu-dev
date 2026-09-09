@@ -32,7 +32,7 @@ export class LeadsController {
     const parseResult = createLeadSchema.safeParse(body);
     if (!parseResult.success) {
       const errorMsg = parseResult.error.issues
-        .map((i) => `${i.path.join('.')}: ${i.message}`)
+        .map((i: any) => `${i.path.join('.')}: ${i.message}`)
         .join(', ');
       throw new BadRequestException(errorMsg);
     }
