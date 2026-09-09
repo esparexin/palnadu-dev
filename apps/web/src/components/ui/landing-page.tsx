@@ -1,24 +1,177 @@
 "use client";
 
-import React from "react"; 
+import React, { useEffect, useRef, useState } from "react"; 
 import Link from "next/link";
 import Globe from "@/components/ui/globe";
 import { services } from "@palnadu/config";
-import { ArrowRight, CheckCircle2, Shield, Zap, Layers, Code, Clock, Users, ArrowUpRight, Check } from "lucide-react";
+import { ArrowRight, ArrowUpRight } from "lucide-react";
+import { cn } from "@/lib/utils";
+
+// Desktop scroll-driven waypoints for the globe (anchored to the right side)
+const DESKTOP_GLOBE_WAYPOINTS = [
+  { top: 22, right: 8, scale: 1.15, opacity: 0.95 },  // Section 0: Hero
+  { top: 38, right: 6, scale: 0.95, opacity: 0.85 },  // Section 1: Standards
+  { top: 28, right: 7, scale: 1.05, opacity: 0.80 },  // Section 2: Capabilities
+  { top: 42, right: 6, scale: 0.90, opacity: 0.70 },  // Section 3: Methodology
+  { top: 50, right: 8, scale: 0.75, opacity: 0.20 },  // Section 4: CTA
+];
 
 export function ScrollGlobe() {
+  const [activeSection, setActiveSection] = useState(0);
+  const activeSectionRef = useRef(0);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const desktopGlobeRef = useRef<HTMLDivElement>(null);
+  const progressBarRef = useRef<HTMLDivElement>(null);
+  const sectionRefs = useRef<(HTMLElement | null)[]>([]);
+
+  useEffect(() => {
+    let ticking = false;
+
+    const onScroll = () => {
+      if (!ticking) {
+        requestAnimationFrame(() => {
+          const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+          const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+          const progress = docHeight > 0 ? Math.min(Math.max(scrollTop / docHeight, 0), 1) : 0;
+
+          // 1. Update top progress bar
+          if (progressBarRef.current) {
+            progressBarRef.current.style.transform = `scaleX(${progress})`;
+          }
+
+          // 2. Identify active section
+          const viewportCenter = window.innerHeight / 2;
+          let newSection = 0;
+          let minDistance = Infinity;
+
+          sectionRefs.current.forEach((ref, index) => {
+            if (ref) {
+              const rect = ref.getBoundingClientRect();
+              const center = rect.top + rect.height / 2;
+              const dist = Math.abs(center - viewportCenter);
+              if (dist < minDistance) {
+                minDistance = dist;
+                newSection = index;
+              }
+            }
+          });
+
+          // 3. Smooth desktop globe animation across scroll waypoints
+          if (desktopGlobeRef.current && window.innerWidth >= 1024) {
+            const wp = DESKTOP_GLOBE_WAYPOINTS[newSection] || DESKTOP_GLOBE_WAYPOINTS[0];
+            desktopGlobeRef.current.style.transform = `translate3d(0, ${wp.top}vh, 0) scale3d(${wp.scale}, ${wp.scale}, 1)`;
+            desktopGlobeRef.current.style.right = `${wp.right}vw`;
+            desktopGlobeRef.current.style.opacity = `${wp.opacity}`;
+          }
+
+          if (newSection !== activeSectionRef.current) {
+            activeSectionRef.current = newSection;
+            setActiveSection(newSection);
+          }
+
+          ticking = false;
+        });
+        ticking = true;
+      }
+    };
+
+    window.addEventListener("scroll", onScroll, { passive: true });
+
+    // Set initial position
+    if (desktopGlobeRef.current && window.innerWidth >= 1024) {
+      const initWp = DESKTOP_GLOBE_WAYPOINTS[0];
+      desktopGlobeRef.current.style.transform = `translate3d(0, ${initWp.top}vh, 0) scale3d(${initWp.scale}, ${initWp.scale}, 1)`;
+      desktopGlobeRef.current.style.right = `${initWp.right}vw`;
+      desktopGlobeRef.current.style.opacity = `${initWp.opacity}`;
+    }
+
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  const navLabels = ["Overview", "Standards", "Capabilities", "Process", "Get Started"];
+
   return (
-    <div className="relative w-full max-w-screen overflow-x-hidden bg-white text-palnadu-dark">
-      {/* ── 1. HERO SECTION: BALANCED 2-COLUMN DESKTOP GRID ── */}
-      <section className="relative z-20 px-4 sm:px-8 md:px-12 lg:px-16 pt-8 pb-16 sm:py-16 lg:py-20 border-b border-palnadu-border/60">
+    <div 
+      ref={containerRef}
+      className="relative w-full max-w-screen overflow-x-hidden bg-white text-palnadu-dark"
+    >
+      {/* Top Progress Bar */}
+      <div className="fixed top-0 left-0 w-full h-0.5 bg-palnadu-border/40 z-50 pointer-events-none">
+        <div 
+          ref={progressBarRef}
+          className="h-full bg-gradient-to-r from-palnadu-blue via-palnadu-blue to-palnadu-teal will-change-transform shadow-xs"
+          style={{ transform: 'scaleX(0)', transformOrigin: 'left center' }}
+        />
+      </div>
+
+      {/* Desktop Scroll Indicator Dots */}
+      <div className="hidden lg:flex fixed right-4 sm:right-6 top-1/2 -translate-y-1/2 z-40">
+        <div className="space-y-4">
+          {navLabels.map((label, index) => (
+            <div key={index} className="relative group">
+              <div
+                className={cn(
+                  "nav-label absolute right-6 top-1/2 -translate-y-1/2",
+                  "px-3 py-1 rounded-md text-xs font-semibold whitespace-nowrap",
+                  "bg-white/95 backdrop-blur-md border border-palnadu-border shadow-md z-50 text-palnadu-dark",
+                  activeSection === index ? "animate-fadeOut" : "opacity-0 pointer-events-none"
+                )}
+              >
+                <div className="flex items-center gap-1.5">
+                  <div className="w-1.5 h-1.5 rounded-full bg-palnadu-blue" />
+                  <span>{label}</span>
+                </div>
+              </div>
+
+              <button
+                onClick={() => {
+                  sectionRefs.current[index]?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }}
+                className={cn(
+                  "relative w-2.5 h-2.5 rounded-full border-2 transition-all duration-300 hover:scale-125 cursor-pointer",
+                  activeSection === index 
+                    ? "bg-palnadu-blue border-palnadu-blue shadow-sm" 
+                    : "bg-transparent border-palnadu-border hover:border-palnadu-blue"
+                )}
+                aria-label={`Go to ${label}`}
+              />
+            </div>
+          ))}
+        </div>
+        <div className="absolute left-1/2 top-0 bottom-0 w-px bg-palnadu-border -translate-x-1/2 -z-10" />
+      </div>
+
+      {/* ── DESKTOP SCROLL-ANIMATED GLOBE (Anchored to right, travels smoothly) ── */}
+      <div
+        ref={desktopGlobeRef}
+        className="hidden lg:block fixed top-0 z-10 pointer-events-none will-change-transform transition-all duration-700 ease-[cubic-bezier(0.23,1,0.32,1)]"
+        style={{
+          transform: `translate3d(0, ${DESKTOP_GLOBE_WAYPOINTS[0].top}vh, 0) scale3d(${DESKTOP_GLOBE_WAYPOINTS[0].scale}, ${DESKTOP_GLOBE_WAYPOINTS[0].scale}, 1)`,
+          right: `${DESKTOP_GLOBE_WAYPOINTS[0].right}vw`,
+          opacity: DESKTOP_GLOBE_WAYPOINTS[0].opacity,
+        }}
+      >
+        <div className="relative flex items-center justify-center">
+          <div className="absolute w-72 h-72 rounded-full bg-palnadu-blue/10 blur-3xl pointer-events-none" />
+          <div className="relative z-10">
+            <Globe />
+          </div>
+        </div>
+      </div>
+
+      {/* ── SECTION 0: HERO & TRUST METRICS ── */}
+      <section
+        ref={(el) => { sectionRefs.current[0] = el; }}
+        className="relative z-20 px-4 sm:px-8 md:px-12 lg:px-16 pt-8 pb-16 sm:py-16 lg:py-20 border-b border-palnadu-border/60"
+      >
         <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-center">
           
           {/* Left Column (7 cols): Content & Trust Proof */}
-          <div className="lg:col-span-7 space-y-6 text-left">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-palnadu-light-blue/70 border border-palnadu-blue/20 text-palnadu-blue text-xs font-semibold">
-              <span className="h-1.5 w-1.5 rounded-full bg-palnadu-blue animate-pulse" />
-              <span className="font-mono uppercase tracking-wider text-[11px]">Problem-First Software Studio</span>
-            </div>
+          <div className="lg:col-span-7 space-y-5 text-left">
+            {/* Pure Typographic Eyebrow — No Pills, No Chips */}
+            <p className="text-xs font-mono uppercase tracking-widest text-palnadu-blue font-bold">
+              Problem-First Software Studio
+            </p>
 
             <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-palnadu-dark leading-[1.12]">
               Start With The Problem.
@@ -45,7 +198,7 @@ export function ScrollGlobe() {
               </Link>
             </div>
 
-            {/* Trust Metrics Bar — Fills the lower hero and eliminates empty void */}
+            {/* Trust Metrics Bar — Fills the lower hero, zero empty void */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-8 border-t border-palnadu-border/60">
               <div className="space-y-0.5">
                 <p className="text-xl sm:text-2xl font-black text-palnadu-dark">8+ Years</p>
@@ -66,22 +219,27 @@ export function ScrollGlobe() {
             </div>
           </div>
 
-          {/* Right Column (5 cols): Anchored 3D Globe Visual */}
-          <div className="lg:col-span-5 flex items-center justify-center relative">
-            {/* Ambient Radial Glow Backdrop */}
-            <div className="absolute w-72 h-72 rounded-full bg-palnadu-blue/10 blur-3xl pointer-events-none" />
-            <div className="relative z-10 transform scale-90 sm:scale-100 lg:scale-110 py-4">
+          {/* Right Column: Mobile Inline Globe (On mobile only; Desktop uses smooth scroll globe) */}
+          <div className="lg:hidden flex items-center justify-center relative py-6">
+            <div className="absolute w-64 h-64 rounded-full bg-palnadu-blue/10 blur-3xl pointer-events-none" />
+            <div className="relative z-10 transform scale-85">
               <Globe />
             </div>
           </div>
 
+          {/* Desktop Right Column Placeholder (Reserves grid space so text never shifts) */}
+          <div className="hidden lg:block lg:col-span-5 h-[380px]" aria-hidden="true" />
+
         </div>
       </section>
 
-      {/* ── 2. STANDARDS: "TRUTH BEFORE CODE" ── */}
-      <section className="relative z-20 px-4 sm:px-8 md:px-12 lg:px-16 py-16 sm:py-20 bg-palnadu-off-white/40 border-b border-palnadu-border/60">
+      {/* ── SECTION 1: STANDARDS & METHODOLOGY ("TRUTH BEFORE CODE") ── */}
+      <section
+        ref={(el) => { sectionRefs.current[1] = el; }}
+        className="relative z-20 px-4 sm:px-8 md:px-12 lg:px-16 py-16 sm:py-20 bg-palnadu-off-white/40 border-b border-palnadu-border/60"
+      >
         <div className="max-w-7xl mx-auto space-y-10">
-          <div className="max-w-2xl">
+          <div className="max-w-2xl text-left">
             <p className="text-xs font-mono uppercase tracking-widest text-palnadu-blue font-bold mb-2">
               Engineering Standards
             </p>
@@ -138,11 +296,14 @@ export function ScrollGlobe() {
         </div>
       </section>
 
-      {/* ── 3. CAPABILITIES: ALL 7 CORE SERVICES ── */}
-      <section className="relative z-20 px-4 sm:px-8 md:px-12 lg:px-16 py-16 sm:py-24 bg-white border-b border-palnadu-border/60">
+      {/* ── SECTION 2: CAPABILITIES (7 CORE SERVICES) ── */}
+      <section
+        ref={(el) => { sectionRefs.current[2] = el; }}
+        className="relative z-20 px-4 sm:px-8 md:px-12 lg:px-16 py-16 sm:py-24 bg-white border-b border-palnadu-border/60"
+      >
         <div className="max-w-7xl mx-auto space-y-8">
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-            <div>
+            <div className="text-left">
               <p className="text-xs font-mono uppercase tracking-widest text-palnadu-blue font-bold mb-2">
                 Capabilities
               </p>
@@ -168,7 +329,7 @@ export function ScrollGlobe() {
               <Link
                 key={srv.slug}
                 href={`/services/${srv.slug}`}
-                className="p-5 rounded-xl border border-palnadu-border bg-white hover:border-palnadu-blue hover:shadow-2xs transition-all flex flex-col justify-between group"
+                className="p-5 rounded-xl border border-palnadu-border bg-white hover:border-palnadu-blue hover:shadow-2xs transition-all flex flex-col justify-between group text-left"
               >
                 <div className="space-y-2">
                   <div className="flex items-center justify-between text-xs text-palnadu-secondary font-mono">
@@ -188,10 +349,13 @@ export function ScrollGlobe() {
         </div>
       </section>
 
-      {/* ── 4. PROCESS: 4-STEP METHODOLOGY ── */}
-      <section className="relative z-20 px-4 sm:px-8 md:px-12 lg:px-16 py-16 sm:py-20 bg-palnadu-off-white/40 border-b border-palnadu-border/60">
+      {/* ── SECTION 3: 4-STEP DELIVERY METHODOLOGY ── */}
+      <section
+        ref={(el) => { sectionRefs.current[3] = el; }}
+        className="relative z-20 px-4 sm:px-8 md:px-12 lg:px-16 py-16 sm:py-20 bg-palnadu-off-white/40 border-b border-palnadu-border/60"
+      >
         <div className="max-w-7xl mx-auto space-y-8">
-          <div className="max-w-2xl">
+          <div className="max-w-2xl text-left">
             <p className="text-xs font-mono uppercase tracking-widest text-palnadu-blue font-bold mb-2">
               Methodology
             </p>
@@ -210,7 +374,7 @@ export function ScrollGlobe() {
               { step: "03", phase: "Build", title: "Disciplined Sprints", desc: "Clean TypeScript code delivered with weekly staging progress access." },
               { step: "04", phase: "Deliver", title: "Handoff & Support", desc: "100% code and infrastructure ownership with post-launch support." },
             ].map((p) => (
-              <div key={p.step} className="p-5 rounded-xl border border-palnadu-border bg-white shadow-2xs space-y-2">
+              <div key={p.step} className="p-5 rounded-xl border border-palnadu-border bg-white shadow-2xs space-y-2 text-left">
                 <div className="flex items-center gap-1.5 text-xs font-mono">
                   <span className="font-bold text-palnadu-blue">{p.step}</span>
                   <span className="text-palnadu-secondary uppercase font-semibold">/ {p.phase}</span>
@@ -223,8 +387,11 @@ export function ScrollGlobe() {
         </div>
       </section>
 
-      {/* ── 5. ACTION: HIGH-IMPACT CONSULTATION CTA ── */}
-      <section className="relative z-20 px-4 sm:px-8 md:px-12 lg:px-16 py-16 sm:py-24 bg-white">
+      {/* ── SECTION 4: HIGH-IMPACT CONSULTATION CTA ── */}
+      <section
+        ref={(el) => { sectionRefs.current[4] = el; }}
+        className="relative z-20 px-4 sm:px-8 md:px-12 lg:px-16 py-16 sm:py-24 bg-white"
+      >
         <div className="max-w-4xl mx-auto rounded-2xl border border-palnadu-border bg-palnadu-light-blue/30 p-8 sm:p-12 shadow-sm text-center space-y-5">
           <p className="text-xs font-mono uppercase tracking-widest text-palnadu-blue font-bold">
             Get Started
