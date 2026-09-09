@@ -173,6 +173,7 @@ cmd_dev() {
   echo ""
 
   log_info "Starting development servers via Turborepo..."
+  rm -rf apps/web/.next apps/admin/.next
   pnpm turbo dev
 }
 
