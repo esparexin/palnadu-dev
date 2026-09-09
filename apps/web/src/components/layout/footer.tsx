@@ -16,7 +16,7 @@ export function Footer() {
           <div className="col-span-2 sm:col-span-3 lg:col-span-1 space-y-3 mb-1 lg:mb-0">
             <Link href="/" aria-label="Palnadu.dev Home">
               <Image
-                src="/palnadu-logo-white.svg"
+                src="/palnadu-logo-white.png"
                 alt="Palnadu.dev"
                 width={150}
                 height={32}

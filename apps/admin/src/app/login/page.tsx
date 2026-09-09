@@ -39,7 +39,7 @@ export default function LoginPage() {
       <div className="w-full max-w-sm space-y-6">
         <div className="flex flex-col items-center space-y-2 text-center">
           <Image
-            src="/palnadu-logo-horizontal.svg"
+            src="/palnadu-logo-horizontal.png"
             alt="Palnadu.dev"
             width={160}
             height={36}

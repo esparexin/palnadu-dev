@@ -9,18 +9,17 @@
 export const brandAssets = {
   // Cloudinary Hosted CDN Assets (SSOT with auto-format & auto-quality)
   cloudinary: {
-    logoHorizontal: 'https://res.cloudinary.com/jescuj9a/image/upload/f_auto,q_auto/v1788958357/palnadu/brand/logo-horizontal.png',
-    logoWhite: 'https://res.cloudinary.com/jescuj9a/image/upload/f_auto,q_auto/v1788958387/palnadu/brand/logo-white.png',
-    logoMark: 'https://res.cloudinary.com/jescuj9a/image/upload/f_auto,q_auto/v1788958359/palnadu/brand/logo-mark.png',
-    logoMarkSvg: 'https://res.cloudinary.com/jescuj9a/image/upload/v1788958360/palnadu/brand/logo-mark-svg.svg',
-    ogImage: 'https://res.cloudinary.com/jescuj9a/image/upload/f_auto,q_auto/v1788958395/palnadu/brand/og-image.png',
-    banner: 'https://res.cloudinary.com/jescuj9a/image/upload/f_auto,q_auto/v1788958366/palnadu/brand/banner.png',
+    logoHorizontal: 'https://res.cloudinary.com/jescuj9a/image/upload/f_auto,q_auto/v1788959247/palnadu/brand/logo-horizontal.png',
+    logoWhite: 'https://res.cloudinary.com/jescuj9a/image/upload/f_auto,q_auto/v1788959246/palnadu/brand/logo-white.png',
+    faviconMaster: 'https://res.cloudinary.com/jescuj9a/image/upload/f_auto,q_auto/v1788959187/palnadu/brand/favicon-master.png',
+    ogImage: 'https://res.cloudinary.com/jescuj9a/image/upload/f_auto,q_auto/v1788959247/palnadu/brand/og-image.png',
+    coverBanner: 'https://res.cloudinary.com/jescuj9a/image/upload/f_auto,q_auto/v1788959195/palnadu/brand/cover-transparent.png',
   },
-  // Local static paths (Cached locally)
+  // Local static paths (Fast local cache)
   logoHorizontal: '/palnadu-logo-horizontal.png',
   logoWhite: '/palnadu-logo-white.png',
   logoDarkText: '/palnadu-logo-horizontal.png',
-  defaultOgImage: 'https://res.cloudinary.com/jescuj9a/image/upload/f_auto,q_auto/v1788958395/palnadu/brand/og-image.png',
+  defaultOgImage: 'https://res.cloudinary.com/jescuj9a/image/upload/f_auto,q_auto/v1788959247/palnadu/brand/og-image.png',
 } as const;
 
 export interface ImageTransformOptions {
