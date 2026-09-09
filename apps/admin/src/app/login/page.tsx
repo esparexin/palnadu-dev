@@ -41,11 +41,11 @@ export default function LoginPage() {
           <Image
             src="/palnadu-logo-horizontal.png"
             alt="Palnadu.dev"
-            width={160}
-            height={36}
+            width={200}
+            height={28}
             priority
             unoptimized
-            className="h-9 w-auto mb-2"
+            className="h-8 w-auto mb-2"
           />
           <p className="text-sm text-palnadu-secondary">Sign in to the admin dashboard</p>
         </div>

@@ -18,8 +18,8 @@ export function Footer() {
               <Image
                 src="/palnadu-logo-white.png"
                 alt="Palnadu.dev"
-                width={160}
-                height={34}
+                width={200}
+                height={28}
                 unoptimized
                 className="h-7 w-auto"
               />

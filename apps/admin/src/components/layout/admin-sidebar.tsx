@@ -52,11 +52,11 @@ export function AdminSidebar() {
           <Image
             src="/palnadu-logo-horizontal.png"
             alt="Palnadu.dev"
-            width={150}
-            height={36}
+            width={180}
+            height={26}
             priority
             unoptimized
-            className="h-8 w-auto"
+            className="h-7 w-auto"
           />
         </Link>
       </div>
@@ -114,11 +114,11 @@ export function AdminSidebar() {
           <Image
             src="/palnadu-logo-horizontal.png"
             alt="Palnadu.dev"
-            width={130}
-            height={28}
+            width={150}
+            height={22}
             priority
             unoptimized
-            className="h-6 w-auto"
+            className="h-5 w-auto"
           />
         </Link>
 

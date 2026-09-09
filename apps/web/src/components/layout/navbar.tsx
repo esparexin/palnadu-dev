@@ -21,8 +21,8 @@ export function Navbar() {
           <Image
             src="/palnadu-logo-horizontal.png"
             alt="Palnadu.dev"
-            width={170}
-            height={36}
+            width={220}
+            height={32}
             priority
             unoptimized
             className="h-8 w-auto"
