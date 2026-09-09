@@ -38,16 +38,15 @@ export default function LoginPage() {
     <div className="flex min-h-screen items-center justify-center bg-palnadu-off-white px-4">
       <div className="w-full max-w-sm space-y-6">
         <div className="flex flex-col items-center space-y-2 text-center">
-          <Image
-            src="/footer_header-logo.png"
-            alt="Palnadu.dev"
-            width={200}
-            height={28}
-            priority
-            unoptimized
-            className="h-8 w-auto mb-2"
-          />
-          <p className="text-sm text-palnadu-secondary">Sign in to the admin dashboard</p>
+          <div className="flex items-center gap-2.5 mb-1">
+            <div className="h-10 w-10 rounded-xl bg-palnadu-dark flex items-center justify-center font-black text-base text-white shadow-sm">
+              P<span className="text-palnadu-teal">.</span>
+            </div>
+            <span className="text-2xl font-black tracking-tight text-palnadu-dark">
+              Palnadu<span className="text-palnadu-blue font-bold">.dev</span>
+            </span>
+          </div>
+          <p className="text-xs text-palnadu-secondary">Sign in to the admin dashboard</p>
         </div>
 
         <form

@@ -14,15 +14,13 @@ export function Footer() {
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6 sm:gap-8">
           {/* Brand & Identity — Spans 2 cols on mobile, 3 on tablet, 1 on desktop */}
           <div className="col-span-2 sm:col-span-3 lg:col-span-1 space-y-3 mb-1 lg:mb-0">
-            <Link href="/" aria-label="Palnadu.dev Home">
-              <Image
-                src="/footer_header-logo.png"
-                alt="Palnadu.dev"
-                width={220}
-                height={32}
-                unoptimized
-                className="h-8 w-auto"
-              />
+            <Link href="/" className="inline-flex items-center gap-2.5 group" aria-label="Palnadu.dev Home">
+              <div className="h-8 w-8 rounded-lg bg-white/10 border border-white/20 flex items-center justify-center font-black text-sm text-white shadow-xs group-hover:border-palnadu-teal transition-colors">
+                P<span className="text-palnadu-teal">.</span>
+              </div>
+              <span className="text-xl font-extrabold tracking-tight text-white">
+                Palnadu<span className="text-palnadu-teal font-bold">.dev</span>
+              </span>
             </Link>
             <p className="text-xs sm:text-sm text-palnadu-light-blue/80 leading-relaxed max-w-sm">
               Start with the problem. We build the solution. Turning real-world problems into practical digital solutions.

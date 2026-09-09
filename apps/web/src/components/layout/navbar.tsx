@@ -45,17 +45,14 @@ export function Navbar() {
         {/* Accent top line */}
         <div className="h-0.5 w-full bg-palnadu-blue" />
         <nav className="container flex h-16 items-center justify-between" aria-label="Main navigation">
-          {/* Logo */}
-          <Link href="/" className="flex items-center space-x-2 group" aria-label="Palnadu.dev Home">
-            <Image
-              src="/footer_header-logo.png"
-              alt="Palnadu.dev"
-              width={220}
-              height={32}
-              priority
-              unoptimized
-              className="h-8 w-auto"
-            />
+          {/* Brand Typographic Logo */}
+          <Link href="/" className="flex items-center gap-2.5 group" aria-label="Palnadu.dev Home">
+            <div className="h-8 w-8 rounded-lg bg-palnadu-dark flex items-center justify-center font-black text-sm text-white shadow-xs group-hover:bg-palnadu-blue transition-colors">
+              P<span className="text-palnadu-teal">.</span>
+            </div>
+            <span className="text-xl font-extrabold tracking-tight text-palnadu-dark">
+              Palnadu<span className="text-palnadu-blue font-bold">.dev</span>
+            </span>
           </Link>
 
           {/* Desktop Navigation — Direct links, no dropdown */}
