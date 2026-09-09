@@ -7,24 +7,8 @@ export class LeadsService {
   constructor(private prisma: PrismaService) {}
 
   async create(data: Prisma.LeadCreateInput) {
-    // Save lead
+    // Save lead as single source of truth
     const lead = await this.prisma.lead.create({ data });
-
-    // Also save as contact submission for audit
-    await this.prisma.contactSubmission.create({
-      data: {
-        name: data.name,
-        email: data.email,
-        phone: data.phone as string | undefined,
-        company: data.company as string | undefined,
-        problemDescription: data.problemDescription,
-        currentSituation: data.currentSituation as string | undefined,
-        projectStage: data.projectStage,
-        requiredHelp: data.requiredHelp,
-        budget: data.budget as string | undefined,
-        additionalInfo: data.additionalInfo as string | undefined,
-      },
-    });
 
     // Create notification
     await this.prisma.notification.create({
@@ -35,8 +19,6 @@ export class LeadsService {
         data: { leadId: lead.id } as Prisma.JsonObject,
       },
     });
-
-    // TODO: Send email notification via Resend
 
     return lead;
   }

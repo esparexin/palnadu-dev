@@ -9,7 +9,13 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
-      secretOrKey: config.get<string>('JWT_SECRET', 'default-dev-secret-change-me'),
+      secretOrKey: (() => {
+        const secret = config.get<string>('JWT_SECRET');
+        if (!secret && process.env.NODE_ENV === 'production') {
+          throw new Error('FATAL: JWT_SECRET environment variable must be set in production');
+        }
+        return secret || 'default-dev-secret-change-me';
+      })(),
     });
   }
 

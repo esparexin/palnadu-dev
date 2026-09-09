@@ -262,23 +262,6 @@ model Media {
   @@map("media")
 }
 
-model ContactSubmission {
-  id                 String       @id @default(auto()) @map("_id") @db.ObjectId
-  name               String
-  email              String
-  phone              String?
-  company            String?
-  problemDescription String
-  currentSituation   String?
-  projectStage       ProjectStage
-  requiredHelp       RequiredHelp
-  budget             String?
-  additionalInfo     String?
-  createdAt          DateTime     @default(now())
-
-  @@map("contact_submissions")
-}
-
 model Notification {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
   userId    String?  @db.ObjectId
