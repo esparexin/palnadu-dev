@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { SectionHeading } from '@/components/layout/section-heading';
 import { CtaSection } from '@/components/sections/cta-section';
+import { imagePresets } from '@palnadu/config';
 import { api } from '@/lib/api';
 import { Calendar, ArrowRight } from 'lucide-react';
 
@@ -51,7 +52,7 @@ export default async function BlogPage() {
                     {post.coverImage && (
                       <div className="rounded-lg overflow-hidden h-44 mb-3 border border-palnadu-border/60 bg-palnadu-off-white">
                         <img
-                          src={post.coverImage}
+                          src={imagePresets.blogCard(post.coverImage)}
                           alt={post.title}
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                         />

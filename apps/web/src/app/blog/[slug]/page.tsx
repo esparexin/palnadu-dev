@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { siteConfig } from '@palnadu/config';
+import { siteConfig, imagePresets } from '@palnadu/config';
 import { api } from '@/lib/api';
 import { CtaSection } from '@/components/sections/cta-section';
 import { Calendar, User, ArrowLeft, ArrowRight } from 'lucide-react';
@@ -145,13 +145,13 @@ export default async function BlogPostPage({ params }: Props) {
             </div>
           </header>
 
-          {/* Cover Image if available */}
+          {/* Cover Image if available with Cloudinary Optimization */}
           {post.coverImage && (
-            <div className="my-8 rounded-xl overflow-hidden border border-palnadu-border shadow-xs">
+            <div className="my-8 rounded-xl overflow-hidden border border-palnadu-border shadow-xs bg-palnadu-off-white">
               <img
-                src={post.coverImage}
+                src={imagePresets.blogHero(post.coverImage)}
                 alt={post.title}
-                className="w-full h-auto max-h-[450px] object-cover"
+                className="w-full h-auto max-h-[480px] object-cover"
               />
             </div>
           )}
