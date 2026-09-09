@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { api } from '@/lib/api';
 import type { BlogPost } from '@palnadu/types';
-import { Plus, Search, Edit2, Trash2, X, Globe, Eye, FileText, CheckCircle2, Sparkles, ExternalLink } from 'lucide-react';
+import { Plus, Search, Edit2, Trash2, X, Globe, Eye, FileText, CheckCircle2, Sparkles, ExternalLink, UploadCloud, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface BlogFormData {
@@ -50,6 +50,31 @@ export default function BlogAdminPage() {
   const [editingPost, setEditingPost] = useState<BlogPost | null>(null);
   const [formData, setFormData] = useState<BlogFormData>(initialFormData);
   const [submitting, setSubmitting] = useState(false);
+  const [uploadingCover, setUploadingCover] = useState(false);
+  const coverInputRef = useRef<HTMLInputElement>(null);
+
+  const handleCoverUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadingCover(true);
+    try {
+      const res: any = await api.media.upload(file);
+      const url = res?.data?.url || res?.url;
+      if (url) {
+        setFormData((prev) => ({
+          ...prev,
+          coverImage: url,
+          ogImage: prev.ogImage || url,
+        }));
+      }
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Upload failed');
+    } finally {
+      setUploadingCover(false);
+      if (coverInputRef.current) coverInputRef.current.value = '';
+    }
+  };
 
   const fetchPosts = () => {
     setLoading(true);
@@ -429,18 +454,66 @@ export default function BlogAdminPage() {
                     </div>
                   </div>
 
-                  <div className="space-y-1">
-                    <label className="text-xs font-semibold text-palnadu-dark">Cover Image URL (Cloudinary / Web)</label>
-                    <input
-                      type="url"
-                      placeholder="https://res.cloudinary.com/jescuj9a/image/upload/..."
-                      value={formData.coverImage}
-                      onChange={(e) => setFormData({ ...formData, coverImage: e.target.value })}
-                      className="w-full h-8 rounded-md border border-palnadu-border bg-white px-3 text-xs text-palnadu-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-palnadu-blue"
-                    />
-                    <p className="text-[10px] text-palnadu-secondary">
-                      Tip: You can upload graphics in the <a href="/media" target="_blank" className="text-palnadu-blue underline">Media Library</a> and paste the link here.
-                    </p>
+                  {/* Cover Image with 1-Click Cloudinary Upload */}
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-palnadu-dark">Cover Photo (Cloudinary CDN)</label>
+                    {formData.coverImage ? (
+                      <div className="relative rounded-lg border border-palnadu-border p-2 bg-palnadu-off-white/40 flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-2.5 overflow-hidden">
+                          <img
+                            src={formData.coverImage}
+                            alt="Cover preview"
+                            className="h-12 w-20 rounded-md object-cover border border-palnadu-border shrink-0"
+                          />
+                          <span className="text-xs font-mono text-palnadu-secondary truncate">{formData.coverImage}</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setFormData({ ...formData, coverImage: '', ogImage: '' })}
+                          className="text-xs font-semibold text-palnadu-error hover:underline shrink-0 cursor-pointer"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="file"
+                          ref={coverInputRef}
+                          accept="image/png,image/jpeg,image/webp,image/avif"
+                          onChange={handleCoverUpload}
+                          className="hidden"
+                          id="blog-cover-upload"
+                        />
+                        <label
+                          htmlFor="blog-cover-upload"
+                          className={cn(
+                            "inline-flex items-center justify-center gap-1.5 h-8 px-3 rounded-md border border-palnadu-border bg-white text-xs font-semibold text-palnadu-dark hover:bg-palnadu-light-blue hover:text-palnadu-blue hover:border-palnadu-blue transition-colors cursor-pointer shadow-xs shrink-0",
+                            uploadingCover && "opacity-50 pointer-events-none"
+                          )}
+                        >
+                          {uploadingCover ? (
+                            <>
+                              <Loader2 className="h-3.5 w-3.5 animate-spin text-palnadu-blue" />
+                              <span>Uploading to Cloudinary...</span>
+                            </>
+                          ) : (
+                            <>
+                              <UploadCloud className="h-3.5 w-3.5 text-palnadu-blue" />
+                              <span>Upload Photo</span>
+                            </>
+                          )}
+                        </label>
+                        <span className="text-[11px] text-palnadu-secondary shrink-0">or URL:</span>
+                        <input
+                          type="url"
+                          placeholder="https://res.cloudinary.com/..."
+                          value={formData.coverImage}
+                          onChange={(e) => setFormData({ ...formData, coverImage: e.target.value })}
+                          className="flex-1 h-8 rounded-md border border-palnadu-border bg-white px-3 text-xs text-palnadu-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-palnadu-blue"
+                        />
+                      </div>
+                    )}
                   </div>
 
                   <div className="space-y-1">
