@@ -7,13 +7,13 @@ import { services } from "@palnadu/config";
 import { ArrowRight, ArrowUpRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-// Desktop scroll-driven waypoints for the globe (anchored to the right side)
-const DESKTOP_GLOBE_WAYPOINTS = [
-  { top: 22, right: 8, scale: 1.15, rotate: 0, opacity: 0.95 },   // Section 0: Hero
-  { top: 32, right: 6, scale: 0.95, rotate: -8, opacity: 0.85 },  // Section 1: Standards
-  { top: 24, right: 7, scale: 1.05, rotate: 6, opacity: 0.80 },   // Section 2: Capabilities
-  { top: 38, right: 6, scale: 0.90, rotate: -4, opacity: 0.70 },  // Section 3: Methodology
-  { top: 48, right: 8, scale: 0.75, rotate: 0, opacity: 0.18 },   // Section 4: CTA
+// Desktop scroll waypoints (anchored to the right side of the screen)
+const DESKTOP_WAYPOINTS = [
+  { top: 22, right: 8, scale: 1.15, rotate: 0, opacity: 0.95 },   // 0: Hero
+  { top: 32, right: 6, scale: 0.95, rotate: -8, opacity: 0.85 },  // 1: Standards
+  { top: 24, right: 7, scale: 1.05, rotate: 6, opacity: 0.80 },   // 2: Capabilities
+  { top: 38, right: 6, scale: 0.90, rotate: -4, opacity: 0.70 },  // 3: Methodology
+  { top: 48, right: 8, scale: 0.75, rotate: 0, opacity: 0.18 },   // 4: CTA
 ];
 
 export function ScrollGlobe() {
@@ -21,6 +21,7 @@ export function ScrollGlobe() {
   const activeSectionRef = useRef(0);
   const containerRef = useRef<HTMLDivElement>(null);
   const desktopGlobeRef = useRef<HTMLDivElement>(null);
+  const mobileGlobeRef = useRef<HTMLDivElement>(null);
   const progressBarRef = useRef<HTMLDivElement>(null);
   const sectionRefs = useRef<(HTMLElement | null)[]>([]);
 
@@ -34,12 +35,12 @@ export function ScrollGlobe() {
           const docHeight = document.documentElement.scrollHeight - window.innerHeight;
           const progress = docHeight > 0 ? Math.min(Math.max(scrollTop / docHeight, 0), 1) : 0;
 
-          // 1. Update top progress bar
+          // 1. Progress Bar
           if (progressBarRef.current) {
             progressBarRef.current.style.transform = `scaleX(${progress})`;
           }
 
-          // 2. Identify active section
+          // 2. Identify Active Section
           const viewportCenter = window.innerHeight / 2;
           let newSection = 0;
           let minDistance = Infinity;
@@ -56,9 +57,17 @@ export function ScrollGlobe() {
             }
           });
 
-          // 3. Smooth desktop globe animation across scroll waypoints
+          // 3. Mobile Scroll Parallax Movement
+          if (mobileGlobeRef.current && window.innerWidth < 1024) {
+            const moveY = Math.min(scrollTop * 0.35, 160);
+            const rotateDeg = (scrollTop * 0.08) % 360;
+            const scaleVal = Math.max(0.78, 0.88 - scrollTop * 0.0003);
+            mobileGlobeRef.current.style.transform = `translate3d(0, ${moveY}px, 0) scale(${scaleVal}) rotate(${rotateDeg}deg)`;
+          }
+
+          // 4. Desktop Scroll Waypoint Movement
           if (desktopGlobeRef.current && window.innerWidth >= 1024) {
-            const wp = DESKTOP_GLOBE_WAYPOINTS[newSection] || DESKTOP_GLOBE_WAYPOINTS[0];
+            const wp = DESKTOP_WAYPOINTS[newSection] || DESKTOP_WAYPOINTS[0];
             desktopGlobeRef.current.style.transform = `translate3d(0, ${wp.top}vh, 0) scale3d(${wp.scale}, ${wp.scale}, 1) rotate(${wp.rotate}deg)`;
             desktopGlobeRef.current.style.right = `${wp.right}vw`;
             desktopGlobeRef.current.style.opacity = `${wp.opacity}`;
@@ -77,9 +86,9 @@ export function ScrollGlobe() {
 
     window.addEventListener("scroll", onScroll, { passive: true });
 
-    // Set initial position
+    // Initial desktop placement
     if (desktopGlobeRef.current && window.innerWidth >= 1024) {
-      const initWp = DESKTOP_GLOBE_WAYPOINTS[0];
+      const initWp = DESKTOP_WAYPOINTS[0];
       desktopGlobeRef.current.style.transform = `translate3d(0, ${initWp.top}vh, 0) scale3d(${initWp.scale}, ${initWp.scale}, 1) rotate(${initWp.rotate}deg)`;
       desktopGlobeRef.current.style.right = `${initWp.right}vw`;
       desktopGlobeRef.current.style.opacity = `${initWp.opacity}`;
@@ -141,14 +150,14 @@ export function ScrollGlobe() {
         <div className="absolute left-1/2 top-0 bottom-0 w-px bg-palnadu-border -translate-x-1/2 -z-10" />
       </div>
 
-      {/* ── DESKTOP SCROLL-ANIMATED GLOBE (Anchored to right, travels smoothly) ── */}
+      {/* ── DESKTOP SCROLL-ANIMATED GLOBE (Desktop Only: Anchored right, travels down waypoints) ── */}
       <div
         ref={desktopGlobeRef}
         className="hidden lg:block fixed top-0 z-10 pointer-events-none will-change-transform transition-all duration-700 ease-[cubic-bezier(0.23,1,0.32,1)]"
         style={{
-          transform: `translate3d(0, ${DESKTOP_GLOBE_WAYPOINTS[0].top}vh, 0) scale3d(${DESKTOP_GLOBE_WAYPOINTS[0].scale}, ${DESKTOP_GLOBE_WAYPOINTS[0].scale}, 1) rotate(${DESKTOP_GLOBE_WAYPOINTS[0].rotate}deg)`,
-          right: `${DESKTOP_GLOBE_WAYPOINTS[0].right}vw`,
-          opacity: DESKTOP_GLOBE_WAYPOINTS[0].opacity,
+          transform: `translate3d(0, ${DESKTOP_WAYPOINTS[0].top}vh, 0) scale3d(${DESKTOP_WAYPOINTS[0].scale}, ${DESKTOP_WAYPOINTS[0].scale}, 1) rotate(${DESKTOP_WAYPOINTS[0].rotate}deg)`,
+          right: `${DESKTOP_WAYPOINTS[0].right}vw`,
+          opacity: DESKTOP_WAYPOINTS[0].opacity,
         }}
       >
         <div className="relative flex items-center justify-center">
@@ -159,10 +168,10 @@ export function ScrollGlobe() {
         </div>
       </div>
 
-      {/* ── SECTION 0: HERO & TRUST METRICS (Refinement 1 & 3: Tight Spacing) ── */}
+      {/* ── SECTION 0: HERO & TRUST METRICS ── */}
       <section
         ref={(el) => { sectionRefs.current[0] = el; }}
-        className="relative z-20 px-4 sm:px-8 md:px-12 lg:px-16 pt-6 pb-6 sm:py-14 lg:py-20 border-b border-palnadu-border/60"
+        className="relative z-20 px-4 sm:px-8 md:px-12 lg:px-16 pt-6 pb-12 sm:py-14 lg:py-20 border-b border-palnadu-border/60"
       >
         <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
           
@@ -219,10 +228,19 @@ export function ScrollGlobe() {
             </div>
           </div>
 
-          {/* Right Column: Mobile Inline Globe (Refinement 3: Compact Scale & Ambient Glow) */}
-          <div className="lg:hidden flex items-center justify-center relative py-2 my-1">
+          {/* Right Column: Mobile Scroll-Driven Animated Globe */}
+          <div className="lg:hidden flex items-center justify-center relative py-4 my-2 overflow-visible">
+            {/* Ambient Radial Glow Backdrop */}
             <div className="absolute w-56 h-56 rounded-full bg-palnadu-blue/10 blur-2xl pointer-events-none" />
-            <div className="relative z-10 transform scale-80">
+            
+            {/* Scroll-animated globe on mobile: Parallax translation, dynamic scaling and spin */}
+            <div
+              ref={mobileGlobeRef}
+              className="relative z-10 will-change-transform transition-transform duration-150 ease-out"
+              style={{
+                transform: 'translate3d(0, 0, 0) scale(0.88)',
+              }}
+            >
               <Globe />
             </div>
           </div>
@@ -296,7 +314,7 @@ export function ScrollGlobe() {
         </div>
       </section>
 
-      {/* ── SECTION 2: CAPABILITIES (Refinement 2: Compact Service Cards) ── */}
+      {/* ── SECTION 2: CAPABILITIES ── */}
       <section
         ref={(el) => { sectionRefs.current[2] = el; }}
         className="relative z-20 px-4 sm:px-8 md:px-12 lg:px-16 py-10 sm:py-16 lg:py-24 bg-white border-b border-palnadu-border/60"
@@ -323,7 +341,7 @@ export function ScrollGlobe() {
             </Link>
           </div>
 
-          {/* Compact Responsive Services Grid (Saves ~180px of mobile scrolling) */}
+          {/* Compact Responsive Services Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 sm:gap-4">
             {services.map((srv, idx) => (
               <Link
