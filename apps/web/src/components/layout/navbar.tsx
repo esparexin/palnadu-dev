@@ -19,7 +19,7 @@ export function Navbar() {
         {/* Logo */}
         <Link href="/" className="flex items-center space-x-2 group" aria-label="Palnadu.dev Home">
           <Image
-            src="/palnadu-logo-horizontal.png"
+            src="/footer_header-logo.png?v=3"
             alt="Palnadu.dev"
             width={220}
             height={32}

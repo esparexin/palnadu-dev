@@ -50,7 +50,7 @@ export function AdminSidebar() {
       <div className="flex h-16 items-center border-b border-palnadu-border px-6">
         <Link href="/dashboard" className="flex items-center gap-2">
           <Image
-            src="/palnadu-logo-horizontal.png"
+            src="/footer_header-logo.png?v=3"
             alt="Palnadu.dev"
             width={180}
             height={26}
@@ -112,7 +112,7 @@ export function AdminSidebar() {
 
         <Link href="/dashboard" className="flex items-center">
           <Image
-            src="/palnadu-logo-horizontal.png"
+            src="/footer_header-logo.png?v=3"
             alt="Palnadu.dev"
             width={150}
             height={22}
