@@ -9,11 +9,11 @@ import { cn } from "@/lib/utils";
 
 // Desktop scroll-driven waypoints for the globe (anchored to the right side)
 const DESKTOP_GLOBE_WAYPOINTS = [
-  { top: 22, right: 8, scale: 1.15, opacity: 0.95 },  // Section 0: Hero
-  { top: 38, right: 6, scale: 0.95, opacity: 0.85 },  // Section 1: Standards
-  { top: 28, right: 7, scale: 1.05, opacity: 0.80 },  // Section 2: Capabilities
-  { top: 42, right: 6, scale: 0.90, opacity: 0.70 },  // Section 3: Methodology
-  { top: 50, right: 8, scale: 0.75, opacity: 0.20 },  // Section 4: CTA
+  { top: 22, right: 8, scale: 1.15, rotate: 0, opacity: 0.95 },   // Section 0: Hero
+  { top: 32, right: 6, scale: 0.95, rotate: -8, opacity: 0.85 },  // Section 1: Standards
+  { top: 24, right: 7, scale: 1.05, rotate: 6, opacity: 0.80 },   // Section 2: Capabilities
+  { top: 38, right: 6, scale: 0.90, rotate: -4, opacity: 0.70 },  // Section 3: Methodology
+  { top: 48, right: 8, scale: 0.75, rotate: 0, opacity: 0.18 },   // Section 4: CTA
 ];
 
 export function ScrollGlobe() {
@@ -59,7 +59,7 @@ export function ScrollGlobe() {
           // 3. Smooth desktop globe animation across scroll waypoints
           if (desktopGlobeRef.current && window.innerWidth >= 1024) {
             const wp = DESKTOP_GLOBE_WAYPOINTS[newSection] || DESKTOP_GLOBE_WAYPOINTS[0];
-            desktopGlobeRef.current.style.transform = `translate3d(0, ${wp.top}vh, 0) scale3d(${wp.scale}, ${wp.scale}, 1)`;
+            desktopGlobeRef.current.style.transform = `translate3d(0, ${wp.top}vh, 0) scale3d(${wp.scale}, ${wp.scale}, 1) rotate(${wp.rotate}deg)`;
             desktopGlobeRef.current.style.right = `${wp.right}vw`;
             desktopGlobeRef.current.style.opacity = `${wp.opacity}`;
           }
@@ -80,7 +80,7 @@ export function ScrollGlobe() {
     // Set initial position
     if (desktopGlobeRef.current && window.innerWidth >= 1024) {
       const initWp = DESKTOP_GLOBE_WAYPOINTS[0];
-      desktopGlobeRef.current.style.transform = `translate3d(0, ${initWp.top}vh, 0) scale3d(${initWp.scale}, ${initWp.scale}, 1)`;
+      desktopGlobeRef.current.style.transform = `translate3d(0, ${initWp.top}vh, 0) scale3d(${initWp.scale}, ${initWp.scale}, 1) rotate(${initWp.rotate}deg)`;
       desktopGlobeRef.current.style.right = `${initWp.right}vw`;
       desktopGlobeRef.current.style.opacity = `${initWp.opacity}`;
     }
@@ -146,7 +146,7 @@ export function ScrollGlobe() {
         ref={desktopGlobeRef}
         className="hidden lg:block fixed top-0 z-10 pointer-events-none will-change-transform transition-all duration-700 ease-[cubic-bezier(0.23,1,0.32,1)]"
         style={{
-          transform: `translate3d(0, ${DESKTOP_GLOBE_WAYPOINTS[0].top}vh, 0) scale3d(${DESKTOP_GLOBE_WAYPOINTS[0].scale}, ${DESKTOP_GLOBE_WAYPOINTS[0].scale}, 1)`,
+          transform: `translate3d(0, ${DESKTOP_GLOBE_WAYPOINTS[0].top}vh, 0) scale3d(${DESKTOP_GLOBE_WAYPOINTS[0].scale}, ${DESKTOP_GLOBE_WAYPOINTS[0].scale}, 1) rotate(${DESKTOP_GLOBE_WAYPOINTS[0].rotate}deg)`,
           right: `${DESKTOP_GLOBE_WAYPOINTS[0].right}vw`,
           opacity: DESKTOP_GLOBE_WAYPOINTS[0].opacity,
         }}
@@ -159,15 +159,15 @@ export function ScrollGlobe() {
         </div>
       </div>
 
-      {/* ── SECTION 0: HERO & TRUST METRICS ── */}
+      {/* ── SECTION 0: HERO & TRUST METRICS (Refinement 1 & 3: Tight Spacing) ── */}
       <section
         ref={(el) => { sectionRefs.current[0] = el; }}
-        className="relative z-20 px-4 sm:px-8 md:px-12 lg:px-16 pt-8 pb-16 sm:py-16 lg:py-20 border-b border-palnadu-border/60"
+        className="relative z-20 px-4 sm:px-8 md:px-12 lg:px-16 pt-6 pb-6 sm:py-14 lg:py-20 border-b border-palnadu-border/60"
       >
-        <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-center">
+        <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
           
           {/* Left Column (7 cols): Content & Trust Proof */}
-          <div className="lg:col-span-7 space-y-5 text-left">
+          <div className="lg:col-span-7 space-y-4 sm:space-y-5 text-left">
             {/* Pure Typographic Eyebrow — No Pills, No Chips */}
             <p className="text-xs font-mono uppercase tracking-widest text-palnadu-blue font-bold">
               Problem-First Software Studio
@@ -182,7 +182,7 @@ export function ScrollGlobe() {
               Palnadu.dev turns real-world business challenges into practical, production-ready software. We validate ideas, eliminate manual business bottlenecks, and engineer what works.
             </p>
 
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-2">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-1">
               <Link
                 href="/contact"
                 className="px-7 py-3.5 rounded-md font-semibold text-sm text-center inline-flex items-center justify-center bg-palnadu-blue text-white hover:bg-[#12487e] shadow-xs transition-colors"
@@ -199,36 +199,36 @@ export function ScrollGlobe() {
             </div>
 
             {/* Trust Metrics Bar — Fills the lower hero, zero empty void */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-8 border-t border-palnadu-border/60">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5 sm:gap-4 pt-6 border-t border-palnadu-border/60">
               <div className="space-y-0.5">
                 <p className="text-xl sm:text-2xl font-black text-palnadu-dark">8+ Years</p>
-                <p className="text-xs text-palnadu-secondary">Engineering Experience</p>
+                <p className="text-[11px] sm:text-xs text-palnadu-secondary">Engineering Experience</p>
               </div>
               <div className="space-y-0.5">
                 <p className="text-xl sm:text-2xl font-black text-palnadu-teal">100%</p>
-                <p className="text-xs text-palnadu-secondary">Code Ownership</p>
+                <p className="text-[11px] sm:text-xs text-palnadu-secondary">Code Ownership</p>
               </div>
               <div className="space-y-0.5">
                 <p className="text-xl sm:text-2xl font-black text-palnadu-blue">Fixed Scope</p>
-                <p className="text-xs text-palnadu-secondary">No Surprise Bills</p>
+                <p className="text-[11px] sm:text-xs text-palnadu-secondary">No Surprise Bills</p>
               </div>
               <div className="space-y-0.5">
                 <p className="text-xl sm:text-2xl font-black text-palnadu-dark">Direct Access</p>
-                <p className="text-xs text-palnadu-secondary">To Senior Engineers</p>
+                <p className="text-[11px] sm:text-xs text-palnadu-secondary">To Senior Engineers</p>
               </div>
             </div>
           </div>
 
-          {/* Right Column: Mobile Inline Globe (On mobile only; Desktop uses smooth scroll globe) */}
-          <div className="lg:hidden flex items-center justify-center relative py-6">
-            <div className="absolute w-64 h-64 rounded-full bg-palnadu-blue/10 blur-3xl pointer-events-none" />
-            <div className="relative z-10 transform scale-85">
+          {/* Right Column: Mobile Inline Globe (Refinement 3: Compact Scale & Ambient Glow) */}
+          <div className="lg:hidden flex items-center justify-center relative py-2 my-1">
+            <div className="absolute w-56 h-56 rounded-full bg-palnadu-blue/10 blur-2xl pointer-events-none" />
+            <div className="relative z-10 transform scale-80">
               <Globe />
             </div>
           </div>
 
           {/* Desktop Right Column Placeholder (Reserves grid space so text never shifts) */}
-          <div className="hidden lg:block lg:col-span-5 h-[380px]" aria-hidden="true" />
+          <div className="hidden lg:block lg:col-span-5 h-[360px]" aria-hidden="true" />
 
         </div>
       </section>
@@ -236,24 +236,24 @@ export function ScrollGlobe() {
       {/* ── SECTION 1: STANDARDS & METHODOLOGY ("TRUTH BEFORE CODE") ── */}
       <section
         ref={(el) => { sectionRefs.current[1] = el; }}
-        className="relative z-20 px-4 sm:px-8 md:px-12 lg:px-16 py-16 sm:py-20 bg-palnadu-off-white/40 border-b border-palnadu-border/60"
+        className="relative z-20 px-4 sm:px-8 md:px-12 lg:px-16 py-10 sm:py-16 lg:py-20 bg-palnadu-off-white/40 border-b border-palnadu-border/60"
       >
-        <div className="max-w-7xl mx-auto space-y-10">
+        <div className="max-w-7xl mx-auto space-y-8 sm:space-y-10">
           <div className="max-w-2xl text-left">
-            <p className="text-xs font-mono uppercase tracking-widest text-palnadu-blue font-bold mb-2">
+            <p className="text-xs font-mono uppercase tracking-widest text-palnadu-blue font-bold mb-1.5">
               Engineering Standards
             </p>
             <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-palnadu-dark">
               Truth Before Code.
             </h2>
-            <p className="mt-2 text-sm sm:text-base text-palnadu-body leading-relaxed">
+            <p className="mt-1.5 text-sm sm:text-base text-palnadu-body leading-relaxed">
               Before writing software, we diagnose where work gets stuck. We look at API dependencies, scalability risks, and realistic costs upfront. If a simple existing tool solves your problem, we tell you directly.
             </p>
           </div>
 
           {/* 4 Structured Engineering Commitments */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="p-5 rounded-xl border border-palnadu-border bg-white shadow-2xs space-y-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+            <div className="p-4 sm:p-5 rounded-xl border border-palnadu-border bg-white shadow-2xs space-y-2 text-left">
               <div className="h-8 w-8 rounded-md bg-palnadu-light-blue text-palnadu-blue flex items-center justify-center font-bold text-xs">
                 01
               </div>
@@ -263,7 +263,7 @@ export function ScrollGlobe() {
               </p>
             </div>
 
-            <div className="p-5 rounded-xl border border-palnadu-border bg-white shadow-2xs space-y-2">
+            <div className="p-4 sm:p-5 rounded-xl border border-palnadu-border bg-white shadow-2xs space-y-2 text-left">
               <div className="h-8 w-8 rounded-md bg-palnadu-light-blue text-palnadu-teal flex items-center justify-center font-bold text-xs">
                 02
               </div>
@@ -273,7 +273,7 @@ export function ScrollGlobe() {
               </p>
             </div>
 
-            <div className="p-5 rounded-xl border border-palnadu-border bg-white shadow-2xs space-y-2">
+            <div className="p-4 sm:p-5 rounded-xl border border-palnadu-border bg-white shadow-2xs space-y-2 text-left">
               <div className="h-8 w-8 rounded-md bg-palnadu-light-blue text-palnadu-blue flex items-center justify-center font-bold text-xs">
                 03
               </div>
@@ -283,7 +283,7 @@ export function ScrollGlobe() {
               </p>
             </div>
 
-            <div className="p-5 rounded-xl border border-palnadu-border bg-white shadow-2xs space-y-2">
+            <div className="p-4 sm:p-5 rounded-xl border border-palnadu-border bg-white shadow-2xs space-y-2 text-left">
               <div className="h-8 w-8 rounded-md bg-palnadu-light-blue text-palnadu-dark flex items-center justify-center font-bold text-xs">
                 04
               </div>
@@ -296,21 +296,21 @@ export function ScrollGlobe() {
         </div>
       </section>
 
-      {/* ── SECTION 2: CAPABILITIES (7 CORE SERVICES) ── */}
+      {/* ── SECTION 2: CAPABILITIES (Refinement 2: Compact Service Cards) ── */}
       <section
         ref={(el) => { sectionRefs.current[2] = el; }}
-        className="relative z-20 px-4 sm:px-8 md:px-12 lg:px-16 py-16 sm:py-24 bg-white border-b border-palnadu-border/60"
+        className="relative z-20 px-4 sm:px-8 md:px-12 lg:px-16 py-10 sm:py-16 lg:py-24 bg-white border-b border-palnadu-border/60"
       >
-        <div className="max-w-7xl mx-auto space-y-8">
-          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+        <div className="max-w-7xl mx-auto space-y-6 sm:space-y-8">
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 sm:gap-4">
             <div className="text-left">
-              <p className="text-xs font-mono uppercase tracking-widest text-palnadu-blue font-bold mb-2">
+              <p className="text-xs font-mono uppercase tracking-widest text-palnadu-blue font-bold mb-1.5">
                 Capabilities
               </p>
               <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-palnadu-dark">
                 Practical Engineering Directory
               </h2>
-              <p className="mt-1 text-sm text-palnadu-body">
+              <p className="mt-1 text-xs sm:text-sm text-palnadu-body">
                 Custom software engineered around your actual operations &mdash; eliminating messy spreadsheets and manual logs.
               </p>
             </div>
@@ -323,15 +323,15 @@ export function ScrollGlobe() {
             </Link>
           </div>
 
-          {/* Clean 3-Column Services Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {/* Compact Responsive Services Grid (Saves ~180px of mobile scrolling) */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 sm:gap-4">
             {services.map((srv, idx) => (
               <Link
                 key={srv.slug}
                 href={`/services/${srv.slug}`}
-                className="p-5 rounded-xl border border-palnadu-border bg-white hover:border-palnadu-blue hover:shadow-2xs transition-all flex flex-col justify-between group text-left"
+                className="p-4 sm:p-5 rounded-xl border border-palnadu-border bg-white hover:border-palnadu-blue hover:shadow-2xs transition-all flex flex-col justify-between group text-left"
               >
-                <div className="space-y-2">
+                <div className="space-y-1.5 sm:space-y-2">
                   <div className="flex items-center justify-between text-xs text-palnadu-secondary font-mono">
                     <span>0{idx + 1}</span>
                     <ArrowUpRight className="h-3.5 w-3.5 text-palnadu-secondary group-hover:text-palnadu-blue group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
@@ -352,29 +352,29 @@ export function ScrollGlobe() {
       {/* ── SECTION 3: 4-STEP DELIVERY METHODOLOGY ── */}
       <section
         ref={(el) => { sectionRefs.current[3] = el; }}
-        className="relative z-20 px-4 sm:px-8 md:px-12 lg:px-16 py-16 sm:py-20 bg-palnadu-off-white/40 border-b border-palnadu-border/60"
+        className="relative z-20 px-4 sm:px-8 md:px-12 lg:px-16 py-10 sm:py-16 lg:py-20 bg-palnadu-off-white/40 border-b border-palnadu-border/60"
       >
-        <div className="max-w-7xl mx-auto space-y-8">
+        <div className="max-w-7xl mx-auto space-y-6 sm:space-y-8">
           <div className="max-w-2xl text-left">
-            <p className="text-xs font-mono uppercase tracking-widest text-palnadu-blue font-bold mb-2">
+            <p className="text-xs font-mono uppercase tracking-widest text-palnadu-blue font-bold mb-1.5">
               Methodology
             </p>
             <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-palnadu-dark">
               How We Work With You
             </h2>
-            <p className="mt-1 text-sm text-palnadu-body">
+            <p className="mt-1 text-xs sm:text-sm text-palnadu-body">
               A transparent, phased engineering process designed to eliminate budget risk.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
             {[
               { step: "01", phase: "Analyze", title: "Diagnose First", desc: "Identify workflow bottlenecks, user demands, and technical limits." },
               { step: "02", phase: "Scope", title: "Honest Boundaries", desc: "Fixed pricing, transparent milestones, and zero software bloat." },
               { step: "03", phase: "Build", title: "Disciplined Sprints", desc: "Clean TypeScript code delivered with weekly staging progress access." },
               { step: "04", phase: "Deliver", title: "Handoff & Support", desc: "100% code and infrastructure ownership with post-launch support." },
             ].map((p) => (
-              <div key={p.step} className="p-5 rounded-xl border border-palnadu-border bg-white shadow-2xs space-y-2 text-left">
+              <div key={p.step} className="p-4 sm:p-5 rounded-xl border border-palnadu-border bg-white shadow-2xs space-y-1.5 text-left">
                 <div className="flex items-center gap-1.5 text-xs font-mono">
                   <span className="font-bold text-palnadu-blue">{p.step}</span>
                   <span className="text-palnadu-secondary uppercase font-semibold">/ {p.phase}</span>
@@ -390,9 +390,9 @@ export function ScrollGlobe() {
       {/* ── SECTION 4: HIGH-IMPACT CONSULTATION CTA ── */}
       <section
         ref={(el) => { sectionRefs.current[4] = el; }}
-        className="relative z-20 px-4 sm:px-8 md:px-12 lg:px-16 py-16 sm:py-24 bg-white"
+        className="relative z-20 px-4 sm:px-8 md:px-12 lg:px-16 py-12 sm:py-16 lg:py-24 bg-white"
       >
-        <div className="max-w-4xl mx-auto rounded-2xl border border-palnadu-border bg-palnadu-light-blue/30 p-8 sm:p-12 shadow-sm text-center space-y-5">
+        <div className="max-w-4xl mx-auto rounded-2xl border border-palnadu-border bg-palnadu-light-blue/30 p-6 sm:p-10 lg:p-12 shadow-sm text-center space-y-4 sm:space-y-5">
           <p className="text-xs font-mono uppercase tracking-widest text-palnadu-blue font-bold">
             Get Started
           </p>
@@ -405,7 +405,7 @@ export function ScrollGlobe() {
             Work directly with the software developers designing and writing your solution. Fixed price boundaries, honest engineering advice, and 100% code ownership.
           </p>
 
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-1">
             <Link
               href="/contact"
               className="w-full sm:w-auto px-7 py-3 rounded-md font-semibold text-sm bg-palnadu-teal text-white hover:bg-[#157c5c] shadow-xs transition-colors"
@@ -420,7 +420,7 @@ export function ScrollGlobe() {
             </Link>
           </div>
 
-          <p className="text-[11px] text-palnadu-secondary pt-2">
+          <p className="text-[11px] text-palnadu-secondary pt-1">
             We reply within one business day with direct technical advice. Zero sales pressure.
           </p>
         </div>
