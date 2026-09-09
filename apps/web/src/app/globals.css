@@ -15,6 +15,13 @@
     @apply border-border;
   }
 
+  html, body {
+    overflow-x: hidden;
+    max-width: 100vw;
+    width: 100%;
+    position: relative;
+  }
+
   body {
     background-color: var(--color-white);
     color: var(--color-body-text);

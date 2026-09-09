@@ -3,17 +3,15 @@
 import React, { useEffect, useRef, useState } from "react"; 
 import Link from "next/link";
 import Globe from "@/components/ui/globe";
-import { services } from "@palnadu/config";
-import { ArrowRight, ArrowUpRight } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 // Desktop scroll waypoints (anchored to the right side of the screen)
 const DESKTOP_WAYPOINTS = [
   { top: 22, right: 8, scale: 1.15, rotate: 0, opacity: 0.95 },   // 0: Hero
   { top: 32, right: 6, scale: 0.95, rotate: -8, opacity: 0.85 },  // 1: Standards
-  { top: 24, right: 7, scale: 1.05, rotate: 6, opacity: 0.80 },   // 2: Capabilities
-  { top: 38, right: 6, scale: 0.90, rotate: -4, opacity: 0.70 },  // 3: Methodology
-  { top: 48, right: 8, scale: 0.75, rotate: 0, opacity: 0.18 },   // 4: CTA
+  { top: 36, right: 6, scale: 0.90, rotate: 4, opacity: 0.70 },   // 2: Process
+  { top: 48, right: 8, scale: 0.75, rotate: 0, opacity: 0.18 },   // 3: CTA
 ];
 
 export function ScrollGlobe() {
@@ -97,12 +95,12 @@ export function ScrollGlobe() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  const navLabels = ["Overview", "Standards", "Capabilities", "Process", "Get Started"];
+  const navLabels = ["Overview", "Standards", "Process", "Get Started"];
 
   return (
     <div 
       ref={containerRef}
-      className="relative w-full max-w-screen overflow-x-hidden bg-white text-palnadu-dark"
+      className="relative w-full max-w-full overflow-x-hidden bg-white text-palnadu-dark"
     >
       {/* Top Progress Bar */}
       <div className="fixed top-0 left-0 w-full h-0.5 bg-palnadu-border/40 z-50 pointer-events-none">
@@ -171,7 +169,7 @@ export function ScrollGlobe() {
       {/* ── SECTION 0: HERO & TRUST METRICS ── */}
       <section
         ref={(el) => { sectionRefs.current[0] = el; }}
-        className="relative z-20 px-4 sm:px-8 md:px-12 lg:px-16 pt-6 pb-12 sm:py-14 lg:py-20 border-b border-palnadu-border/60"
+        className="relative z-20 px-4 sm:px-8 md:px-12 lg:px-16 pt-6 pb-12 sm:py-14 lg:py-20 border-b border-palnadu-border/60 overflow-hidden w-full"
       >
         <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
           
@@ -191,19 +189,20 @@ export function ScrollGlobe() {
               Palnadu.dev turns real-world business challenges into practical, production-ready software. We validate ideas, eliminate manual business bottlenecks, and engineer what works.
             </p>
 
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-1">
+            {/* Mobile 2-Column Buttons: "Any Idea →" & "Services" */}
+            <div className="grid grid-cols-2 gap-2.5 w-full max-w-sm sm:max-w-none sm:flex sm:flex-row sm:items-center sm:gap-3 pt-1">
               <Link
                 href="/contact"
-                className="px-7 py-3.5 rounded-md font-semibold text-sm text-center inline-flex items-center justify-center bg-palnadu-blue text-white hover:bg-[#12487e] shadow-xs transition-colors"
+                className="w-full sm:w-auto px-3 py-3 sm:px-7 sm:py-3.5 rounded-md font-semibold text-xs sm:text-sm text-center inline-flex items-center justify-center bg-palnadu-blue text-white hover:bg-[#12487e] shadow-xs transition-colors"
               >
-                <span>Discuss Your Idea</span>
-                <ArrowRight className="ml-2 h-4 w-4" />
+                <span>Any Idea</span>
+                <ArrowRight className="ml-1.5 h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
               </Link>
               <Link
                 href="/services"
-                className="px-7 py-3.5 rounded-md font-semibold text-sm text-center inline-flex items-center justify-center border border-palnadu-blue bg-white text-palnadu-blue hover:bg-palnadu-light-blue transition-colors"
+                className="w-full sm:w-auto px-3 py-3 sm:px-7 sm:py-3.5 rounded-md font-semibold text-xs sm:text-sm text-center inline-flex items-center justify-center border border-palnadu-blue bg-white text-palnadu-blue hover:bg-palnadu-light-blue transition-colors"
               >
-                Explore Services
+                Services
               </Link>
             </div>
 
@@ -254,7 +253,7 @@ export function ScrollGlobe() {
       {/* ── SECTION 1: STANDARDS & METHODOLOGY ("TRUTH BEFORE CODE") ── */}
       <section
         ref={(el) => { sectionRefs.current[1] = el; }}
-        className="relative z-20 px-4 sm:px-8 md:px-12 lg:px-16 py-10 sm:py-16 lg:py-20 bg-palnadu-off-white/40 border-b border-palnadu-border/60"
+        className="relative z-20 px-4 sm:px-8 md:px-12 lg:px-16 py-10 sm:py-16 lg:py-20 bg-palnadu-off-white/40 border-b border-palnadu-border/60 overflow-hidden w-full"
       >
         <div className="max-w-7xl mx-auto space-y-8 sm:space-y-10">
           <div className="max-w-2xl text-left">
@@ -314,63 +313,10 @@ export function ScrollGlobe() {
         </div>
       </section>
 
-      {/* ── SECTION 2: CAPABILITIES ── */}
+      {/* ── SECTION 2: 4-STEP DELIVERY METHODOLOGY (DIRECTLY FOLLOWS STANDARDS) ── */}
       <section
         ref={(el) => { sectionRefs.current[2] = el; }}
-        className="relative z-20 px-4 sm:px-8 md:px-12 lg:px-16 py-10 sm:py-16 lg:py-24 bg-white border-b border-palnadu-border/60"
-      >
-        <div className="max-w-7xl mx-auto space-y-6 sm:space-y-8">
-          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 sm:gap-4">
-            <div className="text-left">
-              <p className="text-xs font-mono uppercase tracking-widest text-palnadu-blue font-bold mb-1.5">
-                Capabilities
-              </p>
-              <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-palnadu-dark">
-                Practical Engineering Directory
-              </h2>
-              <p className="mt-1 text-xs sm:text-sm text-palnadu-body">
-                Custom software engineered around your actual operations &mdash; eliminating messy spreadsheets and manual logs.
-              </p>
-            </div>
-            <Link
-              href="/services"
-              className="text-xs font-semibold text-palnadu-blue hover:underline shrink-0 flex items-center gap-1"
-            >
-              <span>View All 7 Services</span>
-              <ArrowRight className="h-3.5 w-3.5" />
-            </Link>
-          </div>
-
-          {/* Compact Responsive Services Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 sm:gap-4">
-            {services.map((srv, idx) => (
-              <Link
-                key={srv.slug}
-                href={`/services/${srv.slug}`}
-                className="p-4 sm:p-5 rounded-xl border border-palnadu-border bg-white hover:border-palnadu-blue hover:shadow-2xs transition-all flex flex-col justify-between group text-left"
-              >
-                <div className="space-y-1.5 sm:space-y-2">
-                  <div className="flex items-center justify-between text-xs text-palnadu-secondary font-mono">
-                    <span>0{idx + 1}</span>
-                    <ArrowUpRight className="h-3.5 w-3.5 text-palnadu-secondary group-hover:text-palnadu-blue group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
-                  </div>
-                  <h3 className="font-bold text-sm text-palnadu-dark group-hover:text-palnadu-blue transition-colors">
-                    {srv.title}
-                  </h3>
-                  <p className="text-xs text-palnadu-body leading-relaxed line-clamp-2">
-                    {srv.shortDescription}
-                  </p>
-                </div>
-              </Link>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── SECTION 3: 4-STEP DELIVERY METHODOLOGY ── */}
-      <section
-        ref={(el) => { sectionRefs.current[3] = el; }}
-        className="relative z-20 px-4 sm:px-8 md:px-12 lg:px-16 py-10 sm:py-16 lg:py-20 bg-palnadu-off-white/40 border-b border-palnadu-border/60"
+        className="relative z-20 px-4 sm:px-8 md:px-12 lg:px-16 py-10 sm:py-16 lg:py-20 bg-white border-b border-palnadu-border/60 overflow-hidden w-full"
       >
         <div className="max-w-7xl mx-auto space-y-6 sm:space-y-8">
           <div className="max-w-2xl text-left">
@@ -405,10 +351,10 @@ export function ScrollGlobe() {
         </div>
       </section>
 
-      {/* ── SECTION 4: HIGH-IMPACT CONSULTATION CTA ── */}
+      {/* ── SECTION 3: HIGH-IMPACT CONSULTATION CTA ── */}
       <section
-        ref={(el) => { sectionRefs.current[4] = el; }}
-        className="relative z-20 px-4 sm:px-8 md:px-12 lg:px-16 py-12 sm:py-16 lg:py-24 bg-white"
+        ref={(el) => { sectionRefs.current[3] = el; }}
+        className="relative z-20 px-4 sm:px-8 md:px-12 lg:px-16 py-12 sm:py-16 lg:py-24 bg-white overflow-hidden w-full"
       >
         <div className="max-w-4xl mx-auto rounded-2xl border border-palnadu-border bg-palnadu-light-blue/30 p-6 sm:p-10 lg:p-12 shadow-sm text-center space-y-4 sm:space-y-5">
           <p className="text-xs font-mono uppercase tracking-widest text-palnadu-blue font-bold">
