@@ -17,9 +17,48 @@ export function SmoothScrollProvider({ children }: { children: React.ReactNode }
   }, [pathname]);
 
   useEffect(() => {
-    // Initialize Lenis for smooth transition scrolling
+    // Scroll Reveal Intersection Observer for smooth transition effects
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('is-revealed');
+          }
+        });
+      },
+      {
+        threshold: 0.08,
+        rootMargin: '0px 0px -40px 0px',
+      },
+    );
+
+    const observeElements = () => {
+      const elements = document.querySelectorAll('.scroll-reveal:not(.is-revealed)');
+      elements.forEach((el) => {
+        const rect = el.getBoundingClientRect();
+        if (rect.top < window.innerHeight && rect.bottom > 0) {
+          el.classList.add('is-revealed');
+        } else {
+          observer.observe(el);
+        }
+      });
+    };
+
+    const isTouchDevice = typeof window !== 'undefined' && ('ontouchstart' in window || navigator.maxTouchPoints > 0);
+
+    // On touch devices (smartphones/tablets), rely on native 120Hz momentum scrolling for max speed
+    if (isTouchDevice) {
+      observeElements();
+      const timer = setTimeout(observeElements, 100);
+      return () => {
+        clearTimeout(timer);
+        observer.disconnect();
+      };
+    }
+
+    // On desktop, initialize Lenis for smooth mouse-wheel transitions
     const lenis = new Lenis({
-      duration: 1.1,
+      duration: 1.0,
       easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
       orientation: 'vertical',
       gestureOrientation: 'vertical',
@@ -49,40 +88,13 @@ export function SmoothScrollProvider({ children }: { children: React.ReactNode }
           e.preventDefault();
           lenis.scrollTo(targetElement as HTMLElement, {
             offset: -70,
-            duration: 1.0,
+            duration: 0.9,
           });
         }
       }
     };
 
     document.addEventListener('click', handleAnchorClick);
-
-    // Scroll Reveal Intersection Observer for smooth transition effects
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            entry.target.classList.add('is-revealed');
-          }
-        });
-      },
-      {
-        threshold: 0.08,
-        rootMargin: '0px 0px -40px 0px',
-      },
-    );
-
-    const observeElements = () => {
-      const elements = document.querySelectorAll('.scroll-reveal:not(.is-revealed)');
-      elements.forEach((el) => {
-        const rect = el.getBoundingClientRect();
-        if (rect.top < window.innerHeight && rect.bottom > 0) {
-          el.classList.add('is-revealed');
-        } else {
-          observer.observe(el);
-        }
-      });
-    };
 
     observeElements();
     const timer = setTimeout(observeElements, 100);

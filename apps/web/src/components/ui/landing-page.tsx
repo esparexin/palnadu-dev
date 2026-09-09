@@ -1,11 +1,10 @@
 "use client";
 
-import React, { useEffect, useRef, useState, useCallback, useMemo } from "react"; 
+import React, { useEffect, useRef, useState, useMemo } from "react"; 
 import Link from "next/link";
 import Globe from "@/components/ui/globe";
 import { cn } from "@/lib/utils";
 
-// Reusable ScrollGlobe component following shadcn/ui patterns
 export interface ScrollGlobeProps {
   sections: {
     id: string;
@@ -29,10 +28,10 @@ export interface ScrollGlobeProps {
 
 const defaultGlobeConfig = {
   positions: [
-    { top: "50%", left: "75%", scale: 1.4 },  // Hero: Right side, balanced
-    { top: "25%", left: "50%", scale: 0.9 },  // Innovation: Top side, subtle
-    { top: "15%", left: "85%", scale: 1.8 },  // Discovery: Right side, medium
-    { top: "50%", left: "50%", scale: 1.6 },  // Future: Center, large backdrop
+    { top: "50%", left: "75%", scale: 1.35 },  // Hero: Right side, balanced
+    { top: "30%", left: "50%", scale: 0.85 },  // Methodology: Subtle center top
+    { top: "25%", left: "80%", scale: 1.4 },   // Capabilities: Right side
+    { top: "50%", left: "50%", scale: 1.3 },   // CTA: Center backdrop
   ]
 };
 
@@ -41,9 +40,10 @@ const parsePercent = (str: string): number => parseFloat(str.replace('%', ''));
 
 export function ScrollGlobe({ sections, globeConfig = defaultGlobeConfig, className }: ScrollGlobeProps) {
   const [activeSection, setActiveSection] = useState(0);
-  const [scrollProgress, setScrollProgress] = useState(0);
-  const [globeTransform, setGlobeTransform] = useState("");
+  const activeSectionRef = useRef(0);
   const containerRef = useRef<HTMLDivElement>(null);
+  const globeRef = useRef<HTMLDivElement>(null);
+  const progressBarRef = useRef<HTMLDivElement>(null);
   const sectionRefs = useRef<(HTMLElement | null)[]>([]);
   const animationFrameId = useRef<number | undefined>(undefined);
   
@@ -56,68 +56,73 @@ export function ScrollGlobe({ sections, globeConfig = defaultGlobeConfig, classN
     }));
   }, [globeConfig.positions]);
 
-  // Direct scroll tracking
-  const updateScrollPosition = useCallback(() => {
-    const scrollTop = window.pageYOffset;
-    const docHeight = document.documentElement.scrollHeight - window.innerHeight;
-    const progress = Math.min(Math.max(scrollTop / docHeight, 0), 1);
-    
-    setScrollProgress(progress);
-
-    const viewportCenter = window.innerHeight / 2;
-    let newActiveSection = 0;
-    let minDistance = Infinity;
-
-    sectionRefs.current.forEach((ref, index) => {
-      if (ref) {
-        const rect = ref.getBoundingClientRect();
-        const sectionCenter = rect.top + rect.height / 2;
-        const distance = Math.abs(sectionCenter - viewportCenter);
-        
-        if (distance < minDistance) {
-          minDistance = distance;
-          newActiveSection = index;
-        }
-      }
-    });
-
-    const currentPos = calculatedPositions[newActiveSection] || calculatedPositions[0];
-    const transform = `translate3d(${currentPos.left}vw, ${currentPos.top}vh, 0) translate3d(-50%, -50%, 0) scale3d(${currentPos.scale}, ${currentPos.scale}, 1)`;
-    
-    setGlobeTransform(transform);
-    setActiveSection(newActiveSection);
-  }, [calculatedPositions]);
-
-  // Throttled scroll handler with RAF
   useEffect(() => {
     let ticking = false;
-    
-    const handleScroll = () => {
+
+    const onScroll = () => {
       if (!ticking) {
         animationFrameId.current = requestAnimationFrame(() => {
-          updateScrollPosition();
+          const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+          const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+          const progress = docHeight > 0 ? Math.min(Math.max(scrollTop / docHeight, 0), 1) : 0;
+          
+          // 1. Direct hardware-accelerated progress bar update (Zero React re-render)
+          if (progressBarRef.current) {
+            progressBarRef.current.style.transform = `scaleX(${progress})`;
+          }
+
+          // 2. Identify active section
+          const viewportCenter = window.innerHeight / 2;
+          let newActiveSection = 0;
+          let minDistance = Infinity;
+
+          sectionRefs.current.forEach((ref, index) => {
+            if (ref) {
+              const rect = ref.getBoundingClientRect();
+              const sectionCenter = rect.top + rect.height / 2;
+              const distance = Math.abs(sectionCenter - viewportCenter);
+              
+              if (distance < minDistance) {
+                minDistance = distance;
+                newActiveSection = index;
+              }
+            }
+          });
+
+          // 3. Direct hardware-accelerated globe transform update (Zero React re-render)
+          if (globeRef.current) {
+            const currentPos = calculatedPositions[newActiveSection] || calculatedPositions[0];
+            const transform = `translate3d(${currentPos.left}vw, ${currentPos.top}vh, 0) translate3d(-50%, -50%, 0) scale3d(${currentPos.scale}, ${currentPos.scale}, 1)`;
+            globeRef.current.style.transform = transform;
+            globeRef.current.style.opacity = newActiveSection === 3 ? "0.3" : "0.9";
+          }
+
+          // 4. Update state ONLY when section changes
+          if (newActiveSection !== activeSectionRef.current) {
+            activeSectionRef.current = newActiveSection;
+            setActiveSection(newActiveSection);
+          }
+
           ticking = false;
         });
         ticking = true;
       }
     };
 
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    updateScrollPosition();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    
+    // Initial placement
+    if (globeRef.current) {
+      const initialPos = calculatedPositions[0];
+      globeRef.current.style.transform = `translate3d(${initialPos.left}vw, ${initialPos.top}vh, 0) translate3d(-50%, -50%, 0) scale3d(${initialPos.scale}, ${initialPos.scale}, 1)`;
+    }
     
     return () => {
-      window.removeEventListener("scroll", handleScroll);
+      window.removeEventListener("scroll", onScroll);
       if (animationFrameId.current) {
         cancelAnimationFrame(animationFrameId.current);
       }
     };
-  }, [updateScrollPosition]);
-
-  // Initial globe position
-  useEffect(() => {
-    const initialPos = calculatedPositions[0];
-    const initialTransform = `translate3d(${initialPos.left}vw, ${initialPos.top}vh, 0) translate3d(-50%, -50%, 0) scale3d(${initialPos.scale}, ${initialPos.scale}, 1)`;
-    setGlobeTransform(initialTransform);
   }, [calculatedPositions]);
 
   return (
@@ -129,13 +134,13 @@ export function ScrollGlobe({ sections, globeConfig = defaultGlobeConfig, classN
       )}
     >
       {/* Top Progress Bar */}
-      <div className="fixed top-0 left-0 w-full h-0.5 bg-palnadu-border/40 z-50">
+      <div className="fixed top-0 left-0 w-full h-0.5 bg-palnadu-border/40 z-50 pointer-events-none">
         <div 
+          ref={progressBarRef}
           className="h-full bg-gradient-to-r from-palnadu-blue via-palnadu-blue to-palnadu-teal will-change-transform shadow-xs"
           style={{ 
-            transform: `scaleX(${scrollProgress})`,
+            transform: 'scaleX(0)',
             transformOrigin: 'left center',
-            transition: 'transform 0.15s ease-out',
           }}
         />
       </div>
@@ -183,129 +188,137 @@ export function ScrollGlobe({ sections, globeConfig = defaultGlobeConfig, classN
         <div className="absolute left-1/2 top-0 bottom-0 w-px bg-palnadu-border -translate-x-1/2 -z-10" />
       </div>
 
-      {/* Ultra-smooth Globe */}
+      {/* Hardware-Accelerated Globe Layer */}
       <div
-        className="fixed z-10 pointer-events-none will-change-transform transition-all duration-[1200ms] ease-[cubic-bezier(0.23,1,0.32,1)]"
-        style={{
-          transform: globeTransform,
-          filter: `opacity(${activeSection === 3 ? 0.35 : 0.9})`,
-        }}
+        ref={globeRef}
+        className="fixed z-10 pointer-events-none will-change-transform transition-transform duration-[900ms] ease-[cubic-bezier(0.23,1,0.32,1)]"
+        style={{ opacity: 0.9 }}
       >
-        <div className="scale-75 sm:scale-90 lg:scale-100">
+        <div className="scale-60 sm:scale-80 lg:scale-100">
           <Globe />
         </div>
       </div>
 
-      {/* Dynamic Sections */}
-      {sections.map((section, index) => (
-        <section
-          key={section.id}
-          ref={(el) => {
-            sectionRefs.current[index] = el;
-          }}
-          className={cn(
-            "relative min-h-[60vh] sm:min-h-[80vh] lg:min-h-screen flex flex-col justify-center px-4 sm:px-8 md:px-12 lg:px-16 z-20 py-12 sm:py-16 lg:py-24",
-            "w-full max-w-full overflow-hidden",
-            section.align === 'center' && "items-center text-center",
-            section.align === 'right' && "items-end text-right",
-            section.align !== 'center' && section.align !== 'right' && "items-start text-left"
-          )}
-        >
-          <div className={cn(
-            "w-full max-w-xl md:max-w-2xl lg:max-w-3xl will-change-transform transition-all duration-700",
-            "opacity-100 translate-y-0"
-          )}>
-            
-            {section.badge && (
-              <p className="text-xs font-mono uppercase tracking-widest text-palnadu-blue font-bold mb-2">
-                {section.badge}
-              </p>
+      {/* Dynamic Sections with Natural Responsive Vertical Rhythm */}
+      {sections.map((section, index) => {
+        // Calibrate height based on section content weight to prevent empty voids
+        const sectionHeight = 
+          index === 0 ? "min-h-[75vh] sm:min-h-[85vh] py-16 sm:py-20 lg:py-24" :
+          index === 1 ? "min-h-[45vh] sm:min-h-[55vh] py-12 sm:py-16" :
+          index === 2 ? "min-h-[55vh] sm:min-h-[65vh] py-12 sm:py-16" :
+          "min-h-[60vh] sm:min-h-[70vh] py-14 sm:py-20";
+
+        return (
+          <section
+            key={section.id}
+            ref={(el) => {
+              sectionRefs.current[index] = el;
+            }}
+            className={cn(
+              "relative flex flex-col justify-center px-4 sm:px-8 md:px-12 lg:px-16 z-20",
+              "w-full max-w-full overflow-hidden",
+              sectionHeight,
+              section.align === 'center' && "items-center text-center",
+              section.align === 'right' && "items-end text-right",
+              section.align !== 'center' && section.align !== 'right' && "items-start text-left"
             )}
-
-            <h1 className={cn(
-              "font-extrabold mb-4 sm:mb-6 leading-[1.1] tracking-tight text-palnadu-dark",
-              index === 0 
-                ? "text-3xl sm:text-5xl md:text-6xl" 
-                : "text-2xl sm:text-4xl md:text-5xl"
-            )}>
-              {section.subtitle ? (
-                <div className="space-y-1">
-                  <div>{section.title}</div>
-                  <div className="text-palnadu-blue font-bold">
-                    {section.subtitle}
-                  </div>
-                </div>
-              ) : (
-                <div>{section.title}</div>
-              )}
-            </h1>
-            
+          >
             <div className={cn(
-              "text-palnadu-body leading-relaxed mb-6 sm:mb-8 text-[15px] sm:text-base md:text-lg font-normal",
-              section.align === 'center' ? "max-w-xl mx-auto text-center" : "max-w-xl"
+              "w-full max-w-xl md:max-w-2xl lg:max-w-3xl will-change-transform",
+              "opacity-100 translate-y-0"
             )}>
-              <p>{section.description}</p>
-            </div>
+              
+              {section.badge && (
+                <p className="text-xs font-mono uppercase tracking-widest text-palnadu-blue font-bold mb-2">
+                  {section.badge}
+                </p>
+              )}
 
-            {/* Features list */}
-            {section.features && (
-              <div className="grid gap-2.5 sm:gap-3 mb-6 sm:mb-8">
-                {section.features.map((feature) => (
-                  <div 
-                    key={feature.title}
-                    className="p-3.5 rounded-lg border border-palnadu-border bg-white/80 backdrop-blur-xs shadow-2xs hover:border-palnadu-blue transition-colors text-left"
-                  >
-                    <div className="flex items-start gap-2.5">
-                      <span className="text-palnadu-blue font-bold text-xs shrink-0 mt-0.5">▪</span>
-                      <div className="space-y-0.5">
-                        <h3 className="font-bold text-palnadu-dark text-sm">{feature.title}</h3>
-                        <p className="text-palnadu-body text-[13px] leading-relaxed">{feature.description}</p>
-                      </div>
+              <h1 className={cn(
+                "font-extrabold mb-4 sm:mb-6 leading-[1.15] tracking-tight text-palnadu-dark",
+                index === 0 
+                  ? "text-3xl sm:text-5xl md:text-6xl" 
+                  : "text-2xl sm:text-4xl md:text-5xl"
+              )}>
+                {section.subtitle ? (
+                  <div className="space-y-1">
+                    <div>{section.title}</div>
+                    <div className="text-palnadu-blue font-bold">
+                      {section.subtitle}
                     </div>
                   </div>
-                ))}
-              </div>
-            )}
-
-            {/* Actions */}
-            {section.actions && (
+                ) : (
+                  <div>{section.title}</div>
+                )}
+              </h1>
+              
               <div className={cn(
-                "flex flex-col sm:flex-row flex-wrap gap-2.5 sm:gap-3",
-                section.align === 'center' && "justify-center",
-                section.align === 'right' && "justify-end",
-                (!section.align || section.align === 'left') && "justify-start"
+                "text-palnadu-body leading-relaxed mb-6 sm:mb-8 text-[15px] sm:text-base md:text-lg font-normal",
+                section.align === 'center' ? "max-w-xl mx-auto text-center" : "max-w-xl"
               )}>
-                {section.actions.map((action) => {
-                  const btnClass = cn(
-                    "px-7 py-3 sm:py-2.5 rounded-md font-semibold transition-all duration-200 text-sm text-center inline-flex items-center justify-center shadow-xs min-h-[44px] sm:min-h-0",
-                    action.variant === 'primary' 
-                      ? "bg-palnadu-blue text-white hover:bg-[#12487e]" 
-                      : "border border-palnadu-blue bg-white text-palnadu-blue hover:bg-palnadu-light-blue"
-                  );
-
-                  if (action.href) {
-                    return (
-                      <Link key={action.label} href={action.href} className={btnClass}>
-                        {action.label}
-                      </Link>
-                    );
-                  }
-
-                  return (
-                    <button
-                      key={action.label}
-                      onClick={action.onClick}
-                      className={btnClass}
-                    >
-                      {action.label}
-                    </button>
-                  );
-                })}
+                <p>{section.description}</p>
               </div>
-            )}
-          </div>
-        </section>
-      ))}
+
+              {/* Features list */}
+              {section.features && (
+                <div className="grid gap-2.5 sm:gap-3 mb-6 sm:mb-8">
+                  {section.features.map((feature) => (
+                    <div 
+                      key={feature.title}
+                      className="p-3.5 rounded-lg border border-palnadu-border bg-white/90 backdrop-blur-xs shadow-2xs hover:border-palnadu-blue transition-colors text-left"
+                    >
+                      <div className="flex items-start gap-2.5">
+                        <span className="text-palnadu-blue font-bold text-xs shrink-0 mt-0.5">▪</span>
+                        <div className="space-y-0.5">
+                          <h3 className="font-bold text-palnadu-dark text-sm">{feature.title}</h3>
+                          <p className="text-palnadu-body text-[13px] leading-relaxed">{feature.description}</p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Actions */}
+              {section.actions && (
+                <div className={cn(
+                  "flex flex-col sm:flex-row flex-wrap gap-2.5 sm:gap-3",
+                  section.align === 'center' && "justify-center",
+                  section.align === 'right' && "justify-end",
+                  (!section.align || section.align === 'left') && "justify-start"
+                )}>
+                  {section.actions.map((action) => {
+                    const btnClass = cn(
+                      "px-7 py-3 sm:py-2.5 rounded-md font-semibold transition-all duration-200 text-sm text-center inline-flex items-center justify-center shadow-xs min-h-[44px] sm:min-h-0",
+                      action.variant === 'primary' 
+                        ? "bg-palnadu-blue text-white hover:bg-[#12487e]" 
+                        : "border border-palnadu-blue bg-white text-palnadu-blue hover:bg-palnadu-light-blue"
+                    );
+
+                    if (action.href) {
+                      return (
+                        <Link key={action.label} href={action.href} className={btnClass}>
+                          {action.label}
+                        </Link>
+                      );
+                    }
+
+                    return (
+                      <button
+                        key={action.label}
+                        onClick={action.onClick}
+                        className={btnClass}
+                      >
+                        {action.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </section>
+        );
+      })}
     </div>
   );
 }
