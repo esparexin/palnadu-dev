@@ -114,4 +114,10 @@ export class LeadsService {
       where: { status: LeadStatus.NEW },
     });
   }
+
+  async remove(id: string) {
+    return this.prisma.lead.delete({
+      where: { id },
+    });
+  }
 }

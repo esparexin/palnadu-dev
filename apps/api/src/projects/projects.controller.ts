@@ -3,6 +3,7 @@ import {
   Get,
   Post,
   Patch,
+  Delete,
   Body,
   Param,
   Query,
@@ -54,5 +55,11 @@ export class ProjectsController {
   async update(@Param('id') id: string, @Body() body: any) {
     const project = await this.projectsService.update(id, body);
     return { success: true, data: project };
+  }
+
+  @Delete(':id')
+  async remove(@Param('id') id: string) {
+    await this.projectsService.remove(id);
+    return { success: true, message: 'Project deleted successfully' };
   }
 }

@@ -3,6 +3,7 @@ import {
   Get,
   Post,
   Patch,
+  Delete,
   Body,
   Param,
   Query,
@@ -96,5 +97,13 @@ export class LeadsController {
   ) {
     const lead = await this.leadsService.update(id, body as any);
     return { success: true, data: lead };
+  }
+
+  @Delete('admin/leads/:id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('SUPER_ADMIN', 'ADMIN')
+  async removeLead(@Param('id') id: string) {
+    await this.leadsService.remove(id);
+    return { success: true, message: 'Lead deleted successfully' };
   }
 }

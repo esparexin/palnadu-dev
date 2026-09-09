@@ -15,6 +15,7 @@ import {
   Layers,
   UserCheck,
   CheckCircle2,
+  Trash2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -77,6 +78,18 @@ export default function LeadDetailPage() {
       /* handle error */
     }
     setSaving(false);
+  };
+
+  const deleteLead = async () => {
+    if (!lead) return;
+    if (!confirm(`Are you sure you want to delete inquiry from "${lead.name}"? This cannot be undone.`)) return;
+
+    try {
+      await api.leads.delete(lead.id);
+      router.push('/leads');
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Failed to delete lead');
+    }
   };
 
   const convertToClient = async () => {
@@ -347,6 +360,23 @@ export default function LeadDetailPage() {
                 </button>
               ))}
             </div>
+          </div>
+
+          {/* Delete Card */}
+          <div className="rounded-xl border border-red-200 bg-red-50/50 p-4 shadow-2xs">
+            <h3 className="text-xs font-bold uppercase tracking-wider font-mono text-palnadu-error mb-1">
+              Delete Lead
+            </h3>
+            <p className="text-[11px] text-palnadu-secondary mb-3">
+              Permanently purge spam or duplicate inquiries from the database.
+            </p>
+            <button
+              onClick={deleteLead}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-white border border-red-200 text-palnadu-error text-xs font-semibold hover:bg-red-50 transition-colors cursor-pointer"
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+              <span>Delete Inquiry</span>
+            </button>
           </div>
         </div>
       </div>

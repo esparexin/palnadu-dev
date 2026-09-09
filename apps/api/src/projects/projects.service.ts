@@ -82,4 +82,10 @@ export class ProjectsService {
       where: { status: ProjectStatus.ACTIVE },
     });
   }
+
+  async remove(id: string) {
+    return this.prisma.project.delete({
+      where: { id },
+    });
+  }
 }

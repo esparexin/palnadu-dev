@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { api } from '@/lib/api';
 import type { Lead } from '@palnadu/types';
-import { Mail, Phone, MessageSquare, ArrowRight, Search } from 'lucide-react';
+import { Mail, Phone, MessageSquare, ArrowRight, Search, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const statusColors: Record<string, string> = {
@@ -41,6 +41,16 @@ export default function LeadsPage() {
   const newLeadsCount = leads.filter((l) => l.status === 'NEW').length;
   const inPipelineCount = leads.filter((l) => ['CONTACTED', 'DISCOVERY', 'PROPOSAL', 'NEGOTIATION'].includes(l.status)).length;
   const wonCount = leads.filter((l) => l.status === 'WON').length;
+
+  const handleDeleteLead = async (id: string, name: string) => {
+    if (!confirm(`Are you sure you want to delete inquiry from "${name}"? This action cannot be undone.`)) return;
+    try {
+      await api.leads.delete(id);
+      setLeads((prev) => prev.filter((l) => l.id !== id));
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Failed to delete lead');
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -240,7 +250,7 @@ export default function LeadsPage() {
                       </td>
 
                       {/* Action */}
-                      <td className="px-4 py-3 text-right">
+                      <td className="px-4 py-3 text-right space-x-1">
                         <Link
                           href={`/leads/${lead.id}`}
                           className="inline-flex items-center gap-1 rounded-md px-2.5 py-1 text-xs font-semibold text-palnadu-blue hover:bg-palnadu-light-blue transition-colors"
@@ -248,6 +258,13 @@ export default function LeadsPage() {
                           <span>Review</span>
                           <ArrowRight className="h-3 w-3" />
                         </Link>
+                        <button
+                          onClick={() => handleDeleteLead(lead.id, lead.name)}
+                          className="inline-flex items-center p-1 rounded-md text-palnadu-secondary hover:text-palnadu-error hover:bg-red-50 transition-colors cursor-pointer"
+                          title="Delete Lead"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
                       </td>
                     </tr>
                   );

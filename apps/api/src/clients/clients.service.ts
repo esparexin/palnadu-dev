@@ -42,4 +42,8 @@ export class ClientsService {
   async getCount() {
     return this.prisma.client.count();
   }
+
+  async remove(id: string) {
+    return this.prisma.client.delete({ where: { id } });
+  }
 }

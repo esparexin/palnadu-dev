@@ -60,6 +60,7 @@ export const api = {
     get: (id: string) => adminApi(`/api/admin/leads/${id}`),
     update: (id: string, data: unknown) =>
       adminApi(`/api/admin/leads/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+    delete: (id: string) => adminApi(`/api/admin/leads/${id}`, { method: 'DELETE' }),
   },
   clients: {
     list: (params?: Record<string, string>) => adminApi('/api/admin/clients', { params }),
@@ -68,6 +69,7 @@ export const api = {
     get: (id: string) => adminApi(`/api/admin/clients/${id}`),
     update: (id: string, data: unknown) =>
       adminApi(`/api/admin/clients/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+    delete: (id: string) => adminApi(`/api/admin/clients/${id}`, { method: 'DELETE' }),
   },
   projects: {
     list: (params?: Record<string, string>) => adminApi('/api/admin/projects', { params }),
@@ -76,6 +78,7 @@ export const api = {
     get: (id: string) => adminApi(`/api/admin/projects/${id}`),
     update: (id: string, data: unknown) =>
       adminApi(`/api/admin/projects/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+    delete: (id: string) => adminApi(`/api/admin/projects/${id}`, { method: 'DELETE' }),
   },
   services: {
     list: (params?: Record<string, string>) => adminApi('/api/admin/services', { params }),
@@ -93,6 +96,7 @@ export const api = {
     get: (id: string) => adminApi(`/api/admin/case-studies/${id}`),
     update: (id: string, data: unknown) =>
       adminApi(`/api/admin/case-studies/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+    delete: (id: string) => adminApi(`/api/admin/case-studies/${id}`, { method: 'DELETE' }),
   },
   blog: {
     list: (params?: Record<string, string>) => adminApi('/api/admin/blog', { params }),
@@ -101,6 +105,7 @@ export const api = {
     get: (id: string) => adminApi(`/api/admin/blog/${id}`),
     update: (id: string, data: unknown) =>
       adminApi(`/api/admin/blog/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+    delete: (id: string) => adminApi(`/api/admin/blog/${id}`, { method: 'DELETE' }),
   },
   media: {
     list: (params?: Record<string, string>) => adminApi('/api/admin/media', { params }),

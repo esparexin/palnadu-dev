@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Patch, Body, Param, Query, UseGuards, NotFoundException } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Body, Param, Query, UseGuards, NotFoundException } from '@nestjs/common';
 import { ClientsService } from './clients.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
@@ -33,5 +33,11 @@ export class ClientsController {
   async update(@Param('id') id: string, @Body() body: any) {
     const client = await this.clientsService.update(id, body);
     return { success: true, data: client };
+  }
+
+  @Delete(':id')
+  async remove(@Param('id') id: string) {
+    await this.clientsService.remove(id);
+    return { success: true, message: 'Client deleted successfully' };
   }
 }
