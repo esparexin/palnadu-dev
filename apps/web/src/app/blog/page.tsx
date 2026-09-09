@@ -131,9 +131,10 @@ export default async function BlogPage({ searchParams }: Props) {
                 const readMinutes = Math.max(1, Math.ceil(words / 220));
 
                 return (
-                  <article
+                  <Link
                     key={post.id}
-                    className="flex flex-col justify-between rounded-xl border border-palnadu-border bg-white p-5 shadow-2xs hover:border-palnadu-blue transition-colors group"
+                    href={`/blog/${post.slug}`}
+                    className="flex flex-col justify-between rounded-xl border border-palnadu-border bg-white p-5 shadow-2xs hover:border-palnadu-blue hover:shadow-sm transition-all group cursor-pointer text-left"
                   >
                     <div className="space-y-3">
                       {/* Cover Photo */}
@@ -166,7 +167,7 @@ export default async function BlogPage({ searchParams }: Props) {
 
                       {/* Title */}
                       <h2 className="text-base font-bold text-palnadu-dark group-hover:text-palnadu-blue transition-colors leading-snug line-clamp-2">
-                        <Link href={`/blog/${post.slug}`}>{post.title}</Link>
+                        {post.title}
                       </h2>
 
                       {/* Excerpt */}
@@ -177,7 +178,7 @@ export default async function BlogPage({ searchParams }: Props) {
                       )}
                     </div>
 
-                    {/* Footer Date & Read Link */}
+                    {/* Footer Date & Read Indicator */}
                     <div className="pt-3 mt-4 border-t border-palnadu-border/40 flex items-center justify-between text-xs">
                       <div className="flex items-center gap-1 text-[11px] text-palnadu-secondary font-mono">
                         <Calendar className="h-3 w-3 text-palnadu-secondary/80" />
@@ -190,15 +191,12 @@ export default async function BlogPage({ searchParams }: Props) {
                         </time>
                       </div>
 
-                      <Link
-                        href={`/blog/${post.slug}`}
-                        className="inline-flex items-center gap-1 font-semibold text-palnadu-blue group-hover:underline text-xs"
-                      >
+                      <span className="inline-flex items-center gap-1 font-semibold text-palnadu-blue group-hover:underline text-xs">
                         <span>Read</span>
-                        <ArrowRight className="h-3 w-3 group-hover:translate-x-0.5 transition-transform" />
-                      </Link>
+                        <ArrowRight className="h-3.5 w-3.5 group-hover:translate-x-1 transition-transform" />
+                      </span>
                     </div>
-                  </article>
+                  </Link>
                 );
               })}
             </div>
