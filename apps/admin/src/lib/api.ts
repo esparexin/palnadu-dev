@@ -106,6 +106,7 @@ export const api = {
     update: (id: string, data: unknown) =>
       adminApi(`/api/admin/blog/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
     delete: (id: string) => adminApi(`/api/admin/blog/${id}`, { method: 'DELETE' }),
+    categories: () => adminApi('/api/blog/categories'),
   },
   media: {
     list: (params?: Record<string, string>) => adminApi('/api/admin/media', { params }),
