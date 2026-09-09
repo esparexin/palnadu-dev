@@ -31,7 +31,7 @@ export default function ProjectsPage() {
     status: 'ACTIVE',
     startDate: '',
     expectedCompletion: '',
-    technology: 'Next.js, TypeScript, PostgreSQL',
+    technology: 'Next.js, TypeScript, MongoDB',
     budget: '',
   });
 
@@ -89,7 +89,7 @@ export default function ProjectsPage() {
         status: 'ACTIVE',
         startDate: '',
         expectedCompletion: '',
-        technology: 'Next.js, TypeScript, PostgreSQL',
+        technology: 'Next.js, TypeScript, MongoDB',
         budget: '',
       });
       loadData();

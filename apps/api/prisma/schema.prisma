@@ -293,13 +293,3 @@ model Notification {
   @@index([userId, read])
   @@map("notifications")
 }
-
-model Setting {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  key         String   @unique
-  value       String
-  description String?
-  updatedAt   DateTime @updatedAt
-
-  @@map("settings")
-}

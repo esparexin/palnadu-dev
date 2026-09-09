@@ -44,7 +44,7 @@ export default function SettingsPage() {
           <div className="space-y-3 text-xs">
             <div className="flex justify-between py-2 border-b border-palnadu-border/60">
               <span className="text-palnadu-secondary font-medium">Database:</span>
-              <span className="font-mono text-palnadu-dark font-semibold">PostgreSQL 16 (Prisma ORM)</span>
+              <span className="font-mono text-palnadu-dark font-semibold">MongoDB Atlas (Prisma ORM)</span>
             </div>
             <div className="flex justify-between py-2 border-b border-palnadu-border/60">
               <span className="text-palnadu-secondary font-medium">REST API Endpoint:</span>

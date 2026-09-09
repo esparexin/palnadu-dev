@@ -92,9 +92,14 @@ export const createLeadSchema = z.object({
 
 export type CreateLeadInput = z.infer<typeof createLeadSchema>;
 
+export const dbIdSchema = z
+  .string()
+  .trim()
+  .regex(/^[0-9a-fA-F]{24}$|^[0-9a-fA-F-]{36}$/, 'Invalid ID format');
+
 export const updateLeadSchema = z.object({
   status: z.enum(leadStatusValues).optional(),
-  assignedTo: z.string().uuid().optional().nullable(),
+  assignedTo: dbIdSchema.optional().nullable(),
   notes: z.string().max(5000).optional(),
 });
 
@@ -178,7 +183,7 @@ export const createCaseStudySchema = z.object({
     .min(2)
     .max(200)
     .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
-  clientId: z.string().uuid().optional(),
+  clientId: dbIdSchema.optional(),
   problem: z.string().trim().min(20),
   solution: z.string().trim().min(20),
   technology: z.array(z.string()).min(1),
@@ -205,7 +210,7 @@ export const createBlogPostSchema = z.object({
   excerpt: z.string().trim().max(500).optional().or(z.literal('')),
   content: z.string().trim().min(50),
   coverImage: z.string().url().optional().or(z.literal('')),
-  categoryId: z.string().uuid().optional(),
+  categoryId: dbIdSchema.optional(),
   seoTitle: z.string().max(70).optional().or(z.literal('')),
   seoDescription: z.string().max(160).optional().or(z.literal('')),
   canonicalUrl: z.string().url().optional().or(z.literal('')),
@@ -238,7 +243,7 @@ export const createClientSchema = z.object({
   phone: z.string().trim().max(25).optional().or(z.literal('')),
   address: z.string().trim().max(500).optional().or(z.literal('')),
   notes: z.string().trim().max(3000).optional().or(z.literal('')),
-  leadId: z.string().uuid().optional(),
+  leadId: dbIdSchema.optional(),
 });
 
 export type CreateClientInput = z.infer<typeof createClientSchema>;
@@ -255,7 +260,7 @@ export const projectStatusValues = [
 
 export const createProjectSchema = z.object({
   name: z.string().trim().min(2).max(200),
-  clientId: z.string().uuid(),
+  clientId: dbIdSchema,
   description: z.string().trim().max(5000).optional().or(z.literal('')),
   status: z.enum(projectStatusValues).default('PLANNING'),
   startDate: z.string().datetime().optional(),
