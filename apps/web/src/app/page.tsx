@@ -144,7 +144,7 @@ export default function HomePage() {
   return (
     <>
       <JsonLd />
-      <ScrollGlobe sections={palnaduHomeSections} />
+      <ScrollGlobe />
     </>
   );
 }

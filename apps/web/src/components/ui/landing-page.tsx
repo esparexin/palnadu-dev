@@ -1,324 +1,263 @@
 "use client";
 
-import React, { useEffect, useRef, useState, useMemo } from "react"; 
+import React from "react"; 
 import Link from "next/link";
 import Globe from "@/components/ui/globe";
-import { cn } from "@/lib/utils";
+import { services } from "@palnadu/config";
+import { ArrowRight, CheckCircle2, Shield, Zap, Layers, Code, Clock, Users, ArrowUpRight, Check } from "lucide-react";
 
-export interface ScrollGlobeProps {
-  sections: {
-    id: string;
-    badge?: string;
-    title: string;
-    subtitle?: string;
-    description: string;
-    align?: 'left' | 'center' | 'right';
-    features?: { title: string; description: string }[];
-    actions?: { label: string; variant: 'primary' | 'secondary'; href?: string; onClick?: () => void }[];
-  }[];
-  globeConfig?: {
-    positions: {
-      top: string;
-      left: string;
-      scale: number;
-    }[];
-  };
-  className?: string;
-}
-
-const defaultGlobeConfig = {
-  positions: [
-    { top: "50%", left: "75%", scale: 1.35 },  // Hero: Right side, balanced
-    { top: "30%", left: "50%", scale: 0.85 },  // Methodology: Subtle center top
-    { top: "25%", left: "80%", scale: 1.4 },   // Capabilities: Right side
-    { top: "50%", left: "50%", scale: 1.3 },   // CTA: Center backdrop
-  ]
-};
-
-// Parse percentage string to number
-const parsePercent = (str: string): number => parseFloat(str.replace('%', ''));
-
-export function ScrollGlobe({ sections, globeConfig = defaultGlobeConfig, className }: ScrollGlobeProps) {
-  const [activeSection, setActiveSection] = useState(0);
-  const activeSectionRef = useRef(0);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const globeRef = useRef<HTMLDivElement>(null);
-  const progressBarRef = useRef<HTMLDivElement>(null);
-  const sectionRefs = useRef<(HTMLElement | null)[]>([]);
-  const animationFrameId = useRef<number | undefined>(undefined);
-  
-  // Pre-calculate positions for performance
-  const calculatedPositions = useMemo(() => {
-    return globeConfig.positions.map(pos => ({
-      top: parsePercent(pos.top),
-      left: parsePercent(pos.left),
-      scale: pos.scale
-    }));
-  }, [globeConfig.positions]);
-
-  useEffect(() => {
-    let ticking = false;
-
-    const onScroll = () => {
-      if (!ticking) {
-        animationFrameId.current = requestAnimationFrame(() => {
-          const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-          const docHeight = document.documentElement.scrollHeight - window.innerHeight;
-          const progress = docHeight > 0 ? Math.min(Math.max(scrollTop / docHeight, 0), 1) : 0;
-          
-          // 1. Direct hardware-accelerated progress bar update (Zero React re-render)
-          if (progressBarRef.current) {
-            progressBarRef.current.style.transform = `scaleX(${progress})`;
-          }
-
-          // 2. Identify active section
-          const viewportCenter = window.innerHeight / 2;
-          let newActiveSection = 0;
-          let minDistance = Infinity;
-
-          sectionRefs.current.forEach((ref, index) => {
-            if (ref) {
-              const rect = ref.getBoundingClientRect();
-              const sectionCenter = rect.top + rect.height / 2;
-              const distance = Math.abs(sectionCenter - viewportCenter);
-              
-              if (distance < minDistance) {
-                minDistance = distance;
-                newActiveSection = index;
-              }
-            }
-          });
-
-          // 3. Direct hardware-accelerated globe transform update (Zero React re-render)
-          if (globeRef.current) {
-            const currentPos = calculatedPositions[newActiveSection] || calculatedPositions[0];
-            const transform = `translate3d(${currentPos.left}vw, ${currentPos.top}vh, 0) translate3d(-50%, -50%, 0) scale3d(${currentPos.scale}, ${currentPos.scale}, 1)`;
-            globeRef.current.style.transform = transform;
-            globeRef.current.style.opacity = newActiveSection === 3 ? "0.3" : "0.9";
-          }
-
-          // 4. Update state ONLY when section changes
-          if (newActiveSection !== activeSectionRef.current) {
-            activeSectionRef.current = newActiveSection;
-            setActiveSection(newActiveSection);
-          }
-
-          ticking = false;
-        });
-        ticking = true;
-      }
-    };
-
-    window.addEventListener("scroll", onScroll, { passive: true });
-    
-    // Initial placement
-    if (globeRef.current) {
-      const initialPos = calculatedPositions[0];
-      globeRef.current.style.transform = `translate3d(${initialPos.left}vw, ${initialPos.top}vh, 0) translate3d(-50%, -50%, 0) scale3d(${initialPos.scale}, ${initialPos.scale}, 1)`;
-    }
-    
-    return () => {
-      window.removeEventListener("scroll", onScroll);
-      if (animationFrameId.current) {
-        cancelAnimationFrame(animationFrameId.current);
-      }
-    };
-  }, [calculatedPositions]);
-
+export function ScrollGlobe() {
   return (
-    <div 
-      ref={containerRef}
-      className={cn(
-        "relative w-full max-w-screen overflow-x-hidden min-h-screen bg-white text-palnadu-dark",
-        className
-      )}
-    >
-      {/* Top Progress Bar */}
-      <div className="fixed top-0 left-0 w-full h-0.5 bg-palnadu-border/40 z-50 pointer-events-none">
-        <div 
-          ref={progressBarRef}
-          className="h-full bg-gradient-to-r from-palnadu-blue via-palnadu-blue to-palnadu-teal will-change-transform shadow-xs"
-          style={{ 
-            transform: 'scaleX(0)',
-            transformOrigin: 'left center',
-          }}
-        />
-      </div>
+    <div className="relative w-full max-w-screen overflow-x-hidden bg-white text-palnadu-dark">
+      {/* ── 1. HERO SECTION: BALANCED 2-COLUMN DESKTOP GRID ── */}
+      <section className="relative z-20 px-4 sm:px-8 md:px-12 lg:px-16 pt-8 pb-16 sm:py-16 lg:py-20 border-b border-palnadu-border/60">
+        <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-center">
+          
+          {/* Left Column (7 cols): Content & Trust Proof */}
+          <div className="lg:col-span-7 space-y-6 text-left">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-palnadu-light-blue/70 border border-palnadu-blue/20 text-palnadu-blue text-xs font-semibold">
+              <span className="h-1.5 w-1.5 rounded-full bg-palnadu-blue animate-pulse" />
+              <span className="font-mono uppercase tracking-wider text-[11px]">Problem-First Software Studio</span>
+            </div>
 
-      {/* Enhanced Navigation with active label */}
-      <div className="hidden sm:flex fixed right-3 sm:right-6 top-1/2 -translate-y-1/2 z-40">
-        <div className="space-y-4">
-          {sections.map((section, index) => (
-            <div key={index} className="relative group">
-              <div
-                className={cn(
-                  "nav-label absolute right-6 top-1/2 -translate-y-1/2",
-                  "px-3 py-1 rounded-md text-xs font-semibold whitespace-nowrap",
-                  "bg-white/95 backdrop-blur-md border border-palnadu-border shadow-md z-50 text-palnadu-dark",
-                  activeSection === index ? "animate-fadeOut" : "opacity-0 pointer-events-none"
-                )}
+            <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-palnadu-dark leading-[1.12]">
+              Start With The Problem.
+              <span className="block text-palnadu-blue mt-1">We Build The Solution.</span>
+            </h1>
+
+            <p className="text-sm sm:text-base md:text-lg text-palnadu-body leading-relaxed max-w-xl">
+              Palnadu.dev turns real-world business challenges into practical, production-ready software. We validate ideas, eliminate manual business bottlenecks, and engineer what works.
+            </p>
+
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-2">
+              <Link
+                href="/contact"
+                className="px-7 py-3.5 rounded-md font-semibold text-sm text-center inline-flex items-center justify-center bg-palnadu-blue text-white hover:bg-[#12487e] shadow-xs transition-colors"
               >
-                <div className="flex items-center gap-1.5">
-                  <div className="w-1.5 h-1.5 rounded-full bg-palnadu-blue" />
-                  <span>
-                    {section.badge || `Part ${index + 1}`}
-                  </span>
-                </div>
-              </div>
-
-              <button
-                onClick={() => {
-                  sectionRefs.current[index]?.scrollIntoView({ 
-                    behavior: 'smooth',
-                    block: 'start'
-                  });
-                }}
-                className={cn(
-                  "relative w-2.5 h-2.5 rounded-full border-2 transition-all duration-300 hover:scale-125 cursor-pointer",
-                  activeSection === index 
-                    ? "bg-palnadu-blue border-palnadu-blue shadow-sm" 
-                    : "bg-transparent border-palnadu-border hover:border-palnadu-blue"
-                )}
-                aria-label={`Go to ${section.badge || `section ${index + 1}`}`}
-              />
+                <span>Discuss Your Idea</span>
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Link>
+              <Link
+                href="/services"
+                className="px-7 py-3.5 rounded-md font-semibold text-sm text-center inline-flex items-center justify-center border border-palnadu-blue bg-white text-palnadu-blue hover:bg-palnadu-light-blue transition-colors"
+              >
+                Explore Services
+              </Link>
             </div>
-          ))}
+
+            {/* Trust Metrics Bar — Fills the lower hero and eliminates empty void */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-8 border-t border-palnadu-border/60">
+              <div className="space-y-0.5">
+                <p className="text-xl sm:text-2xl font-black text-palnadu-dark">8+ Years</p>
+                <p className="text-xs text-palnadu-secondary">Engineering Experience</p>
+              </div>
+              <div className="space-y-0.5">
+                <p className="text-xl sm:text-2xl font-black text-palnadu-teal">100%</p>
+                <p className="text-xs text-palnadu-secondary">Code Ownership</p>
+              </div>
+              <div className="space-y-0.5">
+                <p className="text-xl sm:text-2xl font-black text-palnadu-blue">Fixed Scope</p>
+                <p className="text-xs text-palnadu-secondary">No Surprise Bills</p>
+              </div>
+              <div className="space-y-0.5">
+                <p className="text-xl sm:text-2xl font-black text-palnadu-dark">Direct Access</p>
+                <p className="text-xs text-palnadu-secondary">To Senior Engineers</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Right Column (5 cols): Anchored 3D Globe Visual */}
+          <div className="lg:col-span-5 flex items-center justify-center relative">
+            {/* Ambient Radial Glow Backdrop */}
+            <div className="absolute w-72 h-72 rounded-full bg-palnadu-blue/10 blur-3xl pointer-events-none" />
+            <div className="relative z-10 transform scale-90 sm:scale-100 lg:scale-110 py-4">
+              <Globe />
+            </div>
+          </div>
+
         </div>
-        
-        <div className="absolute left-1/2 top-0 bottom-0 w-px bg-palnadu-border -translate-x-1/2 -z-10" />
-      </div>
+      </section>
 
-      {/* Hardware-Accelerated Globe Layer */}
-      <div
-        ref={globeRef}
-        className="fixed z-10 pointer-events-none will-change-transform transition-transform duration-[900ms] ease-[cubic-bezier(0.23,1,0.32,1)]"
-        style={{ opacity: 0.9 }}
-      >
-        <div className="scale-60 sm:scale-80 lg:scale-100">
-          <Globe />
+      {/* ── 2. STANDARDS: "TRUTH BEFORE CODE" ── */}
+      <section className="relative z-20 px-4 sm:px-8 md:px-12 lg:px-16 py-16 sm:py-20 bg-palnadu-off-white/40 border-b border-palnadu-border/60">
+        <div className="max-w-7xl mx-auto space-y-10">
+          <div className="max-w-2xl">
+            <p className="text-xs font-mono uppercase tracking-widest text-palnadu-blue font-bold mb-2">
+              Engineering Standards
+            </p>
+            <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-palnadu-dark">
+              Truth Before Code.
+            </h2>
+            <p className="mt-2 text-sm sm:text-base text-palnadu-body leading-relaxed">
+              Before writing software, we diagnose where work gets stuck. We look at API dependencies, scalability risks, and realistic costs upfront. If a simple existing tool solves your problem, we tell you directly.
+            </p>
+          </div>
+
+          {/* 4 Structured Engineering Commitments */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="p-5 rounded-xl border border-palnadu-border bg-white shadow-2xs space-y-2">
+              <div className="h-8 w-8 rounded-md bg-palnadu-light-blue text-palnadu-blue flex items-center justify-center font-bold text-xs">
+                01
+              </div>
+              <h3 className="font-bold text-sm text-palnadu-dark">Diagnostic First</h3>
+              <p className="text-xs text-palnadu-body leading-relaxed">
+                We audit workflow bottlenecks, user demands, and technical limitations before development begins.
+              </p>
+            </div>
+
+            <div className="p-5 rounded-xl border border-palnadu-border bg-white shadow-2xs space-y-2">
+              <div className="h-8 w-8 rounded-md bg-palnadu-light-blue text-palnadu-teal flex items-center justify-center font-bold text-xs">
+                02
+              </div>
+              <h3 className="font-bold text-sm text-palnadu-dark">Fixed Boundaries</h3>
+              <p className="text-xs text-palnadu-body leading-relaxed">
+                Clear milestones and upfront scope limits. No open-ended hourly billing or surprise engineering invoices.
+              </p>
+            </div>
+
+            <div className="p-5 rounded-xl border border-palnadu-border bg-white shadow-2xs space-y-2">
+              <div className="h-8 w-8 rounded-md bg-palnadu-light-blue text-palnadu-blue flex items-center justify-center font-bold text-xs">
+                03
+              </div>
+              <h3 className="font-bold text-sm text-palnadu-dark">100% Ownership</h3>
+              <p className="text-xs text-palnadu-body leading-relaxed">
+                You receive full Git repository ownership and cloud credentials upon completion. Zero vendor lock-in.
+              </p>
+            </div>
+
+            <div className="p-5 rounded-xl border border-palnadu-border bg-white shadow-2xs space-y-2">
+              <div className="h-8 w-8 rounded-md bg-palnadu-light-blue text-palnadu-dark flex items-center justify-center font-bold text-xs">
+                04
+              </div>
+              <h3 className="font-bold text-sm text-palnadu-dark">Disciplined Sprints</h3>
+              <p className="text-xs text-palnadu-body leading-relaxed">
+                Clean, battle-tested TypeScript code delivered in focused 3 to 6-week MVP validation cycles.
+              </p>
+            </div>
+          </div>
         </div>
-      </div>
+      </section>
 
-      {/* Dynamic Sections with Natural Responsive Vertical Rhythm */}
-      {sections.map((section, index) => {
-        // Calibrate height based on section content weight to prevent empty voids
-        const sectionHeight = 
-          index === 0 ? "min-h-[75vh] sm:min-h-[85vh] py-16 sm:py-20 lg:py-24" :
-          index === 1 ? "min-h-[45vh] sm:min-h-[55vh] py-12 sm:py-16" :
-          index === 2 ? "min-h-[55vh] sm:min-h-[65vh] py-12 sm:py-16" :
-          "min-h-[60vh] sm:min-h-[70vh] py-14 sm:py-20";
+      {/* ── 3. CAPABILITIES: ALL 7 CORE SERVICES ── */}
+      <section className="relative z-20 px-4 sm:px-8 md:px-12 lg:px-16 py-16 sm:py-24 bg-white border-b border-palnadu-border/60">
+        <div className="max-w-7xl mx-auto space-y-8">
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+            <div>
+              <p className="text-xs font-mono uppercase tracking-widest text-palnadu-blue font-bold mb-2">
+                Capabilities
+              </p>
+              <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-palnadu-dark">
+                Practical Engineering Directory
+              </h2>
+              <p className="mt-1 text-sm text-palnadu-body">
+                Custom software engineered around your actual operations &mdash; eliminating messy spreadsheets and manual logs.
+              </p>
+            </div>
+            <Link
+              href="/services"
+              className="text-xs font-semibold text-palnadu-blue hover:underline shrink-0 flex items-center gap-1"
+            >
+              <span>View All 7 Services</span>
+              <ArrowRight className="h-3.5 w-3.5" />
+            </Link>
+          </div>
 
-        return (
-          <section
-            key={section.id}
-            ref={(el) => {
-              sectionRefs.current[index] = el;
-            }}
-            className={cn(
-              "relative flex flex-col justify-center px-4 sm:px-8 md:px-12 lg:px-16 z-20",
-              "w-full max-w-full overflow-hidden",
-              sectionHeight,
-              section.align === 'center' && "items-center text-center",
-              section.align === 'right' && "items-end text-right",
-              section.align !== 'center' && section.align !== 'right' && "items-start text-left"
-            )}
-          >
-            <div className={cn(
-              "w-full max-w-xl md:max-w-2xl lg:max-w-3xl will-change-transform",
-              "opacity-100 translate-y-0"
-            )}>
-              
-              {section.badge && (
-                <p className="text-xs font-mono uppercase tracking-widest text-palnadu-blue font-bold mb-2">
-                  {section.badge}
-                </p>
-              )}
-
-              <h1 className={cn(
-                "font-extrabold mb-4 sm:mb-6 leading-[1.15] tracking-tight text-palnadu-dark",
-                index === 0 
-                  ? "text-3xl sm:text-5xl md:text-6xl" 
-                  : "text-2xl sm:text-4xl md:text-5xl"
-              )}>
-                {section.subtitle ? (
-                  <div className="space-y-1">
-                    <div>{section.title}</div>
-                    <div className="text-palnadu-blue font-bold">
-                      {section.subtitle}
-                    </div>
+          {/* Clean 3-Column Services Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {services.map((srv, idx) => (
+              <Link
+                key={srv.slug}
+                href={`/services/${srv.slug}`}
+                className="p-5 rounded-xl border border-palnadu-border bg-white hover:border-palnadu-blue hover:shadow-2xs transition-all flex flex-col justify-between group"
+              >
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-xs text-palnadu-secondary font-mono">
+                    <span>0{idx + 1}</span>
+                    <ArrowUpRight className="h-3.5 w-3.5 text-palnadu-secondary group-hover:text-palnadu-blue group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
                   </div>
-                ) : (
-                  <div>{section.title}</div>
-                )}
-              </h1>
-              
-              <div className={cn(
-                "text-palnadu-body leading-relaxed mb-6 sm:mb-8 text-[15px] sm:text-base md:text-lg font-normal",
-                section.align === 'center' ? "max-w-xl mx-auto text-center" : "max-w-xl"
-              )}>
-                <p>{section.description}</p>
+                  <h3 className="font-bold text-sm text-palnadu-dark group-hover:text-palnadu-blue transition-colors">
+                    {srv.title}
+                  </h3>
+                  <p className="text-xs text-palnadu-body leading-relaxed line-clamp-2">
+                    {srv.shortDescription}
+                  </p>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── 4. PROCESS: 4-STEP METHODOLOGY ── */}
+      <section className="relative z-20 px-4 sm:px-8 md:px-12 lg:px-16 py-16 sm:py-20 bg-palnadu-off-white/40 border-b border-palnadu-border/60">
+        <div className="max-w-7xl mx-auto space-y-8">
+          <div className="max-w-2xl">
+            <p className="text-xs font-mono uppercase tracking-widest text-palnadu-blue font-bold mb-2">
+              Methodology
+            </p>
+            <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-palnadu-dark">
+              How We Work With You
+            </h2>
+            <p className="mt-1 text-sm text-palnadu-body">
+              A transparent, phased engineering process designed to eliminate budget risk.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {[
+              { step: "01", phase: "Analyze", title: "Diagnose First", desc: "Identify workflow bottlenecks, user demands, and technical limits." },
+              { step: "02", phase: "Scope", title: "Honest Boundaries", desc: "Fixed pricing, transparent milestones, and zero software bloat." },
+              { step: "03", phase: "Build", title: "Disciplined Sprints", desc: "Clean TypeScript code delivered with weekly staging progress access." },
+              { step: "04", phase: "Deliver", title: "Handoff & Support", desc: "100% code and infrastructure ownership with post-launch support." },
+            ].map((p) => (
+              <div key={p.step} className="p-5 rounded-xl border border-palnadu-border bg-white shadow-2xs space-y-2">
+                <div className="flex items-center gap-1.5 text-xs font-mono">
+                  <span className="font-bold text-palnadu-blue">{p.step}</span>
+                  <span className="text-palnadu-secondary uppercase font-semibold">/ {p.phase}</span>
+                </div>
+                <h3 className="font-bold text-sm text-palnadu-dark">{p.title}</h3>
+                <p className="text-xs text-palnadu-body leading-relaxed">{p.desc}</p>
               </div>
+            ))}
+          </div>
+        </div>
+      </section>
 
-              {/* Features list */}
-              {section.features && (
-                <div className="grid gap-2.5 sm:gap-3 mb-6 sm:mb-8">
-                  {section.features.map((feature) => (
-                    <div 
-                      key={feature.title}
-                      className="p-3.5 rounded-lg border border-palnadu-border bg-white/90 backdrop-blur-xs shadow-2xs hover:border-palnadu-blue transition-colors text-left"
-                    >
-                      <div className="flex items-start gap-2.5">
-                        <span className="text-palnadu-blue font-bold text-xs shrink-0 mt-0.5">▪</span>
-                        <div className="space-y-0.5">
-                          <h3 className="font-bold text-palnadu-dark text-sm">{feature.title}</h3>
-                          <p className="text-palnadu-body text-[13px] leading-relaxed">{feature.description}</p>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
+      {/* ── 5. ACTION: HIGH-IMPACT CONSULTATION CTA ── */}
+      <section className="relative z-20 px-4 sm:px-8 md:px-12 lg:px-16 py-16 sm:py-24 bg-white">
+        <div className="max-w-4xl mx-auto rounded-2xl border border-palnadu-border bg-palnadu-light-blue/30 p-8 sm:p-12 shadow-sm text-center space-y-5">
+          <p className="text-xs font-mono uppercase tracking-widest text-palnadu-blue font-bold">
+            Get Started
+          </p>
 
-              {/* Actions */}
-              {section.actions && (
-                <div className={cn(
-                  "flex flex-col sm:flex-row flex-wrap gap-2.5 sm:gap-3",
-                  section.align === 'center' && "justify-center",
-                  section.align === 'right' && "justify-end",
-                  (!section.align || section.align === 'left') && "justify-start"
-                )}>
-                  {section.actions.map((action) => {
-                    const btnClass = cn(
-                      "px-7 py-3 sm:py-2.5 rounded-md font-semibold transition-all duration-200 text-sm text-center inline-flex items-center justify-center shadow-xs min-h-[44px] sm:min-h-0",
-                      action.variant === 'primary' 
-                        ? "bg-palnadu-blue text-white hover:bg-[#12487e]" 
-                        : "border border-palnadu-blue bg-white text-palnadu-blue hover:bg-palnadu-light-blue"
-                    );
+          <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-palnadu-dark">
+            Ready To Build What Works?
+          </h2>
 
-                    if (action.href) {
-                      return (
-                        <Link key={action.label} href={action.href} className={btnClass}>
-                          {action.label}
-                        </Link>
-                      );
-                    }
+          <p className="text-sm sm:text-base text-palnadu-body max-w-xl mx-auto leading-relaxed">
+            Work directly with the software developers designing and writing your solution. Fixed price boundaries, honest engineering advice, and 100% code ownership.
+          </p>
 
-                    return (
-                      <button
-                        key={action.label}
-                        onClick={action.onClick}
-                        className={btnClass}
-                      >
-                        {action.label}
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          </section>
-        );
-      })}
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+            <Link
+              href="/contact"
+              className="w-full sm:w-auto px-7 py-3 rounded-md font-semibold text-sm bg-palnadu-teal text-white hover:bg-[#157c5c] shadow-xs transition-colors"
+            >
+              Tell Us What You Want To Build →
+            </Link>
+            <Link
+              href="/services"
+              className="w-full sm:w-auto px-7 py-3 rounded-md font-semibold text-sm border border-palnadu-blue text-palnadu-blue bg-white hover:bg-palnadu-off-white transition-colors"
+            >
+              Explore All Services
+            </Link>
+          </div>
+
+          <p className="text-[11px] text-palnadu-secondary pt-2">
+            We reply within one business day with direct technical advice. Zero sales pressure.
+          </p>
+        </div>
+      </section>
     </div>
   );
 }
