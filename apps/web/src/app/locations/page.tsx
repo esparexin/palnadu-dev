@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 export default function LocationsPage() {
   return (
     <div className="bg-white">
-      <section className="py-12 sm:py-16">
+      <section className="py-16 sm:py-24 min-h-[45vh] flex flex-col justify-center">
         <div className="container max-w-2xl">
           <SectionHeading
             label="Presence"
@@ -19,8 +19,8 @@ export default function LocationsPage() {
           />
 
           <div className="mt-8 text-center">
-            <div className="rounded-lg border border-palnadu-border bg-palnadu-off-white p-6 shadow-2xs">
-              <p className="text-xs sm:text-sm text-palnadu-body leading-relaxed">
+            <div className="rounded-lg border border-palnadu-border bg-palnadu-off-white p-6 sm:p-8 shadow-2xs">
+              <p className="text-sm sm:text-base text-palnadu-body leading-relaxed">
                 We work with businesses across Narasaraopet, Chilakaluripet, Sattenapalle,
                 Vinukonda, throughout Andhra Pradesh, India, and internationally.
               </p>

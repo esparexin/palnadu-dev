@@ -31,7 +31,7 @@ export function MobileStickyCta() {
     >
       <Link
         href="/contact"
-        className="flex items-center justify-between w-full max-w-sm mx-auto px-4 py-2.5 rounded-md bg-palnadu-blue text-white font-semibold shadow-md text-xs active:scale-95 transition-transform"
+        className="flex items-center justify-between w-full max-w-sm mx-auto px-5 py-3 rounded-md bg-palnadu-blue text-white font-semibold shadow-md text-sm active:scale-95 transition-transform"
       >
         <span>Discuss your idea or process</span>
         <span className="font-mono text-xs">→</span>

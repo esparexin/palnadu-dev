@@ -13,15 +13,14 @@ export function CtaSection() {
           Have an idea, or need to automate a process?
         </h2>
 
-        <p className="text-xs sm:text-sm text-palnadu-body leading-relaxed max-w-md mx-auto">
+        <p className="text-sm sm:text-base text-palnadu-body leading-relaxed max-w-md mx-auto">
           Tell us what you want to achieve. We&apos;ll explain what it takes to build and the most cost-effective path forward.
         </p>
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-2.5 pt-2">
           <Button
             asChild
-            size="sm"
-            className="w-full sm:w-auto bg-palnadu-teal text-white hover:bg-[#157c5c] font-semibold px-5 h-9 rounded-md text-xs shadow-xs"
+            className="w-full sm:w-auto bg-palnadu-teal text-white hover:bg-[#157c5c] font-semibold px-6 h-11 sm:h-10 rounded-md text-sm shadow-xs"
           >
             <Link href="/contact">
               Tell us what you want to build
@@ -30,8 +29,7 @@ export function CtaSection() {
           <Button
             asChild
             variant="outline"
-            size="sm"
-            className="w-full sm:w-auto border-palnadu-blue text-palnadu-blue bg-white hover:bg-palnadu-off-white px-5 h-9 rounded-md text-xs"
+            className="w-full sm:w-auto border-palnadu-blue text-palnadu-blue bg-white hover:bg-palnadu-off-white px-6 h-11 sm:h-10 rounded-md text-sm"
           >
             <Link href="/services">View services</Link>
           </Button>

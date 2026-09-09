@@ -98,7 +98,7 @@ export default function ServicesPage() {
                         >
                           {service.title}
                         </Link>
-                        <p className="mt-1 text-xs text-palnadu-body leading-relaxed max-w-xl">
+                        <p className="mt-1 text-[13px] sm:text-sm text-palnadu-body leading-relaxed max-w-xl">
                           {detail.summary}
                         </p>
 
@@ -106,7 +106,7 @@ export default function ServicesPage() {
                         {detail.deliverables.length > 0 && (
                           <div className="flex flex-wrap gap-x-3 gap-y-1 mt-2.5">
                             {detail.deliverables.map((item) => (
-                              <span key={item} className="text-[11px] text-palnadu-secondary flex items-center gap-1 font-mono">
+                              <span key={item} className="text-xs sm:text-[13px] text-palnadu-secondary flex items-center gap-1 font-mono">
                                 <span className="text-palnadu-teal">▪</span>
                                 {item}
                               </span>
@@ -118,7 +118,7 @@ export default function ServicesPage() {
 
                     <Link
                       href={`/services/${service.slug}`}
-                      className="text-xs font-semibold text-palnadu-blue hover:underline shrink-0 pl-7 sm:pl-4 mt-1 sm:mt-0 inline-flex items-center gap-1"
+                      className="text-xs sm:text-sm font-semibold text-palnadu-blue hover:underline shrink-0 pl-7 sm:pl-4 mt-1 sm:mt-0 inline-flex items-center gap-1"
                     >
                       <span>Explore</span>
                       <span>→</span>

@@ -203,11 +203,11 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
         )}
 
         {/* Mobile Header (Concise & Compact — does NOT occupy the whole page) */}
-        <div className="lg:hidden text-center space-y-1 my-2 max-w-sm">
-          <p className="text-[10px] font-mono uppercase tracking-widest text-palnadu-light-blue font-bold">
+        <div className="lg:hidden text-center space-y-1.5 my-2 max-w-sm">
+          <p className="text-[11px] font-mono uppercase tracking-widest text-palnadu-light-blue font-bold">
             Start With The Problem
           </p>
-          <h1 className="text-xl sm:text-2xl font-black text-white leading-tight drop-shadow-sm">
+          <h1 className="text-2xl sm:text-2xl font-black text-white leading-tight drop-shadow-sm">
             {title}
           </h1>
         </div>
@@ -288,7 +288,7 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                     {/* Name Field */}
                     <div className="space-y-0.5">
-                      <Label htmlFor="name" className="text-xs font-semibold text-palnadu-dark">
+                      <Label htmlFor="name" className="text-xs sm:text-sm font-semibold text-palnadu-dark">
                         Your Name <span className="text-palnadu-error">*</span>
                       </Label>
                       <Input
@@ -310,7 +310,7 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
 
                     {/* Email Field */}
                     <div className="space-y-0.5">
-                      <Label htmlFor="email" className="text-xs font-semibold text-palnadu-dark">
+                      <Label htmlFor="email" className="text-xs sm:text-sm font-semibold text-palnadu-dark">
                         Email Address <span className="text-palnadu-error">*</span>
                       </Label>
                       <Input
@@ -335,7 +335,7 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                     {/* Phone Field */}
                     <div className="space-y-0.5">
-                      <Label htmlFor="phone" className="text-xs font-semibold text-palnadu-dark">
+                      <Label htmlFor="phone" className="text-xs sm:text-sm font-semibold text-palnadu-dark">
                         Phone or WhatsApp
                       </Label>
                       <Input
@@ -358,7 +358,7 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
 
                     {/* Company Field */}
                     <div className="space-y-0.5">
-                      <Label htmlFor="company" className="text-xs font-semibold text-palnadu-dark">
+                      <Label htmlFor="company" className="text-xs sm:text-sm font-semibold text-palnadu-dark">
                         Company or Startup Name
                       </Label>
                       <Input
@@ -373,7 +373,7 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                     {/* Project Stage */}
                     <div className="space-y-0.5">
-                      <Label htmlFor="projectStage" className="text-xs font-semibold text-palnadu-dark">
+                      <Label htmlFor="projectStage" className="text-xs sm:text-sm font-semibold text-palnadu-dark">
                         Project Stage
                       </Label>
                       <select
@@ -391,7 +391,7 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
 
                     {/* Budget Range */}
                     <div className="space-y-0.5">
-                      <Label htmlFor="budget" className="text-xs font-semibold text-palnadu-dark">
+                      <Label htmlFor="budget" className="text-xs sm:text-sm font-semibold text-palnadu-dark">
                         Estimated Budget
                       </Label>
                       <select
@@ -410,7 +410,7 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
 
                   {/* Message Field */}
                   <div className="space-y-0.5">
-                    <Label htmlFor="problemDescription" className="text-xs font-semibold text-palnadu-dark">
+                    <Label htmlFor="problemDescription" className="text-xs sm:text-sm font-semibold text-palnadu-dark">
                       What problem are you trying to solve? <span className="text-palnadu-error">*</span>
                     </Label>
                     <Textarea
@@ -433,7 +433,7 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
 
                   {/* Project Type Multi-select Checkboxes */}
                   <div className="space-y-1.5 pt-0.5">
-                    <p className="text-xs font-semibold text-palnadu-dark">
+                    <p className="text-xs sm:text-sm font-semibold text-palnadu-dark">
                       Help needed with:
                     </p>
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
@@ -477,7 +477,7 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
                   <Button
                     type="submit"
                     disabled={isSubmitting}
-                    className="w-full bg-palnadu-blue hover:bg-[#12487e] text-white font-semibold text-xs h-9 rounded-md transition-colors shadow-xs mt-1 disabled:opacity-50 cursor-pointer"
+                    className="w-full bg-palnadu-blue hover:bg-[#12487e] text-white font-semibold text-sm h-11 sm:h-10 rounded-md transition-colors shadow-xs mt-1 disabled:opacity-50 cursor-pointer"
                   >
                     {isSubmitting ? 'Sending...' : 'Send Message →'}
                   </Button>

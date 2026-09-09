@@ -39,7 +39,7 @@ const industries = [
 export default function IndustriesPage() {
   return (
     <div className="bg-white">
-      <section className="py-12 sm:py-16">
+      <section className="py-16 sm:py-20 min-h-[45vh]">
         <div className="container max-w-4xl">
           <SectionHeading
             label="Sectors"
@@ -51,10 +51,10 @@ export default function IndustriesPage() {
             {industries.map((ind) => (
               <div
                 key={ind.slug}
-                className="rounded-lg border border-palnadu-border bg-palnadu-off-white p-4 shadow-2xs hover:border-palnadu-blue transition-colors"
+                className="rounded-lg border border-palnadu-border bg-palnadu-off-white p-4 sm:p-5 shadow-2xs hover:border-palnadu-blue transition-colors"
               >
-                <h3 className="text-sm font-bold text-palnadu-dark mb-1">{ind.name}</h3>
-                <p className="text-xs text-palnadu-body leading-relaxed">{ind.description}</p>
+                <h3 className="text-sm sm:text-base font-bold text-palnadu-dark mb-1.5">{ind.name}</h3>
+                <p className="text-[13px] sm:text-sm text-palnadu-body leading-relaxed">{ind.description}</p>
               </div>
             ))}
           </div>

@@ -204,7 +204,7 @@ export function ScrollGlobe({ sections, globeConfig = defaultGlobeConfig, classN
             sectionRefs.current[index] = el;
           }}
           className={cn(
-            "relative min-h-screen flex flex-col justify-center px-4 sm:px-8 md:px-12 lg:px-16 z-20 py-16 lg:py-24",
+            "relative min-h-[60vh] sm:min-h-[80vh] lg:min-h-screen flex flex-col justify-center px-4 sm:px-8 md:px-12 lg:px-16 z-20 py-12 sm:py-16 lg:py-24",
             "w-full max-w-full overflow-hidden",
             section.align === 'center' && "items-center text-center",
             section.align === 'right' && "items-end text-right",
@@ -241,7 +241,7 @@ export function ScrollGlobe({ sections, globeConfig = defaultGlobeConfig, classN
             </h1>
             
             <div className={cn(
-              "text-palnadu-body leading-relaxed mb-6 sm:mb-8 text-sm sm:text-base md:text-lg font-normal",
+              "text-palnadu-body leading-relaxed mb-6 sm:mb-8 text-[15px] sm:text-base md:text-lg font-normal",
               section.align === 'center' ? "max-w-xl mx-auto text-center" : "max-w-xl"
             )}>
               <p>{section.description}</p>
@@ -258,8 +258,8 @@ export function ScrollGlobe({ sections, globeConfig = defaultGlobeConfig, classN
                     <div className="flex items-start gap-2.5">
                       <span className="text-palnadu-blue font-bold text-xs shrink-0 mt-0.5">▪</span>
                       <div className="space-y-0.5">
-                        <h3 className="font-bold text-palnadu-dark text-xs sm:text-sm">{feature.title}</h3>
-                        <p className="text-palnadu-body text-xs leading-relaxed">{feature.description}</p>
+                        <h3 className="font-bold text-palnadu-dark text-sm">{feature.title}</h3>
+                        <p className="text-palnadu-body text-[13px] leading-relaxed">{feature.description}</p>
                       </div>
                     </div>
                   </div>
@@ -277,7 +277,7 @@ export function ScrollGlobe({ sections, globeConfig = defaultGlobeConfig, classN
               )}>
                 {section.actions.map((action) => {
                   const btnClass = cn(
-                    "px-6 py-2.5 rounded-md font-semibold transition-all duration-200 text-xs sm:text-sm text-center inline-flex items-center justify-center shadow-xs",
+                    "px-7 py-3 sm:py-2.5 rounded-md font-semibold transition-all duration-200 text-sm text-center inline-flex items-center justify-center shadow-xs min-h-[44px] sm:min-h-0",
                     action.variant === 'primary' 
                       ? "bg-palnadu-blue text-white hover:bg-[#12487e]" 
                       : "border border-palnadu-blue bg-white text-palnadu-blue hover:bg-palnadu-light-blue"

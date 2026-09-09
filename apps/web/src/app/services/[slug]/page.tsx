@@ -225,7 +225,7 @@ export default async function ServicePage({ params }: Props) {
               <>
                 <div className="mt-8 space-y-3.5">
                   {content.content.map((para, i) => (
-                    <p key={i} className="text-palnadu-body leading-relaxed text-xs sm:text-sm">
+                    <p key={i} className="text-palnadu-body leading-relaxed text-sm sm:text-base">
                       {para}
                     </p>
                   ))}
@@ -233,11 +233,11 @@ export default async function ServicePage({ params }: Props) {
 
                 {content.benefits && (
                   <div className="mt-8 pt-6 border-t border-palnadu-border">
-                    <h2 className="text-sm font-bold text-palnadu-dark uppercase tracking-wider font-mono text-xs mb-3">Coverage</h2>
+                    <h2 className="text-xs font-bold text-palnadu-dark uppercase tracking-wider font-mono mb-3">Coverage</h2>
                     <ul className="grid gap-2 sm:grid-cols-2">
                       {content.benefits.map((benefit) => (
-                        <li key={benefit} className="text-xs text-palnadu-body font-medium flex items-baseline gap-2">
-                          <span className="text-palnadu-blue font-bold text-[10px]">/</span>
+                        <li key={benefit} className="text-sm text-palnadu-body font-medium flex items-baseline gap-2">
+                          <span className="text-palnadu-blue font-bold text-xs">/</span>
                           <span>{benefit}</span>
                         </li>
                       ))}
@@ -248,11 +248,11 @@ export default async function ServicePage({ params }: Props) {
             )}
 
             <div className="mt-10 pt-8 border-t border-palnadu-border text-center">
-              <h2 className="text-base sm:text-lg font-bold text-palnadu-dark">Need help with {service.title.toLowerCase()}?</h2>
-              <p className="mt-1 text-palnadu-body max-w-md mx-auto text-xs">
+              <h2 className="text-lg sm:text-xl font-bold text-palnadu-dark">Need help with {service.title.toLowerCase()}?</h2>
+              <p className="mt-1.5 text-palnadu-body max-w-md mx-auto text-sm">
                 Tell us your challenge and we&apos;ll explain our honest technical recommendations.
               </p>
-              <Button asChild size="sm" className="mt-3 bg-palnadu-blue text-white hover:bg-[#12487e] font-semibold text-xs h-8 rounded-md px-4 shadow-xs">
+              <Button asChild className="mt-4 bg-palnadu-blue text-white hover:bg-[#12487e] font-semibold text-sm h-11 sm:h-10 rounded-md px-6 shadow-xs">
                 <Link href="/contact">
                   Tell us your problem →
                 </Link>

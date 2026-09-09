@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 export default function BlogPage() {
   return (
     <div className="bg-white">
-      <section className="py-12 sm:py-16">
+      <section className="py-16 sm:py-24 min-h-[45vh] flex flex-col justify-center">
         <div className="container">
           <SectionHeading
             label="Articles"
@@ -20,9 +20,9 @@ export default function BlogPage() {
           />
 
           <div className="mx-auto mt-8 max-w-xl text-center">
-            <div className="rounded-lg border border-palnadu-border bg-palnadu-off-white p-6 shadow-2xs">
-              <h3 className="text-sm font-bold text-palnadu-dark mb-1">Articles In Preparation</h3>
-              <p className="text-xs text-palnadu-body leading-relaxed">
+            <div className="rounded-lg border border-palnadu-border bg-palnadu-off-white p-6 sm:p-8 shadow-2xs">
+              <h3 className="text-base font-bold text-palnadu-dark mb-1.5">Articles In Preparation</h3>
+              <p className="text-sm text-palnadu-body leading-relaxed">
                 We are preparing practical engineering breakdowns and startup guides.
               </p>
             </div>

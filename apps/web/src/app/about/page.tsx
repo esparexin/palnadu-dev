@@ -20,7 +20,7 @@ export default function AboutPage() {
           <h1 className="bg-gradient-to-br from-white via-slate-100 to-slate-400 py-1 bg-clip-text text-2xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-transparent leading-tight">
             Software engineers, not commission salespeople.
           </h1>
-          <p className="mx-auto max-w-lg text-xs sm:text-sm text-slate-300 leading-relaxed font-normal">
+          <p className="mx-auto max-w-lg text-sm sm:text-base text-slate-300 leading-relaxed font-normal">
             Built by engineers from Palnadu with 8+ years of experience turning real-world problems into practical software.
           </p>
         </div>
