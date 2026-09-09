@@ -52,10 +52,11 @@ export function AdminSidebar() {
           <Image
             src="/palnadu-logo-horizontal.png"
             alt="Palnadu.dev"
-            width={140}
-            height={32}
+            width={150}
+            height={36}
             priority
-            className="h-7 w-auto"
+            unoptimized
+            className="h-8 w-auto"
           />
         </Link>
       </div>
@@ -99,14 +100,30 @@ export function AdminSidebar() {
 
   return (
     <>
-      {/* Mobile trigger */}
-      <button
-        className="fixed left-4 top-4 z-50 rounded-md border border-palnadu-border bg-white p-2 lg:hidden shadow-xs cursor-pointer"
-        onClick={() => setMobileOpen(!mobileOpen)}
-        aria-label="Toggle sidebar"
-      >
-        {mobileOpen ? <X className="h-5 w-5 text-palnadu-blue" /> : <Menu className="h-5 w-5 text-palnadu-dark" />}
-      </button>
+      {/* Mobile Top Navigation Bar with Logo */}
+      <header className="fixed top-0 inset-x-0 h-14 z-30 bg-white border-b border-palnadu-border flex items-center justify-between px-4 lg:hidden">
+        <button
+          className="rounded-md border border-palnadu-border bg-white p-1.5 text-palnadu-dark hover:text-palnadu-blue hover:bg-palnadu-light-blue transition-colors cursor-pointer"
+          onClick={() => setMobileOpen(!mobileOpen)}
+          aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
+        >
+          {mobileOpen ? <X className="h-5 w-5 text-palnadu-blue" /> : <Menu className="h-5 w-5 text-palnadu-dark" />}
+        </button>
+
+        <Link href="/dashboard" className="flex items-center">
+          <Image
+            src="/palnadu-logo-horizontal.png"
+            alt="Palnadu.dev"
+            width={130}
+            height={28}
+            priority
+            unoptimized
+            className="h-6 w-auto"
+          />
+        </Link>
+
+        <div className="w-8" aria-hidden="true" />
+      </header>
 
       {/* Mobile overlay */}
       {mobileOpen && (

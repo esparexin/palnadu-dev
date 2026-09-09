@@ -24,6 +24,7 @@ export function Navbar() {
             width={170}
             height={36}
             priority
+            unoptimized
             className="h-8 w-auto"
           />
         </Link>

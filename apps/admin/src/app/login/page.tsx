@@ -44,6 +44,7 @@ export default function LoginPage() {
             width={160}
             height={36}
             priority
+            unoptimized
             className="h-9 w-auto mb-2"
           />
           <p className="text-sm text-palnadu-secondary">Sign in to the admin dashboard</p>
