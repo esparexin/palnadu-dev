@@ -74,6 +74,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       suppressHydrationWarning
     >
       <head>
+        <link rel="icon" href="/favicon.png" type="image/png" sizes="32x32" />
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
         <link rel="canonical" href={siteConfig.url} />
       </head>
       <body className="min-h-screen font-sans antialiased bg-white text-palnadu-body selection:bg-palnadu-light-blue selection:text-palnadu-blue">
