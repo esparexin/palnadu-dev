@@ -20,7 +20,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const post = res?.data;
     if (!post) return { title: 'Article Not Found | Palnadu.dev' };
 
-    const title = post.seoTitle || `${post.title} | Palnadu.dev`;
+    const title = post.seoTitle
+      ? { absolute: post.seoTitle }
+      : post.title;
+    const ogTitle = post.seoTitle || `${post.title} | ${siteConfig.name}`;
     const description = post.seoDescription || post.excerpt || siteConfig.description;
     const ogImage = post.ogImage || post.coverImage || `${siteConfig.url}/og.png`;
     const canonicalUrl = post.canonicalUrl || `${siteConfig.url}/blog/${slug}`;
@@ -32,7 +35,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         canonical: canonicalUrl,
       },
       openGraph: {
-        title,
+        title: ogTitle,
         description,
         url: canonicalUrl,
         type: 'article',
