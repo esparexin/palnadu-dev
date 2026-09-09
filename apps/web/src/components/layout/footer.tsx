@@ -16,12 +16,12 @@ export function Footer() {
           <div className="col-span-2 sm:col-span-3 lg:col-span-1 space-y-3 mb-1 lg:mb-0">
             <Link href="/" aria-label="Palnadu.dev Home">
               <Image
-                src="/footer_header-logo-white.png?v=3"
+                src="/footer_header-logo.png"
                 alt="Palnadu.dev"
-                width={200}
-                height={28}
+                width={220}
+                height={32}
                 unoptimized
-                className="h-7 w-auto"
+                className="h-8 w-auto"
               />
             </Link>
             <p className="text-xs sm:text-sm text-palnadu-light-blue/80 leading-relaxed max-w-sm">
