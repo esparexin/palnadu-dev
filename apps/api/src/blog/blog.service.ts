@@ -24,13 +24,20 @@ export class BlogService {
     page?: number;
     limit?: number;
     categorySlug?: string;
+    search?: string;
   } = {}) {
-    const { page = 1, limit = 10, categorySlug } = params;
+    const { page = 1, limit = 12, categorySlug, search } = params;
     const skip = (page - 1) * limit;
 
     const where: Prisma.BlogPostWhereInput = {
       status: PublishStatus.PUBLISHED,
       ...(categorySlug && { category: { slug: categorySlug } }),
+      ...(search && {
+        OR: [
+          { title: { contains: search, mode: 'insensitive' } },
+          { excerpt: { contains: search, mode: 'insensitive' } },
+        ],
+      }),
     };
 
     const [posts, total] = await Promise.all([
@@ -58,9 +65,9 @@ export class BlogService {
     };
   }
 
-  // Public: single post by slug
+  // Public: single post by slug with related posts
   async findBySlug(slug: string) {
-    return this.prisma.blogPost.findFirst({
+    const post = await this.prisma.blogPost.findFirst({
       where: {
         slug,
         status: PublishStatus.PUBLISHED,
@@ -70,6 +77,30 @@ export class BlogService {
         category: true,
       },
     });
+
+    if (!post) return null;
+
+    const relatedPosts = await this.prisma.blogPost.findMany({
+      where: {
+        status: PublishStatus.PUBLISHED,
+        id: { not: post.id },
+        ...(post.categoryId ? { categoryId: post.categoryId } : {}),
+      },
+      take: 2,
+      orderBy: { publishDate: 'desc' },
+      select: {
+        id: true,
+        title: true,
+        slug: true,
+        excerpt: true,
+        coverImage: true,
+        publishDate: true,
+        createdAt: true,
+        category: { select: { name: true, slug: true } },
+      },
+    });
+
+    return { ...post, relatedPosts };
   }
 
   // Admin: all posts

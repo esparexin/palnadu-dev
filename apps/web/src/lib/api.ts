@@ -50,5 +50,6 @@ export const api = {
     list: (params?: Record<string, string>) =>
       apiClient('/api/blog', { params }),
     getBySlug: (slug: string) => apiClient(`/api/blog/${slug}`),
+    categories: () => apiClient<{ success: boolean; data: any[] }>('/api/blog/categories'),
   },
 };

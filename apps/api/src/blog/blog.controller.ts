@@ -28,11 +28,13 @@ export class BlogController {
     @Query('page') page?: string,
     @Query('limit') limit?: string,
     @Query('category') category?: string,
+    @Query('search') search?: string,
   ) {
     const result = await this.blogService.findPublished({
       page: page ? parseInt(page) : 1,
-      limit: limit ? parseInt(limit) : 10,
+      limit: limit ? parseInt(limit) : 12,
       categorySlug: category,
+      search,
     });
     return { success: true, ...result };
   }
@@ -84,7 +86,17 @@ export class BlogController {
   @Roles('SUPER_ADMIN', 'ADMIN', 'EDITOR')
   async create(@Body() body: any, @Request() req: any) {
     const post = await this.blogService.create({
-      ...body,
+      title: body.title,
+      slug: body.slug,
+      excerpt: body.excerpt || undefined,
+      content: body.content,
+      coverImage: body.coverImage || undefined,
+      seoTitle: body.seoTitle || undefined,
+      seoDescription: body.seoDescription || undefined,
+      canonicalUrl: body.canonicalUrl || undefined,
+      ogImage: body.ogImage || undefined,
+      status: body.status || PublishStatus.DRAFT,
+      publishDate: body.status === PublishStatus.PUBLISHED ? (body.publishDate || new Date()) : undefined,
       author: { connect: { id: req.user.sub } },
       ...(body.categoryId && { category: { connect: { id: body.categoryId } } }),
     });
@@ -95,7 +107,14 @@ export class BlogController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('SUPER_ADMIN', 'ADMIN', 'EDITOR')
   async update(@Param('id') id: string, @Body() body: any) {
-    const post = await this.blogService.update(id, body);
+    const { categoryId, ...rest } = body;
+    const updateData: any = { ...rest };
+    if (categoryId) {
+      updateData.category = { connect: { id: categoryId } };
+    } else if (categoryId === null) {
+      updateData.category = { disconnect: true };
+    }
+    const post = await this.blogService.update(id, updateData);
     return { success: true, data: post };
   }
 

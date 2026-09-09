@@ -9,6 +9,7 @@ import { cn } from '@/lib/utils';
 interface BlogFormData {
   title: string;
   slug: string;
+  categoryId?: string;
   excerpt: string;
   content: string;
   coverImage: string;
@@ -21,6 +22,7 @@ interface BlogFormData {
 const initialFormData: BlogFormData = {
   title: '',
   slug: '',
+  categoryId: undefined,
   excerpt: '',
   content: '',
   coverImage: '',
@@ -41,13 +43,15 @@ function slugify(text: string): string {
 }
 
 export default function BlogAdminPage() {
-  const [posts, setPosts] = useState<BlogPost[]>([]);
+  const [posts, setPosts] = useState<any[]>([]);
+  const [categories, setCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'content' | 'seo'>('content');
-  const [editingPost, setEditingPost] = useState<BlogPost | null>(null);
+  const [editingPost, setEditingPost] = useState<any | null>(null);
   const [formData, setFormData] = useState<BlogFormData>(initialFormData);
   const [submitting, setSubmitting] = useState(false);
   const [uploadingCover, setUploadingCover] = useState(false);
@@ -81,17 +85,23 @@ export default function BlogAdminPage() {
     const params: Record<string, string> = {};
     if (search) params.search = search;
     if (statusFilter) params.status = statusFilter;
+    if (categoryFilter) params.category = categoryFilter;
 
-    api.blog
-      .list(params)
-      .then((res: any) => setPosts(res.data || []))
+    Promise.all([
+      api.blog.list(params),
+      api.blog.categories(),
+    ])
+      .then(([postsRes, catRes]: [any, any]) => {
+        setPosts(postsRes.data || []);
+        setCategories(catRes.data || []);
+      })
       .catch(() => {})
       .finally(() => setLoading(false));
   };
 
   useEffect(() => {
     fetchPosts();
-  }, [search, statusFilter]);
+  }, [search, statusFilter, categoryFilter]);
 
   const openCreateModal = () => {
     setEditingPost(null);
@@ -100,11 +110,12 @@ export default function BlogAdminPage() {
     setModalOpen(true);
   };
 
-  const openEditModal = (post: BlogPost) => {
+  const openEditModal = (post: any) => {
     setEditingPost(post);
     setFormData({
       title: post.title,
       slug: post.slug,
+      categoryId: post.categoryId || post.category?.id || undefined,
       excerpt: post.excerpt || '',
       content: post.content,
       coverImage: post.coverImage || '',
@@ -140,6 +151,7 @@ export default function BlogAdminPage() {
       const payload = {
         title: formData.title,
         slug: formData.slug,
+        categoryId: formData.categoryId || undefined,
         excerpt: formData.excerpt || undefined,
         content: formData.content,
         coverImage: formData.coverImage || undefined,
@@ -231,6 +243,19 @@ export default function BlogAdminPage() {
 
         <div className="flex items-center gap-2">
           <select
+            value={categoryFilter}
+            onChange={(e) => setCategoryFilter(e.target.value)}
+            className="h-8 rounded-md border border-palnadu-border bg-white px-2.5 text-xs text-palnadu-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-palnadu-blue cursor-pointer"
+          >
+            <option value="">All Categories</option>
+            {categories.map((c) => (
+              <option key={c.id} value={c.slug}>
+                {c.name}
+              </option>
+            ))}
+          </select>
+
+          <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
             className="h-8 rounded-md border border-palnadu-border bg-white px-2.5 text-xs text-palnadu-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-palnadu-blue cursor-pointer"
@@ -249,6 +274,7 @@ export default function BlogAdminPage() {
             <thead>
               <tr className="border-b border-palnadu-border bg-palnadu-off-white/50 text-palnadu-secondary text-left font-semibold">
                 <th className="px-4 py-3">Article Title & Slug</th>
+                <th className="px-4 py-3">Category</th>
                 <th className="px-4 py-3">SEO Health</th>
                 <th className="px-4 py-3">Status</th>
                 <th className="px-4 py-3">Updated Date</th>
@@ -284,6 +310,13 @@ export default function BlogAdminPage() {
                       <div className="font-mono text-[11px] text-palnadu-secondary mt-0.5">
                         /blog/{post.slug}
                       </div>
+                    </td>
+
+                    {/* Category */}
+                    <td className="px-4 py-3">
+                      <span className="inline-block px-2 py-0.5 rounded-md bg-palnadu-off-white border border-palnadu-border text-[10px] font-semibold text-palnadu-dark">
+                        {post.category?.name || 'Unassigned'}
+                      </span>
                     </td>
 
                     {/* SEO Health Badge */}
@@ -424,8 +457,8 @@ export default function BlogAdminPage() {
                     />
                   </div>
 
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="space-y-1">
+                  <div className="grid grid-cols-3 gap-3">
+                    <div className="col-span-1 space-y-1">
                       <label className="text-xs font-semibold text-palnadu-dark">
                         URL Slug <span className="text-palnadu-error">*</span>
                       </label>
@@ -441,7 +474,23 @@ export default function BlogAdminPage() {
                       </div>
                     </div>
 
-                    <div className="space-y-1">
+                    <div className="col-span-1 space-y-1">
+                      <label className="text-xs font-semibold text-palnadu-dark">Category</label>
+                      <select
+                        value={formData.categoryId || ''}
+                        onChange={(e) => setFormData({ ...formData, categoryId: e.target.value || undefined })}
+                        className="w-full h-8 rounded-md border border-palnadu-border bg-white px-3 text-xs text-palnadu-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-palnadu-blue cursor-pointer"
+                      >
+                        <option value="">Select Category...</option>
+                        {categories.map((c) => (
+                          <option key={c.id} value={c.id}>
+                            {c.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className="col-span-1 space-y-1">
                       <label className="text-xs font-semibold text-palnadu-dark">Publication Status</label>
                       <select
                         value={formData.status}
