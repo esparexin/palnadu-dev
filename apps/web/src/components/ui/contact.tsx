@@ -122,7 +122,6 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
         ? prev.filter((t) => t !== type)
         : [...prev, type];
       
-      // Auto-assign primary help category and additional info
       if (updated.length > 0) {
         const primaryHelp = helpTypeMapping[updated[0]] || 'NOT_SURE';
         setValue('requiredHelp', primaryHelp);
@@ -162,22 +161,22 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
   };
 
   return (
-    <section className={cn("relative min-h-screen w-full overflow-hidden bg-white text-palnadu-dark", className)}>
+    <section className={cn("relative min-h-[90vh] w-full overflow-hidden bg-white text-palnadu-dark", className)}>
       {/* Background Image with Palnadu Primary Dark overlay */}
       <div
         className="absolute inset-0 bg-cover bg-center transition-all duration-500 ease-in-out"
         style={{ backgroundImage: `url(${backgroundImageSrc})` }}
       >
         {/* Palnadu Primary Dark tint overlay (#042C53) */}
-        <div className="absolute inset-0 bg-palnadu-dark/65 mix-blend-multiply" />
-        <div className="absolute inset-0 bg-gradient-to-r from-palnadu-dark/90 via-palnadu-dark/60 to-palnadu-dark/40" />
+        <div className="absolute inset-0 bg-palnadu-dark/70 mix-blend-multiply" />
+        <div className="absolute inset-0 bg-gradient-to-r from-palnadu-dark/95 via-palnadu-dark/75 to-palnadu-dark/50" />
 
         {/* Animated Bubbles */}
         <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
           {Array.from({ length: 15 }).map((_, i) => (
             <div
               key={i}
-              className="absolute bg-white/25 rounded-full animate-bubble opacity-0"
+              className="absolute bg-white/20 rounded-full animate-bubble opacity-0"
               style={{
                 width: `${(i % 4) * 6 + 10}px`,
                 height: `${(i % 4) * 6 + 10}px`,
@@ -191,68 +190,62 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
         </div>
       </div>
 
-      {/* Main Content Overlay — Top-aligned directly below header */}
-      <div className="relative z-10 flex flex-col items-center justify-start w-full h-full px-4 py-4 sm:px-6 sm:py-6 md:px-8 lg:px-12">
+      {/* Main Content Container — Top-aligned, responsive padding */}
+      <div className="relative z-10 flex flex-col items-center justify-start w-full h-full px-3 py-3 sm:px-6 sm:py-6 md:px-8 lg:px-12">
         {/* Optional Sub-Navigation Bar */}
         {showNav && (
-          <nav className="w-full max-w-7xl flex items-center justify-between p-4 bg-white/90 backdrop-blur-md rounded-xl border border-palnadu-border shadow-md mb-6">
-            <div className="flex items-center space-x-2">
-              <span className="font-extrabold text-xl text-palnadu-dark">Palnadu<span className="text-palnadu-blue">.dev</span></span>
-            </div>
-            <div className="hidden md:flex items-center space-x-6">
-              {['About', 'Services', 'Work', 'Blog'].map((item) => (
-                <a
-                  key={item}
-                  href={`/${item.toLowerCase()}`}
-                  className="text-sm font-semibold text-palnadu-dark hover:text-palnadu-blue transition-colors"
-                >
-                  {item}
-                </a>
-              ))}
-              <Button asChild size="sm" className="bg-palnadu-blue text-white hover:bg-[#12487e]">
-                <a href="#contact-card">Get in touch</a>
-              </Button>
-            </div>
-            <Button asChild size="sm" className="md:hidden bg-palnadu-blue text-white">
-              <a href="#contact-card">Contact</a>
+          <nav className="w-full max-w-6xl flex items-center justify-between p-3.5 bg-white/90 backdrop-blur-md rounded-xl border border-palnadu-border shadow-md mb-4">
+            <span className="font-extrabold text-lg text-palnadu-dark">Palnadu<span className="text-palnadu-blue">.dev</span></span>
+            <Button asChild size="sm" className="bg-palnadu-blue text-white hover:bg-[#12487e]">
+              <a href="#contact-card">Get in touch</a>
             </Button>
           </nav>
         )}
 
-        {/* Main Section - Grid Layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 w-full max-w-7xl pt-2 sm:pt-4 pb-8" id="contact-card">
-          {/* Left Side: Headline & Brand Statement */}
-          <div className="lg:col-span-5 flex flex-col justify-center p-2 sm:p-4 lg:p-8 space-y-4">
+        {/* Mobile Header (Concise & Compact — does NOT occupy the whole page) */}
+        <div className="lg:hidden text-center space-y-1 my-2 max-w-sm">
+          <p className="text-[10px] font-mono uppercase tracking-widest text-palnadu-light-blue font-bold">
+            Start With The Problem
+          </p>
+          <h1 className="text-xl sm:text-2xl font-black text-white leading-tight drop-shadow-sm">
+            {title}
+          </h1>
+        </div>
+
+        {/* Main Grid: Desktop 2-Column (Left Headline, Right Form) | Mobile Form-First */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-10 w-full max-w-6xl pb-8" id="contact-card">
+          {/* Desktop Left Side: Headline & Brand Statement (Hidden on small mobile to avoid occupying whole screen) */}
+          <div className="hidden lg:flex lg:col-span-5 flex-col justify-center p-4 lg:p-6 space-y-4">
             <p className="text-xs font-mono uppercase tracking-widest text-palnadu-light-blue font-bold">
               Start With The Problem
             </p>
-            <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-white leading-tight drop-shadow-md max-w-xl">
+            <h1 className="text-3xl lg:text-4xl xl:text-5xl font-black text-white leading-tight drop-shadow-md">
               {title}
             </h1>
-            <p className="text-sm sm:text-base text-palnadu-light-blue/90 leading-relaxed max-w-lg">
-              Have a raw startup idea, or need to replace manual spreadsheets and paper logs with custom software? Talk directly with our software engineers.
+            <p className="text-sm text-palnadu-light-blue/90 leading-relaxed max-w-md">
+              Have an idea, or need to automate a manual process? Talk directly with the software engineers building your solution.
             </p>
           </div>
 
-          {/* Right Side: Contact Form Card with full details and validation */}
-          <div className="lg:col-span-7 bg-white/95 backdrop-blur-md p-6 sm:p-8 rounded-2xl shadow-2xl border border-palnadu-border">
+          {/* Right Side: Contact Form Card (Compact & Streamlined) */}
+          <div className="lg:col-span-7 bg-white/95 backdrop-blur-md p-4 sm:p-6 lg:p-7 rounded-xl sm:rounded-2xl shadow-xl border border-palnadu-border">
             {submitted ? (
-              <div className="py-12 text-center space-y-4 animate-fade-in">
-                <div className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-palnadu-light-blue text-palnadu-teal mx-auto">
-                  <CheckCircle2 className="h-6 w-6" />
+              <div className="py-10 text-center space-y-3 animate-fade-in">
+                <div className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-palnadu-light-blue text-palnadu-teal mx-auto">
+                  <CheckCircle2 className="h-5 w-5" />
                 </div>
-                <h3 className="text-2xl font-bold text-palnadu-dark">Message Received</h3>
-                <p className="text-sm text-palnadu-body max-w-sm mx-auto leading-relaxed">
+                <h3 className="text-xl font-bold text-palnadu-dark">Message Received</h3>
+                <p className="text-xs text-palnadu-body max-w-xs mx-auto leading-relaxed">
                   Thank you. We have received your inquiry and will reply with honest engineering advice within one business day.
                 </p>
-                <div className="pt-3">
+                <div className="pt-2">
                   <Button
                     onClick={() => {
                       setSubmitted(false);
                       setSelectedTypes([]);
                     }}
                     variant="outline"
-                    className="border-palnadu-blue text-palnadu-blue hover:bg-palnadu-light-blue rounded-md text-xs px-5"
+                    className="border-palnadu-blue text-palnadu-blue hover:bg-palnadu-light-blue rounded-md text-xs px-4 h-8"
                   >
                     Send another message
                   </Button>
@@ -260,49 +253,41 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
               </div>
             ) : (
               <>
-                <h2 className="text-2xl font-bold text-palnadu-dark mb-4">{mainMessage}</h2>
+                {/* Compact Card Header */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 mb-3 border-b border-palnadu-border/60">
+                  <div>
+                    <h2 className="text-base sm:text-lg font-bold text-palnadu-dark">{mainMessage}</h2>
+                    <a
+                      href={`mailto:${contactEmail}`}
+                      className="text-xs font-semibold text-palnadu-blue hover:underline"
+                    >
+                      {contactEmail}
+                    </a>
+                  </div>
 
-                {/* Email & Social Channels */}
-                <div className="mb-6">
-                  <p className="text-xs text-palnadu-secondary font-medium uppercase tracking-wider mb-1">
-                    Mail us directly at
-                  </p>
-                  <a
-                    href={`mailto:${contactEmail}`}
-                    className="text-sm sm:text-base font-bold text-palnadu-blue hover:underline"
-                  >
-                    {contactEmail}
-                  </a>
-
-                  <div className="flex items-center space-x-3 mt-3">
-                    <span className="text-xs text-palnadu-secondary font-mono">OR CONNECT:</span>
+                  {/* Social Channel Links */}
+                  <div className="flex items-center gap-1.5 self-start sm:self-auto">
                     {socialLinks.map((link) => (
                       <Button
                         key={link.id}
                         variant="outline"
                         size="icon"
                         asChild
-                        className="h-8 w-8 rounded-md border-palnadu-border bg-white hover:bg-palnadu-light-blue hover:border-palnadu-blue"
+                        className="h-7 w-7 rounded-md border-palnadu-border bg-white hover:bg-palnadu-light-blue hover:border-palnadu-blue"
                       >
                         <a href={link.href} target="_blank" rel="noopener noreferrer" aria-label={link.name}>
-                          <img src={link.iconSrc} alt={link.name} className="h-3.5 w-3.5" />
+                          <img src={link.iconSrc} alt={link.name} className="h-3 w-3" />
                         </a>
                       </Button>
                     ))}
                   </div>
                 </div>
 
-                <hr className="my-5 border-palnadu-border" />
-
-                {/* Form with Zod Validation & Rich Details */}
-                <form onSubmit={handleSubmit(onFormSubmit)} noValidate className="space-y-4">
-                  <p className="text-xs text-palnadu-secondary font-semibold uppercase tracking-wider">
-                    Inquiry Details
-                  </p>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                {/* Form with Zod Validation */}
+                <form onSubmit={handleSubmit(onFormSubmit)} noValidate className="space-y-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                     {/* Name Field */}
-                    <div className="space-y-1">
+                    <div className="space-y-0.5">
                       <Label htmlFor="name" className="text-xs font-semibold text-palnadu-dark">
                         Your Name <span className="text-palnadu-error">*</span>
                       </Label>
@@ -311,7 +296,7 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
                         placeholder="e.g. John Doe"
                         aria-invalid={!!errors.name}
                         className={cn(
-                          "bg-white text-palnadu-body text-xs h-9 rounded-md transition-colors",
+                          "bg-white text-palnadu-body text-xs h-8 rounded-md transition-colors",
                           errors.name
                             ? "border-palnadu-error focus-visible:ring-palnadu-error"
                             : "border-palnadu-border focus-visible:ring-palnadu-blue"
@@ -319,12 +304,12 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
                         {...register('name')}
                       />
                       {errors.name && (
-                        <p className="text-xs text-palnadu-error font-medium">{errors.name.message}</p>
+                        <p className="text-[11px] text-palnadu-error font-medium">{errors.name.message}</p>
                       )}
                     </div>
 
                     {/* Email Field */}
-                    <div className="space-y-1">
+                    <div className="space-y-0.5">
                       <Label htmlFor="email" className="text-xs font-semibold text-palnadu-dark">
                         Email Address <span className="text-palnadu-error">*</span>
                       </Label>
@@ -334,7 +319,7 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
                         placeholder="name@example.com"
                         aria-invalid={!!errors.email}
                         className={cn(
-                          "bg-white text-palnadu-body text-xs h-9 rounded-md transition-colors",
+                          "bg-white text-palnadu-body text-xs h-8 rounded-md transition-colors",
                           errors.email
                             ? "border-palnadu-error focus-visible:ring-palnadu-error"
                             : "border-palnadu-border focus-visible:ring-palnadu-blue"
@@ -342,14 +327,14 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
                         {...register('email')}
                       />
                       {errors.email && (
-                        <p className="text-xs text-palnadu-error font-medium">{errors.email.message}</p>
+                        <p className="text-[11px] text-palnadu-error font-medium">{errors.email.message}</p>
                       )}
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                     {/* Phone Field */}
-                    <div className="space-y-1">
+                    <div className="space-y-0.5">
                       <Label htmlFor="phone" className="text-xs font-semibold text-palnadu-dark">
                         Phone or WhatsApp
                       </Label>
@@ -359,7 +344,7 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
                         placeholder="+91 98765 43210"
                         aria-invalid={!!errors.phone}
                         className={cn(
-                          "bg-white text-palnadu-body text-xs h-9 rounded-md transition-colors",
+                          "bg-white text-palnadu-body text-xs h-8 rounded-md transition-colors",
                           errors.phone
                             ? "border-palnadu-error focus-visible:ring-palnadu-error"
                             : "border-palnadu-border focus-visible:ring-palnadu-blue"
@@ -367,36 +352,36 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
                         {...register('phone')}
                       />
                       {errors.phone && (
-                        <p className="text-xs text-palnadu-error font-medium">{errors.phone.message}</p>
+                        <p className="text-[11px] text-palnadu-error font-medium">{errors.phone.message}</p>
                       )}
                     </div>
 
                     {/* Company Field */}
-                    <div className="space-y-1">
+                    <div className="space-y-0.5">
                       <Label htmlFor="company" className="text-xs font-semibold text-palnadu-dark">
                         Company or Startup Name
                       </Label>
                       <Input
                         id="company"
                         placeholder="e.g. Acme Corp / Stealth"
-                        className="bg-white border-palnadu-border text-palnadu-body text-xs h-9 rounded-md focus-visible:ring-palnadu-blue"
+                        className="bg-white border-palnadu-border text-palnadu-body text-xs h-8 rounded-md focus-visible:ring-palnadu-blue"
                         {...register('company')}
                       />
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                     {/* Project Stage */}
-                    <div className="space-y-1">
+                    <div className="space-y-0.5">
                       <Label htmlFor="projectStage" className="text-xs font-semibold text-palnadu-dark">
                         Project Stage
                       </Label>
                       <select
                         id="projectStage"
-                        className="w-full bg-white border border-palnadu-border text-palnadu-body text-xs h-9 rounded-md px-2.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-palnadu-blue cursor-pointer"
+                        className="w-full bg-white border border-palnadu-border text-palnadu-body text-xs h-8 rounded-md px-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-palnadu-blue cursor-pointer"
                         {...register('projectStage')}
                       >
-                        <option value="JUST_AN_IDEA">Just an idea / Raw concept</option>
+                        <option value="JUST_AN_IDEA">Just an idea / Concept</option>
                         <option value="EXISTING_BUSINESS">Existing business workflow</option>
                         <option value="EXISTING_PRODUCT">Existing software / MVP update</option>
                         <option value="MANUAL_PROCESS">Manual process automation</option>
@@ -405,13 +390,13 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
                     </div>
 
                     {/* Budget Range */}
-                    <div className="space-y-1">
+                    <div className="space-y-0.5">
                       <Label htmlFor="budget" className="text-xs font-semibold text-palnadu-dark">
                         Estimated Budget
                       </Label>
                       <select
                         id="budget"
-                        className="w-full bg-white border border-palnadu-border text-palnadu-body text-xs h-9 rounded-md px-2.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-palnadu-blue cursor-pointer"
+                        className="w-full bg-white border border-palnadu-border text-palnadu-body text-xs h-8 rounded-md px-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-palnadu-blue cursor-pointer"
                         {...register('budget')}
                       >
                         <option value="">Flexible / Exploring options</option>
@@ -424,7 +409,7 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
                   </div>
 
                   {/* Message Field */}
-                  <div className="space-y-1">
+                  <div className="space-y-0.5">
                     <Label htmlFor="problemDescription" className="text-xs font-semibold text-palnadu-dark">
                       What problem are you trying to solve? <span className="text-palnadu-error">*</span>
                     </Label>
@@ -434,7 +419,7 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
                       rows={3}
                       aria-invalid={!!errors.problemDescription}
                       className={cn(
-                        "bg-white text-palnadu-body text-xs py-2 rounded-md transition-colors",
+                        "bg-white text-palnadu-body text-xs py-1.5 rounded-md transition-colors",
                         errors.problemDescription
                           ? "border-palnadu-error focus-visible:ring-palnadu-error"
                           : "border-palnadu-border focus-visible:ring-palnadu-blue"
@@ -442,16 +427,16 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
                       {...register('problemDescription')}
                     />
                     {errors.problemDescription && (
-                      <p className="text-xs text-palnadu-error font-medium">{errors.problemDescription.message}</p>
+                      <p className="text-[11px] text-palnadu-error font-medium">{errors.problemDescription.message}</p>
                     )}
                   </div>
 
                   {/* Project Type Multi-select Checkboxes */}
-                  <div className="space-y-2 pt-1">
+                  <div className="space-y-1.5 pt-0.5">
                     <p className="text-xs font-semibold text-palnadu-dark">
-                      I&apos;m looking for help with:
+                      Help needed with:
                     </p>
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-0.5">
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
                       {projectTypeOptions.map((option) => {
                         const id = option.replace(/\s+/g, '-').toLowerCase();
                         const isChecked = selectedTypes.includes(option);
@@ -459,10 +444,10 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
                           <div
                             key={option}
                             className={cn(
-                              "flex items-center space-x-2 p-2 rounded-md border transition-colors cursor-pointer",
+                              "flex items-center space-x-1.5 p-1.5 rounded-md border transition-colors cursor-pointer",
                               isChecked
                                 ? "border-palnadu-blue bg-palnadu-light-blue/60"
-                                : "border-palnadu-border/70 bg-palnadu-off-white/50 hover:bg-palnadu-light-blue/40"
+                                : "border-palnadu-border/70 bg-palnadu-off-white/40 hover:bg-palnadu-light-blue/30"
                             )}
                             onClick={() => handleCheckboxToggle(option)}
                           >
@@ -473,7 +458,7 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
                             />
                             <Label
                               htmlFor={id}
-                              className="text-[11px] font-medium text-palnadu-dark cursor-pointer select-none leading-none truncate"
+                              className="text-[10px] font-medium text-palnadu-dark cursor-pointer select-none leading-none truncate"
                             >
                               {option}
                             </Label>
@@ -484,7 +469,7 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
                   </div>
 
                   {errorMessage && (
-                    <div role="alert" className="p-2.5 rounded-md bg-red-50 border border-palnadu-error/40 text-xs text-palnadu-error font-medium">
+                    <div role="alert" className="p-2 rounded-md bg-red-50 border border-palnadu-error/40 text-xs text-palnadu-error font-medium">
                       {errorMessage}
                     </div>
                   )}
@@ -492,9 +477,9 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
                   <Button
                     type="submit"
                     disabled={isSubmitting}
-                    className="w-full bg-palnadu-blue hover:bg-[#12487e] text-white font-semibold text-xs h-10 rounded-md transition-colors shadow-sm mt-2 disabled:opacity-50"
+                    className="w-full bg-palnadu-blue hover:bg-[#12487e] text-white font-semibold text-xs h-9 rounded-md transition-colors shadow-xs mt-1 disabled:opacity-50 cursor-pointer"
                   >
-                    {isSubmitting ? 'Sending...' : 'Send a message →'}
+                    {isSubmitting ? 'Sending...' : 'Send Message →'}
                   </Button>
                 </form>
               </>
