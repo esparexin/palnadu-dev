@@ -13,16 +13,55 @@ export const siteConfig = {
   ogImage: 'https://palnadu.dev/og.png',
   creator: 'Palnadu.dev',
   keywords: [
-    'software development',
-    'web development',
-    'mobile app development',
-    'custom software',
-    'MVP development',
-    'startup technology partner',
-    'SaaS development',
-    'business automation',
-    'technical consulting',
-    'Palnadu',
+    // Web Design & Website Development
+    'web design company in Palnadu',
+    'web design company in Guntur',
+    'website development Palnadu',
+    'website design Guntur',
+    'best web design company in Guntur',
+    'top web designers in Palnadu',
+    'website development company in Narasaraopet',
+    // Software Development
+    'software development company Palnadu',
+    'software development company Guntur',
+    'custom software development Palnadu',
+    'software developers Guntur',
+    'best software development company Guntur',
+    'top software development company Palnadu',
+    // Web Applications & SaaS
+    'web application development Palnadu',
+    'web application development Guntur',
+    'custom web applications Guntur',
+    'business web application development Palnadu',
+    'SaaS development Guntur',
+    'web app development company Palnadu',
+    // Mobile Apps
+    'mobile app development Palnadu',
+    'mobile app development Guntur',
+    'Android app development Guntur',
+    'iOS app development Guntur',
+    'cross-platform app development Palnadu',
+    // Startup & MVP Development
+    'startup technology company Palnadu',
+    'MVP development Guntur',
+    'MVP development Palnadu',
+    'startup software development Guntur',
+    'startup website development Guntur',
+    'SaaS startup development Guntur',
+    // Digital Marketing & Local SEO
+    'digital marketing agency Palnadu',
+    'digital marketing agency Guntur',
+    'SEO services Palnadu',
+    'SEO company Guntur',
+    'local SEO Guntur',
+    'social media marketing Guntur',
+    // Business Websites & Affordable Engineering
+    'business website development Guntur',
+    'small business website Palnadu',
+    'affordable website development Guntur',
+    'company website development Palnadu',
+    'affordable software development Palnadu',
+    'affordable web design Guntur',
   ],
   links: {
     github: 'https://github.com/palnadudev',
@@ -176,6 +215,242 @@ export const processSteps = [
   },
 ] as const;
 
+// ─── Location Data (SSOT) ─────────────────────────────────────
+// Genuine economic and commercial data for Palnadu, Guntur & surrounding hubs.
+// Avoids doorway/duplicate pages by providing authentic local business context.
+
+export interface LocationData {
+  slug: string;
+  name: string;
+  district: string;
+  tagline: string;
+  economicProfile: string;
+  keyIndustries: string[];
+  commonPainPoints: string[];
+  popularServices: string[];
+  faq: { q: string; a: string }[];
+}
+
+export const coreLocations: LocationData[] = [
+  {
+    slug: 'guntur',
+    name: 'Guntur',
+    district: 'Guntur District',
+    tagline: 'Web Applications, Custom Software & Digital Transformation for Guntur Enterprises',
+    economicProfile: 'As the commercial and agricultural powerhouse of coastal Andhra Pradesh, Guntur hosts Asia’s largest chili market yard, tobacco trading houses, major multi-speciality medical centers, and expanding educational institutions.',
+    keyIndustries: [
+      'Agricultural Spice & Grain Trading',
+      'Private Hospitals & Diagnostic Centers',
+      'Cotton & Textile Ginning',
+      'Engineering Colleges & Schools',
+      'Wholesale Consumer Goods Distribution',
+    ],
+    commonPainPoints: [
+      'Inventory reconciliation between mandi yards, godowns, and head offices',
+      'Unreliable desktop accounting software unable to sync with field billing reps',
+      'Slow, bloated WordPress websites that crash during admissions or seasonal marketing campaigns',
+    ],
+    popularServices: [
+      'Custom ERP & Inventory Management Web Apps',
+      'Hospital Patient Portals & Appointment Engines',
+      'High-Speed Next.js Corporate Websites',
+      'B2B Wholesale Ordering Platforms',
+    ],
+    faq: [
+      {
+        q: 'Why should Guntur businesses choose custom software over ready-made accounting tools?',
+        a: 'Off-the-shelf tools don’t fit regional mandi credit cycles, multiple dispatch godowns, or transport memo workflows. Custom software engineered by Palnadu.dev is built around your exact commercial workflow with 100% data ownership.',
+      },
+      {
+        q: 'Can our sales team in Guntur use the system on their mobile phones?',
+        a: 'Yes. All web applications and business portals built by Palnadu.dev are mobile-first, lightweight, and engineered to work reliably on standard 4G and 5G networks.',
+      },
+    ],
+  },
+  {
+    slug: 'palnadu',
+    name: 'Palnadu',
+    district: 'Palnadu District',
+    tagline: 'Software Engineering, Web Development & Business Automation Rooted in Palnadu',
+    economicProfile: 'Formed as a dedicated district with Narasaraopet as its administrative center, Palnadu is an emerging economic corridor with rapid growth in agro-industries, limestone processing, educational campuses, and regional commerce.',
+    keyIndustries: [
+      'Agro-Processing & Seed Distribution',
+      'Cotton Ginning & Trading',
+      'Educational Institutions & Academies',
+      'Healthcare & Specialty Clinics',
+      'Local Merchant Retail',
+    ],
+    commonPainPoints: [
+      'Reliance on paper books, WhatsApp chats, and Excel spreadsheets for critical business orders',
+      'High fees paid to metropolitan IT agencies that don’t understand regional commercial realities',
+      'Zero technical support when software breaks or staff turnover occurs',
+    ],
+    popularServices: [
+      'Custom Business Management Software',
+      'School & College Admissions Portals',
+      'Local Business Websites with High-Speed Next.js',
+      'Automated Billing & WhatsApp PDF Invoicing',
+    ],
+    faq: [
+      {
+        q: 'Where is Palnadu.dev based?',
+        a: 'Palnadu.dev is headquartered in the Palnadu region. We work directly with business owners, founders, and institutions across Palnadu, Narasaraopet, Chilakaluripet, and surrounding regions.',
+      },
+      {
+        q: 'How fast can a custom software MVP be launched?',
+        a: 'We deliver focused, practical MVPs in rapid 3-to-6-week sprints so your business starts capturing value immediately without massive upfront capital expenditure.',
+      },
+    ],
+  },
+  {
+    slug: 'narasaraopet',
+    name: 'Narasaraopet',
+    district: 'Palnadu District (Headquarters)',
+    tagline: 'Fast Websites, Educational Portals & Custom Software in Narasaraopet',
+    economicProfile: 'The commercial and educational heart of Palnadu district, Narasaraopet connects surrounding agrarian and industrial centers with leading engineering colleges, healthcare clinics, and wholesale markets.',
+    keyIndustries: [
+      'Higher Education & Engineering Colleges',
+      'Automotive Spares & Machinery',
+      'Seed & Agro Inputs',
+      'Speciality Hospitals & Diagnostics',
+      'Retail Shopping Complexes',
+    ],
+    commonPainPoints: [
+      'College websites that take 8+ seconds to load and fail on smartphones',
+      'Manual student fee tracking and enquiry paperwork prone to human error',
+      'Loss of local search visibility to competitors on Google Maps and regional searches',
+    ],
+    popularServices: [
+      'Student Information Systems & College Portals',
+      'Local SEO & Fast Business Websites',
+      'Clinic Patient Scheduling Applications',
+      'Automated Ledger & Invoicing Software',
+    ],
+    faq: [
+      {
+        q: 'Can Palnadu.dev redesign an existing slow college or school website in Narasaraopet?',
+        a: 'Yes. We migrate fragile WordPress and PHP websites to sub-second Next.js edge platforms with online admission inquiries, photo galleries, and mobile-friendly speed.',
+      },
+    ],
+  },
+  {
+    slug: 'chilakaluripet',
+    name: 'Chilakaluripet',
+    district: 'Palnadu District',
+    tagline: 'Transport Logistics, Commercial Software & Web Solutions in Chilakaluripet',
+    economicProfile: 'Positioned on the NH-16 highway, Chilakaluripet is an essential transport, vehicle body building, and agricultural produce transit hub in Andhra Pradesh.',
+    keyIndustries: [
+      'Highway Transport & Fleet Logistics',
+      'Commercial Auto Body Works',
+      'Cotton & Tobacco Trading',
+      'Cold Storage Operations',
+      'Agri-Equipment Supply',
+    ],
+    commonPainPoints: [
+      'Tracking vehicle maintenance, driver trip logs, and consignor billings across paper slips',
+      'Cold storage bay occupancy tracking managed through prone-to-loss registers',
+      'Lack of professional digital presence when pitching corporate logistics contracts',
+    ],
+    popularServices: [
+      'Fleet & Trip Dispatch Tracking Web Apps',
+      'Cold Storage Stock Allocation Software',
+      'Professional Corporate Websites for Logistics Operators',
+      'Automated WhatsApp LR / Consignment Slips',
+    ],
+    faq: [
+      {
+        q: 'Do you build custom fleet or lorry transport billing software?',
+        a: 'Yes. We engineer customized web platforms that track trip advances, diesel consumption, freight bills, and transport memos with real-time phone access.',
+      },
+    ],
+  },
+  {
+    slug: 'sattenapalle',
+    name: 'Sattenapalle',
+    district: 'Palnadu District',
+    tagline: 'Agri-Trading Software & Modern Web Development in Sattenapalle',
+    economicProfile: 'A major railway junction and commercial trading town in Palnadu, Sattenapalle is famous for paddy, cotton, chili markets, and residential educational hubs.',
+    keyIndustries: [
+      'Paddy & Rice Mills',
+      'Cotton Ginning',
+      'Timber & Construction Materials',
+      'Junior Colleges & Schools',
+      'General Merchant Trade',
+    ],
+    commonPainPoints: [
+      'Calculating dynamic moisture deductions and mill yields manually',
+      'WhatsApp invoice disputes with wholesale purchasers in other districts',
+    ],
+    popularServices: [
+      'Rice Mill & Ginning Inventory Applications',
+      'Wholesale Billing Software with GST Reports',
+      'High-Converting School & Business Websites',
+    ],
+    faq: [
+      {
+        q: 'Can we access our Sattenapalle mill software while traveling?',
+        a: 'Yes. All systems are deployed to secure cloud servers with role-based logins for owners, managers, and clerks accessible from any device.',
+      },
+    ],
+  },
+  {
+    slug: 'vinukonda',
+    name: 'Vinukonda',
+    district: 'Palnadu District',
+    tagline: 'Custom Software & Web Application Development in Vinukonda',
+    economicProfile: 'Situated on the Guntur-Guntakal railway route, Vinukonda serves as a vibrant trading bridge connecting Palnadu with Rayalaseema markets.',
+    keyIndustries: [
+      'Agricultural Commodity Trading',
+      'Granite & Mining Quarry Supplies',
+      'Retail Trade & Distribution',
+      'Healthcare Facilities',
+    ],
+    commonPainPoints: [
+      'Distance from big IT centers making it hard to get reliable software developers',
+      'Overpaying for rigid metropolitan software that doesn’t work offline or on low bandwidth',
+    ],
+    popularServices: [
+      'Quarry & Material Dispatch Web Software',
+      'Mobile-Friendly Merchant Billing Systems',
+      'SEO-Optimized Business Websites',
+    ],
+    faq: [
+      {
+        q: 'Does Palnadu.dev support businesses located in Vinukonda?',
+        a: 'Yes. We are dedicated to empowering regional commercial businesses across Vinukonda with modern engineering and direct developer support.',
+      },
+    ],
+  },
+  {
+    slug: 'macherla',
+    name: 'Macherla',
+    district: 'Palnadu District',
+    tagline: 'Industrial, Cement & Commercial Technology Solutions in Macherla',
+    economicProfile: 'Historically significant and industrially rich, Macherla borders the Nagarjuna Sagar project with thriving cement factories, limestone deposits, and tourism commerce.',
+    keyIndustries: [
+      'Cement & Mineral Ancillary Suppliers',
+      'Tourism & Hospitality',
+      'Heavy Transport & Mining Services',
+      'Local Commercial Trading',
+    ],
+    commonPainPoints: [
+      'Tracking weighbridge tickets and industrial supply contracts across disparate spreadsheets',
+      'Outdated static websites that fail to attract modern commercial clients',
+    ],
+    popularServices: [
+      'Contract & Gate Pass Management Software',
+      'Hospitality & Hotel Web Platforms',
+      'Industrial Supplier Corporate Websites',
+    ],
+    faq: [
+      {
+        q: 'Can we integrate weighbridge or gate entry records into our custom web portal?',
+        a: 'Yes. We build APIs and data ingestion connectors that sync gate passes, weigh slips, and vendor invoices into your centralized dashboard.',
+      },
+    ],
+  },
+];
+
 // ─── Sitemap Pages (SSOT) ─────────────────────────────────────
 // Every public page must be registered here.
 // sitemap.ts, canonical URLs, and future audits all read from this list.
@@ -198,9 +473,17 @@ export const sitemapPages: SitemapPage[] = [
   { path: '/work',       changeFrequency: 'monthly', priority: 0.7 },
   { path: '/blog',       changeFrequency: 'weekly',  priority: 0.8 },
   { path: '/contact',    changeFrequency: 'monthly', priority: 0.7 },
-  // ── SEO / Local ──
+  // ── SEO / Local Directory ──
   { path: '/industries', changeFrequency: 'monthly', priority: 0.6 },
-  { path: '/locations',  changeFrequency: 'monthly', priority: 0.6 },
+  { path: '/locations',  changeFrequency: 'monthly', priority: 0.7 },
+  // ── Core Location Hubs (Genuine Topical Authority) ──
+  { path: '/locations/guntur',         changeFrequency: 'monthly', priority: 0.8 },
+  { path: '/locations/palnadu',        changeFrequency: 'monthly', priority: 0.8 },
+  { path: '/locations/narasaraopet',   changeFrequency: 'monthly', priority: 0.8 },
+  { path: '/locations/chilakaluripet', changeFrequency: 'monthly', priority: 0.7 },
+  { path: '/locations/sattenapalle',   changeFrequency: 'monthly', priority: 0.7 },
+  { path: '/locations/vinukonda',      changeFrequency: 'monthly', priority: 0.7 },
+  { path: '/locations/macherla',       changeFrequency: 'monthly', priority: 0.7 },
   // ── Legal ──
   { path: '/privacy',    changeFrequency: 'yearly',  priority: 0.3 },
   { path: '/terms',      changeFrequency: 'yearly',  priority: 0.3 },
