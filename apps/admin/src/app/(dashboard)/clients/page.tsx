@@ -5,6 +5,7 @@ import { api } from '@/lib/api';
 import type { Client } from '@palnadu/types';
 import { Plus, Search, Edit2, Trash2, X, Building, Mail, Phone } from 'lucide-react';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { useToast } from '@/components/ui/toast';
 
 interface ClientFormData {
   name: string;
@@ -23,6 +24,7 @@ const initialFormData: ClientFormData = {
 };
 
 export default function ClientsPage() {
+  const { toast } = useToast();
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -70,7 +72,7 @@ export default function ClientsPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name || !formData.email) {
-      alert('Please provide name and email.');
+      toast.error('Please provide name and email.');
       return;
     }
 
@@ -78,13 +80,15 @@ export default function ClientsPage() {
     try {
       if (editingClient) {
         await api.clients.update(editingClient.id, formData);
+        toast.success('Client updated successfully');
       } else {
         await api.clients.create(formData);
+        toast.success('Client created successfully');
       }
       setModalOpen(false);
       fetchClients();
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Operation failed');
+      toast.error(err instanceof Error ? err.message : 'Operation failed');
     } finally {
       setSubmitting(false);
     }
@@ -95,10 +99,11 @@ export default function ClientsPage() {
     try {
       setDeleting(true);
       await api.clients.delete(deleteTarget.id);
+      toast.success('Client deleted successfully');
       setDeleteTarget(null);
       fetchClients();
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to delete client');
+      toast.error(err instanceof Error ? err.message : 'Failed to delete client');
     } finally {
       setDeleting(false);
     }

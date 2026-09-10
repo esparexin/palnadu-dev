@@ -5,6 +5,7 @@ import { api } from '@/lib/api';
 import type { Client } from '@palnadu/types';
 import { FolderKanban, Plus, Calendar, DollarSign, Building, X, Search, Edit2, Trash2 } from 'lucide-react';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { useToast } from '@/components/ui/toast';
 import { cn } from '@/lib/utils';
 
 const statusColors: Record<string, string> = {
@@ -38,6 +39,7 @@ const initialFormData: ProjectFormData = {
 };
 
 export default function ProjectsPage() {
+  const { toast } = useToast();
   const [projects, setProjects] = useState<any[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
@@ -100,7 +102,7 @@ export default function ProjectsPage() {
   const handleSaveProject = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name || !formData.clientId) {
-      alert('Please enter a project name and select a client.');
+      toast.error('Please enter a project name and select a client.');
       return;
     }
 
@@ -123,14 +125,16 @@ export default function ProjectsPage() {
 
       if (editingProject) {
         await api.projects.update(editingProject.id, payload);
+        toast.success('Project updated successfully');
       } else {
         await api.projects.create(payload);
+        toast.success('Project created successfully');
       }
 
       setModalOpen(false);
       loadData();
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to save project');
+      toast.error(err instanceof Error ? err.message : 'Failed to save project');
     } finally {
       setSubmitting(false);
     }
@@ -141,10 +145,11 @@ export default function ProjectsPage() {
     try {
       setDeleting(true);
       await api.projects.delete(deleteTarget.id);
+      toast.success('Project deleted successfully');
       setDeleteTarget(null);
       loadData();
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to delete project');
+      toast.error(err instanceof Error ? err.message : 'Failed to delete project');
     } finally {
       setDeleting(false);
     }

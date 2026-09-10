@@ -5,6 +5,7 @@ import { api } from '@/lib/api';
 import type { User, UserRole } from '@palnadu/types';
 import { Plus, X, UserCheck, UserX, Shield, Edit2 } from 'lucide-react';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { useToast } from '@/components/ui/toast';
 import { cn } from '@/lib/utils';
 
 const roleColors: Record<string, string> = {
@@ -30,6 +31,7 @@ const initialFormData: UserFormData = {
 };
 
 export default function UsersPage() {
+  const { toast } = useToast();
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
@@ -54,12 +56,12 @@ export default function UsersPage() {
   const handleCreateUser = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name || !formData.email || !formData.password) {
-      alert('Please fill all required fields.');
+      toast.error('Please fill all required fields.');
       return;
     }
 
     if (formData.password.length < 8) {
-      alert('Password must be at least 8 characters.');
+      toast.error('Password must be at least 8 characters.');
       return;
     }
 
@@ -68,9 +70,10 @@ export default function UsersPage() {
       await api.users.create(formData);
       setModalOpen(false);
       setFormData(initialFormData);
+      toast.success('User account created successfully');
       fetchUsers();
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to create user');
+      toast.error(err instanceof Error ? err.message : 'Failed to create user');
     } finally {
       setSubmitting(false);
     }
@@ -81,10 +84,11 @@ export default function UsersPage() {
     try {
       setStatusLoading(true);
       await api.users.update(statusTarget.id, { isActive: !statusTarget.isActive });
+      toast.success(statusTarget.isActive ? 'User deactivated successfully' : 'User activated successfully');
       setStatusTarget(null);
       fetchUsers();
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to update user status');
+      toast.error(err instanceof Error ? err.message : 'Failed to update user status');
     } finally {
       setStatusLoading(false);
     }
@@ -93,9 +97,10 @@ export default function UsersPage() {
   const handleRoleChange = async (userId: string, newRole: string) => {
     try {
       await api.users.update(userId, { role: newRole });
+      toast.success('User role updated successfully');
       fetchUsers();
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to change role');
+      toast.error(err instanceof Error ? err.message : 'Failed to change role');
     }
   };
 

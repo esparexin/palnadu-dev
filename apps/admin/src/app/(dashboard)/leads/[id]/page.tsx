@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { useToast } from '@/components/ui/toast';
 
 const statusColors: Record<string, string> = {
   NEW: 'bg-blue-100 text-blue-800 border-blue-200',
@@ -35,6 +36,7 @@ const statusColors: Record<string, string> = {
 const allStatuses = Object.keys(statusColors);
 
 export default function LeadDetailPage() {
+  const { toast } = useToast();
   const params = useParams();
   const router = useRouter();
   const [lead, setLead] = useState<Lead | null>(null);
@@ -77,8 +79,9 @@ export default function LeadDetailPage() {
     try {
       await api.leads.update(lead.id, { notes });
       setLead({ ...lead, notes });
-    } catch {
-      /* handle error */
+      toast.success('Notes saved successfully');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to save notes');
     }
     setSaving(false);
   };
@@ -90,7 +93,7 @@ export default function LeadDetailPage() {
       await api.leads.delete(lead.id);
       router.push('/leads');
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to delete lead');
+      toast.error(err instanceof Error ? err.message : 'Failed to delete lead');
     } finally {
       setDeleting(false);
     }
@@ -110,8 +113,9 @@ export default function LeadDetailPage() {
       await api.leads.update(lead.id, { status: 'WON' });
       setLead({ ...lead, status: 'WON' as Lead['status'] });
       setConvertedSuccess(true);
+      toast.success('Inquiry converted to client successfully');
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to convert client');
+      toast.error(err instanceof Error ? err.message : 'Failed to convert client');
     }
     setConverting(false);
   };

@@ -6,6 +6,7 @@ import { api } from '@/lib/api';
 import type { Lead } from '@palnadu/types';
 import { Mail, Phone, MessageSquare, ArrowRight, Search, Trash2 } from 'lucide-react';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { useToast } from '@/components/ui/toast';
 import { cn } from '@/lib/utils';
 
 const statusColors: Record<string, string> = {
@@ -21,6 +22,7 @@ const statusColors: Record<string, string> = {
 };
 
 export default function LeadsPage() {
+  const { toast } = useToast();
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -52,8 +54,9 @@ export default function LeadsPage() {
       await api.leads.delete(deleteTarget.id);
       setLeads((prev) => prev.filter((l) => l.id !== deleteTarget.id));
       setDeleteTarget(null);
+      toast.success('Inquiry deleted successfully');
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to delete lead');
+      toast.error(err instanceof Error ? err.message : 'Failed to delete lead');
     } finally {
       setDeleting(false);
     }

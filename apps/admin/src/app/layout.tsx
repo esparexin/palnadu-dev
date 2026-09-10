@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { Plus_Jakarta_Sans } from 'next/font/google';
+import { ToastProvider } from '@/components/ui/toast';
 import './globals.css';
 
 const fontSans = Plus_Jakarta_Sans({
@@ -50,7 +51,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <link rel="icon" href={faviconUrl} sizes="any" />
         <link rel="apple-touch-icon" href={faviconUrl} />
       </head>
-      <body className="min-h-screen font-sans antialiased bg-white text-palnadu-body">{children}</body>
+      <body className="min-h-screen font-sans antialiased bg-white text-palnadu-body">
+        <ToastProvider>{children}</ToastProvider>
+      </body>
     </html>
   );
 }

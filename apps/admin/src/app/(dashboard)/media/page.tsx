@@ -4,6 +4,7 @@ import { useEffect, useState, useRef } from 'react';
 import { api } from '@/lib/api';
 import { UploadCloud, Image as ImageIcon, ExternalLink, Trash2, Check, Copy } from 'lucide-react';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { useToast } from '@/components/ui/toast';
 
 interface MediaItem {
   id: string;
@@ -16,6 +17,7 @@ interface MediaItem {
 }
 
 export default function MediaPage() {
+  const { toast } = useToast();
   const [mediaItems, setMediaItems] = useState<MediaItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
@@ -48,8 +50,11 @@ export default function MediaPage() {
     try {
       await api.media.upload(file);
       fetchMedia();
+      toast.success('Media asset uploaded successfully');
     } catch (err) {
-      setErrorNotice(err instanceof Error ? err.message : 'Upload failed');
+      const msg = err instanceof Error ? err.message : 'Upload failed';
+      setErrorNotice(msg);
+      toast.error(msg);
     } finally {
       setUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
@@ -59,6 +64,7 @@ export default function MediaPage() {
   const copyToClipboard = (id: string, url: string) => {
     navigator.clipboard.writeText(url);
     setCopiedId(id);
+    toast.info('Direct URL copied to clipboard');
     setTimeout(() => setCopiedId(null), 2000);
   };
 
@@ -67,10 +73,11 @@ export default function MediaPage() {
     try {
       setDeleting(true);
       await api.media.delete(deleteTarget.id);
+      toast.success('Media asset deleted successfully');
       setDeleteTarget(null);
       fetchMedia();
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to delete');
+      toast.error(err instanceof Error ? err.message : 'Failed to delete');
     } finally {
       setDeleting(false);
     }

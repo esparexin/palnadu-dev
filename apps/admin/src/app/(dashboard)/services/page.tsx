@@ -5,6 +5,7 @@ import { api } from '@/lib/api';
 import type { Service } from '@palnadu/types';
 import { Plus, Edit2, Trash2, X, Briefcase, ExternalLink } from 'lucide-react';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { useToast } from '@/components/ui/toast';
 import { cn } from '@/lib/utils';
 
 interface ServiceFormData {
@@ -35,6 +36,7 @@ function slugify(text: string): string {
 }
 
 export default function ServicesAdminPage() {
+  const { toast } = useToast();
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
@@ -90,7 +92,7 @@ export default function ServicesAdminPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.title || !formData.slug || !formData.shortDescription || !formData.content) {
-      alert('Please fill all required fields.');
+      toast.error('Please fill all required fields.');
       return;
     }
 
@@ -98,13 +100,15 @@ export default function ServicesAdminPage() {
     try {
       if (editingService) {
         await api.services.update(editingService.id, formData);
+        toast.success('Service updated successfully');
       } else {
         await api.services.create(formData);
+        toast.success('Service created successfully');
       }
       setModalOpen(false);
       fetchServices();
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Operation failed');
+      toast.error(err instanceof Error ? err.message : 'Operation failed');
     } finally {
       setSubmitting(false);
     }
@@ -115,10 +119,11 @@ export default function ServicesAdminPage() {
     try {
       setDeleting(true);
       await api.services.delete(deleteTarget.id);
+      toast.success('Service deleted successfully');
       setDeleteTarget(null);
       fetchServices();
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to delete service');
+      toast.error(err instanceof Error ? err.message : 'Failed to delete service');
     } finally {
       setDeleting(false);
     }

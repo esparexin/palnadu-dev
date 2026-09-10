@@ -5,6 +5,7 @@ import { api } from '@/lib/api';
 import type { BlogPost } from '@palnadu/types';
 import { Plus, Search, Edit2, Trash2, X, Globe, Eye, FileText, CheckCircle2, Sparkles, ExternalLink, UploadCloud, Loader2 } from 'lucide-react';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { useToast } from '@/components/ui/toast';
 import { cn } from '@/lib/utils';
 
 interface BlogFormData {
@@ -44,6 +45,7 @@ function slugify(text: string): string {
 }
 
 export default function BlogAdminPage() {
+  const { toast } = useToast();
   const [posts, setPosts] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -76,7 +78,7 @@ export default function BlogAdminPage() {
         }));
       }
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Upload failed');
+      toast.error(err instanceof Error ? err.message : 'Upload failed');
     } finally {
       setUploadingCover(false);
       if (coverInputRef.current) coverInputRef.current.value = '';
@@ -145,7 +147,7 @@ export default function BlogAdminPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.title || !formData.slug || !formData.content) {
-      alert('Please provide Title, Slug, and Article Content.');
+      toast.error('Please provide Title, Slug, and Article Content.');
       return;
     }
 
@@ -167,14 +169,16 @@ export default function BlogAdminPage() {
 
       if (editingPost) {
         await api.blog.update(editingPost.id, payload);
+        toast.success('Article updated successfully');
       } else {
         await api.blog.create(payload);
+        toast.success('Article published successfully');
       }
 
       setModalOpen(false);
       fetchPosts();
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Operation failed');
+      toast.error(err instanceof Error ? err.message : 'Operation failed');
     } finally {
       setSubmitting(false);
     }
@@ -185,10 +189,11 @@ export default function BlogAdminPage() {
     try {
       setDeleting(true);
       await api.blog.delete(deleteTarget.id);
+      toast.success('Article deleted successfully');
       setDeleteTarget(null);
       fetchPosts();
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to delete article');
+      toast.error(err instanceof Error ? err.message : 'Failed to delete article');
     } finally {
       setDeleting(false);
     }
