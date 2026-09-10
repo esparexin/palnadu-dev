@@ -196,18 +196,18 @@ export function ScrollGlobe() {
               Palnadu.dev turns real-world business challenges into practical, production-ready software. We validate ideas, eliminate manual business bottlenecks, and engineer what works.
             </p>
 
-            {/* Mobile 2-Column Action Buttons | Desktop Prominent Action Buttons */}
+            {/* Mobile 2-Column Action Buttons | Desktop Wide Action Buttons */}
             <div className="grid grid-cols-2 gap-2.5 w-full max-w-sm sm:max-w-none sm:flex sm:flex-row sm:items-center sm:gap-3 lg:gap-4 pt-2 sm:pt-2.5">
               <Link
                 href="/contact"
-                className="w-full sm:w-auto px-3 py-3 sm:px-7 sm:py-3.5 lg:px-9 lg:py-4 rounded-md font-semibold text-xs sm:text-sm lg:text-base text-center inline-flex items-center justify-center bg-palnadu-blue text-white hover:bg-[#12487e] shadow-xs transition-colors"
+                className="w-full sm:w-auto lg:min-w-[210px] px-3 py-3 sm:px-7 sm:py-3.5 lg:px-8 lg:py-4 rounded-md font-semibold text-xs sm:text-sm lg:text-base text-center inline-flex items-center justify-center bg-palnadu-blue text-white hover:bg-[#12487e] shadow-xs transition-colors"
               >
                 <span>Any Idea</span>
                 <ArrowRight className="ml-1.5 lg:ml-2 h-3.5 w-3.5 sm:h-4 sm:w-4 lg:h-4.5 lg:w-4.5 shrink-0" />
               </Link>
               <Link
                 href="/services"
-                className="w-full sm:w-auto px-3 py-3 sm:px-7 sm:py-3.5 lg:px-9 lg:py-4 rounded-md font-semibold text-xs sm:text-sm lg:text-base text-center inline-flex items-center justify-center border border-palnadu-blue bg-white text-palnadu-blue hover:bg-palnadu-light-blue transition-colors"
+                className="w-full sm:w-auto lg:min-w-[210px] px-3 py-3 sm:px-7 sm:py-3.5 lg:px-8 lg:py-4 rounded-md font-semibold text-xs sm:text-sm lg:text-base text-center inline-flex items-center justify-center border border-palnadu-blue bg-white text-palnadu-blue hover:bg-palnadu-light-blue transition-colors"
               >
                 Services
               </Link>
