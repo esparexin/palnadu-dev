@@ -8,18 +8,18 @@ import { cn } from "@/lib/utils";
 
 // Desktop waypoints (anchored to the right 5-column runway of the 12-col grid)
 const DESKTOP_POSITIONS = [
-  { top: 50, left: 75, scale: 1.25, opacity: 0.95 }, // 0: Hero — Right column
-  { top: 50, left: 75, scale: 1.10, opacity: 0.90 }, // 1: Standards — Right column (100% visible, zero cards on it!)
-  { top: 50, left: 75, scale: 1.15, opacity: 0.90 }, // 2: Methodology — Right column (100% visible!)
-  { top: 52, left: 50, scale: 1.45, opacity: 0.14 }, // 3: CTA — Centered ambient backdrop
+  { top: 50, left: 75, scale: 1.25, opacity: 0.95 }, // 0: Hero — 95% crisp & clearly visible
+  { top: 50, left: 75, scale: 1.10, opacity: 0.90 }, // 1: Standards — 90% crisp & visible
+  { top: 50, left: 75, scale: 1.15, opacity: 0.90 }, // 2: Methodology — 90% crisp & visible
+  { top: 52, left: 50, scale: 1.45, opacity: 0.16 }, // 3: CTA — Centered ambient backdrop
 ];
 
-// Mobile waypoints (calibrated to stay clean, readable, and non-intrusive)
+// Mobile waypoints (calibrated to sit cleanly below metrics and stay non-intrusive)
 const MOBILE_POSITIONS = [
-  { top: 66, left: 50, scale: 0.76, opacity: 0.95 }, // 0: Hero — Centered below trust metrics
-  { top: 48, left: 82, scale: 0.65, opacity: 0.25 }, // 1: Standards — Subtly drifted right
-  { top: 48, left: 80, scale: 0.68, opacity: 0.28 }, // 2: Methodology — Mid right
-  { top: 52, left: 50, scale: 1.10, opacity: 0.12 }, // 3: CTA — Centered ambient backdrop
+  { top: 78, left: 50, scale: 0.72, opacity: 0.90 }, // 0: Hero — Cleanly below trust metrics, zero text overlap
+  { top: 50, left: 82, scale: 0.60, opacity: 0.25 }, // 1: Standards — Soft ambient background
+  { top: 50, left: 80, scale: 0.62, opacity: 0.28 }, // 2: Methodology — Soft ambient background
+  { top: 52, left: 50, scale: 1.05, opacity: 0.14 }, // 3: CTA — Centered ambient backdrop
 ];
 
 export function ScrollGlobe() {
@@ -176,7 +176,7 @@ export function ScrollGlobe() {
       {/* ── SECTION 0: HERO & BALANCED 2-COLUMN GRID ── */}
       <section
         ref={(el) => { sectionRefs.current[0] = el; }}
-        className="relative z-20 px-4 sm:px-8 md:px-12 lg:px-16 pt-10 pb-6 sm:pt-14 sm:pb-16 lg:pt-20 lg:pb-18 border-b border-palnadu-border/60 overflow-hidden w-full bg-white/80 backdrop-blur-xs"
+        className="relative z-20 px-4 sm:px-8 md:px-12 lg:px-16 pt-10 pb-8 sm:pt-14 sm:pb-16 lg:pt-20 lg:pb-18 border-b border-palnadu-border/60 overflow-hidden w-full bg-transparent"
       >
         <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
           
@@ -237,8 +237,8 @@ export function ScrollGlobe() {
           {/* Desktop Right Column: Reserves space for the scrolling globe */}
           <div className="hidden lg:block lg:col-span-5 h-[380px]" aria-hidden="true" />
 
-          {/* Mobile Reserved Height for Globe in Hero — Compact to eliminate excess white space */}
-          <div className="lg:hidden h-[140px]" aria-hidden="true" />
+          {/* Mobile Reserved Height for Globe in Hero — Clean clearance below metrics */}
+          <div className="lg:hidden h-[200px]" aria-hidden="true" />
 
         </div>
       </section>
@@ -246,7 +246,7 @@ export function ScrollGlobe() {
       {/* ── SECTION 1: STANDARDS ("TRUTH BEFORE CODE") ── */}
       <section
         ref={(el) => { sectionRefs.current[1] = el; }}
-        className="relative z-20 px-4 sm:px-8 md:px-12 lg:px-16 py-7 sm:py-14 lg:py-20 bg-palnadu-off-white/60 border-b border-palnadu-border/60 overflow-hidden w-full backdrop-blur-xs"
+        className="relative z-20 px-4 sm:px-8 md:px-12 lg:px-16 py-7 sm:py-14 lg:py-20 border-b border-palnadu-border/60 overflow-hidden w-full bg-transparent"
       >
         <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
           <div className="lg:col-span-7 space-y-6">
@@ -314,7 +314,7 @@ export function ScrollGlobe() {
       {/* ── SECTION 2: 4-STEP DELIVERY METHODOLOGY ("HOW WE WORK WITH YOU") ── */}
       <section
         ref={(el) => { sectionRefs.current[2] = el; }}
-        className="relative z-20 px-4 sm:px-8 md:px-12 lg:px-16 py-7 sm:py-14 lg:py-20 bg-white/90 border-b border-palnadu-border/60 overflow-hidden w-full backdrop-blur-xs"
+        className="relative z-20 px-4 sm:px-8 md:px-12 lg:px-16 py-7 sm:py-14 lg:py-20 border-b border-palnadu-border/60 overflow-hidden w-full bg-transparent"
       >
         <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
           <div className="lg:col-span-7 space-y-6">
@@ -357,7 +357,7 @@ export function ScrollGlobe() {
       {/* ── SECTION 3: HIGH-IMPACT CONSULTATION CTA ── */}
       <section
         ref={(el) => { sectionRefs.current[3] = el; }}
-        className="relative z-20 px-4 sm:px-8 md:px-12 lg:px-16 py-8 sm:py-14 lg:py-24 bg-palnadu-off-white/40 overflow-hidden w-full"
+        className="relative z-20 px-4 sm:px-8 md:px-12 lg:px-16 py-8 sm:py-14 lg:py-24 overflow-hidden w-full bg-transparent"
       >
         <div className="max-w-4xl mx-auto rounded-2xl border border-palnadu-border bg-white/95 backdrop-blur-md p-6 sm:p-10 lg:p-12 shadow-sm text-center space-y-4 sm:space-y-5">
           <p className="text-xs font-mono uppercase tracking-widest text-palnadu-blue font-bold">
