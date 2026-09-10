@@ -4,23 +4,9 @@ import React, { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import Globe from "@/components/ui/globe";
 import { ArrowRight } from "lucide-react";
-import { cn } from "@/lib/utils";
-
-// Desktop scroll waypoints (anchored to the right side of the screen)
-const DESKTOP_WAYPOINTS = [
-  { top: 22, right: 8, scale: 1.15, rotate: 0, opacity: 0.95 },   // 0: Hero
-  { top: 32, right: 6, scale: 0.95, rotate: -8, opacity: 0.85 },  // 1: Standards
-  { top: 28, right: 7, scale: 1.05, rotate: 6, opacity: 0.85 },   // 2: Methodology (Vibrant & Clearly Visible!)
-  { top: 46, right: 8, scale: 0.75, rotate: 0, opacity: 0.35 },   // 3: CTA
-];
 
 export function ScrollGlobe() {
-  const [activeSection, setActiveSection] = useState(0);
-  const activeSectionRef = useRef(0);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const desktopGlobeRef = useRef<HTMLDivElement>(null);
   const progressBarRef = useRef<HTMLDivElement>(null);
-  const sectionRefs = useRef<(HTMLElement | null)[]>([]);
 
   useEffect(() => {
     let ticking = false;
@@ -32,39 +18,8 @@ export function ScrollGlobe() {
           const docHeight = document.documentElement.scrollHeight - window.innerHeight;
           const progress = docHeight > 0 ? Math.min(Math.max(scrollTop / docHeight, 0), 1) : 0;
 
-          // 1. Top Progress Bar
           if (progressBarRef.current) {
             progressBarRef.current.style.transform = `scaleX(${progress})`;
-          }
-
-          // 2. Identify Active Section
-          const viewportCenter = window.innerHeight / 2;
-          let newSection = 0;
-          let minDistance = Infinity;
-
-          sectionRefs.current.forEach((ref, index) => {
-            if (ref) {
-              const rect = ref.getBoundingClientRect();
-              const center = rect.top + rect.height / 2;
-              const dist = Math.abs(center - viewportCenter);
-              if (dist < minDistance) {
-                minDistance = dist;
-                newSection = index;
-              }
-            }
-          });
-
-          // 3. Desktop Scroll Waypoint Movement (High opacity in Methodology!)
-          if (desktopGlobeRef.current && window.innerWidth >= 1024) {
-            const wp = DESKTOP_WAYPOINTS[newSection] || DESKTOP_WAYPOINTS[0];
-            desktopGlobeRef.current.style.transform = `translate3d(0, ${wp.top}vh, 0) scale3d(${wp.scale}, ${wp.scale}, 1) rotate(${wp.rotate}deg)`;
-            desktopGlobeRef.current.style.right = `${wp.right}vw`;
-            desktopGlobeRef.current.style.opacity = `${wp.opacity}`;
-          }
-
-          if (newSection !== activeSectionRef.current) {
-            activeSectionRef.current = newSection;
-            setActiveSection(newSection);
           }
 
           ticking = false;
@@ -74,99 +29,27 @@ export function ScrollGlobe() {
     };
 
     window.addEventListener("scroll", onScroll, { passive: true });
-
-    // Initial desktop placement
-    if (desktopGlobeRef.current && window.innerWidth >= 1024) {
-      const initWp = DESKTOP_WAYPOINTS[0];
-      desktopGlobeRef.current.style.transform = `translate3d(0, ${initWp.top}vh, 0) scale3d(${initWp.scale}, ${initWp.scale}, 1) rotate(${initWp.rotate}deg)`;
-      desktopGlobeRef.current.style.right = `${initWp.right}vw`;
-      desktopGlobeRef.current.style.opacity = `${initWp.opacity}`;
-    }
-
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  const navLabels = ["Overview", "Standards", "Process", "Get Started"];
-
   return (
-    <div 
-      ref={containerRef}
-      className="relative w-full max-w-full overflow-x-hidden bg-white text-palnadu-dark"
-    >
-      {/* Top Progress Bar */}
+    <div className="relative w-full max-w-full overflow-x-hidden bg-white text-palnadu-dark">
+      {/* Top Scroll Progress Bar */}
       <div className="fixed top-0 left-0 w-full h-0.5 bg-palnadu-border/40 z-50 pointer-events-none">
         <div 
           ref={progressBarRef}
-          className="h-full bg-gradient-to-r from-palnadu-blue via-palnadu-blue to-palnadu-teal will-change-transform shadow-xs"
+          className="h-full bg-gradient-to-r from-palnadu-blue via-palnadu-blue to-palnadu-teal will-change-transform"
           style={{ transform: 'scaleX(0)', transformOrigin: 'left center' }}
         />
       </div>
 
-      {/* Desktop Scroll Indicator Dots */}
-      <div className="hidden lg:flex fixed right-4 sm:right-6 top-1/2 -translate-y-1/2 z-40">
-        <div className="space-y-4">
-          {navLabels.map((label, index) => (
-            <div key={index} className="relative group">
-              <div
-                className={cn(
-                  "nav-label absolute right-6 top-1/2 -translate-y-1/2",
-                  "px-3 py-1 rounded-md text-xs font-semibold whitespace-nowrap",
-                  "bg-white/95 backdrop-blur-md border border-palnadu-border shadow-md z-50 text-palnadu-dark",
-                  activeSection === index ? "animate-fadeOut" : "opacity-0 pointer-events-none"
-                )}
-              >
-                <div className="flex items-center gap-1.5">
-                  <div className="w-1.5 h-1.5 rounded-full bg-palnadu-blue" />
-                  <span>{label}</span>
-                </div>
-              </div>
-
-              <button
-                onClick={() => {
-                  sectionRefs.current[index]?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                }}
-                className={cn(
-                  "relative w-2.5 h-2.5 rounded-full border-2 transition-all duration-300 hover:scale-125 cursor-pointer",
-                  activeSection === index 
-                    ? "bg-palnadu-blue border-palnadu-blue shadow-sm" 
-                    : "bg-transparent border-palnadu-border hover:border-palnadu-blue"
-                )}
-                aria-label={`Go to ${label}`}
-              />
-            </div>
-          ))}
-        </div>
-        <div className="absolute left-1/2 top-0 bottom-0 w-px bg-palnadu-border -translate-x-1/2 -z-10" />
-      </div>
-
-      {/* ── DESKTOP SCROLL-ANIMATED GLOBE (Desktop Only: Anchored right, travels down waypoints) ── */}
-      <div
-        ref={desktopGlobeRef}
-        className="hidden lg:block fixed top-0 z-10 pointer-events-none will-change-transform transition-all duration-700 ease-[cubic-bezier(0.23,1,0.32,1)]"
-        style={{
-          transform: `translate3d(0, ${DESKTOP_WAYPOINTS[0].top}vh, 0) scale3d(${DESKTOP_WAYPOINTS[0].scale}, ${DESKTOP_WAYPOINTS[0].scale}, 1) rotate(${DESKTOP_WAYPOINTS[0].rotate}deg)`,
-          right: `${DESKTOP_WAYPOINTS[0].right}vw`,
-          opacity: DESKTOP_WAYPOINTS[0].opacity,
-        }}
-      >
-        <div className="relative flex items-center justify-center">
-          <div className="absolute w-72 h-72 rounded-full bg-palnadu-blue/10 blur-3xl pointer-events-none" />
-          <div className="relative z-10">
-            <Globe />
-          </div>
-        </div>
-      </div>
-
-      {/* ── SECTION 0: HERO & TRUST METRICS ── */}
-      <section
-        ref={(el) => { sectionRefs.current[0] = el; }}
-        className="relative z-20 px-4 sm:px-8 md:px-12 lg:px-16 pt-6 pb-12 sm:py-14 lg:py-20 border-b border-palnadu-border/60 overflow-hidden w-full"
-      >
+      {/* ── SECTION 1: HERO & BALANCED 2-COLUMN GRID (NO EMPTY VOID) ── */}
+      <section className="relative z-20 px-4 sm:px-8 md:px-12 lg:px-16 pt-6 pb-10 sm:py-12 lg:py-16 border-b border-palnadu-border/60">
         <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
           
           {/* Left Column (7 cols): Content & Trust Proof */}
           <div className="lg:col-span-7 space-y-4 sm:space-y-5 text-left">
-            {/* Pure Typographic Eyebrow — No Pills, No Chips */}
+            {/* Pure Typographic Eyebrow — Zero pills, zero chips */}
             <p className="text-xs font-mono uppercase tracking-widest text-palnadu-blue font-bold">
               Problem-First Software Studio
             </p>
@@ -180,7 +63,7 @@ export function ScrollGlobe() {
               Palnadu.dev turns real-world business challenges into practical, production-ready software. We validate ideas, eliminate manual business bottlenecks, and engineer what works.
             </p>
 
-            {/* Mobile 2-Column Buttons: "Any Idea →" & "Services" */}
+            {/* Mobile 2-Column Action Buttons */}
             <div className="grid grid-cols-2 gap-2.5 w-full max-w-sm sm:max-w-none sm:flex sm:flex-row sm:items-center sm:gap-3 pt-1">
               <Link
                 href="/contact"
@@ -197,7 +80,7 @@ export function ScrollGlobe() {
               </Link>
             </div>
 
-            {/* Trust Metrics Bar — Fills the lower hero, zero empty void */}
+            {/* Trust Metrics Bar — Fills the lower hero and eliminates empty void */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5 sm:gap-4 pt-6 border-t border-palnadu-border/60">
               <div className="space-y-0.5">
                 <p className="text-xl sm:text-2xl font-black text-palnadu-dark">8+ Years</p>
@@ -218,26 +101,21 @@ export function ScrollGlobe() {
             </div>
           </div>
 
-          {/* Right Column: Mobile Inline Globe (Prominent in Hero) */}
-          <div className="lg:hidden flex items-center justify-center relative py-4 my-2 overflow-visible">
-            <div className="absolute w-56 h-56 rounded-full bg-palnadu-blue/10 blur-2xl pointer-events-none" />
-            <div className="relative z-10 transform scale-85 opacity-95">
+          {/* Right Column (5 cols): Beautifully Anchored 3D Globe Visual */}
+          <div className="lg:col-span-5 flex items-center justify-center relative py-4 lg:py-0">
+            {/* Ambient Radial Glow Backdrop */}
+            <div className="absolute w-60 h-60 sm:w-72 sm:h-72 rounded-full bg-palnadu-blue/10 blur-3xl pointer-events-none" />
+            <div className="relative z-10 transform scale-90 sm:scale-100 lg:scale-110">
               <Globe />
             </div>
           </div>
 
-          {/* Desktop Right Column Placeholder (Reserves grid space so text never shifts) */}
-          <div className="hidden lg:block lg:col-span-5 h-[360px]" aria-hidden="true" />
-
         </div>
       </section>
 
-      {/* ── SECTION 1: STANDARDS & METHODOLOGY ("TRUTH BEFORE CODE") ── */}
-      <section
-        ref={(el) => { sectionRefs.current[1] = el; }}
-        className="relative z-20 px-4 sm:px-8 md:px-12 lg:px-16 py-10 sm:py-16 lg:py-20 bg-palnadu-off-white/40 border-b border-palnadu-border/60 overflow-hidden w-full"
-      >
-        <div className="max-w-7xl mx-auto space-y-8 sm:space-y-10">
+      {/* ── SECTION 2: STANDARDS ("TRUTH BEFORE CODE") ── */}
+      <section className="relative z-20 px-4 sm:px-8 md:px-12 lg:px-16 py-10 sm:py-14 lg:py-16 bg-palnadu-off-white/40 border-b border-palnadu-border/60">
+        <div className="max-w-7xl mx-auto space-y-6 sm:space-y-8">
           <div className="max-w-2xl text-left">
             <p className="text-xs font-mono uppercase tracking-widest text-palnadu-blue font-bold mb-1.5">
               Engineering Standards
@@ -295,11 +173,8 @@ export function ScrollGlobe() {
         </div>
       </section>
 
-      {/* ── SECTION 2: 4-STEP DELIVERY METHODOLOGY ("HOW WE WORK WITH YOU") ── */}
-      <section
-        ref={(el) => { sectionRefs.current[2] = el; }}
-        className="relative z-20 px-4 sm:px-8 md:px-12 lg:px-16 py-10 sm:py-16 lg:py-20 bg-white border-b border-palnadu-border/60 overflow-hidden w-full"
-      >
+      {/* ── SECTION 3: 4-STEP DELIVERY METHODOLOGY ("HOW WE WORK WITH YOU") ── */}
+      <section className="relative z-20 px-4 sm:px-8 md:px-12 lg:px-16 py-10 sm:py-14 lg:py-16 bg-white border-b border-palnadu-border/60">
         <div className="max-w-7xl mx-auto space-y-6 sm:space-y-8">
           <div className="max-w-2xl text-left">
             <p className="text-xs font-mono uppercase tracking-widest text-palnadu-blue font-bold mb-1.5">
@@ -313,18 +188,6 @@ export function ScrollGlobe() {
             </p>
           </div>
 
-          {/* Mobile Globe Showcase in Methodology — 100% Visible, High Opacity, Never Covered! */}
-          <div className="lg:hidden flex flex-col items-center justify-center py-4 my-2 relative">
-            <div className="absolute w-52 h-52 rounded-full bg-palnadu-blue/10 blur-2xl pointer-events-none" />
-            <div className="relative z-10 transform scale-75 opacity-90">
-              <Globe />
-            </div>
-            <p className="text-[10px] font-mono text-palnadu-secondary uppercase tracking-wider mt-1 text-center">
-              Global Standards • Local Accountability
-            </p>
-          </div>
-
-          {/* 4 Process Step Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
             {[
               { step: "01", phase: "Analyze", title: "Diagnose First", desc: "Identify workflow bottlenecks, user demands, and technical limits." },
@@ -345,12 +208,9 @@ export function ScrollGlobe() {
         </div>
       </section>
 
-      {/* ── SECTION 3: HIGH-IMPACT CONSULTATION CTA ── */}
-      <section
-        ref={(el) => { sectionRefs.current[3] = el; }}
-        className="relative z-20 px-4 sm:px-8 md:px-12 lg:px-16 py-12 sm:py-16 lg:py-24 bg-white overflow-hidden w-full"
-      >
-        <div className="max-w-4xl mx-auto rounded-2xl border border-palnadu-border bg-palnadu-light-blue/30 p-6 sm:p-10 lg:p-12 shadow-sm text-center space-y-4 sm:space-y-5">
+      {/* ── SECTION 4: HIGH-IMPACT CONSULTATION CTA ── */}
+      <section className="relative z-20 px-4 sm:px-8 md:px-12 lg:px-16 py-12 sm:py-16 lg:py-20 bg-palnadu-off-white/30">
+        <div className="max-w-4xl mx-auto rounded-2xl border border-palnadu-border bg-white p-6 sm:p-10 lg:p-12 shadow-xs text-center space-y-4 sm:space-y-5">
           <p className="text-xs font-mono uppercase tracking-widest text-palnadu-blue font-bold">
             Get Started
           </p>
@@ -372,7 +232,7 @@ export function ScrollGlobe() {
             </Link>
             <Link
               href="/services"
-              className="w-full sm:w-auto px-7 py-3 rounded-md font-semibold text-sm border border-palnadu-blue text-palnadu-blue bg-white hover:bg-palnadu-off-white transition-colors"
+              className="w-full sm:w-auto px-7 py-3 rounded-md font-semibold text-sm border border-palnadu-blue text-palnadu-blue bg-white hover:bg-palnadu-light-blue transition-colors"
             >
               Explore All Services
             </Link>
