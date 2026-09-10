@@ -33,7 +33,7 @@ export function ScrollGlobe() {
           const docHeight = document.documentElement.scrollHeight - window.innerHeight;
           const progress = docHeight > 0 ? Math.min(Math.max(scrollTop / docHeight, 0), 1) : 0;
 
-          // 1. Progress Bar
+          // 1. Top Progress Bar
           if (progressBarRef.current) {
             progressBarRef.current.style.transform = `scaleX(${progress})`;
           }
@@ -55,12 +55,37 @@ export function ScrollGlobe() {
             }
           });
 
-          // 3. Mobile Scroll Parallax Movement
+          // 3. Mobile Continuous Scroll Movement & Dynamic Opacity Adjustment
           if (mobileGlobeRef.current && window.innerWidth < 1024) {
-            const moveY = Math.min(scrollTop * 0.35, 160);
-            const rotateDeg = (scrollTop * 0.08) % 360;
-            const scaleVal = Math.max(0.78, 0.88 - scrollTop * 0.0003);
-            mobileGlobeRef.current.style.transform = `translate3d(0, ${moveY}px, 0) scale(${scaleVal}) rotate(${rotateDeg}deg)`;
+            let top: number, left: number, scale: number, opacity: number, rotate: number;
+
+            if (progress < 0.22) {
+              const subP = progress / 0.22;
+              top = 60 - subP * 24;          // 60vh -> 36vh
+              left = 50 + subP * 34;         // 50vw -> 84vw (moves towards right edge)
+              scale = 0.85 - subP * 0.25;    // 0.85 -> 0.60
+              opacity = 0.95 - subP * 0.55;  // 0.95 -> 0.40 (smoothly dials down)
+              rotate = subP * 30;
+            } else if (progress < 0.65) {
+              const subP = (progress - 0.22) / 0.43;
+              top = 36 + subP * 12;          // 36vh -> 48vh
+              left = 84 + Math.sin(subP * Math.PI) * 4; // subtle wave
+              scale = 0.60 + Math.sin(subP * Math.PI) * 0.05;
+              opacity = 0.40 - subP * 0.12;  // 0.40 -> 0.28
+              rotate = 30 + subP * 45;
+            } else {
+              const subP = (progress - 0.65) / 0.35;
+              top = 48 + (50 - 48) * subP;
+              left = 84 - subP * 34;         // 84vw -> 50vw (centers behind CTA)
+              scale = 0.65 - subP * 0.05;
+              opacity = 0.28 - subP * 0.14;  // 0.28 -> 0.14
+              rotate = 75 + subP * 20;
+            }
+
+            mobileGlobeRef.current.style.top = `${top}vh`;
+            mobileGlobeRef.current.style.left = `${left}vw`;
+            mobileGlobeRef.current.style.opacity = `${opacity}`;
+            mobileGlobeRef.current.style.transform = `translate3d(-50%, 0, 0) scale(${scale}) rotate(${rotate}deg)`;
           }
 
           // 4. Desktop Scroll Waypoint Movement
@@ -166,10 +191,27 @@ export function ScrollGlobe() {
         </div>
       </div>
 
+      {/* ── MOBILE SCROLL-ANIMATED GLOBE (Mobile Only: Active scroll movement & dynamic opacity) ── */}
+      <div
+        ref={mobileGlobeRef}
+        className="lg:hidden fixed z-10 pointer-events-none will-change-transform transition-all duration-300 ease-out"
+        style={{
+          top: "60vh",
+          left: "50vw",
+          transform: "translate3d(-50%, 0, 0) scale(0.85)",
+          opacity: 0.95,
+        }}
+      >
+        <div className="relative flex items-center justify-center">
+          <div className="absolute w-56 h-56 rounded-full bg-palnadu-blue/10 blur-2xl pointer-events-none" />
+          <Globe />
+        </div>
+      </div>
+
       {/* ── SECTION 0: HERO & TRUST METRICS ── */}
       <section
         ref={(el) => { sectionRefs.current[0] = el; }}
-        className="relative z-20 px-4 sm:px-8 md:px-12 lg:px-16 pt-6 pb-12 sm:py-14 lg:py-20 border-b border-palnadu-border/60 overflow-hidden w-full"
+        className="relative z-20 px-4 sm:px-8 md:px-12 lg:px-16 pt-6 pb-6 sm:py-14 lg:py-20 border-b border-palnadu-border/60 overflow-hidden w-full"
       >
         <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
           
@@ -227,22 +269,8 @@ export function ScrollGlobe() {
             </div>
           </div>
 
-          {/* Right Column: Mobile Scroll-Driven Animated Globe */}
-          <div className="lg:hidden flex items-center justify-center relative py-4 my-2 overflow-visible">
-            {/* Ambient Radial Glow Backdrop */}
-            <div className="absolute w-56 h-56 rounded-full bg-palnadu-blue/10 blur-2xl pointer-events-none" />
-            
-            {/* Scroll-animated globe on mobile: Parallax translation, dynamic scaling and spin */}
-            <div
-              ref={mobileGlobeRef}
-              className="relative z-10 will-change-transform transition-transform duration-150 ease-out"
-              style={{
-                transform: 'translate3d(0, 0, 0) scale(0.88)',
-              }}
-            >
-              <Globe />
-            </div>
-          </div>
+          {/* Mobile Reserved Height for Globe in Hero */}
+          <div className="lg:hidden h-[240px]" aria-hidden="true" />
 
           {/* Desktop Right Column Placeholder (Reserves grid space so text never shifts) */}
           <div className="hidden lg:block lg:col-span-5 h-[360px]" aria-hidden="true" />
@@ -313,7 +341,7 @@ export function ScrollGlobe() {
         </div>
       </section>
 
-      {/* ── SECTION 2: 4-STEP DELIVERY METHODOLOGY (DIRECTLY FOLLOWS STANDARDS) ── */}
+      {/* ── SECTION 2: 4-STEP DELIVERY METHODOLOGY ── */}
       <section
         ref={(el) => { sectionRefs.current[2] = el; }}
         className="relative z-20 px-4 sm:px-8 md:px-12 lg:px-16 py-10 sm:py-16 lg:py-20 bg-white border-b border-palnadu-border/60 overflow-hidden w-full"

@@ -117,11 +117,8 @@ setup_database() {
   log_info "Generating Prisma Client..."
   pnpm db:generate
 
-  log_info "Syncing database schema with PostgreSQL..."
-  pnpm db:push
-
-  log_info "Seeding initial admin account and default records..."
-  pnpm db:seed || log_warn "Seed step skipped or already populated."
+  # Sync database schema if needed (non-blocking for dev startup)
+  pnpm db:push 2>/dev/null || log_warn "Database sync skipped or already up to date."
 }
 
 cmd_build() {
