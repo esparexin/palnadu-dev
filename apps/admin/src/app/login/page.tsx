@@ -7,6 +7,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { loginSchema, type LoginInput } from '@palnadu/validation';
 import { api } from '@/lib/api';
+import { BrandLogo } from '@/components/ui/brand-logo';
 import { Loader2 } from 'lucide-react';
 
 export default function LoginPage() {
@@ -38,13 +39,8 @@ export default function LoginPage() {
     <div className="flex min-h-screen items-center justify-center bg-palnadu-off-white px-4">
       <div className="w-full max-w-sm space-y-6">
         <div className="flex flex-col items-center space-y-2 text-center">
-          <div className="flex items-center gap-2.5 mb-1">
-            <div className="h-10 w-10 rounded-xl bg-palnadu-dark flex items-center justify-center font-black text-base text-white shadow-sm">
-              P<span className="text-palnadu-teal">.</span>
-            </div>
-            <span className="text-2xl font-black tracking-tight text-palnadu-dark">
-              Palnadu<span className="text-palnadu-blue font-bold">.dev</span>
-            </span>
+          <div className="mb-1">
+            <BrandLogo size="lg" />
           </div>
           <p className="text-xs text-palnadu-secondary">Sign in to the admin dashboard</p>
         </div>

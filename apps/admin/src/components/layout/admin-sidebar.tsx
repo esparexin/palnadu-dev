@@ -18,6 +18,7 @@ import {
   X,
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
+import { BrandLogo } from '@/components/ui/brand-logo';
 import { cn } from '@/lib/utils';
 
 const sidebarItems = [
@@ -61,14 +62,9 @@ export function AdminSidebar() {
     <div className="flex h-full flex-col bg-white">
       {/* Brand Header */}
       <div className="flex h-16 items-center border-b border-palnadu-border px-6">
-        <Link href="/dashboard" className="flex items-center gap-2.5">
-          <div className="h-8 w-8 rounded-lg bg-palnadu-dark flex items-center justify-center font-black text-sm text-white shadow-xs">
-            P<span className="text-palnadu-teal">.</span>
-          </div>
-          <span className="text-lg font-extrabold tracking-tight text-palnadu-dark">
-            Palnadu<span className="text-palnadu-blue font-bold">.dev</span>
-            <span className="ml-1.5 px-1.5 py-0.5 rounded text-[10px] font-mono font-bold bg-palnadu-light-blue text-palnadu-blue">ADMIN</span>
-          </span>
+        <Link href="/dashboard" className="flex items-center gap-2">
+          <BrandLogo size="md" />
+          <span className="ml-1 px-1.5 py-0.5 rounded text-[10px] font-mono font-bold bg-palnadu-light-blue text-palnadu-blue">ADMIN</span>
         </Link>
       </div>
 
@@ -132,13 +128,8 @@ export function AdminSidebar() {
           {mobileOpen ? <X className="h-5 w-5 text-palnadu-blue" /> : <Menu className="h-5 w-5 text-palnadu-dark" />}
         </button>
 
-        <Link href="/dashboard" className="flex items-center gap-2">
-          <div className="h-7 w-7 rounded-md bg-palnadu-dark flex items-center justify-center font-black text-xs text-white shadow-xs">
-            P<span className="text-palnadu-teal">.</span>
-          </div>
-          <span className="text-base font-extrabold tracking-tight text-palnadu-dark">
-            Palnadu<span className="text-palnadu-blue font-bold">.dev</span>
-          </span>
+        <Link href="/dashboard" className="flex items-center">
+          <BrandLogo size="sm" />
         </Link>
 
         <div className="w-8" aria-hidden="true" />

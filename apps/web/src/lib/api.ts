@@ -52,4 +52,7 @@ export const api = {
     getBySlug: (slug: string) => apiClient(`/api/blog/${slug}`),
     categories: () => apiClient<{ success: boolean; data: any[] }>('/api/blog/categories'),
   },
+  settings: {
+    branding: () => apiClient<{ success: boolean; data: any }>('/api/settings/branding'),
+  },
 };

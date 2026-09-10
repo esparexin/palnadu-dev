@@ -7,11 +7,26 @@ import { usePathname } from 'next/navigation';
 import { Menu, X, ArrowRight } from 'lucide-react';
 import { mainNavItems } from '@palnadu/config';
 import { Button } from '@/components/ui/button';
+import { BrandLogo } from '@/components/ui/brand-logo';
+import { api } from '@/lib/api';
 import { cn } from '@/lib/utils';
 
 export function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [customLogoUrl, setCustomLogoUrl] = useState<string | null>(null);
   const pathname = usePathname();
+
+  // Fetch active custom logo if configured
+  useEffect(() => {
+    api.settings
+      .branding()
+      .then((res) => {
+        if (res.success && res.data?.hasCustomLogo && res.data.logoUrl) {
+          setCustomLogoUrl(res.data.logoUrl);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   // Close menu automatically on route change
   useEffect(() => {
@@ -45,14 +60,9 @@ export function Navbar() {
         {/* Accent top line */}
         <div className="h-0.5 w-full bg-palnadu-blue" />
         <nav className="container flex h-16 items-center justify-between" aria-label="Main navigation">
-          {/* Brand Typographic Logo */}
-          <Link href="/" className="flex items-center gap-2.5 group" aria-label="Palnadu.dev Home">
-            <div className="h-8 w-8 rounded-lg bg-palnadu-dark flex items-center justify-center font-black text-sm text-white shadow-xs group-hover:bg-palnadu-blue transition-colors">
-              P<span className="text-palnadu-teal">.</span>
-            </div>
-            <span className="text-xl font-extrabold tracking-tight text-palnadu-dark">
-              Palnadu<span className="text-palnadu-blue font-bold">.dev</span>
-            </span>
+          {/* Brand Logo (SSOT with Fallback) */}
+          <Link href="/" className="flex items-center group" aria-label="Palnadu.dev Home">
+            <BrandLogo customLogoUrl={customLogoUrl} variant="default" size="md" />
           </Link>
 
           {/* Desktop Navigation — Direct links, no dropdown */}

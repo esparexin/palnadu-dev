@@ -134,4 +134,28 @@ export const api = {
   dashboard: {
     stats: () => adminApi('/api/admin/dashboard/stats'),
   },
+  settings: {
+    branding: {
+      get: () => adminApi<{ success: boolean; data: any }>('/api/admin/settings/branding'),
+      uploadLogo: async (file: File) => {
+        const token = getToken();
+        const formData = new FormData();
+        formData.append('file', file);
+        const response = await fetch(`${API_URL}/api/admin/settings/branding/logo`, {
+          method: 'POST',
+          headers: { ...(token && { Authorization: `Bearer ${token}` }) },
+          body: formData,
+        });
+        if (!response.ok) {
+          const err = await response.json().catch(() => ({}));
+          throw new Error(err.message || 'Logo upload failed');
+        }
+        return response.json();
+      },
+      removeLogo: () =>
+        adminApi<{ success: boolean; message: string; data: any }>('/api/admin/settings/branding/logo', {
+          method: 'DELETE',
+        }),
+    },
+  },
 };

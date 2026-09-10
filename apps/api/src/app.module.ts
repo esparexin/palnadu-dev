@@ -15,6 +15,7 @@ import { MediaModule } from './media/media.module';
 import { UsersModule } from './users/users.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { NotificationsModule } from './notifications/notifications.module';
+import { SettingsModule } from './settings/settings.module';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { NotificationsModule } from './notifications/notifications.module';
     UsersModule,
     DashboardModule,
     NotificationsModule,
+    SettingsModule,
   ],
   controllers: [HealthController],
   providers: [
