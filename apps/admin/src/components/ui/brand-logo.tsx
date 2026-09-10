@@ -22,9 +22,9 @@ export function BrandLogo({
   const isWhite = variant === 'white';
 
   const sizeClasses = {
-    sm: { icon: 'h-7 w-7 text-xs', text: 'text-base', imgHeight: 28 },
-    md: { icon: 'h-8 w-8 text-sm', text: 'text-lg', imgHeight: 32 },
-    lg: { icon: 'h-10 w-10 text-base', text: 'text-2xl', imgHeight: 40 },
+    sm: { icon: 'h-7 w-7 text-xs', text: 'text-base', imgHeight: 32 },
+    md: { icon: 'h-8 w-8 text-sm', text: 'text-lg', imgHeight: 46 },
+    lg: { icon: 'h-10 w-10 text-base', text: 'text-2xl', imgHeight: 56 },
   }[size];
 
   // 1. If custom logo is configured and active, render optimized image
@@ -35,7 +35,7 @@ export function BrandLogo({
           <img
             src={customLogoUrl}
             alt="Palnadu.dev Logo"
-            className="h-8 max-h-9 w-auto object-contain"
+            className="h-9 sm:h-11 w-auto object-contain transition-all"
             style={{ maxHeight: `${sizeClasses.imgHeight}px` }}
           />
         </div>
