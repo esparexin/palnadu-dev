@@ -16,6 +16,7 @@ import { UsersModule } from './users/users.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { SettingsModule } from './settings/settings.module';
+import { AutomationModule } from './automation/automation.module';
 
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import { SettingsModule } from './settings/settings.module';
     DashboardModule,
     NotificationsModule,
     SettingsModule,
+    AutomationModule,
   ],
   controllers: [HealthController],
   providers: [

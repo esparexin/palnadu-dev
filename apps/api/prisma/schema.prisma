@@ -225,6 +225,8 @@ model BlogPost {
   ogImage        String?
   publishDate    DateTime?
   status         PublishStatus @default(DRAFT)
+  imageMetadata  Json?
+  faqData        Json?
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
 
