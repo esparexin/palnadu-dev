@@ -165,14 +165,23 @@ export default async function BlogPostPage({ params }: Props) {
             </div>
           </header>
 
-          {/* Cover Image if available with Cloudinary Optimization */}
-          {post.coverImage && (
+          {/* Cover Image with Fallback */}
+          {post.coverImage ? (
             <div className="my-8 rounded-xl overflow-hidden border border-palnadu-border shadow-xs bg-palnadu-off-white">
               <img
                 src={imagePresets.blogHero(post.coverImage)}
                 alt={post.title}
                 className="w-full h-auto max-h-[480px] object-cover"
               />
+            </div>
+          ) : (
+            <div className="my-8 rounded-xl overflow-hidden border border-palnadu-border/60 bg-gradient-to-br from-palnadu-dark via-[#083b6f] to-palnadu-blue p-8 sm:p-12 text-white shadow-xs">
+              <span className="text-xs font-mono font-bold uppercase tracking-widest text-palnadu-teal block mb-2">
+                {post.category?.name || 'Engineering Insight'}
+              </span>
+              <h2 className="text-2xl sm:text-3xl font-extrabold text-white leading-tight">
+                {post.title}
+              </h2>
             </div>
           )}
 

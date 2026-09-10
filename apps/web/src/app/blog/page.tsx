@@ -137,14 +137,27 @@ export default async function BlogPage({ searchParams }: Props) {
                     className="flex flex-col justify-between rounded-xl border border-palnadu-border bg-white p-5 shadow-2xs hover:border-palnadu-blue hover:shadow-sm transition-all group cursor-pointer text-left"
                   >
                     <div className="space-y-3">
-                      {/* Cover Photo */}
-                      {post.coverImage && (
-                        <div className="rounded-lg overflow-hidden h-40 border border-palnadu-border/60 bg-palnadu-off-white">
+                      {/* Cover Photo with Smart Editorial Fallback */}
+                      {post.coverImage ? (
+                        <div className="rounded-lg overflow-hidden h-44 border border-palnadu-border/60 bg-palnadu-off-white relative">
                           <img
                             src={imagePresets.blogCard(post.coverImage)}
                             alt={post.title}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                           />
+                        </div>
+                      ) : (
+                        <div className="rounded-lg overflow-hidden h-44 border border-palnadu-border/60 bg-gradient-to-br from-palnadu-dark via-[#083b6f] to-palnadu-blue p-5 flex flex-col justify-between text-white relative">
+                          <div className="flex items-center justify-between">
+                            <span className="text-[11px] font-mono font-bold uppercase tracking-widest text-palnadu-teal">
+                              {post.category?.name || 'Engineering'}
+                            </span>
+                            <span className="h-2 w-2 rounded-full bg-palnadu-teal" />
+                          </div>
+                          <div className="space-y-1">
+                            <p className="text-[11px] font-mono text-palnadu-light-blue/80">Palnadu.dev Publication</p>
+                            <p className="text-sm font-bold text-white line-clamp-2">{post.title}</p>
+                          </div>
                         </div>
                       )}
 
