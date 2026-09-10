@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
 import type { User, UserRole } from '@palnadu/types';
 import { Plus, X, UserCheck, UserX, Shield, Edit2 } from 'lucide-react';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { cn } from '@/lib/utils';
 
 const roleColors: Record<string, string> = {
@@ -33,6 +34,8 @@ export default function UsersPage() {
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [statusTarget, setStatusTarget] = useState<User | null>(null);
+  const [statusLoading, setStatusLoading] = useState(false);
   const [formData, setFormData] = useState<UserFormData>(initialFormData);
 
   const fetchUsers = () => {
@@ -73,15 +76,17 @@ export default function UsersPage() {
     }
   };
 
-  const toggleUserActive = async (user: User) => {
-    const action = user.isActive ? 'deactivate' : 'activate';
-    if (!confirm(`Are you sure you want to ${action} ${user.name}?`)) return;
-
+  const confirmToggleActive = async () => {
+    if (!statusTarget) return;
     try {
-      await api.users.update(user.id, { isActive: !user.isActive });
+      setStatusLoading(true);
+      await api.users.update(statusTarget.id, { isActive: !statusTarget.isActive });
+      setStatusTarget(null);
       fetchUsers();
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Failed to update user status');
+    } finally {
+      setStatusLoading(false);
     }
   };
 
@@ -178,7 +183,7 @@ export default function UsersPage() {
                     </td>
                     <td className="px-4 py-3 text-right">
                       <button
-                        onClick={() => toggleUserActive(user)}
+                        onClick={() => setStatusTarget(user)}
                         className={cn(
                           'inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-semibold border transition-colors cursor-pointer',
                           user.isActive
@@ -299,6 +304,17 @@ export default function UsersPage() {
           </div>
         </div>
       )}
+      {/* Status Toggle Web Dialog */}
+      <ConfirmDialog
+        open={Boolean(statusTarget)}
+        onCancel={() => setStatusTarget(null)}
+        onConfirm={confirmToggleActive}
+        loading={statusLoading}
+        title={statusTarget?.isActive ? 'Deactivate User Account?' : 'Activate User Account?'}
+        message={statusTarget ? `Are you sure you want to ${statusTarget.isActive ? 'deactivate' : 'activate'} ${statusTarget.name}'s account?` : ''}
+        confirmLabel={statusTarget?.isActive ? 'Deactivate User' : 'Activate User'}
+        variant={statusTarget?.isActive ? 'danger' : 'default'}
+      />
     </div>
   );
 }

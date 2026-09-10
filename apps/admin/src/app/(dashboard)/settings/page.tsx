@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { api } from '@/lib/api';
 import { BrandLogo } from '@/components/ui/brand-logo';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import {
   UploadCloud,
   Trash2,
@@ -53,6 +54,7 @@ export default function SettingsPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [removingType, setRemovingType] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<{ type: 'header' | 'footer' | 'favicon'; label: string } | null>(null);
 
   // Staged files for Apply / Discard flow
   const [stagedFiles, setStagedFiles] = useState<{
@@ -194,10 +196,9 @@ export default function SettingsPage() {
   };
 
   // Immediate remove of an active asset
-  const handleRemoveAsset = async (type: 'header' | 'footer' | 'favicon', label: string) => {
-    if (!confirm(`Are you sure you want to remove the custom ${label}? It will revert to the default brandmark.`)) {
-      return;
-    }
+  const handleConfirmRemove = async () => {
+    if (!deleteTarget) return;
+    const { type, label } = deleteTarget;
 
     setRemovingType(type);
     setErrorMessage(null);
@@ -207,6 +208,7 @@ export default function SettingsPage() {
       await api.settings.branding.removeAsset(type);
       await fetchBranding();
       setSuccessMessage(`${label} removed. Default fallback restored.`);
+      setDeleteTarget(null);
     } catch (err) {
       setErrorMessage(err instanceof Error ? err.message : `Failed to remove ${label}.`);
     } finally {
@@ -322,7 +324,7 @@ export default function SettingsPage() {
 
             {branding.headerLogo?.url && (
               <button
-                onClick={() => handleRemoveAsset('header', 'Header Logo')}
+                onClick={() => setDeleteTarget({ type: 'header', label: 'Header Logo' })}
                 disabled={saving || removingType === 'header'}
                 className="h-8 px-2.5 rounded-md font-semibold text-xs border border-red-200 text-red-600 bg-white hover:bg-red-50 transition-colors cursor-pointer disabled:opacity-50"
                 title="Remove custom header logo"
@@ -390,7 +392,7 @@ export default function SettingsPage() {
 
             {branding.footerLogo?.url && (
               <button
-                onClick={() => handleRemoveAsset('footer', 'Footer Logo')}
+                onClick={() => setDeleteTarget({ type: 'footer', label: 'Footer Logo' })}
                 disabled={saving || removingType === 'footer'}
                 className="h-8 px-2.5 rounded-md font-semibold text-xs border border-red-200 text-red-600 bg-white hover:bg-red-50 transition-colors cursor-pointer disabled:opacity-50"
                 title="Remove custom footer logo"
@@ -467,7 +469,7 @@ export default function SettingsPage() {
 
             {branding.favicon?.url && (
               <button
-                onClick={() => handleRemoveAsset('favicon', 'Favicon')}
+                onClick={() => setDeleteTarget({ type: 'favicon', label: 'Favicon' })}
                 disabled={saving || removingType === 'favicon'}
                 className="h-8 px-2.5 rounded-md font-semibold text-xs border border-red-200 text-red-600 bg-white hover:bg-red-50 transition-colors cursor-pointer disabled:opacity-50"
                 title="Remove custom favicon"
@@ -514,6 +516,16 @@ export default function SettingsPage() {
           </div>
         </div>
       )}
+      {/* Web Modal Confirmation Dialog */}
+      <ConfirmDialog
+        open={Boolean(deleteTarget)}
+        onCancel={() => setDeleteTarget(null)}
+        onConfirm={handleConfirmRemove}
+        loading={Boolean(removingType)}
+        title="Remove Custom Asset?"
+        message={deleteTarget ? `Are you sure you want to remove the custom ${deleteTarget.label}? It will immediately revert to the default brandmark.` : ''}
+        confirmLabel="Remove Asset"
+      />
     </div>
   );
 }

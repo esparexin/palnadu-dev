@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
 import type { Client } from '@palnadu/types';
 import { Plus, Search, Edit2, Trash2, X, Building, Mail, Phone } from 'lucide-react';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 
 interface ClientFormData {
   name: string;
@@ -29,6 +30,8 @@ export default function ClientsPage() {
   const [editingClient, setEditingClient] = useState<Client | null>(null);
   const [formData, setFormData] = useState<ClientFormData>(initialFormData);
   const [submitting, setSubmitting] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const fetchClients = () => {
     setLoading(true);
@@ -87,15 +90,17 @@ export default function ClientsPage() {
     }
   };
 
-  const handleDelete = async (id: string, name: string) => {
-    if (!confirm(`Are you sure you want to delete client "${name}"? This action cannot be undone.`)) {
-      return;
-    }
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
     try {
-      await api.clients.delete(id);
+      setDeleting(true);
+      await api.clients.delete(deleteTarget.id);
+      setDeleteTarget(null);
       fetchClients();
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Failed to delete client');
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -195,7 +200,7 @@ export default function ClientsPage() {
                         <Edit2 className="h-3.5 w-3.5" />
                       </button>
                       <button
-                        onClick={() => handleDelete(client.id, client.name)}
+                        onClick={() => setDeleteTarget({ id: client.id, name: client.name })}
                         className="inline-flex items-center p-1.5 rounded-md hover:bg-red-50 text-palnadu-error transition-colors cursor-pointer"
                         title="Delete Client"
                       >
@@ -310,6 +315,16 @@ export default function ClientsPage() {
           </div>
         </div>
       )}
+      {/* Delete Confirmation Web Dialog */}
+      <ConfirmDialog
+        open={Boolean(deleteTarget)}
+        onCancel={() => setDeleteTarget(null)}
+        onConfirm={confirmDelete}
+        loading={deleting}
+        title="Delete Client?"
+        message={deleteTarget ? `Are you sure you want to delete client "${deleteTarget.name}"? This action cannot be undone and will remove associated data.` : ''}
+        confirmLabel="Delete Client"
+      />
     </div>
   );
 }

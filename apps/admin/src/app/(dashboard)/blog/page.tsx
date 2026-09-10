@@ -4,6 +4,7 @@ import { useEffect, useState, useRef } from 'react';
 import { api } from '@/lib/api';
 import type { BlogPost } from '@palnadu/types';
 import { Plus, Search, Edit2, Trash2, X, Globe, Eye, FileText, CheckCircle2, Sparkles, ExternalLink, UploadCloud, Loader2 } from 'lucide-react';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { cn } from '@/lib/utils';
 
 interface BlogFormData {
@@ -55,6 +56,8 @@ export default function BlogAdminPage() {
   const [formData, setFormData] = useState<BlogFormData>(initialFormData);
   const [submitting, setSubmitting] = useState(false);
   const [uploadingCover, setUploadingCover] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; title: string } | null>(null);
+  const [deleting, setDeleting] = useState(false);
   const coverInputRef = useRef<HTMLInputElement>(null);
 
   const handleCoverUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -177,15 +180,17 @@ export default function BlogAdminPage() {
     }
   };
 
-  const handleDelete = async (id: string, title: string) => {
-    if (!confirm(`Are you sure you want to delete article "${title}"? This cannot be undone.`)) {
-      return;
-    }
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
     try {
-      await api.blog.delete(id);
+      setDeleting(true);
+      await api.blog.delete(deleteTarget.id);
+      setDeleteTarget(null);
       fetchPosts();
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Failed to delete article');
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -375,7 +380,7 @@ export default function BlogAdminPage() {
                         <Edit2 className="h-3.5 w-3.5" />
                       </button>
                       <button
-                        onClick={() => handleDelete(post.id, post.title)}
+                        onClick={() => setDeleteTarget({ id: post.id, title: post.title })}
                         className="inline-flex items-center p-1.5 rounded-md hover:bg-red-50 text-palnadu-error transition-colors cursor-pointer"
                         title="Delete Article"
                       >
@@ -700,6 +705,16 @@ export default function BlogAdminPage() {
           </div>
         </div>
       )}
+      {/* Delete Article Web Dialog */}
+      <ConfirmDialog
+        open={Boolean(deleteTarget)}
+        onCancel={() => setDeleteTarget(null)}
+        onConfirm={confirmDelete}
+        loading={deleting}
+        title="Delete Article?"
+        message={deleteTarget ? `Are you sure you want to delete article "${deleteTarget.title}"? This action cannot be undone.` : ''}
+        confirmLabel="Delete Article"
+      />
     </div>
   );
 }

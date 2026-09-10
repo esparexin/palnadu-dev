@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { api } from '@/lib/api';
 import { UploadCloud, Image as ImageIcon, ExternalLink, Trash2, Check, Copy } from 'lucide-react';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 
 interface MediaItem {
   id: string;
@@ -20,6 +21,8 @@ export default function MediaPage() {
   const [uploading, setUploading] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [errorNotice, setErrorNotice] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; name?: string } | null>(null);
+  const [deleting, setDeleting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const fetchMedia = () => {
@@ -59,13 +62,17 @@ export default function MediaPage() {
     setTimeout(() => setCopiedId(null), 2000);
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this media record?')) return;
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
     try {
-      await api.media.delete(id);
+      setDeleting(true);
+      await api.media.delete(deleteTarget.id);
+      setDeleteTarget(null);
       fetchMedia();
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Failed to delete');
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -208,7 +215,7 @@ export default function MediaPage() {
                       </a>
 
                       <button
-                        onClick={() => handleDelete(item.id)}
+                        onClick={() => setDeleteTarget({ id: item.id, name: item.originalName || item.filename })}
                         title="Delete asset"
                         className="inline-flex items-center text-red-500 hover:text-red-700 p-1 cursor-pointer"
                       >
@@ -222,6 +229,16 @@ export default function MediaPage() {
           </div>
         )}
       </div>
+      {/* Delete Media Web Dialog */}
+      <ConfirmDialog
+        open={Boolean(deleteTarget)}
+        onCancel={() => setDeleteTarget(null)}
+        onConfirm={confirmDelete}
+        loading={deleting}
+        title="Delete Media Asset?"
+        message={deleteTarget ? `Are you sure you want to delete "${deleteTarget.name || 'this media file'}"? This action cannot be undone.` : ''}
+        confirmLabel="Delete Asset"
+      />
     </div>
   );
 }

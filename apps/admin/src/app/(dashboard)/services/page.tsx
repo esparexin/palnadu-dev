@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
 import type { Service } from '@palnadu/types';
 import { Plus, Edit2, Trash2, X, Briefcase, ExternalLink } from 'lucide-react';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { cn } from '@/lib/utils';
 
 interface ServiceFormData {
@@ -40,6 +41,8 @@ export default function ServicesAdminPage() {
   const [editingService, setEditingService] = useState<Service | null>(null);
   const [formData, setFormData] = useState<ServiceFormData>(initialFormData);
   const [submitting, setSubmitting] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; title: string } | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const fetchServices = () => {
     setLoading(true);
@@ -107,15 +110,17 @@ export default function ServicesAdminPage() {
     }
   };
 
-  const handleDelete = async (id: string, title: string) => {
-    if (!confirm(`Are you sure you want to delete service "${title}"? This cannot be undone.`)) {
-      return;
-    }
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
     try {
-      await api.services.delete(id);
+      setDeleting(true);
+      await api.services.delete(deleteTarget.id);
+      setDeleteTarget(null);
       fetchServices();
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Failed to delete service');
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -217,7 +222,7 @@ export default function ServicesAdminPage() {
                         <Edit2 className="h-3.5 w-3.5" />
                       </button>
                       <button
-                        onClick={() => handleDelete(service.id, service.title)}
+                        onClick={() => setDeleteTarget({ id: service.id, title: service.title })}
                         className="inline-flex items-center p-1.5 rounded-md hover:bg-red-50 text-palnadu-error transition-colors cursor-pointer"
                         title="Delete Service"
                       >
@@ -353,6 +358,16 @@ export default function ServicesAdminPage() {
           </div>
         </div>
       )}
+      {/* Delete Service Web Dialog */}
+      <ConfirmDialog
+        open={Boolean(deleteTarget)}
+        onCancel={() => setDeleteTarget(null)}
+        onConfirm={confirmDelete}
+        loading={deleting}
+        title="Delete Service?"
+        message={deleteTarget ? `Are you sure you want to delete service "${deleteTarget.title}"? This action cannot be undone.` : ''}
+        confirmLabel="Delete Service"
+      />
     </div>
   );
 }

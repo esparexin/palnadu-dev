@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { api } from '@/lib/api';
 import type { Lead } from '@palnadu/types';
 import { Mail, Phone, MessageSquare, ArrowRight, Search, Trash2 } from 'lucide-react';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { cn } from '@/lib/utils';
 
 const statusColors: Record<string, string> = {
@@ -24,6 +25,8 @@ export default function LeadsPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     const params: Record<string, string> = {};
@@ -42,13 +45,17 @@ export default function LeadsPage() {
   const inPipelineCount = leads.filter((l) => ['CONTACTED', 'DISCOVERY', 'PROPOSAL', 'NEGOTIATION'].includes(l.status)).length;
   const wonCount = leads.filter((l) => l.status === 'WON').length;
 
-  const handleDeleteLead = async (id: string, name: string) => {
-    if (!confirm(`Are you sure you want to delete inquiry from "${name}"? This action cannot be undone.`)) return;
+  const confirmDeleteLead = async () => {
+    if (!deleteTarget) return;
     try {
-      await api.leads.delete(id);
-      setLeads((prev) => prev.filter((l) => l.id !== id));
+      setDeleting(true);
+      await api.leads.delete(deleteTarget.id);
+      setLeads((prev) => prev.filter((l) => l.id !== deleteTarget.id));
+      setDeleteTarget(null);
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Failed to delete lead');
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -259,7 +266,7 @@ export default function LeadsPage() {
                           <ArrowRight className="h-3 w-3" />
                         </Link>
                         <button
-                          onClick={() => handleDeleteLead(lead.id, lead.name)}
+                          onClick={() => setDeleteTarget({ id: lead.id, name: lead.name })}
                           className="inline-flex items-center p-1 rounded-md text-palnadu-secondary hover:text-palnadu-error hover:bg-red-50 transition-colors cursor-pointer"
                           title="Delete Lead"
                         >
@@ -274,6 +281,16 @@ export default function LeadsPage() {
           </table>
         </div>
       </div>
+      {/* Delete Lead Web Dialog */}
+      <ConfirmDialog
+        open={Boolean(deleteTarget)}
+        onCancel={() => setDeleteTarget(null)}
+        onConfirm={confirmDeleteLead}
+        loading={deleting}
+        title="Delete Inquiry?"
+        message={deleteTarget ? `Are you sure you want to delete the inquiry from "${deleteTarget.name}"? This action cannot be undone.` : ''}
+        confirmLabel="Delete Inquiry"
+      />
     </div>
   );
 }

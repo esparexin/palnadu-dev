@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
 import type { Client } from '@palnadu/types';
 import { FolderKanban, Plus, Calendar, DollarSign, Building, X, Search, Edit2, Trash2 } from 'lucide-react';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { cn } from '@/lib/utils';
 
 const statusColors: Record<string, string> = {
@@ -46,6 +47,8 @@ export default function ProjectsPage() {
   const [editingProject, setEditingProject] = useState<any | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [formData, setFormData] = useState<ProjectFormData>(initialFormData);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const loadData = () => {
     setLoading(true);
@@ -133,15 +136,17 @@ export default function ProjectsPage() {
     }
   };
 
-  const handleDeleteProject = async (id: string, name: string) => {
-    if (!confirm(`Are you sure you want to delete project "${name}"? This action cannot be undone.`)) {
-      return;
-    }
+  const confirmDeleteProject = async () => {
+    if (!deleteTarget) return;
     try {
-      await api.projects.delete(id);
+      setDeleting(true);
+      await api.projects.delete(deleteTarget.id);
+      setDeleteTarget(null);
       loadData();
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Failed to delete project');
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -341,7 +346,7 @@ export default function ProjectsPage() {
                         <Edit2 className="h-3.5 w-3.5" />
                       </button>
                       <button
-                        onClick={() => handleDeleteProject(project.id, project.name)}
+                        onClick={() => setDeleteTarget({ id: project.id, name: project.name })}
                         className="inline-flex items-center p-1.5 rounded-md hover:bg-red-50 text-palnadu-error transition-colors cursor-pointer"
                         title="Delete Project"
                       >
@@ -511,6 +516,16 @@ export default function ProjectsPage() {
           </div>
         </div>
       )}
+      {/* Delete Project Web Dialog */}
+      <ConfirmDialog
+        open={Boolean(deleteTarget)}
+        onCancel={() => setDeleteTarget(null)}
+        onConfirm={confirmDeleteProject}
+        loading={deleting}
+        title="Delete Project?"
+        message={deleteTarget ? `Are you sure you want to delete project "${deleteTarget.name}"? This action cannot be undone.` : ''}
+        confirmLabel="Delete Project"
+      />
     </div>
   );
 }

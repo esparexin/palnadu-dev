@@ -18,6 +18,7 @@ import {
   Trash2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 
 const statusColors: Record<string, string> = {
   NEW: 'bg-blue-100 text-blue-800 border-blue-200',
@@ -42,6 +43,8 @@ export default function LeadDetailPage() {
   const [saving, setSaving] = useState(false);
   const [converting, setConverting] = useState(false);
   const [convertedSuccess, setConvertedSuccess] = useState(false);
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     if (params.id) {
@@ -80,15 +83,16 @@ export default function LeadDetailPage() {
     setSaving(false);
   };
 
-  const deleteLead = async () => {
+  const handleConfirmDelete = async () => {
     if (!lead) return;
-    if (!confirm(`Are you sure you want to delete inquiry from "${lead.name}"? This cannot be undone.`)) return;
-
     try {
+      setDeleting(true);
       await api.leads.delete(lead.id);
       router.push('/leads');
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Failed to delete lead');
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -371,7 +375,7 @@ export default function LeadDetailPage() {
               Permanently purge spam or duplicate inquiries from the database.
             </p>
             <button
-              onClick={deleteLead}
+              onClick={() => setConfirmDeleteOpen(true)}
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-white border border-red-200 text-palnadu-error text-xs font-semibold hover:bg-red-50 transition-colors cursor-pointer"
             >
               <Trash2 className="h-3.5 w-3.5" />
@@ -380,6 +384,17 @@ export default function LeadDetailPage() {
           </div>
         </div>
       </div>
+
+      {/* Delete Lead Web Dialog */}
+      <ConfirmDialog
+        open={confirmDeleteOpen}
+        onCancel={() => setConfirmDeleteOpen(false)}
+        onConfirm={handleConfirmDelete}
+        loading={deleting}
+        title="Delete Inquiry?"
+        message={lead ? `Are you sure you want to delete the inquiry from "${lead.name}"? This cannot be undone.` : ''}
+        confirmLabel="Delete Inquiry"
+      />
     </div>
   );
 }
