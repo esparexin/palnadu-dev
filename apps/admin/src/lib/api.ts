@@ -19,27 +19,80 @@ export async function adminApi<T>(endpoint: string, options: FetchOptions = {}):
     url += `?${searchParams.toString()}`;
   }
 
-  const response = await fetch(url, {
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token && { Authorization: `Bearer ${token}` }),
-      ...fetchOptions.headers,
-    },
-    ...fetchOptions,
-  });
-
-  if (response.status === 401) {
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('admin_token');
-      localStorage.removeItem('admin_user');
-      window.location.href = '/login';
-    }
-    throw new Error('Unauthorized');
+  let response: Response;
+  try {
+    response = await fetch(url, {
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token && { Authorization: `Bearer ${token}` }),
+        ...fetchOptions.headers,
+      },
+      ...fetchOptions,
+    });
+  } catch (networkErr) {
+    throw new Error(
+      'Unable to connect to the backend server. Please check your internet connection or verify the API is running.',
+    );
   }
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({}));
-    throw new Error(error.message || `API error: ${response.status}`);
+    const errorData = await response.json().catch(() => ({}));
+    const serverMessage = errorData.message || errorData.error;
+
+    // 1. Handle 401 Unauthorized (Differentiate login failure vs session expiry)
+    if (response.status === 401) {
+      // If error happened during an active login attempt
+      if (endpoint.includes('/auth/login')) {
+        throw new Error(
+          serverMessage || 'Invalid email or password. Please verify your credentials and try again.',
+        );
+      }
+
+      // If error happened on a protected route (session expired or token invalid)
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('admin_token');
+        localStorage.removeItem('admin_user');
+        if (window.location.pathname !== '/login') {
+          window.location.href = '/login?session=expired';
+        }
+      }
+      throw new Error(
+        serverMessage || 'Your session has expired. Please sign in again to continue.',
+      );
+    }
+
+    // 2. Handle 403 Forbidden (RBAC permission violation)
+    if (response.status === 403) {
+      throw new Error(
+        serverMessage || 'Access denied: You do not have sufficient permissions to perform this action.',
+      );
+    }
+
+    // 3. Handle 404 Not Found
+    if (response.status === 404) {
+      throw new Error(
+        serverMessage || 'The requested record or resource was not found.',
+      );
+    }
+
+    // 4. Handle 400 Bad Request
+    if (response.status === 400) {
+      throw new Error(
+        serverMessage || 'Invalid request. Please check your input parameters and try again.',
+      );
+    }
+
+    // 5. Handle 500+ Internal Server Errors
+    if (response.status >= 500) {
+      throw new Error(
+        serverMessage || 'A server error occurred. Please try again or contact the technical administrator.',
+      );
+    }
+
+    // Fallback error
+    throw new Error(
+      serverMessage || `Request failed with status code ${response.status}.`,
+    );
   }
 
   return response.json();

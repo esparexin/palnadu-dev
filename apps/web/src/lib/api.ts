@@ -16,17 +16,38 @@ export async function apiClient<T>(
     url += `?${searchParams.toString()}`;
   }
 
-  const response = await fetch(url, {
-    headers: {
-      'Content-Type': 'application/json',
-      ...fetchOptions.headers,
-    },
-    ...fetchOptions,
-  });
+  let response: Response;
+  try {
+    response = await fetch(url, {
+      headers: {
+        'Content-Type': 'application/json',
+        ...fetchOptions.headers,
+      },
+      ...fetchOptions,
+    });
+  } catch (networkErr) {
+    throw new Error(
+      'Unable to connect to Palnadu.dev services. Please check your internet connection and try again.',
+    );
+  }
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({}));
-    throw new Error(error.message || `API error: ${response.status}`);
+    const errorData = await response.json().catch(() => ({}));
+    const message = errorData.message || errorData.error;
+
+    if (response.status === 404) {
+      throw new Error(message || 'The requested page or record could not be found.');
+    }
+    if (response.status === 400) {
+      throw new Error(message || 'Invalid request. Please check your submission.');
+    }
+    if (response.status >= 500) {
+      throw new Error(
+        message || 'We are experiencing temporary server difficulties. Please try again shortly.',
+      );
+    }
+
+    throw new Error(message || `Request failed with status code ${response.status}.`);
   }
 
   return response.json();
