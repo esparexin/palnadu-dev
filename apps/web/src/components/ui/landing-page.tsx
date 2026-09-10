@@ -176,14 +176,14 @@ export function ScrollGlobe() {
       {/* ── SECTION 0: HERO & BALANCED 2-COLUMN GRID ── */}
       <section
         ref={(el) => { sectionRefs.current[0] = el; }}
-        className="relative z-20 px-4 sm:px-8 md:px-12 lg:px-16 pt-6 pb-12 sm:py-14 lg:py-20 border-b border-palnadu-border/60 overflow-hidden w-full bg-white/80 backdrop-blur-xs"
+        className="relative z-20 px-4 sm:px-8 md:px-12 lg:px-16 pt-10 pb-12 sm:pt-14 sm:pb-16 lg:pt-20 lg:pb-18 border-b border-palnadu-border/60 overflow-hidden w-full bg-white/80 backdrop-blur-xs"
       >
         <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
           
           {/* Left Column (7 cols): Content & Trust Proof */}
           <div className="lg:col-span-7 space-y-4 sm:space-y-5 text-left">
-            {/* Pure Typographic Eyebrow */}
-            <p className="text-xs font-mono uppercase tracking-widest text-palnadu-blue font-bold">
+            {/* Pure Typographic Eyebrow with comfortable spacing */}
+            <p className="text-xs font-mono uppercase tracking-widest text-palnadu-blue font-bold mb-1.5 sm:mb-2">
               Problem-First Software Studio
             </p>
 
@@ -196,8 +196,8 @@ export function ScrollGlobe() {
               Palnadu.dev turns real-world business challenges into practical, production-ready software. We validate ideas, eliminate manual business bottlenecks, and engineer what works.
             </p>
 
-            {/* Mobile 2-Column Action Buttons */}
-            <div className="grid grid-cols-2 gap-2.5 w-full max-w-sm sm:max-w-none sm:flex sm:flex-row sm:items-center sm:gap-3 pt-1">
+            {/* Mobile 2-Column Action Buttons with enhanced breathing room */}
+            <div className="grid grid-cols-2 gap-2.5 w-full max-w-sm sm:max-w-none sm:flex sm:flex-row sm:items-center sm:gap-3 pt-2 sm:pt-2.5">
               <Link
                 href="/contact"
                 className="w-full sm:w-auto px-3 py-3 sm:px-7 sm:py-3.5 rounded-md font-semibold text-xs sm:text-sm text-center inline-flex items-center justify-center bg-palnadu-blue text-white hover:bg-[#12487e] shadow-xs transition-colors"
@@ -213,8 +213,8 @@ export function ScrollGlobe() {
               </Link>
             </div>
 
-            {/* Trust Metrics Bar */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5 sm:gap-4 pt-6 border-t border-palnadu-border/60">
+            {/* Trust Metrics Bar — Decongested with balanced padding and grid gaps */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-4 gap-y-4 sm:gap-4 pt-8 sm:pt-9 border-t border-palnadu-border/50">
               <div className="space-y-0.5">
                 <p className="text-xl sm:text-2xl font-black text-palnadu-dark">8+ Years</p>
                 <p className="text-[11px] sm:text-xs text-palnadu-secondary">Engineering Experience</p>
