@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { siteConfig, imagePresets } from '@palnadu/config';
 import { api } from '@/lib/api';
 import { CtaSection } from '@/components/sections/cta-section';
-import { Calendar, User, ArrowLeft, ArrowRight, Tag, Clock, CheckCircle } from 'lucide-react';
+import { Calendar, User, ArrowLeft, ArrowRight, Tag, Clock } from 'lucide-react';
 
 type Props = {
   params: Promise<{ slug: string }>;
@@ -25,7 +25,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const ogTitle = post.seoTitle || `${post.title} | ${siteConfig.name}`;
     const description = post.seoDescription || post.excerpt || siteConfig.description;
     const ogImage = post.ogImage || post.coverImage || `${siteConfig.url}/og.png`;
-    const canonicalUrl = post.canonicalUrl || `${siteConfig.url}/blog/${slug}`;
+    const canonicalUrl = post.canonicalUrl || `/blog/${slug}`;
 
     return {
       title,

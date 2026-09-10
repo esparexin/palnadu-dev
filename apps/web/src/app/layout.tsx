@@ -100,18 +100,12 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const { faviconUrl, appleIconUrl } = await getActiveFavicon();
-
   return (
     <html
       lang="en"
       className={`${fontSans.variable} ${fontMono.variable}`}
       suppressHydrationWarning
     >
-      <head>
-        <link rel="icon" href={faviconUrl} sizes="any" />
-        <link rel="apple-touch-icon" href={appleIconUrl} />
-      </head>
       <body className="min-h-screen font-sans antialiased bg-white text-palnadu-body selection:bg-palnadu-light-blue selection:text-palnadu-blue">
         <SmoothScrollProvider>
           <div className="relative flex min-h-screen flex-col bg-white">

@@ -1,10 +1,8 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import { services } from '@palnadu/config';
-import { siteConfig } from '@palnadu/config';
+import { services, siteConfig } from '@palnadu/config';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, ArrowLeft } from 'lucide-react';
 
 // Service content — stored here for now; admin-managed later
 const serviceContent: Record<
@@ -132,7 +130,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     title: service.title,
     description: service.shortDescription,
     alternates: {
-      canonical: `${siteConfig.url}/services/${slug}`,
+      canonical: `/services/${slug}`,
     },
     openGraph: {
       title: `${service.title} | ${siteConfig.name}`,
