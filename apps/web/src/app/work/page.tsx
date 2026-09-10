@@ -1,7 +1,8 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { Zap, Palette, Puzzle, ArrowRight, ArrowUpRight, CheckCircle2 } from 'lucide-react';
+import { Zap, Palette, Puzzle, ArrowRight, CheckCircle2 } from 'lucide-react';
 import { CtaSection } from '@/components/sections/cta-section';
+import { BentoGrid01 } from '@/components/ui/bento-grid-01';
 
 export const metadata: Metadata = {
   title: 'Work & Apps',
@@ -134,7 +135,10 @@ export default function WorkPage() {
         </div>
       </section>
 
-      {/* ── 3. VISUAL COLLECTION: RECENT WORKS SHOWCASE ── */}
+      {/* ── 3. INTERACTIVE BENTO GRID: CAPABILITIES & POLISH ── */}
+      <BentoGrid01 />
+
+      {/* ── 4. PRODUCTION PORTFOLIO SHOWCASE ── */}
       <section className="px-4 sm:px-8 md:px-12 lg:px-16 py-12 sm:py-16 lg:py-24 bg-palnadu-off-white/20 border-b border-palnadu-border/60">
         <div className="max-w-7xl mx-auto space-y-8 sm:space-y-12">
           <div className="max-w-2xl text-left space-y-2">
@@ -205,7 +209,7 @@ export default function WorkPage() {
         </div>
       </section>
 
-      {/* ── 4. CTA SECTION ── */}
+      {/* ── 5. CTA SECTION ── */}
       <CtaSection />
     </div>
   );
