@@ -115,9 +115,9 @@ export default function ServicesPage() {
             <p className="text-xs font-mono uppercase tracking-widest text-palnadu-blue font-bold mb-1">
               Directory
             </p>
-            <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-palnadu-dark leading-tight">
-              All 7 Engineering Capabilities
-            </h2>
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight text-palnadu-dark leading-tight">
+              Software Engineering & Web Development Services
+            </h1>
           </div>
 
           {/* Clean Typographic List With Actual Services Content */}

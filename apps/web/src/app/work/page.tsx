@@ -55,6 +55,9 @@ export default function WorkPage() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
       />
+      <h1 className="sr-only">
+        Our Work — Custom Software & Web Applications Portfolio | Palnadu.dev
+      </h1>
       <WorkClient />
     </>
   );

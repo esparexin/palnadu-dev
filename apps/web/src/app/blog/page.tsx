@@ -91,11 +91,17 @@ export default async function BlogPage({ searchParams }: Props) {
       <div className="bg-white">
       <section className="py-14 sm:py-18">
         <div className="container max-w-5xl">
-          <SectionHeading
-            label="Knowledge Base"
-            title="Insights & Engineering Truths"
-            description="Practical guides on startup MVPs, school web platforms, local SEO, and avoiding expensive software traps."
-          />
+          <div className="max-w-2xl mx-auto text-center space-y-2">
+            <p className="text-xs font-mono uppercase tracking-widest text-palnadu-blue font-bold">
+              Knowledge Base
+            </p>
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight text-palnadu-dark leading-tight">
+              Engineering Insights & Software Truths
+            </h1>
+            <p className="text-sm sm:text-base text-palnadu-body leading-relaxed">
+              Practical guides on startup MVPs, web application development, school platforms, and local SEO in Palnadu and Guntur.
+            </p>
+          </div>
 
           {/* Search & Category Filter Bar */}
           <div className="mt-10 space-y-4">

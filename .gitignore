@@ -40,3 +40,8 @@ coverage/
 # Generated
 *.generated.*
 *.tsbuildinfo
+
+# Agent skills
+.agents/
+.claude/
+skills-lock.json

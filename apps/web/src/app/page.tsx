@@ -144,6 +144,9 @@ export default function HomePage() {
   return (
     <>
       <JsonLd />
+      <h1 className="sr-only">
+        Palnadu.dev — Problem-First Software Studio, Web Applications & Development in Palnadu and Guntur
+      </h1>
       <ScrollGlobe />
     </>
   );

@@ -64,7 +64,7 @@ export const siteConfig = {
     'affordable web design Guntur',
   ],
   links: {
-    github: 'https://github.com/palnadudev',
+    github: 'https://github.com/esparexin',
     twitter: 'https://twitter.com/palnadudev',
     linkedin: 'https://linkedin.com/company/palnadudev',
   },
