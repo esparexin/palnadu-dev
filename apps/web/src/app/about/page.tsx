@@ -6,6 +6,9 @@ export const metadata: Metadata = {
   title: 'About Us',
   description:
     'Palnadu.dev is a technology company built by developers from Palnadu with 8+ years of experience. We turn real-world problems into practical software.',
+  alternates: {
+    canonical: '/about',
+  },
 };
 
 export default function AboutPage() {

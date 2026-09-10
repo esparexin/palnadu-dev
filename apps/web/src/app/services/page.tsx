@@ -39,6 +39,9 @@ export const metadata: Metadata = {
   title: 'Services',
   description:
     'Web applications, mobile apps, MVP development, custom software, business automation, and technical consulting. Built by engineers from Palnadu.',
+  alternates: {
+    canonical: '/services',
+  },
 };
 
 export default function ServicesPage() {

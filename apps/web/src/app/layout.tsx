@@ -62,6 +62,9 @@ export async function generateMetadata(): Promise<Metadata> {
     keywords: [...siteConfig.keywords],
     authors: [{ name: siteConfig.creator }],
     creator: siteConfig.creator,
+    alternates: {
+      canonical: '/',
+    },
     icons: {
       icon: [{ url: faviconUrl, sizes: 'any' }],
       apple: [{ url: appleIconUrl, sizes: '180x180' }],
@@ -108,7 +111,6 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       <head>
         <link rel="icon" href={faviconUrl} sizes="any" />
         <link rel="apple-touch-icon" href={appleIconUrl} />
-        <link rel="canonical" href={siteConfig.url} />
       </head>
       <body className="min-h-screen font-sans antialiased bg-white text-palnadu-body selection:bg-palnadu-light-blue selection:text-palnadu-blue">
         <SmoothScrollProvider>

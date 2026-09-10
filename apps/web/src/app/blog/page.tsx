@@ -11,6 +11,9 @@ export const metadata: Metadata = {
   title: 'Blog & Engineering Insights',
   description:
     'Practical software engineering guides, startup MVP breakdowns, school websites, and local SEO insights by Palnadu.dev.',
+  alternates: {
+    canonical: '/blog',
+  },
 };
 
 type Props = {

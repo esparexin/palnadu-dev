@@ -6,6 +6,9 @@ export const metadata: Metadata = {
   title: 'Locations We Serve',
   description:
     'Headquartered in Palnadu with engineering talent serving clients locally and globally.',
+  alternates: {
+    canonical: '/locations',
+  },
 };
 
 export default function LocationsPage() {

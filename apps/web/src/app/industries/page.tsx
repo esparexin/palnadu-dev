@@ -6,6 +6,9 @@ export const metadata: Metadata = {
   title: 'Industries We Serve',
   description:
     'Tailored technology solutions for startups, education, retail, healthcare, and small businesses.',
+  alternates: {
+    canonical: '/industries',
+  },
 };
 
 const industries = [
