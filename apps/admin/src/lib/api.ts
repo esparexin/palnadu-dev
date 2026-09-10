@@ -189,7 +189,27 @@ export const api = {
   },
   settings: {
     branding: {
-      get: () => adminApi<{ success: boolean; data: any }>('/api/admin/settings/branding'),
+      get: () => adminApi<{ success: boolean; data: any }>('/api/settings/branding'),
+      uploadAsset: async (type: 'header' | 'footer' | 'favicon' | 'ogImage', file: File) => {
+        const token = getToken();
+        const formData = new FormData();
+        formData.append('file', file);
+        const response = await fetch(`${API_URL}/api/admin/settings/branding/asset/${type}`, {
+          method: 'POST',
+          headers: { ...(token && { Authorization: `Bearer ${token}` }) },
+          body: formData,
+        });
+        if (!response.ok) {
+          const err = await response.json().catch(() => ({}));
+          throw new Error(err.message || `${type} upload failed`);
+        }
+        return response.json();
+      },
+      removeAsset: (type: 'header' | 'footer' | 'favicon' | 'ogImage') =>
+        adminApi<{ success: boolean; message: string; data: any }>(
+          `/api/admin/settings/branding/asset/${type}`,
+          { method: 'DELETE' },
+        ),
       uploadLogo: async (file: File) => {
         const token = getToken();
         const formData = new FormData();

@@ -1,13 +1,30 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { siteConfig, footerNavItems } from '@palnadu/config';
 import { Separator } from '@/components/ui/separator';
 import { BrandLogo } from '@/components/ui/brand-logo';
+import { api } from '@/lib/api';
 import { ArrowUpRight } from 'lucide-react';
 
 export function Footer() {
+  const [customFooterLogoUrl, setCustomFooterLogoUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    api.settings
+      .branding()
+      .then((res) => {
+        if (res.success && res.data?.footerLogo?.url) {
+          setCustomFooterLogoUrl(res.data.footerLogo.url);
+        } else if (res.success && res.data?.headerLogo?.url) {
+          setCustomFooterLogoUrl(res.data.headerLogo.url);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
   return (
     <footer className="bg-palnadu-dark text-white" role="contentinfo">
       <div className="container pt-10 pb-24 sm:py-14">
@@ -16,7 +33,7 @@ export function Footer() {
           {/* Brand & Identity — Spans 2 cols on mobile, 3 on tablet, 1 on desktop */}
           <div className="col-span-2 sm:col-span-3 lg:col-span-1 space-y-3 mb-1 lg:mb-0">
             <Link href="/" className="inline-flex items-center group" aria-label="Palnadu.dev Home">
-              <BrandLogo variant="white" size="md" />
+              <BrandLogo customLogoUrl={customFooterLogoUrl} variant="white" size="md" />
             </Link>
             <p className="text-xs sm:text-sm text-palnadu-light-blue/80 leading-relaxed max-w-sm">
               Start with the problem. We build the solution. Turning real-world problems into practical digital solutions.

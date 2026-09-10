@@ -21,7 +21,9 @@ export function Navbar() {
     api.settings
       .branding()
       .then((res) => {
-        if (res.success && res.data?.hasCustomLogo && res.data.logoUrl) {
+        if (res.success && res.data?.headerLogo?.url) {
+          setCustomLogoUrl(res.data.headerLogo.url);
+        } else if (res.success && res.data?.logoUrl) {
           setCustomLogoUrl(res.data.logoUrl);
         }
       })

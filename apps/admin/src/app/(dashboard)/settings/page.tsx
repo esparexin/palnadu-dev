@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { siteConfig } from '@palnadu/config';
 import { api } from '@/lib/api';
 import { BrandLogo } from '@/components/ui/brand-logo';
 import {
@@ -11,36 +10,73 @@ import {
   AlertCircle,
   Image as ImageIcon,
   Check,
-  RefreshCw,
+  X,
   Info,
+  Globe,
+  LayoutTemplate,
+  Bookmark,
 } from 'lucide-react';
 
-interface BrandingData {
-  hasCustomLogo: boolean;
-  logoUrl: string | null;
-  logoPublicId?: string | null;
+interface BrandingAsset {
+  url: string | null;
+  publicId?: string | null;
   width?: number | null;
   height?: number | null;
   format?: string | null;
   size?: number | null;
   originalName?: string | null;
   updatedAt?: string;
-  locations?: string[];
 }
 
+interface FullBrandingData {
+  headerLogo: BrandingAsset;
+  footerLogo: BrandingAsset;
+  favicon: BrandingAsset;
+  ogImage: BrandingAsset;
+  updatedAt: string;
+}
+
+const EMPTY_ASSET: BrandingAsset = {
+  url: null,
+  publicId: null,
+};
+
 export default function SettingsPage() {
-  const [branding, setBranding] = useState<BrandingData>({
-    hasCustomLogo: false,
-    logoUrl: null,
+  const [branding, setBranding] = useState<FullBrandingData>({
+    headerLogo: { ...EMPTY_ASSET },
+    footerLogo: { ...EMPTY_ASSET },
+    favicon: { ...EMPTY_ASSET },
+    ogImage: { ...EMPTY_ASSET },
+    updatedAt: '',
   });
+
   const [loading, setLoading] = useState(true);
-  const [uploading, setUploading] = useState(false);
-  const [removing, setRemoving] = useState(false);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [localPreviewUrl, setLocalPreviewUrl] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [removingType, setRemovingType] = useState<string | null>(null);
+
+  // Staged files for Apply / Discard flow
+  const [stagedFiles, setStagedFiles] = useState<{
+    header?: File;
+    footer?: File;
+    favicon?: File;
+  }>({});
+
+  // Local object URLs for instant live preview
+  const [previewUrls, setPreviewUrls] = useState<{
+    header?: string;
+    footer?: string;
+    favicon?: string;
+  }>({});
+
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Hidden file input references
+  const headerInputRef = useRef<HTMLInputElement>(null);
+  const footerInputRef = useRef<HTMLInputElement>(null);
+  const faviconInputRef = useRef<HTMLInputElement>(null);
+
+  const hasUnsavedChanges = Object.keys(stagedFiles).length > 0;
 
   const fetchBranding = async () => {
     try {
@@ -60,108 +96,135 @@ export default function SettingsPage() {
     fetchBranding();
   }, []);
 
-  // Handle client-side file selection & validation
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Stage a file for upload
+  const handleStageFile = (
+    type: 'header' | 'footer' | 'favicon',
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     setErrorMessage(null);
     setSuccessMessage(null);
 
-    // 1. Validate File Size (Max 2MB)
-    const MAX_SIZE = 2 * 1024 * 1024;
-    if (file.size > MAX_SIZE) {
+    // Size validation
+    const maxSize = type === 'favicon' ? 1024 * 1024 : 2 * 1024 * 1024;
+    if (file.size > maxSize) {
       setErrorMessage(
-        `File is too large (${(file.size / 1024 / 1024).toFixed(2)} MB). Maximum allowed size is 2 MB.`,
+        `File is too large (${(file.size / 1024 / 1024).toFixed(2)} MB). Maximum allowed is ${
+          maxSize / 1024 / 1024
+        } MB.`,
       );
-      if (fileInputRef.current) fileInputRef.current.value = '';
+      e.target.value = '';
       return;
     }
 
-    // 2. Validate File Type
-    const allowedTypes = ['image/png', 'image/svg+xml', 'image/webp', 'image/jpeg'];
-    if (!allowedTypes.includes(file.type)) {
-      setErrorMessage('Unsupported format. Please upload a transparent PNG or clean SVG logo.');
-      if (fileInputRef.current) fileInputRef.current.value = '';
+    // Format validation
+    const allowed =
+      type === 'favicon'
+        ? ['image/png', 'image/x-icon', 'image/vnd.microsoft.icon', 'image/svg+xml', 'image/webp']
+        : ['image/png', 'image/svg+xml', 'image/webp', 'image/jpeg'];
+
+    if (!allowed.includes(file.type) && !file.name.endsWith('.ico') && !file.name.endsWith('.svg')) {
+      setErrorMessage(
+        type === 'favicon'
+          ? 'Unsupported favicon format. Please upload a square PNG, ICO, or SVG.'
+          : 'Unsupported format. Please upload a transparent PNG or clean SVG logo.',
+      );
+      e.target.value = '';
       return;
     }
 
-    // 3. Generate Local Instant Preview
     const objectUrl = URL.createObjectURL(file);
-    setLocalPreviewUrl(objectUrl);
-    setSelectedFile(file);
+    setStagedFiles((prev) => ({ ...prev, [type]: file }));
+    setPreviewUrls((prev) => ({ ...prev, [type]: objectUrl }));
   };
 
-  // Upload and Apply Logo to Cloudinary + DB
-  const handleUploadAndSave = async () => {
-    if (!selectedFile) return;
+  // Discard all staged changes
+  const handleDiscardAll = () => {
+    Object.values(previewUrls).forEach((url) => {
+      if (url) URL.revokeObjectURL(url);
+    });
+    setStagedFiles({});
+    setPreviewUrls({});
+    setErrorMessage(null);
+    if (headerInputRef.current) headerInputRef.current.value = '';
+    if (footerInputRef.current) footerInputRef.current.value = '';
+    if (faviconInputRef.current) faviconInputRef.current.value = '';
+  };
 
-    setUploading(true);
+  // Apply & Save all staged changes to Cloudinary + DB
+  const handleApplyChanges = async () => {
+    if (!hasUnsavedChanges) return;
+
+    setSaving(true);
     setErrorMessage(null);
     setSuccessMessage(null);
 
     try {
-      const res = await api.settings.branding.uploadLogo(selectedFile);
-      if (res.success) {
-        setSuccessMessage('Logo uploaded and applied successfully across all channels.');
-        setBranding(res.data);
-        setSelectedFile(null);
-        setLocalPreviewUrl(null);
+      const uploadPromises: Promise<any>[] = [];
+
+      if (stagedFiles.header) {
+        uploadPromises.push(api.settings.branding.uploadAsset('header', stagedFiles.header));
       }
+      if (stagedFiles.footer) {
+        uploadPromises.push(api.settings.branding.uploadAsset('footer', stagedFiles.footer));
+      }
+      if (stagedFiles.favicon) {
+        uploadPromises.push(api.settings.branding.uploadAsset('favicon', stagedFiles.favicon));
+      }
+
+      await Promise.all(uploadPromises);
+
+      // Clean up local preview object URLs
+      Object.values(previewUrls).forEach((url) => {
+        if (url) URL.revokeObjectURL(url);
+      });
+      setStagedFiles({});
+      setPreviewUrls({});
+
+      // Refresh database config
+      await fetchBranding();
+      setSuccessMessage('All branding assets uploaded and applied successfully across all platforms.');
     } catch (err) {
-      setErrorMessage(err instanceof Error ? err.message : 'Failed to upload logo.');
+      setErrorMessage(err instanceof Error ? err.message : 'Failed to apply branding changes.');
     } finally {
-      setUploading(false);
-      if (fileInputRef.current) fileInputRef.current.value = '';
+      setSaving(false);
     }
   };
 
-  // Remove Custom Logo and Revert to Typographic Brandmark
-  const handleRemoveLogo = async () => {
-    if (
-      !confirm(
-        'Are you sure you want to remove the custom logo? The platform will revert to the default vector brandmark [ P. ] Palnadu.dev.',
-      )
-    ) {
+  // Immediate remove of an active asset
+  const handleRemoveAsset = async (type: 'header' | 'footer' | 'favicon', label: string) => {
+    if (!confirm(`Are you sure you want to remove the custom ${label}? It will revert to the default brandmark.`)) {
       return;
     }
 
-    setRemoving(true);
+    setRemovingType(type);
     setErrorMessage(null);
     setSuccessMessage(null);
 
     try {
-      const res = await api.settings.branding.removeLogo();
-      if (res.success) {
-        setSuccessMessage('Custom logo removed. Default typographic brandmark restored.');
-        setBranding(res.data);
-        setSelectedFile(null);
-        setLocalPreviewUrl(null);
-      }
+      await api.settings.branding.removeAsset(type);
+      await fetchBranding();
+      setSuccessMessage(`${label} removed. Default fallback restored.`);
     } catch (err) {
-      setErrorMessage(err instanceof Error ? err.message : 'Failed to remove logo.');
+      setErrorMessage(err instanceof Error ? err.message : `Failed to remove ${label}.`);
     } finally {
-      setRemoving(false);
+      setRemovingType(null);
     }
-  };
-
-  const cancelSelection = () => {
-    setSelectedFile(null);
-    if (localPreviewUrl) URL.revokeObjectURL(localPreviewUrl);
-    setLocalPreviewUrl(null);
-    if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-28">
+      {/* Header */}
       <div>
-        <h1 className="text-2xl font-extrabold tracking-tight text-palnadu-dark">Settings</h1>
+        <h1 className="text-2xl font-extrabold tracking-tight text-palnadu-dark">Brand & Logo Settings</h1>
         <p className="text-xs text-palnadu-secondary mt-0.5">
-          Platform configuration, logo branding, and system parameters.
+          Dedicated asset fields for Header Logo, Footer Logo, and Favicon with live preview and instant application.
         </p>
       </div>
 
-      {/* Notifications */}
+      {/* Feedback Alerts */}
       {successMessage && (
         <div className="p-3.5 rounded-lg bg-emerald-50 border border-emerald-300 text-xs text-emerald-800 font-medium flex items-center gap-2 animate-fade-in">
           <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
@@ -176,270 +239,281 @@ export default function SettingsPage() {
         </div>
       )}
 
-      <div className="grid gap-6 max-w-3xl">
-        {/* ── 1. LOGO & BRAND IDENTITY CARD ── */}
-        <div className="rounded-xl border border-palnadu-border bg-white p-6 shadow-2xs space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-palnadu-border/60 pb-4">
-            <div>
-              <h2 className="text-base font-bold text-palnadu-dark">Logo & Brand Identity</h2>
-              <p className="text-xs text-palnadu-secondary mt-0.5">
-                Manage the authoritative brand logo displayed across the public website, mobile menu, and admin portal.
-              </p>
+      {/* Hidden File Inputs */}
+      <input
+        type="file"
+        ref={headerInputRef}
+        onChange={(e) => handleStageFile('header', e)}
+        accept="image/png,image/svg+xml,image/webp,image/jpeg"
+        className="hidden"
+      />
+      <input
+        type="file"
+        ref={footerInputRef}
+        onChange={(e) => handleStageFile('footer', e)}
+        accept="image/png,image/svg+xml,image/webp,image/jpeg"
+        className="hidden"
+      />
+      <input
+        type="file"
+        ref={faviconInputRef}
+        onChange={(e) => handleStageFile('favicon', e)}
+        accept="image/png,image/x-icon,image/vnd.microsoft.icon,image/svg+xml,image/webp"
+        className="hidden"
+      />
+
+      {/* ── SEPARATE UPLOAD FIELDS GRID ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+        
+        {/* ── CARD 1: HEADER LOGO ── */}
+        <div className="rounded-xl border border-palnadu-border bg-white p-5 shadow-2xs flex flex-col justify-between space-y-4">
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="h-7 w-7 rounded-md bg-palnadu-light-blue text-palnadu-blue flex items-center justify-center">
+                  <LayoutTemplate className="h-4 w-4" />
+                </div>
+                <h2 className="text-sm font-bold text-palnadu-dark">Header Logo</h2>
+              </div>
+              <span
+                className={`text-[10px] font-mono font-semibold px-2 py-0.5 rounded-full ${
+                  stagedFiles.header
+                    ? 'bg-amber-50 text-amber-700 border border-amber-200'
+                    : branding.headerLogo?.url
+                    ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                    : 'bg-palnadu-light-blue text-palnadu-blue border border-palnadu-blue/20'
+                }`}
+              >
+                {stagedFiles.header ? 'Staged (Unsaved)' : branding.headerLogo?.url ? 'Custom Active' : 'Default Brandmark'}
+              </span>
             </div>
-            <span
-              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-mono font-semibold self-start sm:self-auto ${
-                branding.hasCustomLogo
-                  ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                  : 'bg-palnadu-light-blue text-palnadu-blue border border-palnadu-blue/20'
-              }`}
-            >
-              <span className="h-1.5 w-1.5 rounded-full bg-current" />
-              {branding.hasCustomLogo ? 'Custom Logo Active' : 'Default Brandmark Active'}
-            </span>
+
+            <p className="text-[11px] text-palnadu-secondary leading-relaxed">
+              Displayed in Desktop Header, Mobile Navigation drawer, and Admin Portal.
+            </p>
+
+            {/* Light Background Preview */}
+            <div className="p-3.5 rounded-lg border border-palnadu-border bg-white flex flex-col justify-center items-center h-20 relative">
+              <BrandLogo
+                customLogoUrl={previewUrls.header || branding.headerLogo?.url}
+                variant="default"
+                size="md"
+              />
+            </div>
+
+            {/* Specifications Help */}
+            <div className="text-[10px] text-palnadu-secondary space-y-0.5 font-mono pt-1">
+              <p>• Format: Transparent PNG or SVG</p>
+              <p>• Size: 240 × 60 px (max 2 MB)</p>
+              <p>• Tone: Dark text on transparent</p>
+            </div>
           </div>
 
-          {/* Current Active Logo Preview */}
-          <div className="space-y-3">
-            <label className="text-xs font-mono font-bold uppercase tracking-wider text-palnadu-secondary">
-              Current Active Logo
-            </label>
+          {/* Controls */}
+          <div className="flex items-center gap-2 pt-2 border-t border-palnadu-border/60">
+            <button
+              onClick={() => headerInputRef.current?.click()}
+              disabled={saving}
+              className="flex-1 inline-flex items-center justify-center gap-1.5 h-8 rounded-md font-semibold text-xs bg-palnadu-blue text-white hover:bg-[#12487e] transition-colors cursor-pointer disabled:opacity-50"
+            >
+              <UploadCloud className="h-3.5 w-3.5" />
+              <span>{branding.headerLogo?.url ? 'Replace' : 'Upload'}</span>
+            </button>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {/* Light Background Preview */}
-              <div className="p-4 rounded-xl border border-palnadu-border bg-white flex flex-col justify-between space-y-3">
-                <span className="text-[10px] font-mono text-palnadu-secondary uppercase font-semibold">
-                  Light Theme (Header & Navigation)
-                </span>
-                <div className="h-14 flex items-center justify-center p-2">
-                  <BrandLogo customLogoUrl={localPreviewUrl || branding.logoUrl} variant="default" size="md" />
-                </div>
-              </div>
-
-              {/* Dark Background Preview (Checkerboard for transparency) */}
-              <div className="p-4 rounded-xl border border-palnadu-border bg-palnadu-dark flex flex-col justify-between space-y-3">
-                <span className="text-[10px] font-mono text-gray-400 uppercase font-semibold">
-                  Dark Theme (Footer & Contrast)
-                </span>
-                <div className="h-14 flex items-center justify-center p-2">
-                  <BrandLogo customLogoUrl={localPreviewUrl || branding.logoUrl} variant="white" size="md" />
-                </div>
-              </div>
-            </div>
-
-            {/* Asset Metadata if Custom Logo is Active */}
-            {branding.hasCustomLogo && branding.logoUrl && (
-              <div className="flex flex-wrap items-center gap-3 pt-1 text-[11px] font-mono text-palnadu-secondary">
-                {branding.format && (
-                  <span className="bg-palnadu-off-white px-2 py-0.5 rounded border border-palnadu-border/60">
-                    Format: {branding.format.toUpperCase()}
-                  </span>
-                )}
-                {branding.width && branding.height && (
-                  <span className="bg-palnadu-off-white px-2 py-0.5 rounded border border-palnadu-border/60">
-                    Dimensions: {branding.width} × {branding.height} px
-                  </span>
-                )}
-                {branding.size && (
-                  <span className="bg-palnadu-off-white px-2 py-0.5 rounded border border-palnadu-border/60">
-                    Size: {(branding.size / 1024).toFixed(1)} KB
-                  </span>
-                )}
-                <a
-                  href={branding.logoUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-palnadu-blue hover:underline ml-auto"
-                >
-                  View Cloudinary Asset ↗
-                </a>
-              </div>
+            {branding.headerLogo?.url && (
+              <button
+                onClick={() => handleRemoveAsset('header', 'Header Logo')}
+                disabled={saving || removingType === 'header'}
+                className="h-8 px-2.5 rounded-md font-semibold text-xs border border-red-200 text-red-600 bg-white hover:bg-red-50 transition-colors cursor-pointer disabled:opacity-50"
+                title="Remove custom header logo"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </button>
             )}
           </div>
+        </div>
 
-          {/* Action Controls: Upload / Replace / Remove */}
-          <div className="space-y-4 pt-2 border-t border-palnadu-border/60">
-            {/* Hidden native file input */}
-            <input
-              type="file"
-              ref={fileInputRef}
-              onChange={handleFileChange}
-              accept="image/png,image/svg+xml,image/webp,image/jpeg"
-              className="hidden"
-            />
-
-            <div className="flex flex-wrap items-center gap-3">
-              {!selectedFile ? (
-                <>
-                  <button
-                    onClick={() => fileInputRef.current?.click()}
-                    disabled={uploading || removing}
-                    className="inline-flex items-center gap-2 px-4 py-2 rounded-md font-semibold text-xs bg-palnadu-blue text-white hover:bg-[#12487e] shadow-xs cursor-pointer transition-colors disabled:opacity-50"
-                  >
-                    <UploadCloud className="h-4 w-4" />
-                    <span>{branding.hasCustomLogo ? 'Replace Logo' : 'Upload New Logo'}</span>
-                  </button>
-
-                  {branding.hasCustomLogo && (
-                    <button
-                      onClick={handleRemoveLogo}
-                      disabled={uploading || removing}
-                      className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-md font-semibold text-xs border border-red-300 text-red-600 bg-white hover:bg-red-50 shadow-xs cursor-pointer transition-colors disabled:opacity-50"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                      <span>{removing ? 'Removing...' : 'Remove Logo'}</span>
-                    </button>
-                  )}
-                </>
-              ) : (
-                /* Staged Upload Ready to Save */
-                <div className="flex flex-wrap items-center gap-2.5 w-full bg-palnadu-light-blue/40 border border-palnadu-blue/30 p-3 rounded-lg">
-                  <div className="flex-1 min-w-[200px]">
-                    <p className="text-xs font-bold text-palnadu-dark truncate">
-                      Selected: {selectedFile.name}
-                    </p>
-                    <p className="text-[11px] text-palnadu-secondary">
-                      {(selectedFile.size / 1024).toFixed(1)} KB • Ready to apply
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={handleUploadAndSave}
-                      disabled={uploading}
-                      className="inline-flex items-center gap-1.5 px-4 py-2 rounded-md font-semibold text-xs bg-palnadu-teal text-white hover:bg-[#157c5c] shadow-xs cursor-pointer transition-colors disabled:opacity-50"
-                    >
-                      <Check className="h-4 w-4" />
-                      <span>{uploading ? 'Applying to Cloudinary...' : 'Save & Apply Logo'}</span>
-                    </button>
-                    <button
-                      onClick={cancelSelection}
-                      disabled={uploading}
-                      className="px-3 py-2 rounded-md font-semibold text-xs border border-palnadu-border text-palnadu-secondary bg-white hover:bg-palnadu-off-white cursor-pointer transition-colors"
-                    >
-                      Cancel
-                    </button>
-                  </div>
+        {/* ── CARD 2: FOOTER LOGO ── */}
+        <div className="rounded-xl border border-palnadu-border bg-white p-5 shadow-2xs flex flex-col justify-between space-y-4">
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="h-7 w-7 rounded-md bg-palnadu-dark text-white flex items-center justify-center">
+                  <LayoutTemplate className="h-4 w-4" />
                 </div>
-              )}
-            </div>
-
-            {/* Clear Help Text & Guidelines */}
-            <div className="rounded-lg bg-palnadu-off-white/60 border border-palnadu-border/60 p-4 space-y-2 text-xs text-palnadu-body">
-              <div className="flex items-center gap-1.5 font-bold text-palnadu-dark">
-                <Info className="h-3.5 w-3.5 text-palnadu-blue" />
-                <span>Logo Upload Guidelines & Requirements</span>
+                <h2 className="text-sm font-bold text-palnadu-dark">Footer Logo</h2>
               </div>
-              <ul className="list-disc list-inside space-y-1 text-[11px] text-palnadu-secondary pl-1 leading-relaxed">
-                <li>
-                  <strong className="text-palnadu-dark">Recommended Format:</strong> High-resolution{' '}
-                  <strong className="text-palnadu-blue">PNG with transparent background</strong> or clean scalable{' '}
-                  <strong className="text-palnadu-blue">SVG</strong>.
-                </li>
-                <li>
-                  <strong className="text-palnadu-dark">Recommended Dimensions:</strong> Horizontal layout with aspect
-                  ratio around <strong>4:1</strong> (e.g. <code>240 × 60 px</code> up to <code>800 × 200 px</code>).
-                </li>
-                <li>
-                  <strong className="text-palnadu-dark">Maximum File Size:</strong> <strong>2 MB</strong> (automatically
-                  optimized via Cloudinary <code>f_auto, q_auto</code>).
-                </li>
-                <li>
-                  <strong className="text-palnadu-dark">Transparent Background:</strong> Preserves seamless blending
-                  across both light and dark headers without white container boxes.
-                </li>
-                <li>
-                  <strong className="text-palnadu-dark">Automatic Fallback:</strong> If no custom logo is uploaded, the
-                  system automatically displays the vector typographic brandmark <code>[ P. ] Palnadu.dev</code> with zero
-                  layout shift.
-                </li>
-              </ul>
-            </div>
-
-            {/* Display Locations */}
-            <div className="pt-2">
-              <span className="text-[11px] font-mono text-palnadu-secondary font-semibold uppercase tracking-wider block mb-2">
-                Active Display Channels:
-              </span>
-              <div className="flex flex-wrap gap-2">
-                {[
-                  'Desktop Header',
-                  'Mobile Navigation',
-                  'Footer',
-                  'Admin Portal Sidebar',
-                  'Admin Login Box',
-                  'Social Share Metadata',
-                ].map((channel) => (
-                  <span
-                    key={channel}
-                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-white border border-palnadu-border text-[11px] font-medium text-palnadu-dark shadow-2xs"
-                  >
-                    <CheckCircle2 className="h-3 w-3 text-palnadu-teal" />
-                    <span>{channel}</span>
-                  </span>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* ── 2. GENERAL COMPANY IDENTITY CARD ── */}
-        <div className="rounded-xl border border-palnadu-border bg-white p-6 shadow-2xs space-y-4">
-          <h2 className="text-sm font-bold text-palnadu-dark mb-1">Company Identity</h2>
-          <p className="text-xs text-palnadu-secondary mb-4">
-            System identification parameters configured in the centralized monorepo config.
-          </p>
-          <div className="space-y-3 text-xs">
-            <div className="flex justify-between py-2 border-b border-palnadu-border/60">
-              <span className="text-palnadu-secondary font-medium">Company Name:</span>
-              <span className="font-bold text-palnadu-dark">{siteConfig.name}</span>
-            </div>
-            <div className="flex justify-between py-2 border-b border-palnadu-border/60">
-              <span className="text-palnadu-secondary font-medium">Public Contact Email:</span>
-              <span className="font-mono text-palnadu-blue font-semibold">{siteConfig.contact.email}</span>
-            </div>
-            <div className="flex justify-between py-2 border-b border-palnadu-border/60">
-              <span className="text-palnadu-secondary font-medium">Production Website:</span>
-              <a
-                href={siteConfig.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-palnadu-blue hover:underline font-mono"
+              <span
+                className={`text-[10px] font-mono font-semibold px-2 py-0.5 rounded-full ${
+                  stagedFiles.footer
+                    ? 'bg-amber-50 text-amber-700 border border-amber-200'
+                    : branding.footerLogo?.url
+                    ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                    : 'bg-palnadu-light-blue text-palnadu-blue border border-palnadu-blue/20'
+                }`}
               >
-                {siteConfig.url}
-              </a>
+                {stagedFiles.footer ? 'Staged (Unsaved)' : branding.footerLogo?.url ? 'Custom Active' : 'Default Brandmark'}
+              </span>
             </div>
+
+            <p className="text-[11px] text-palnadu-secondary leading-relaxed">
+              Displayed on the dark footer surface (#042C53) across all public pages.
+            </p>
+
+            {/* Dark Background Preview */}
+            <div className="p-3.5 rounded-lg border border-palnadu-border bg-palnadu-dark flex flex-col justify-center items-center h-20 relative">
+              <BrandLogo
+                customLogoUrl={previewUrls.footer || branding.footerLogo?.url}
+                variant="white"
+                size="md"
+              />
+            </div>
+
+            {/* Specifications Help */}
+            <div className="text-[10px] text-palnadu-secondary space-y-0.5 font-mono pt-1">
+              <p>• Format: Transparent PNG or SVG</p>
+              <p>• Size: 240 × 60 px (max 2 MB)</p>
+              <p>• Tone: White / light logo on dark</p>
+            </div>
+          </div>
+
+          {/* Controls */}
+          <div className="flex items-center gap-2 pt-2 border-t border-palnadu-border/60">
+            <button
+              onClick={() => footerInputRef.current?.click()}
+              disabled={saving}
+              className="flex-1 inline-flex items-center justify-center gap-1.5 h-8 rounded-md font-semibold text-xs bg-palnadu-blue text-white hover:bg-[#12487e] transition-colors cursor-pointer disabled:opacity-50"
+            >
+              <UploadCloud className="h-3.5 w-3.5" />
+              <span>{branding.footerLogo?.url ? 'Replace' : 'Upload'}</span>
+            </button>
+
+            {branding.footerLogo?.url && (
+              <button
+                onClick={() => handleRemoveAsset('footer', 'Footer Logo')}
+                disabled={saving || removingType === 'footer'}
+                className="h-8 px-2.5 rounded-md font-semibold text-xs border border-red-200 text-red-600 bg-white hover:bg-red-50 transition-colors cursor-pointer disabled:opacity-50"
+                title="Remove custom footer logo"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </button>
+            )}
           </div>
         </div>
 
-        {/* ── 3. SYSTEM & ARCHITECTURE CARD ── */}
-        <div className="rounded-xl border border-palnadu-border bg-white p-6 shadow-2xs space-y-4">
-          <h2 className="text-sm font-bold text-palnadu-dark mb-1">Architecture & Infrastructure</h2>
-          <p className="text-xs text-palnadu-secondary mb-4">
-            Runtime configurations, asset CDN pipelines, and database state.
-          </p>
-          <div className="space-y-3 text-xs">
-            <div className="flex justify-between py-2 border-b border-palnadu-border/60">
-              <span className="text-palnadu-secondary font-medium">Database:</span>
-              <span className="font-mono text-palnadu-dark font-semibold">MongoDB Atlas (Prisma ORM)</span>
-            </div>
-            <div className="flex justify-between py-2 border-b border-palnadu-border/60">
-              <span className="text-palnadu-secondary font-medium">Cloudinary CDN Pipeline:</span>
-              <span className="font-mono text-palnadu-teal font-semibold">Connected (palnadu/branding/logo)</span>
-            </div>
-            <div className="flex justify-between py-2 border-b border-palnadu-border/60">
-              <span className="text-palnadu-secondary font-medium">REST API Endpoint:</span>
-              <span className="font-mono text-palnadu-blue font-semibold">
-                {process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}
+        {/* ── CARD 3: FAVICON ── */}
+        <div className="rounded-xl border border-palnadu-border bg-white p-5 shadow-2xs flex flex-col justify-between space-y-4">
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="h-7 w-7 rounded-md bg-teal-50 text-palnadu-teal flex items-center justify-center">
+                  <Bookmark className="h-4 w-4" />
+                </div>
+                <h2 className="text-sm font-bold text-palnadu-dark">Favicon</h2>
+              </div>
+              <span
+                className={`text-[10px] font-mono font-semibold px-2 py-0.5 rounded-full ${
+                  stagedFiles.favicon
+                    ? 'bg-amber-50 text-amber-700 border border-amber-200'
+                    : branding.favicon?.url
+                    ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                    : 'bg-palnadu-light-blue text-palnadu-blue border border-palnadu-blue/20'
+                }`}
+              >
+                {stagedFiles.favicon ? 'Staged (Unsaved)' : branding.favicon?.url ? 'Custom Active' : 'Default (/favicon.png)'}
               </span>
             </div>
-            <div className="flex justify-between py-2">
-              <span className="text-palnadu-secondary font-medium">Security Guard:</span>
-              <span className="text-emerald-700 font-semibold bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
-                JWT Auth + Helmet Protection Active
-              </span>
+
+            <p className="text-[11px] text-palnadu-secondary leading-relaxed">
+              Displayed in browser tabs, mobile bookmarks, and progressive web app icons.
+            </p>
+
+            {/* Favicon Browser Tab Simulation Preview */}
+            <div className="p-3.5 rounded-lg border border-palnadu-border bg-palnadu-off-white/50 flex flex-col justify-center items-center h-20">
+              <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-md border border-palnadu-border shadow-xs">
+                {previewUrls.favicon || branding.favicon?.url ? (
+                  <img
+                    src={previewUrls.favicon || branding.favicon?.url || ''}
+                    alt="Favicon"
+                    className="h-4 w-4 object-contain rounded-xs"
+                  />
+                ) : (
+                  <img src="/favicon.png" alt="Favicon" className="h-4 w-4 object-contain" />
+                )}
+                <span className="text-[11px] font-medium text-palnadu-dark truncate max-w-[120px]">
+                  Palnadu.dev — Home
+                </span>
+              </div>
+            </div>
+
+            {/* Specifications Help */}
+            <div className="text-[10px] text-palnadu-secondary space-y-0.5 font-mono pt-1">
+              <p>• Format: Square PNG, ICO, SVG</p>
+              <p>• Size: 32 × 32 px to 512 × 512 px</p>
+              <p>• Maximum: 1 MB</p>
+            </div>
+          </div>
+
+          {/* Controls */}
+          <div className="flex items-center gap-2 pt-2 border-t border-palnadu-border/60">
+            <button
+              onClick={() => faviconInputRef.current?.click()}
+              disabled={saving}
+              className="flex-1 inline-flex items-center justify-center gap-1.5 h-8 rounded-md font-semibold text-xs bg-palnadu-blue text-white hover:bg-[#12487e] transition-colors cursor-pointer disabled:opacity-50"
+            >
+              <UploadCloud className="h-3.5 w-3.5" />
+              <span>{branding.favicon?.url ? 'Replace' : 'Upload'}</span>
+            </button>
+
+            {branding.favicon?.url && (
+              <button
+                onClick={() => handleRemoveAsset('favicon', 'Favicon')}
+                disabled={saving || removingType === 'favicon'}
+                className="h-8 px-2.5 rounded-md font-semibold text-xs border border-red-200 text-red-600 bg-white hover:bg-red-50 transition-colors cursor-pointer disabled:opacity-50"
+                title="Remove custom favicon"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </button>
+            )}
+          </div>
+        </div>
+
+      </div>
+
+      {/* ── FLOATING "APPLY & DISCARD" POPUP BAR (Appears whenever changes are staged) ── */}
+      {hasUnsavedChanges && (
+        <div className="fixed bottom-6 inset-x-4 max-w-xl mx-auto z-50 animate-slide-up">
+          <div className="bg-palnadu-dark text-white p-4 rounded-xl shadow-2xl border border-white/20 flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5 text-xs">
+              <span className="h-2 w-2 rounded-full bg-amber-400 animate-pulse shrink-0" />
+              <div>
+                <p className="font-bold text-white">Unsaved Branding Changes</p>
+                <p className="text-[11px] text-gray-300">
+                  {Object.keys(stagedFiles).length} asset(s) staged. Apply to update Cloudinary & live channels.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 w-full sm:w-auto">
+              <button
+                onClick={handleDiscardAll}
+                disabled={saving}
+                className="flex-1 sm:flex-none px-3.5 py-2 rounded-md font-semibold text-xs border border-white/20 text-gray-300 hover:bg-white/10 transition-colors cursor-pointer disabled:opacity-50"
+              >
+                Discard
+              </button>
+              <button
+                onClick={handleApplyChanges}
+                disabled={saving}
+                className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-md font-semibold text-xs bg-palnadu-teal text-white hover:bg-[#157c5c] shadow-md transition-colors cursor-pointer disabled:opacity-50"
+              >
+                <Check className="h-3.5 w-3.5" />
+                <span>{saving ? 'Applying...' : 'Apply Changes'}</span>
+              </button>
             </div>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
