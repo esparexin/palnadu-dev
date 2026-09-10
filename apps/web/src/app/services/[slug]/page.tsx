@@ -159,7 +159,7 @@ export default async function ServicePage({ params }: Props) {
       '@type': 'ProfessionalService',
       name: 'Palnadu.dev',
       url: siteConfig.url,
-      telephone: '+91',
+      telephone: siteConfig.contact.phone,
       address: {
         '@type': 'PostalAddress',
         addressRegion: 'Andhra Pradesh',

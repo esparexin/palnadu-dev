@@ -37,15 +37,28 @@ export function Footer() {
             <p className="text-xs sm:text-sm text-palnadu-light-blue/80 leading-relaxed max-w-sm">
               Start with the problem. We build the solution. Turning real-world problems into practical digital solutions.
             </p>
-            <p className="text-xs pt-0.5">
-              <a
-                href={`mailto:${siteConfig.contact.email}`}
-                className="text-palnadu-light-blue hover:text-white transition-colors font-mono inline-flex items-center gap-1 underline"
-              >
-                <span>{siteConfig.contact.email}</span>
-                <ArrowUpRight className="h-3 w-3" />
-              </a>
-            </p>
+            <div className="text-xs pt-0.5 space-y-1">
+              <p>
+                <a
+                  href={`mailto:${siteConfig.contact.email}`}
+                  className="text-palnadu-light-blue hover:text-white transition-colors font-mono inline-flex items-center gap-1 underline"
+                >
+                  <span>{siteConfig.contact.email}</span>
+                  <ArrowUpRight className="h-3 w-3" />
+                </a>
+              </p>
+              {siteConfig.contact.phone && (
+                <p>
+                  <a
+                    href={`tel:${siteConfig.contact.phone}`}
+                    className="text-palnadu-light-blue hover:text-white transition-colors font-mono inline-flex items-center gap-1 underline"
+                  >
+                    <span>{siteConfig.contact.phone}</span>
+                    <ArrowUpRight className="h-3 w-3" />
+                  </a>
+                </p>
+              )}
+            </div>
           </div>
 
           {/* Column 1: Services */}

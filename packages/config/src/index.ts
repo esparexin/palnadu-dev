@@ -31,7 +31,7 @@ export const siteConfig = {
   },
   contact: {
     email: 'hello@palnadu.dev',
-    phone: '',
+    phone: '+91-9030787819',
   },
 } as const;
 

@@ -11,7 +11,7 @@ function JsonLd() {
     logo: `${siteConfig.url}/footer_header-logo.png`,
     image: `${siteConfig.url}/og.png`,
     description: siteConfig.description,
-    telephone: '+91',
+    telephone: siteConfig.contact.phone,
     email: siteConfig.contact.email,
     priceRange: '₹₹ / $$',
     address: {

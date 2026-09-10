@@ -257,12 +257,25 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 mb-3 border-b border-palnadu-border/60">
                   <div>
                     <h2 className="text-base sm:text-lg font-bold text-palnadu-dark">{mainMessage}</h2>
-                    <a
-                      href={`mailto:${contactEmail}`}
-                      className="text-xs font-semibold text-palnadu-blue hover:underline"
-                    >
-                      {contactEmail}
-                    </a>
+                    <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs">
+                      <a
+                        href={`mailto:${contactEmail}`}
+                        className="font-semibold text-palnadu-blue hover:underline"
+                      >
+                        {contactEmail}
+                      </a>
+                      {siteConfig.contact.phone && (
+                        <>
+                          <span className="text-palnadu-secondary/60">•</span>
+                          <a
+                            href={`tel:${siteConfig.contact.phone}`}
+                            className="font-semibold font-mono text-palnadu-blue hover:underline"
+                          >
+                            {siteConfig.contact.phone}
+                          </a>
+                        </>
+                      )}
+                    </div>
                   </div>
 
                   {/* Social Channel Links */}

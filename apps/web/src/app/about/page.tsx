@@ -26,6 +26,8 @@ export default function AboutPage() {
       url: siteConfig.url,
       logo: `${siteConfig.url}/footer_header-logo.png`,
       description: siteConfig.description,
+      email: siteConfig.contact.email,
+      telephone: siteConfig.contact.phone,
       address: {
         '@type': 'PostalAddress',
         addressRegion: 'Andhra Pradesh',

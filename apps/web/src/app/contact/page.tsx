@@ -21,6 +21,7 @@ export default function ContactPage() {
       '@type': 'Organization',
       name: 'Palnadu.dev',
       email: siteConfig.contact.email,
+      telephone: siteConfig.contact.phone,
     },
   };
 
