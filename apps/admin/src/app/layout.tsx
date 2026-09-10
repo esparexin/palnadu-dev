@@ -9,21 +9,46 @@ const fontSans = Plus_Jakarta_Sans({
   weight: ['400', '500', '600', '700', '800'],
 });
 
-export const metadata: Metadata = {
-  title: {
-    default: 'Admin | Palnadu.dev',
-    template: '%s | Admin | Palnadu.dev',
-  },
-  description: 'Palnadu.dev Admin Dashboard',
-  robots: { index: false, follow: false },
-};
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+async function getActiveFavicon(): Promise<string> {
+  try {
+    const res = await fetch(`${API_URL}/api/settings/branding`, { next: { revalidate: 30 } });
+    if (res.ok) {
+      const json = await res.json();
+      if (json.success && json.data?.favicon?.url) {
+        return json.data.favicon.url;
+      }
+    }
+  } catch {}
+  return '/favicon.png';
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const faviconUrl = await getActiveFavicon();
+
+  return {
+    title: {
+      default: 'Admin | Palnadu.dev',
+      template: '%s | Admin | Palnadu.dev',
+    },
+    description: 'Palnadu.dev Admin Dashboard',
+    robots: { index: false, follow: false },
+    icons: {
+      icon: [{ url: faviconUrl, sizes: 'any' }],
+      apple: [{ url: faviconUrl, sizes: '180x180' }],
+    },
+  };
+}
+
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const faviconUrl = await getActiveFavicon();
+
   return (
     <html lang="en" className={fontSans.variable} suppressHydrationWarning>
       <head>
-        <link rel="icon" href="/favicon.png" type="image/png" sizes="32x32" />
-        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+        <link rel="icon" href={faviconUrl} sizes="any" />
+        <link rel="apple-touch-icon" href={faviconUrl} />
       </head>
       <body className="min-h-screen font-sans antialiased bg-white text-palnadu-body">{children}</body>
     </html>
