@@ -1,9 +1,10 @@
-import { Controller, Get, Post, Patch, Body, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Body, Query, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { UserRole } from '@prisma/client';
 import { BlogAutomationService } from './blog-automation.service';
+import { FreeKeywordResearchService } from './free-keyword-research.service';
 import { PrismaService } from '../prisma.service';
 
 @Controller('admin/automation')
@@ -12,8 +13,25 @@ import { PrismaService } from '../prisma.service';
 export class AutomationController {
   constructor(
     private automationService: BlogAutomationService,
+    private keywordService: FreeKeywordResearchService,
     private prisma: PrismaService,
   ) {}
+
+  @Get('keywords')
+  async getKeywords(
+    @Query('seed') seed?: string,
+    @Query('location') location?: string,
+  ) {
+    const topic = seed || 'billing software for shop';
+    const suggestions = await this.keywordService.discoverKeywords(topic, location);
+    return {
+      success: true,
+      query: topic,
+      location: location || 'Guntur & Palnadu',
+      count: suggestions.length,
+      data: suggestions,
+    };
+  }
 
   @Get('status')
   async getStatus() {
