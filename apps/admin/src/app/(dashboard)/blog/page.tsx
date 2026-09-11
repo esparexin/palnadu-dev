@@ -199,6 +199,19 @@ export default function BlogAdminPage() {
     }
   };
 
+  const quickPublish = async (post: any) => {
+    try {
+      await api.blog.update(post.id, {
+        status: 'PUBLISHED',
+        publishDate: new Date().toISOString(),
+      });
+      toast.success(`"${post.title.slice(0, 30)}..." published and live!`);
+      fetchPosts();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to publish article');
+    }
+  };
+
   const totalCount = posts.length;
   const publishedCount = posts.filter((p) => p.status === 'PUBLISHED').length;
   const draftCount = posts.filter((p) => p.status === 'DRAFT').length;
@@ -366,6 +379,16 @@ export default function BlogAdminPage() {
 
                     {/* Actions */}
                     <td className="px-4 py-3 text-right space-x-1.5">
+                      {post.status === 'DRAFT' && (
+                        <button
+                          onClick={() => quickPublish(post)}
+                          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-50 border border-emerald-300 text-emerald-700 hover:bg-emerald-100 font-semibold transition-colors cursor-pointer text-[10px]"
+                          title="1-Click Approve & Publish"
+                        >
+                          <CheckCircle2 className="h-3 w-3" />
+                          <span>Approve & Publish</span>
+                        </button>
+                      )}
                       {post.status === 'PUBLISHED' && (
                         <a
                           href={`https://palnadu.dev/blog/${post.slug}`}
