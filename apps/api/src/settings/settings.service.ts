@@ -203,7 +203,7 @@ export class SettingsService implements OnModuleInit {
       const uploadStream = cloudinary.uploader.upload_stream(
         {
           folder: `palnadu/branding/${type}`,
-          resource_type: isSvg ? 'raw' : 'image',
+          resource_type: 'image',
           public_id: `${type}_${Date.now()}`,
           overwrite: true,
         },

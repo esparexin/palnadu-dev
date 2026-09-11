@@ -48,6 +48,11 @@ export function getOptimizedImageUrl(
 ): string {
   if (!url) return '';
 
+  // SVGs are pure vector graphics — never apply raster transformations or format conversions (avoids black background issues)
+  if (url.toLowerCase().includes('.svg')) {
+    return url;
+  }
+
   // Only transform Cloudinary URLs
   if (!url.includes('res.cloudinary.com') || !url.includes('/upload/')) {
     return url;
