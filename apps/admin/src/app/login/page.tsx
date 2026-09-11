@@ -13,6 +13,7 @@ import { Loader2 } from 'lucide-react';
 export default function LoginPage() {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
+  const [customLogoUrl, setCustomLogoUrl] = useState<string | null>(null);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -21,6 +22,15 @@ export default function LoginPage() {
         setError('Your session has expired. Please sign in again to continue.');
       }
     }
+
+    api.settings.branding
+      .get()
+      .then((res) => {
+        if (res.success && res.data?.headerLogo?.url) {
+          setCustomLogoUrl(res.data.headerLogo.url);
+        }
+      })
+      .catch(() => {});
   }, []);
 
   const {
@@ -49,7 +59,7 @@ export default function LoginPage() {
       <div className="w-full max-w-sm space-y-6">
         <div className="flex flex-col items-center space-y-2 text-center">
           <div className="mb-1">
-            <BrandLogo size="lg" />
+            <BrandLogo customLogoUrl={customLogoUrl} size="lg" />
           </div>
           <p className="text-xs text-palnadu-secondary">Sign in to the admin dashboard</p>
         </div>

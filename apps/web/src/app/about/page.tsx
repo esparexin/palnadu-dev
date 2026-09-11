@@ -24,7 +24,7 @@ export default function AboutPage() {
       '@type': 'Organization',
       name: 'Palnadu.dev',
       url: siteConfig.url,
-      logo: `${siteConfig.url}/footer_header-logo.png`,
+      logo: `${siteConfig.url}/logo.png`,
       description: siteConfig.description,
       email: siteConfig.contact.email,
       telephone: siteConfig.contact.phone,

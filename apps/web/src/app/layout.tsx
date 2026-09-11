@@ -29,15 +29,24 @@ export const viewport: Viewport = {
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
 
-async function getActiveFavicon(): Promise<{ faviconUrl: string; appleIconUrl: string }> {
+interface ActiveBranding {
+  faviconUrl: string;
+  appleIconUrl: string;
+  headerLogoUrl: string | null;
+  footerLogoUrl: string | null;
+}
+
+async function getActiveBranding(): Promise<ActiveBranding> {
   try {
     const res = await fetch(`${API_URL}/api/settings/branding`, { next: { revalidate: 30 } });
     if (res.ok) {
       const json = await res.json();
-      if (json.success && json.data?.favicon?.url) {
+      if (json.success && json.data) {
         return {
-          faviconUrl: json.data.favicon.url,
-          appleIconUrl: json.data.favicon.url,
+          faviconUrl: json.data.favicon?.url || '/favicon.png',
+          appleIconUrl: json.data.favicon?.url || '/apple-touch-icon.png',
+          headerLogoUrl: json.data.headerLogo?.url || json.data.logoUrl || null,
+          footerLogoUrl: json.data.footerLogo?.url || json.data.headerLogo?.url || null,
         };
       }
     }
@@ -46,11 +55,13 @@ async function getActiveFavicon(): Promise<{ faviconUrl: string; appleIconUrl: s
   return {
     faviconUrl: '/favicon.png',
     appleIconUrl: '/apple-touch-icon.png',
+    headerLogoUrl: null,
+    footerLogoUrl: null,
   };
 }
 
 export async function generateMetadata(): Promise<Metadata> {
-  const { faviconUrl, appleIconUrl } = await getActiveFavicon();
+  const { faviconUrl, appleIconUrl } = await getActiveBranding();
 
   return {
     metadataBase: new URL(siteConfig.url),
@@ -100,6 +111,8 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const branding = await getActiveBranding();
+
   return (
     <html
       lang="en"
@@ -109,9 +122,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       <body className="min-h-screen font-sans antialiased bg-white text-palnadu-body selection:bg-palnadu-light-blue selection:text-palnadu-blue">
         <SmoothScrollProvider>
           <div className="relative flex min-h-screen flex-col bg-white">
-            <Navbar />
+            <Navbar initialLogoUrl={branding.headerLogoUrl} />
             <main className="flex-1 bg-white">{children}</main>
-            <Footer />
+            <Footer initialLogoUrl={branding.footerLogoUrl} />
             <MobileStickyCta />
           </div>
         </SmoothScrollProvider>

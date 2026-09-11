@@ -9,16 +9,20 @@
 export const brandAssets = {
   // Cloudinary Hosted CDN Assets (SSOT with auto-format & auto-quality)
   cloudinary: {
-    logoHorizontal: 'https://res.cloudinary.com/jescuj9a/image/upload/f_auto,q_auto/v1788959247/palnadu/brand/logo-horizontal.png',
-    logoWhite: 'https://res.cloudinary.com/jescuj9a/image/upload/f_auto,q_auto/v1788959246/palnadu/brand/logo-white.png',
-    faviconMaster: 'https://res.cloudinary.com/jescuj9a/image/upload/f_auto,q_auto/v1788959187/palnadu/brand/favicon-master.png',
+    headerLogo: 'https://res.cloudinary.com/jescuj9a/image/upload/f_auto,q_auto/v1789038852/palnadu/branding/header/header_1789038850642.png',
+    footerLogo: 'https://res.cloudinary.com/jescuj9a/image/upload/f_auto,q_auto/v1789038867/palnadu/branding/footer/footer_1789038865194.png',
+    favicon: 'https://res.cloudinary.com/jescuj9a/image/upload/f_auto,q_auto/v1789038882/palnadu/branding/favicon/favicon_1789038881451.png',
     ogImage: 'https://res.cloudinary.com/jescuj9a/image/upload/f_auto,q_auto/v1788959247/palnadu/brand/og-image.png',
-    coverBanner: 'https://res.cloudinary.com/jescuj9a/image/upload/f_auto,q_auto/v1788959195/palnadu/brand/cover-transparent.png',
   },
-  // Local static paths (Fast local cache)
-  logoHorizontal: '/palnadu-logo-horizontal.png',
+  // Canonical local fallbacks
+  logo: '/logo.png',
   logoWhite: '/palnadu-logo-white.png',
-  logoDarkText: '/palnadu-logo-horizontal.png',
+  logoSvg: '/palnadu-logo-horizontal.svg',
+  favicon: '/favicon.png',
+  appleTouchIcon: '/apple-touch-icon.png',
+  // Backwards compatibility aliases
+  logoHorizontal: '/logo.png',
+  logoDarkText: '/logo.png',
   defaultOgImage: 'https://res.cloudinary.com/jescuj9a/image/upload/f_auto,q_auto/v1788959247/palnadu/brand/og-image.png',
 } as const;
 
@@ -79,6 +83,8 @@ export function getOptimizedImageUrl(
  * Standard responsive presets
  */
 export const imagePresets = {
+  logo: (url: string) =>
+    getOptimizedImageUrl(url, { height: 120, crop: 'limit', quality: 'auto', format: 'auto' }),
   thumbnail: (url: string) =>
     getOptimizedImageUrl(url, { width: 200, height: 200, crop: 'thumb' }),
   avatar: (url: string) =>

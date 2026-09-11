@@ -8,7 +8,7 @@ function JsonLd() {
     '@type': 'ProfessionalService',
     name: 'Palnadu.dev',
     url: siteConfig.url,
-    logo: `${siteConfig.url}/footer_header-logo.png`,
+    logo: `${siteConfig.url}/logo.png`,
     image: `${siteConfig.url}/og.png`,
     description: siteConfig.description,
     telephone: siteConfig.contact.phone,

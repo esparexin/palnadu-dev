@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import Image from 'next/image';
+import { imagePresets } from '@palnadu/config';
 import { cn } from '@/lib/utils';
 
 export interface BrandLogoProps {
@@ -29,11 +29,15 @@ export function BrandLogo({
 
   // 1. If custom logo is configured and active, render optimized image
   if (customLogoUrl) {
+    const optimizedLogo = customLogoUrl.includes('res.cloudinary.com')
+      ? imagePresets.logo(customLogoUrl)
+      : customLogoUrl;
+
     return (
       <div className={cn('flex items-center gap-2.5', className)}>
         <div className="relative flex items-center">
           <img
-            src={customLogoUrl}
+            src={optimizedLogo}
             alt="Palnadu.dev Logo"
             className="h-9 sm:h-11 w-auto object-contain transition-all"
             style={{ maxHeight: `${sizeClasses.imgHeight}px` }}

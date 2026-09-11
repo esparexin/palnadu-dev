@@ -1,7 +1,6 @@
 'use client';
 
 import Link from 'next/link';
-import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
 import {
   LayoutDashboard,
@@ -19,6 +18,7 @@ import {
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { BrandLogo } from '@/components/ui/brand-logo';
+import { api } from '@/lib/api';
 import { cn } from '@/lib/utils';
 
 const sidebarItems = [
@@ -40,6 +40,7 @@ export function AdminSidebar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [userRole, setUserRole] = useState<string>('SUPER_ADMIN');
   const [userName, setUserName] = useState<string>('Admin');
+  const [customLogoUrl, setCustomLogoUrl] = useState<string | null>(null);
 
   useEffect(() => {
     try {
@@ -50,6 +51,15 @@ export function AdminSidebar() {
         if (parsed.name) setUserName(parsed.name);
       }
     } catch {}
+
+    api.settings.branding
+      .get()
+      .then((res) => {
+        if (res.success && res.data?.headerLogo?.url) {
+          setCustomLogoUrl(res.data.headerLogo.url);
+        }
+      })
+      .catch(() => {});
   }, []);
 
   const handleLogout = () => {
@@ -63,7 +73,7 @@ export function AdminSidebar() {
       {/* Brand Header */}
       <div className="flex h-16 items-center border-b border-palnadu-border px-6">
         <Link href="/dashboard" className="flex items-center gap-2">
-          <BrandLogo size="md" />
+          <BrandLogo customLogoUrl={customLogoUrl} size="md" />
           <span className="ml-1 px-1.5 py-0.5 rounded text-[10px] font-mono font-bold bg-palnadu-light-blue text-palnadu-blue">ADMIN</span>
         </Link>
       </div>

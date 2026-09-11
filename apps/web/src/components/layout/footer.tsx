@@ -8,8 +8,12 @@ import { BrandLogo } from '@/components/ui/brand-logo';
 import { api } from '@/lib/api';
 import { ArrowUpRight } from 'lucide-react';
 
-export function Footer() {
-  const [customFooterLogoUrl, setCustomFooterLogoUrl] = useState<string | null>(null);
+interface FooterProps {
+  initialLogoUrl?: string | null;
+}
+
+export function Footer({ initialLogoUrl }: FooterProps = {}) {
+  const [customFooterLogoUrl, setCustomFooterLogoUrl] = useState<string | null>(initialLogoUrl || null);
 
   useEffect(() => {
     api.settings

@@ -84,7 +84,7 @@ export default async function BlogPostPage({ params }: Props) {
     publisher: {
       '@type': 'Organization',
       name: 'Palnadu.dev',
-      logo: `${siteConfig.url}/footer_header-logo.png`,
+      logo: `${siteConfig.url}/logo.png`,
     },
     mainEntityOfPage: {
       '@type': 'WebPage',

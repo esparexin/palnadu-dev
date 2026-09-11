@@ -10,9 +10,13 @@ import { BrandLogo } from '@/components/ui/brand-logo';
 import { api } from '@/lib/api';
 import { cn } from '@/lib/utils';
 
-export function Navbar() {
+interface NavbarProps {
+  initialLogoUrl?: string | null;
+}
+
+export function Navbar({ initialLogoUrl }: NavbarProps = {}) {
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [customLogoUrl, setCustomLogoUrl] = useState<string | null>(null);
+  const [customLogoUrl, setCustomLogoUrl] = useState<string | null>(initialLogoUrl || null);
   const pathname = usePathname();
 
   // Fetch active custom logo if configured
