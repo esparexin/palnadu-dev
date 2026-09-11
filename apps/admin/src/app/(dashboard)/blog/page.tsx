@@ -87,7 +87,7 @@ export default function BlogAdminPage() {
 
   const fetchPosts = () => {
     setLoading(true);
-    const params: Record<string, string> = {};
+    const params: Record<string, string> = { limit: '100' };
     if (search) params.search = search;
     if (statusFilter) params.status = statusFilter;
     if (categoryFilter) params.category = categoryFilter;
@@ -235,21 +235,57 @@ export default function BlogAdminPage() {
         </button>
       </div>
 
-      {/* KPI Overview */}
+      {/* KPI Overview (Clickable Quick Filters) */}
       <div className="grid grid-cols-3 gap-3">
-        <div className="rounded-lg border border-palnadu-border bg-white p-3.5 shadow-2xs">
+        <button
+          onClick={() => setStatusFilter('')}
+          className={cn(
+            "rounded-lg border bg-white p-3.5 shadow-2xs text-left transition-all cursor-pointer",
+            statusFilter === '' ? "border-palnadu-blue ring-1 ring-palnadu-blue" : "border-palnadu-border hover:border-gray-300"
+          )}
+        >
           <p className="text-[11px] font-semibold text-palnadu-secondary uppercase tracking-wider">Total Articles</p>
           <p className="text-xl font-bold text-palnadu-dark mt-1">{loading ? '—' : totalCount}</p>
-        </div>
-        <div className="rounded-lg border border-palnadu-border bg-white p-3.5 shadow-2xs">
+        </button>
+        <button
+          onClick={() => setStatusFilter('PUBLISHED')}
+          className={cn(
+            "rounded-lg border bg-white p-3.5 shadow-2xs text-left transition-all cursor-pointer",
+            statusFilter === 'PUBLISHED' ? "border-emerald-500 ring-1 ring-emerald-500 bg-emerald-50/20" : "border-palnadu-border hover:border-gray-300"
+          )}
+        >
           <p className="text-[11px] font-semibold text-emerald-700 uppercase tracking-wider">Published on Google</p>
           <p className="text-xl font-bold text-emerald-700 mt-1">{loading ? '—' : publishedCount}</p>
-        </div>
-        <div className="rounded-lg border border-palnadu-border bg-white p-3.5 shadow-2xs">
-          <p className="text-[11px] font-semibold text-palnadu-secondary uppercase tracking-wider">Drafts in Progress</p>
-          <p className="text-xl font-bold text-palnadu-dark mt-1">{loading ? '—' : draftCount}</p>
-        </div>
+        </button>
+        <button
+          onClick={() => setStatusFilter('DRAFT')}
+          className={cn(
+            "rounded-lg border bg-white p-3.5 shadow-2xs text-left transition-all cursor-pointer",
+            statusFilter === 'DRAFT' ? "border-amber-500 ring-1 ring-amber-500 bg-amber-50/30" : "border-palnadu-border hover:border-gray-300"
+          )}
+        >
+          <p className="text-[11px] font-semibold text-amber-700 uppercase tracking-wider">Drafts Pending Review</p>
+          <p className="text-xl font-bold text-amber-700 mt-1">{loading ? '—' : draftCount}</p>
+        </button>
       </div>
+
+      {/* Review Alert Banner when Drafts Exist */}
+      {draftCount > 0 && statusFilter !== 'DRAFT' && (
+        <div className="p-3.5 rounded-xl border border-amber-200 bg-amber-50/70 flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-fade-in">
+          <div className="flex items-center gap-2.5">
+            <span className="h-2 w-2 rounded-full bg-amber-500 animate-pulse shrink-0" />
+            <p className="text-xs font-semibold text-amber-950">
+              {draftCount} automated blog article(s) waiting in draft mode for your review.
+            </p>
+          </div>
+          <button
+            onClick={() => setStatusFilter('DRAFT')}
+            className="self-start sm:self-auto px-3 py-1 text-xs font-bold rounded-md bg-amber-600 text-white hover:bg-amber-700 transition-colors shadow-2xs cursor-pointer shrink-0"
+          >
+            Review Drafts →
+          </button>
+        </div>
+      )}
 
       {/* Search & Filter Bar */}
       <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
