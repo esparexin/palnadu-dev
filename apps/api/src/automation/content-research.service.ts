@@ -73,43 +73,41 @@ export class ContentResearchService {
     const researchContext = await this.conductResearch(topicTitle);
     const locationContext = targetLocation || 'Palnadu and Guntur, Andhra Pradesh';
 
-    const systemPrompt = `You are the lead engineering editor at Palnadu.dev, a problem-first software studio based in Palnadu, Andhra Pradesh.
-Website principles:
+    const systemPrompt = `You are a senior software engineer and technical writer at Palnadu.dev, an engineering studio in Palnadu and Guntur, Andhra Pradesh.
+Core engineering principles:
 1. "Start with the problem. We build the solution."
-2. Honest, direct technical advice without commission sales fluff.
-3. Realistic engineering: Next.js (App Router), TypeScript, PostgreSQL/MongoDB, Cloudflare edge, 100% code ownership.
-4. Target region: ${locationContext}.
-5. Zero plagiarism: Never duplicate sentences verbatim. Provide fresh architectural breakdowns, regional commercial examples, and actionable advice.`;
+2. Write with direct human experience, practical trade anecdotes, and candid developer advice.
+3. No AI fluff: Never use clichés like "In today's fast-paced digital world", "In the realm of", "tapestry", "game-changer", "beacon", "delve into", "testament", "revolutionize", "elevate", "harness the power of".
+4. Zero emojis: Do NOT use decorative emojis (no 🚀, 💡, 🔥, 📈, ✨) anywhere in titles, headings, or body text. Maintain clean, professional editorial typography.
+5. Formatting: Write clean, readable paragraphs. Use bullet points or comparison tables only where structurally necessary for technical specifications or checklists.
+6. Zero plagiarism: Formulate 100% original sentence structures and real practical examples from ${locationContext}.
+7. SEO Keywords: Weave target keywords naturally into the title, the first 100 words, at least one H2 heading, and 2-3 body paragraphs without keyword stuffing.`;
 
-    const userPrompt = `Write a comprehensive, in-depth engineering and business blog post about: "${topicTitle}".
+    const userPrompt = `Write an authentic, human-grade technical and business article about: "${topicTitle}".
 Category: ${categorySlug}
-Research dossier:
+Regional Context: ${locationContext}
+Research background:
 ${researchContext}
 
-Requirements:
-- Article Word Count: 1,200 to 1,600 substantive words.
-- Markdown Format: Use # for title, ## for main sections, ### for subsections, comparison tables, bullet points, and code/quote blocks where helpful.
-- Internal Linking: Mention relevant services (e.g., [Web Development Services](/services/web-development), [Custom Software](/services/custom-software), [Contact Page](/contact)).
-- Structure:
-  1. The Operational Bottleneck / Current Reality
-  2. Why Conventional Approaches or Legacy Tools Fail
-  3. The Modern Engineering Architecture Solution
-  4. Cost & ROI Breakdown
-  5. Actionable Implementation Checklist for Regional Businesses
+Content Requirements:
+- Length: 1,200 to 1,600 words of substantive, useful reading.
+- Tone: Written by a seasoned developer talking directly to an intelligent business owner.
+- Markdown: Proper H1 for title, clean H2/H3 headings, occasional code or architectural blocks, clean comparison table, and natural internal links (e.g., [Web Development Services](/services/web-development), [Custom Software](/services/custom-software), [Contact Page](/contact)).
+- Zero robotic filler or decorative symbols.
 
-Return strictly a JSON object with this exact schema:
+Return strictly a valid JSON object matching this schema:
 {
-  "title": "Clear, engaging, non-clickbait title",
+  "title": "Clear, direct, human-written title",
   "slug": "kebab-case-url-slug",
-  "excerpt": "Compelling 2-sentence summary (140-160 characters)",
-  "content": "Full markdown content (minimum 1,200 words)",
+  "excerpt": "Clear, grounded 2-sentence summary (140-160 characters, no emojis)",
+  "content": "Full markdown text (minimum 1,200 words, clean paragraphs, zero emojis)",
   "seoTitle": "SEO title under 60 characters with | Palnadu.dev",
-  "seoDescription": "Meta description under 155 characters",
-  "keywords": ["keyword 1", "keyword 2", "keyword 3", "keyword 4"],
+  "seoDescription": "Meta description under 155 characters explaining the practical problem solved",
+  "keywords": ["primary keyword", "secondary keyword", "location keyword", "intent keyword"],
   "faq": [
-    { "q": "Question 1", "a": "Answer 1" },
-    { "q": "Question 2", "a": "Answer 2" },
-    { "q": "Question 3", "a": "Answer 3" }
+    { "q": "Practical question an owner would ask?", "a": "Direct, honest answer" },
+    { "q": "Practical question about technical complexity?", "a": "Direct, honest answer" },
+    { "q": "Practical question about cost or timeline?", "a": "Direct, honest answer" }
   ]
 }`;
 
@@ -251,9 +249,9 @@ Return strictly a JSON object with this exact schema:
 
     const content = `# ${topicTitle}
 
-In today's fast-moving commercial environment, businesses and founders across **${locationContext}** face a critical turning point. Traditional manual routines—such as relying on paper ledgers, unorganized WhatsApp groups, and fragmented Excel sheets—are creating severe operational bottlenecks.
+Every growing enterprise across **${locationContext}** eventually reaches a point where informal operational methods stop working. When transaction volume expands, relying on fragmented WhatsApp chat threads, manual paper registers, and standalone Excel spreadsheets creates severe administrative bottlenecks.
 
-At **Palnadu.dev**, our founding principle is simple: **Start with the problem. We build the solution.** In this engineering breakdown, we explore why legacy workflows break down under scale, how modern cloud technology eliminates operational friction, and how to execute a cost-effective digital roadmap.
+At **Palnadu.dev**, our approach is direct: **Start with the problem. We build the solution.** In this engineering guide, we examine why traditional manual workflows break down under scale, how custom web applications solve operational drag, and how to execute a cost-effective implementation plan.
 
 ---
 
