@@ -109,6 +109,15 @@ export class BlogController {
   async update(@Param('id') id: string, @Body() body: any) {
     const { categoryId, ...rest } = body;
     const updateData: any = { ...rest };
+
+    // Auto-populate publishDate if transitioning from DRAFT to PUBLISHED
+    if (body.status === PublishStatus.PUBLISHED && !body.publishDate) {
+      const existing = await this.blogService.findOneAdmin(id);
+      if (!existing?.publishDate) {
+        updateData.publishDate = new Date();
+      }
+    }
+
     if (categoryId) {
       updateData.category = { connect: { id: categoryId } };
     } else if (categoryId === null) {

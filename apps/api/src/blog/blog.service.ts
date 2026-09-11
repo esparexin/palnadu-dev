@@ -45,7 +45,7 @@ export class BlogService {
         where,
         skip,
         take: limit,
-        orderBy: { publishDate: 'desc' },
+        orderBy: [{ publishDate: 'desc' }, { createdAt: 'desc' }],
         include: {
           author: { select: { id: true, name: true, avatar: true } },
           category: { select: { id: true, name: true, slug: true } },
@@ -87,7 +87,7 @@ export class BlogService {
         ...(post.categoryId ? { categoryId: post.categoryId } : {}),
       },
       take: 2,
-      orderBy: { publishDate: 'desc' },
+      orderBy: [{ publishDate: 'desc' }, { createdAt: 'desc' }],
       select: {
         id: true,
         title: true,
