@@ -135,7 +135,7 @@ Return strictly a valid JSON object matching this schema:
     if (this.geminiApiKey) {
       try {
         const res = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${this.geminiApiKey}`,
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${this.geminiApiKey}`,
           {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -158,8 +158,12 @@ Return strictly a valid JSON object matching this schema:
           const json = await res.json();
           const rawText = json.candidates?.[0]?.content?.parts?.[0]?.text;
           if (rawText) {
+            this.logger.log('Successfully generated content via live Google Gemini (gemini-3.6-flash)');
             return JSON.parse(rawText);
           }
+        } else {
+          const errText = await res.text();
+          this.logger.warn(`Gemini API returned ${res.status}: ${errText}`);
         }
       } catch (err) {
         this.logger.warn(`Gemini generation failed: ${err instanceof Error ? err.message : err}`);
