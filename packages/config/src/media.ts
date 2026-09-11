@@ -84,7 +84,7 @@ export function getOptimizedImageUrl(
  */
 export const imagePresets = {
   logo: (url: string) =>
-    getOptimizedImageUrl(url, { height: 120, crop: 'limit', quality: 'auto', format: 'auto' }),
+    getOptimizedImageUrl(url, { height: 240, crop: 'limit', quality: 'auto:best', format: 'auto' }),
   thumbnail: (url: string) =>
     getOptimizedImageUrl(url, { width: 200, height: 200, crop: 'thumb' }),
   avatar: (url: string) =>
