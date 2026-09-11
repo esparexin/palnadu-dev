@@ -58,6 +58,7 @@ export default function BlogAdminPage() {
   const [formData, setFormData] = useState<BlogFormData>(initialFormData);
   const [submitting, setSubmitting] = useState(false);
   const [uploadingCover, setUploadingCover] = useState(false);
+  const [generatingAi, setGeneratingAi] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; title: string } | null>(null);
   const [deleting, setDeleting] = useState(false);
   const coverInputRef = useRef<HTMLInputElement>(null);
@@ -212,6 +213,23 @@ export default function BlogAdminPage() {
     }
   };
 
+  const triggerAiGenerate = async () => {
+    setGeneratingAi(true);
+    toast.info('Generating 1,200+ word draft with licensed images...');
+    try {
+      const res = await api.automation.generate();
+      if (res.success) {
+        toast.success(`Draft generated: "${res.data.title.slice(0, 30)}..." Review below!`);
+        setStatusFilter('DRAFT');
+        fetchPosts();
+      }
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to generate blog draft');
+    } finally {
+      setGeneratingAi(false);
+    }
+  };
+
   const totalCount = posts.length;
   const publishedCount = posts.filter((p) => p.status === 'PUBLISHED').length;
   const draftCount = posts.filter((p) => p.status === 'DRAFT').length;
@@ -226,13 +244,24 @@ export default function BlogAdminPage() {
             Publish technical guides, engineering case breakdowns, and manage SEO search metadata.
           </p>
         </div>
-        <button
-          onClick={openCreateModal}
-          className="inline-flex items-center justify-center gap-1.5 rounded-md bg-palnadu-blue px-4 py-2 text-xs font-semibold text-white shadow-xs hover:bg-[#12487e] transition-colors cursor-pointer"
-        >
-          <Plus className="h-4 w-4" />
-          <span>New Article</span>
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={triggerAiGenerate}
+            disabled={generatingAi}
+            className="inline-flex items-center justify-center gap-1.5 rounded-md bg-purple-600 px-3.5 py-2 text-xs font-semibold text-white shadow-xs hover:bg-purple-700 transition-colors cursor-pointer disabled:opacity-50"
+            title="Generate an in-depth, human-grade blog draft with licensed images"
+          >
+            <Sparkles className="h-3.5 w-3.5" />
+            <span>{generatingAi ? 'Generating Draft...' : 'Generate AI Blog Draft'}</span>
+          </button>
+          <button
+            onClick={openCreateModal}
+            className="inline-flex items-center justify-center gap-1.5 rounded-md bg-palnadu-blue px-4 py-2 text-xs font-semibold text-white shadow-xs hover:bg-[#12487e] transition-colors cursor-pointer"
+          >
+            <Plus className="h-4 w-4" />
+            <span>New Article</span>
+          </button>
+        </div>
       </div>
 
       {/* KPI Overview (Clickable Quick Filters) */}

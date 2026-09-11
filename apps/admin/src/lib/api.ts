@@ -161,6 +161,14 @@ export const api = {
     delete: (id: string) => adminApi(`/api/admin/blog/${id}`, { method: 'DELETE' }),
     categories: () => adminApi('/api/blog/categories'),
   },
+  automation: {
+    status: () => adminApi<{ success: boolean; data: any }>('/api/admin/automation/status'),
+    generate: (data?: { topic?: string; categorySlug?: string; batchCount?: number }) =>
+      adminApi<{ success: boolean; message: string; data: any }>('/api/admin/automation/generate', {
+        method: 'POST',
+        body: JSON.stringify(data || {}),
+      }),
+  },
   media: {
     list: (params?: Record<string, string>) => adminApi('/api/admin/media', { params }),
     upload: async (file: File) => {
