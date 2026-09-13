@@ -38,21 +38,24 @@ export class FreeKeywordResearchService {
    * Fetches real-time suggestions from Google's public India search engine
    */
   async getGoogleSuggestions(seed: string): Promise<string[]> {
-    try {
-      const url = `https://suggestqueries.google.com/complete/search?client=chrome&q=${encodeURIComponent(seed)}&gl=in&hl=en`;
-      const res = await fetch(url, {
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36',
-        },
-      });
+    for (const client of ['firefox', 'chrome']) {
+      try {
+        const url = `https://suggestqueries.google.com/complete/search?client=${client}&q=${encodeURIComponent(seed)}&gl=in&hl=en`;
+        const res = await fetch(url, {
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+          },
+        });
 
-      if (res.ok) {
-        const json = await res.json();
-        // Google returns [query, [suggestions...], ...]
-        return Array.isArray(json[1]) ? json[1] : [];
+        if (res.ok) {
+          const json = await res.json();
+          if (Array.isArray(json[1]) && json[1].length > 0) {
+            return json[1];
+          }
+        }
+      } catch (err) {
+        this.logger.warn(`Google Suggest lookup failed for "${seed}" (${client}): ${err instanceof Error ? err.message : err}`);
       }
-    } catch (err) {
-      this.logger.warn(`Google Suggest lookup failed for "${seed}": ${err instanceof Error ? err.message : err}`);
     }
     return [];
   }

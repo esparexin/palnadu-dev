@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { api } from '@/lib/api';
 import type { BlogPost } from '@palnadu/types';
-import { Plus, Search, Edit2, Trash2, X, Globe, Eye, FileText, CheckCircle2, Sparkles, ExternalLink, UploadCloud, Loader2 } from 'lucide-react';
+import { Plus, Search, Edit2, Trash2, X, Globe, Eye, FileText, CheckCircle2, Sparkles, ExternalLink, UploadCloud, Loader2, Compass, Copy, Check, ListChecks, ArrowRight } from 'lucide-react';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { useToast } from '@/components/ui/toast';
 import { cn } from '@/lib/utils';
@@ -62,6 +62,19 @@ export default function BlogAdminPage() {
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; title: string } | null>(null);
   const [deleting, setDeleting] = useState(false);
   const coverInputRef = useRef<HTMLInputElement>(null);
+
+  // SEO Keyword Research Tool modal state
+  const [keywordModalOpen, setKeywordModalOpen] = useState(false);
+  const [keywordSeed, setKeywordSeed] = useState('billing software');
+  const [keywordLocation, setKeywordLocation] = useState('Guntur & Palnadu');
+  const [discoveredKeywords, setDiscoveredKeywords] = useState<any[]>([]);
+  const [searchingKeywords, setSearchingKeywords] = useState(false);
+  const [copiedKw, setCopiedKw] = useState<string | null>(null);
+
+  // Automation queue modal state
+  const [queueModalOpen, setQueueModalOpen] = useState(false);
+  const [automationStatus, setAutomationStatus] = useState<any | null>(null);
+  const [loadingStatus, setLoadingStatus] = useState(false);
 
   const handleCoverUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -230,6 +243,64 @@ export default function BlogAdminPage() {
     }
   };
 
+  const fetchKeywords = async () => {
+    if (!keywordSeed.trim()) return;
+    setSearchingKeywords(true);
+    try {
+      const res = await api.automation.keywords(keywordSeed, keywordLocation);
+      if (res.success) {
+        setDiscoveredKeywords(res.data || []);
+      }
+    } catch (err) {
+      toast.error('Failed to discover keywords');
+    } finally {
+      setSearchingKeywords(false);
+    }
+  };
+
+  const fetchAutomationStatus = async () => {
+    setLoadingStatus(true);
+    setQueueModalOpen(true);
+    try {
+      const res = await api.automation.status();
+      if (res.success) {
+        setAutomationStatus(res.data);
+      }
+    } catch (err) {
+      toast.error('Failed to fetch automation queue status');
+    } finally {
+      setLoadingStatus(false);
+    }
+  };
+
+  const generateFromKeyword = async (kw: string) => {
+    setGeneratingAi(true);
+    toast.info(`Generating draft for "${kw}"...`);
+    try {
+      const res = await api.automation.generate({
+        topic: kw,
+        targetLocation: keywordLocation,
+      });
+      if (res.success) {
+        toast.success(`Draft generated: "${res.data.title.slice(0, 30)}..." Review below!`);
+        setKeywordModalOpen(false);
+        setStatusFilter('DRAFT');
+        fetchPosts();
+      }
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to generate blog draft');
+    } finally {
+      setGeneratingAi(false);
+    }
+  };
+
+  const copyKeyword = (kw: string) => {
+    navigator.clipboard.writeText(kw);
+    setCopiedKw(kw);
+    toast.success('Keyword copied to clipboard');
+    setTimeout(() => setCopiedKw(null), 2000);
+  };
+
   const totalCount = posts.length;
   const publishedCount = posts.filter((p) => p.status === 'PUBLISHED').length;
   const draftCount = posts.filter((p) => p.status === 'DRAFT').length;
@@ -244,12 +315,31 @@ export default function BlogAdminPage() {
             Publish technical guides, engineering case breakdowns, and manage SEO search metadata.
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            onClick={() => {
+              setKeywordModalOpen(true);
+              if (discoveredKeywords.length === 0) fetchKeywords();
+            }}
+            className="inline-flex items-center justify-center gap-1.5 rounded-md border border-palnadu-border bg-white px-3 py-2 text-xs font-semibold text-palnadu-dark shadow-2xs hover:bg-palnadu-off-white transition-colors cursor-pointer"
+            title="Discover real Google search terms for Andhra Pradesh & Palnadu"
+          >
+            <Compass className="h-3.5 w-3.5 text-palnadu-blue" />
+            <span>SEO Keywords</span>
+          </button>
+          <button
+            onClick={fetchAutomationStatus}
+            className="inline-flex items-center justify-center gap-1.5 rounded-md border border-palnadu-border bg-white px-3 py-2 text-xs font-semibold text-palnadu-dark shadow-2xs hover:bg-palnadu-off-white transition-colors cursor-pointer"
+            title="View scheduled blog queue & rotation status"
+          >
+            <ListChecks className="h-3.5 w-3.5 text-emerald-600" />
+            <span>Queue Status</span>
+          </button>
           <button
             onClick={triggerAiGenerate}
             disabled={generatingAi}
             className="inline-flex items-center justify-center gap-1.5 rounded-md bg-purple-600 px-3.5 py-2 text-xs font-semibold text-white shadow-xs hover:bg-purple-700 transition-colors cursor-pointer disabled:opacity-50"
-            title="Generate an in-depth, human-grade blog draft with licensed images"
+            title="Generate next scheduled AI blog draft from queue"
           >
             <Sparkles className="h-3.5 w-3.5" />
             <span>{generatingAi ? 'Generating Draft...' : 'Generate AI Blog Draft'}</span>
@@ -808,6 +898,244 @@ export default function BlogAdminPage() {
         message={deleteTarget ? `Are you sure you want to delete article "${deleteTarget.title}"? This action cannot be undone.` : ''}
         confirmLabel="Delete Article"
       />
+
+      {/* SEO Keyword Discovery Modal */}
+      {keywordModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs animate-fade-in">
+          <div className="w-full max-w-2xl max-h-[85vh] rounded-xl border border-palnadu-border bg-white shadow-2xl flex flex-col overflow-hidden">
+            <div className="flex items-center justify-between border-b border-palnadu-border px-5 py-3.5 bg-palnadu-off-white">
+              <div className="flex items-center gap-2">
+                <div className="h-7 w-7 rounded-lg bg-palnadu-light-blue text-palnadu-blue flex items-center justify-center">
+                  <Compass className="h-4 w-4" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-palnadu-dark">Google Live SEO Keyword Discovery</h3>
+                  <p className="text-[11px] text-palnadu-secondary">Real-time autocomplete queries from Google India for regional intent</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setKeywordModalOpen(false)}
+                className="text-palnadu-secondary hover:text-palnadu-dark p-1 rounded-md hover:bg-gray-100 transition-colors cursor-pointer"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="p-5 border-b border-palnadu-border/60 bg-gray-50/50 space-y-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-palnadu-dark">Seed Keyword / Topic</label>
+                  <input
+                    type="text"
+                    value={keywordSeed}
+                    onChange={(e) => setKeywordSeed(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && fetchKeywords()}
+                    placeholder="e.g. billing software, school website, web design"
+                    className="w-full h-8 rounded-md border border-palnadu-border bg-white px-3 text-xs text-palnadu-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-palnadu-blue"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-palnadu-dark">Target Regional Location</label>
+                  <select
+                    value={keywordLocation}
+                    onChange={(e) => setKeywordLocation(e.target.value)}
+                    className="w-full h-8 rounded-md border border-palnadu-border bg-white px-2.5 text-xs text-palnadu-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-palnadu-blue cursor-pointer"
+                  >
+                    <option value="Guntur & Palnadu">Guntur & Palnadu</option>
+                    <option value="Palnadu">Palnadu</option>
+                    <option value="Guntur">Guntur</option>
+                    <option value="Narasaraopet">Narasaraopet</option>
+                    <option value="Chilakaluripet">Chilakaluripet</option>
+                    <option value="Sattenapalle">Sattenapalle</option>
+                    <option value="Macherla">Macherla</option>
+                    <option value="Vinukonda">Vinukonda</option>
+                    <option value="Andhra Pradesh">Andhra Pradesh</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between pt-1">
+                <p className="text-[11px] text-palnadu-secondary">
+                  Found <span className="font-semibold text-palnadu-dark">{discoveredKeywords.length}</span> live search variations
+                </p>
+                <button
+                  onClick={fetchKeywords}
+                  disabled={searchingKeywords || !keywordSeed.trim()}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-palnadu-blue text-white text-xs font-semibold hover:bg-[#12487e] transition-colors cursor-pointer disabled:opacity-50"
+                >
+                  {searchingKeywords ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Search className="h-3.5 w-3.5" />}
+                  <span>{searchingKeywords ? 'Discovering...' : 'Discover Keywords'}</span>
+                </button>
+              </div>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-4 space-y-2">
+              {searchingKeywords ? (
+                <div className="py-12 text-center text-xs text-palnadu-secondary space-y-2">
+                  <Loader2 className="h-5 w-5 animate-spin mx-auto text-palnadu-blue" />
+                  <p>Querying Google India live suggestion indexes...</p>
+                </div>
+              ) : discoveredKeywords.length === 0 ? (
+                <div className="py-10 text-center text-xs text-palnadu-secondary">
+                  No suggestions found for this seed. Try a broader term like &quot;software&quot;, &quot;app&quot;, or &quot;website&quot;.
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {discoveredKeywords.map((kw, idx) => {
+                    const intentColor =
+                      kw.intent === 'transactional'
+                        ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                        : kw.intent === 'local'
+                        ? 'bg-blue-50 text-blue-700 border-blue-200'
+                        : kw.intent === 'commercial'
+                        ? 'bg-purple-50 text-purple-700 border-purple-200'
+                        : 'bg-gray-100 text-gray-700 border-gray-200';
+
+                    return (
+                      <div
+                        key={idx}
+                        className="rounded-lg border border-palnadu-border bg-white p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:border-palnadu-blue transition-all"
+                      >
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-bold text-palnadu-dark">{kw.keyword}</span>
+                            <span className={cn('px-2 py-0.5 rounded text-[10px] font-mono font-semibold border uppercase', intentColor)}>
+                              {kw.intent}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-3 text-[10px] text-palnadu-secondary">
+                            <span>Score: {kw.relevanceScore}/100</span>
+                            <span>•</span>
+                            <span>{kw.source}</span>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2 shrink-0">
+                          <button
+                            onClick={() => copyKeyword(kw.keyword)}
+                            className="p-1.5 rounded-md border border-palnadu-border text-palnadu-secondary hover:text-palnadu-dark hover:bg-gray-50 transition-colors cursor-pointer"
+                            title="Copy keyword"
+                          >
+                            {copiedKw === kw.keyword ? <Check className="h-3.5 w-3.5 text-emerald-600" /> : <Copy className="h-3.5 w-3.5" />}
+                          </button>
+                          <button
+                            onClick={() => generateFromKeyword(kw.keyword)}
+                            disabled={generatingAi}
+                            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-purple-50 border border-purple-200 text-purple-700 text-xs font-semibold hover:bg-purple-100 transition-colors cursor-pointer disabled:opacity-50"
+                          >
+                            <Sparkles className="h-3 w-3 text-purple-600" />
+                            <span>Draft Post</span>
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Automation Queue Status Modal */}
+      {queueModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs animate-fade-in">
+          <div className="w-full max-w-2xl max-h-[85vh] rounded-xl border border-palnadu-border bg-white shadow-2xl flex flex-col overflow-hidden">
+            <div className="flex items-center justify-between border-b border-palnadu-border px-5 py-3.5 bg-palnadu-off-white">
+              <div className="flex items-center gap-2">
+                <div className="h-7 w-7 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center border border-emerald-200">
+                  <ListChecks className="h-4 w-4" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-palnadu-dark">Blog Automation Engine & Queue</h3>
+                  <p className="text-[11px] text-palnadu-secondary">Autonomous cron schedule, topic rotation, and publish status</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setQueueModalOpen(false)}
+                className="text-palnadu-secondary hover:text-palnadu-dark p-1 rounded-md hover:bg-gray-100 transition-colors cursor-pointer"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="p-5 space-y-4 overflow-y-auto">
+              {loadingStatus ? (
+                <div className="py-12 text-center text-xs text-palnadu-secondary space-y-2">
+                  <Loader2 className="h-5 w-5 animate-spin mx-auto text-palnadu-blue" />
+                  <p>Loading automation statistics...</p>
+                </div>
+              ) : automationStatus ? (
+                <>
+                  <div className="grid grid-cols-3 gap-3">
+                    <div className="rounded-lg border border-palnadu-border bg-gray-50/50 p-3">
+                      <p className="text-[10px] font-semibold text-palnadu-secondary uppercase tracking-wider">Cron Schedule</p>
+                      <p className="text-xs font-bold text-palnadu-dark mt-1">Daily 05:00 AM IST</p>
+                    </div>
+                    <div className="rounded-lg border border-palnadu-border bg-gray-50/50 p-3">
+                      <p className="text-[10px] font-semibold text-palnadu-secondary uppercase tracking-wider">Queue Progress</p>
+                      <p className="text-xs font-bold text-palnadu-dark mt-1">
+                        {automationStatus.statistics?.queueCompleted || 0} Done / {automationStatus.upcomingQueue?.length || 0} Total
+                      </p>
+                    </div>
+                    <div className="rounded-lg border border-palnadu-border bg-gray-50/50 p-3">
+                      <p className="text-[10px] font-semibold text-palnadu-secondary uppercase tracking-wider">Auto-Publish</p>
+                      <p className="text-xs font-bold mt-1 text-amber-700">
+                        {automationStatus.autoPublishEnabled ? 'Automatic (Live)' : 'Draft Review (Safe)'}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2 pt-2">
+                    <h4 className="text-xs font-bold text-palnadu-dark uppercase tracking-wider">Scheduled Topic Rotation Queue</h4>
+                    <div className="space-y-2">
+                      {automationStatus.upcomingQueue?.map((item: any, idx: number) => {
+                        const isCompleted = item.status === 'COMPLETED' || item.isGenerated;
+                        return (
+                          <div
+                            key={idx}
+                            className="rounded-lg border border-palnadu-border bg-white p-3 flex items-center justify-between gap-3 text-xs"
+                          >
+                            <div className="space-y-0.5">
+                              <div className="flex items-center gap-2">
+                                <span className="font-semibold text-palnadu-dark">{item.topic}</span>
+                                <span
+                                  className={cn(
+                                    'px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase',
+                                    isCompleted ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-amber-50 text-amber-700 border border-amber-200'
+                                  )}
+                                >
+                                  {isCompleted ? 'Published' : 'Pending'}
+                                </span>
+                              </div>
+                              <p className="text-[11px] text-palnadu-secondary">
+                                Category: <span className="font-mono">{item.categorySlug}</span> • Target: {item.targetLocation}
+                              </p>
+                            </div>
+
+                            {!isCompleted && (
+                              <button
+                                onClick={() => {
+                                  setQueueModalOpen(false);
+                                  generateFromKeyword(item.topic);
+                                }}
+                                disabled={generatingAi}
+                                className="px-2.5 py-1 rounded-md bg-purple-600 text-white text-xs font-semibold hover:bg-purple-700 transition-colors shrink-0 cursor-pointer disabled:opacity-50"
+                              >
+                                Generate
+                              </button>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </>
+              ) : null}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

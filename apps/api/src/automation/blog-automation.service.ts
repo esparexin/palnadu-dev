@@ -71,6 +71,41 @@ export class BlogAutomationService {
   ) {}
 
   /**
+   * Identifies queue items that haven't been generated in the database yet
+   */
+  async getPendingQueueItems() {
+    const existingPosts = await this.prisma.blogPost.findMany({
+      select: { title: true, slug: true },
+    });
+    const existingSlugs = new Set(existingPosts.map((p) => p.slug));
+    const existingTitles = new Set(existingPosts.map((p) => p.title.toLowerCase().trim()));
+
+    return this.topicQueue.map((item) => {
+      const slug = item.topic
+        .toLowerCase()
+        .trim()
+        .replace(/[^\w\s-]/g, '')
+        .replace(/[\s_-]+/g, '-')
+        .replace(/^-+|-+$/g, '');
+      const isGenerated = existingSlugs.has(slug) || existingTitles.has(item.topic.toLowerCase().trim());
+      return {
+        ...item,
+        slug,
+        isGenerated,
+        status: isGenerated ? ('COMPLETED' as const) : ('PENDING' as const),
+      };
+    });
+  }
+
+  /**
+   * Returns the next pending topic in the rotation queue
+   */
+  async getNextPendingTopic() {
+    const queueStatus = await this.getPendingQueueItems();
+    return queueStatus.find((item) => !item.isGenerated) || queueStatus[0];
+  }
+
+  /**
    * Daily Automated Cron Job: Runs at 05:00 AM IST
    * Automatically executes the 5-post daily batch
    */
@@ -86,11 +121,19 @@ export class BlogAutomationService {
   }
 
   /**
-   * Generates a batch of distinct articles across rotating categories
+   * Generates a batch of distinct articles across rotating categories,
+   * prioritizing pending ungenerated topics first.
    */
   async generateBatch(count = 5): Promise<GenerationResult[]> {
     const results: GenerationResult[] = [];
-    const queue = [...this.topicQueue].slice(0, count);
+    const queueStatus = await this.getPendingQueueItems();
+    const pendingItems = queueStatus.filter((item) => !item.isGenerated);
+
+    // Prioritize pending items first; if fewer than count, pad with remaining items
+    const queue =
+      pendingItems.length >= count
+        ? pendingItems.slice(0, count)
+        : [...pendingItems, ...queueStatus.filter((i) => i.isGenerated)].slice(0, count);
 
     for (const item of queue) {
       try {
@@ -253,6 +296,10 @@ export class BlogAutomationService {
       where: { key: 'auto_publish_blogs' },
     });
 
+    const queueStatus = await this.getPendingQueueItems();
+    const pendingCount = queueStatus.filter((i) => !i.isGenerated).length;
+    const completedCount = queueStatus.filter((i) => i.isGenerated).length;
+
     return {
       engineStatus: 'active',
       schedule: 'Daily at 05:00 IST (23:00 UTC)',
@@ -261,8 +308,10 @@ export class BlogAutomationService {
         totalPosts,
         draftPosts,
         publishedPosts,
+        queuePending: pendingCount,
+        queueCompleted: completedCount,
       },
-      upcomingQueue: this.topicQueue,
+      upcomingQueue: queueStatus,
     };
   }
 }

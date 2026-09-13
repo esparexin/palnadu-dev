@@ -163,10 +163,25 @@ export const api = {
   },
   automation: {
     status: () => adminApi<{ success: boolean; data: any }>('/api/admin/automation/status'),
-    generate: (data?: { topic?: string; categorySlug?: string; batchCount?: number }) =>
+    generate: (data?: {
+      topic?: string;
+      categorySlug?: string;
+      targetLocation?: string;
+      forcePublish?: boolean;
+      batchCount?: number;
+    }) =>
       adminApi<{ success: boolean; message: string; data: any }>('/api/admin/automation/generate', {
         method: 'POST',
         body: JSON.stringify(data || {}),
+      }),
+    keywords: (seed?: string, location?: string) =>
+      adminApi<{ success: boolean; query: string; location: string; count: number; data: any[] }>(
+        `/api/admin/automation/keywords?seed=${encodeURIComponent(seed || '')}&location=${encodeURIComponent(location || '')}`,
+      ),
+    updateSettings: (autoPublish: boolean) =>
+      adminApi<{ success: boolean; message: string }>('/api/admin/automation/settings', {
+        method: 'PATCH',
+        body: JSON.stringify({ autoPublish }),
       }),
   },
   media: {

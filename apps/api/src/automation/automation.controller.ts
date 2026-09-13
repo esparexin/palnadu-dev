@@ -59,13 +59,15 @@ export class AutomationController {
       };
     }
 
-    const topic = body.topic || 'How Digital Transformation and Modern Web Apps Accelerate Growth for Regional Enterprises';
-    const categorySlug = body.categorySlug || 'website-development';
+    const pending = await this.automationService.getNextPendingTopic();
+    const topic = body.topic || pending?.topic || 'How Digital Transformation and Modern Web Apps Accelerate Growth for Regional Enterprises';
+    const categorySlug = body.categorySlug || pending?.categorySlug || 'website-development';
+    const targetLocation = body.targetLocation || pending?.targetLocation;
 
     const result = await this.automationService.generateSingleArticle(
       topic,
       categorySlug,
-      body.targetLocation,
+      targetLocation,
       Boolean(body.forcePublish),
     );
 

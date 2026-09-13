@@ -131,42 +131,45 @@ Return strictly a valid JSON object matching this schema:
    * Calls available LLM provider (Gemini, Claude, or OpenAI)
    */
   private async callLLM(systemPrompt: string, userPrompt: string): Promise<any | null> {
-    // 1. Try Google Gemini if configured
+    // 1. Try Google Gemini if configured (with automatic model resilience fallback)
     if (this.geminiApiKey) {
-      try {
-        const res = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${this.geminiApiKey}`,
-          {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              contents: [
-                {
-                  role: 'user',
-                  parts: [{ text: `${systemPrompt}\n\n${userPrompt}` }],
+      const geminiModels = ['gemini-3.6-flash', 'gemini-3.5-flash', 'gemini-flash-latest'];
+      for (const model of geminiModels) {
+        try {
+          const res = await fetch(
+            `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${this.geminiApiKey}`,
+            {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                contents: [
+                  {
+                    role: 'user',
+                    parts: [{ text: `${systemPrompt}\n\n${userPrompt}` }],
+                  },
+                ],
+                generationConfig: {
+                  responseMimeType: 'application/json',
+                  temperature: 0.7,
                 },
-              ],
-              generationConfig: {
-                responseMimeType: 'application/json',
-                temperature: 0.7,
-              },
-            }),
-          },
-        );
+              }),
+            },
+          );
 
-        if (res.ok) {
-          const json = await res.json();
-          const rawText = json.candidates?.[0]?.content?.parts?.[0]?.text;
-          if (rawText) {
-            this.logger.log('Successfully generated content via live Google Gemini (gemini-3.6-flash)');
-            return JSON.parse(rawText);
+          if (res.ok) {
+            const json = await res.json();
+            const rawText = json.candidates?.[0]?.content?.parts?.[0]?.text;
+            if (rawText) {
+              this.logger.log(`Successfully generated content via live Google Gemini (${model})`);
+              return JSON.parse(rawText);
+            }
+          } else {
+            const errText = await res.text();
+            this.logger.warn(`Gemini API (${model}) returned ${res.status}: ${errText}`);
           }
-        } else {
-          const errText = await res.text();
-          this.logger.warn(`Gemini API returned ${res.status}: ${errText}`);
+        } catch (err) {
+          this.logger.warn(`Gemini generation (${model}) failed: ${err instanceof Error ? err.message : err}`);
         }
-      } catch (err) {
-        this.logger.warn(`Gemini generation failed: ${err instanceof Error ? err.message : err}`);
       }
     }
 
