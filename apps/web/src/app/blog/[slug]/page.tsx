@@ -53,6 +53,45 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 }
 
+// Inline Markdown helper (bold, links, code)
+function renderInline(text: string): React.ReactNode {
+  const regex = /(\[[^\]]+\]\([^)]+\)|\*\*[^*]+\*\*|`[^`]+`)/g;
+  const parts = text.split(regex);
+  if (parts.length === 1) return text;
+
+  return parts.map((part, idx) => {
+    if (part.startsWith('[') && part.includes('](')) {
+      const match = part.match(/^\[([^\]]+)\]\(([^)]+)\)$/);
+      if (match) {
+        return (
+          <Link
+            key={idx}
+            href={match[2]}
+            className="text-palnadu-blue underline underline-offset-2 font-semibold hover:text-[#12487e] transition-colors"
+          >
+            {match[1]}
+          </Link>
+        );
+      }
+    }
+    if (part.startsWith('**') && part.endsWith('**')) {
+      return (
+        <strong key={idx} className="font-bold text-palnadu-dark">
+          {part.slice(2, -2)}
+        </strong>
+      );
+    }
+    if (part.startsWith('`') && part.endsWith('`')) {
+      return (
+        <code key={idx} className="px-1.5 py-0.5 rounded bg-gray-100 text-xs font-mono text-palnadu-blue font-semibold">
+          {part.slice(1, -1)}
+        </code>
+      );
+    }
+    return part;
+  });
+}
+
 export default async function BlogPostPage({ params }: Props) {
   const { slug } = await params;
 
@@ -188,43 +227,125 @@ export default async function BlogPostPage({ params }: Props) {
           {/* Article Body Content */}
           <div className="py-8 space-y-6 text-[15px] sm:text-base text-palnadu-body leading-relaxed">
             {paragraphs.map((para: string, idx: number) => {
-              if (para.startsWith('# ')) {
+              const trimmed = para.trim();
+
+              // 1. Horizontal rules
+              if (trimmed === '---' || trimmed === '***' || trimmed === '___') {
+                return <hr key={idx} className="my-8 border-palnadu-border/80" />;
+              }
+
+              // 2. Inline Markdown Images with optional caption
+              const imageMatch = trimmed.match(/^!\[([^\]]*)\]\((https?:\/\/[^)]+)\)(?:[\s\n]*\*Caption:\s*([^*]+)\*)?/);
+              if (imageMatch) {
+                const [, alt, url, caption] = imageMatch;
                 return (
-                  <h2 key={idx} className="text-2xl sm:text-3xl font-bold text-palnadu-dark pt-4">
-                    {para.replace('# ', '')}
+                  <figure key={idx} className="my-8 rounded-xl overflow-hidden border border-palnadu-border shadow-2xs bg-palnadu-off-white">
+                    <img
+                      src={url}
+                      alt={alt || post.title}
+                      className="w-full h-auto max-h-[500px] object-cover"
+                    />
+                    {caption && (
+                      <figcaption className="px-4 py-2.5 text-center text-xs text-palnadu-secondary italic bg-gray-50/80 border-t border-palnadu-border/60">
+                        {caption}
+                      </figcaption>
+                    )}
+                  </figure>
+                );
+              }
+
+              // 3. Markdown Tables
+              const lines = trimmed.split('\n').map((l) => l.trim()).filter(Boolean);
+              if (lines.length >= 2 && lines.every((l) => l.startsWith('|') && l.endsWith('|'))) {
+                const parseRow = (line: string) =>
+                  line
+                    .slice(1, -1)
+                    .split('|')
+                    .map((cell) => cell.trim());
+
+                const headerCells = parseRow(lines[0]);
+                const bodyRows = lines.slice(1).filter((l) => !l.includes('---')).map(parseRow);
+
+                return (
+                  <div key={idx} className="my-6 overflow-x-auto rounded-xl border border-palnadu-border shadow-2xs">
+                    <table className="w-full text-left text-xs sm:text-sm border-collapse">
+                      <thead className="bg-palnadu-off-white text-palnadu-dark border-b border-palnadu-border font-bold">
+                        <tr>
+                          {headerCells.map((h, i) => (
+                            <th key={i} className="p-3 font-bold">
+                              {renderInline(h)}
+                            </th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-palnadu-border/60 bg-white">
+                        {bodyRows.map((row, rIdx) => (
+                          <tr key={rIdx} className="hover:bg-gray-50/50">
+                            {row.map((cell, cIdx) => (
+                              <td key={cIdx} className="p-3 text-palnadu-body">
+                                {renderInline(cell)}
+                              </td>
+                            ))}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                );
+              }
+
+              // 4. Headings
+              if (trimmed.startsWith('# ')) {
+                return (
+                  <h2 key={idx} className="text-2xl sm:text-3xl font-bold text-palnadu-dark pt-6 first:pt-0">
+                    {renderInline(trimmed.replace(/^#\s+/, ''))}
                   </h2>
                 );
               }
-              if (para.startsWith('## ')) {
+              if (trimmed.startsWith('## ')) {
                 return (
-                  <h3 key={idx} className="text-xl sm:text-2xl font-bold text-palnadu-dark pt-3">
-                    {para.replace('## ', '')}
+                  <h3 key={idx} className="text-xl sm:text-2xl font-bold text-palnadu-dark pt-5">
+                    {renderInline(trimmed.replace(/^##\s+/, ''))}
                   </h3>
                 );
               }
-              if (para.startsWith('### ')) {
+              if (trimmed.startsWith('### ')) {
                 return (
-                  <h4 key={idx} className="text-lg sm:text-xl font-bold text-palnadu-dark pt-2">
-                    {para.replace('### ', '')}
+                  <h4 key={idx} className="text-lg sm:text-xl font-bold text-palnadu-dark pt-4">
+                    {renderInline(trimmed.replace(/^###\s+/, ''))}
                   </h4>
                 );
               }
-              if (para.startsWith('- ') || para.startsWith('* ')) {
-                const items = para.split('\n').filter(Boolean);
+
+              // 5. Code blocks
+              if (trimmed.startsWith('```')) {
+                const codeContent = trimmed.replace(/^```[a-zA-Z]*\n?/, '').replace(/```$/, '');
+                return (
+                  <pre key={idx} className="my-6 p-4 rounded-xl bg-palnadu-dark text-gray-100 text-xs font-mono overflow-x-auto">
+                    <code>{codeContent}</code>
+                  </pre>
+                );
+              }
+
+              // 6. Lists
+              if (trimmed.startsWith('- ') || trimmed.startsWith('* ') || /^\d+\.\s/.test(trimmed)) {
+                const items = trimmed.split('\n').filter(Boolean);
                 return (
                   <ul key={idx} className="space-y-2 my-4 pl-2">
                     {items.map((item: string, i: number) => (
                       <li key={i} className="flex items-start gap-2.5 text-[15px] text-palnadu-body">
                         <span className="text-palnadu-blue font-bold shrink-0 mt-0.5">▪</span>
-                        <span>{item.replace(/^[-*]\s+/, '')}</span>
+                        <span>{renderInline(item.replace(/^([-*]|\d+\.)\s+/, ''))}</span>
                       </li>
                     ))}
                   </ul>
                 );
               }
+
+              // 7. Standard Paragraph
               return (
                 <p key={idx} className="leading-relaxed">
-                  {para}
+                  {renderInline(trimmed)}
                 </p>
               );
             })}
