@@ -79,9 +79,10 @@ Core engineering principles:
 2. Write with direct human experience, practical trade anecdotes, and candid developer advice.
 3. No AI fluff: Never use clichés like "In today's fast-paced digital world", "In the realm of", "tapestry", "game-changer", "beacon", "delve into", "testament", "revolutionize", "elevate", "harness the power of".
 4. Zero emojis: Do NOT use decorative emojis (no 🚀, 💡, 🔥, 📈, ✨) anywhere in titles, headings, or body text. Maintain clean, professional editorial typography.
-5. Formatting: Write clean, readable paragraphs. Use bullet points or comparison tables only where structurally necessary for technical specifications or checklists.
-6. Zero plagiarism: Formulate 100% original sentence structures and real practical examples from ${locationContext}.
-7. SEO Keywords: Weave target keywords naturally into the title, the first 100 words, at least one H2 heading, and 2-3 body paragraphs without keyword stuffing.`;
+5. Zero asterisks: Do NOT use bold asterisks (**text**) or italic asterisks (*text*) anywhere in headings, paragraphs, bullet lists, or tables. Write clean, natural prose using standard sentences. Never decorate words with double or single asterisks.
+6. Formatting: Write clean, readable paragraphs. Use bullet points or comparison tables only where structurally necessary for technical specifications or checklists.
+7. Zero plagiarism: Formulate 100% original sentence structures and real practical examples from ${locationContext}.
+8. SEO Keywords: Weave target keywords naturally into the title, the first 100 words, at least one H2 heading, and 2-3 body paragraphs without keyword stuffing.`;
 
     const userPrompt = `Write an authentic, human-grade technical and business article about: "${topicTitle}".
 Category: ${categorySlug}
@@ -114,9 +115,15 @@ Return strictly a valid JSON object matching this schema:
     // Attempt generation with configured LLM
     const llmDraft = await this.callLLM(systemPrompt, userPrompt);
     if (llmDraft) {
-      const words = llmDraft.content.split(/\s+/).length;
+      // Rigorously sanitize any stray asterisks (**bold** or *italic*)
+      const cleanContent = (llmDraft.content || '')
+        .replace(/\*\*([^*]+)\*\*/g, '$1')
+        .replace(/\*([^*\n]+)\*/g, '$1')
+        .replace(/\*\*/g, '');
+      const words = cleanContent.split(/\s+/).length;
       return {
         ...llmDraft,
+        content: cleanContent,
         canonicalUrl: `/blog/${llmDraft.slug}`,
         categorySlug,
         readingMinutes: Math.max(1, Math.ceil(words / 220)),
@@ -256,9 +263,9 @@ Return strictly a valid JSON object matching this schema:
 
     const content = `# ${topicTitle}
 
-Every growing enterprise across **${locationContext}** eventually reaches a point where informal operational methods stop working. When transaction volume expands, relying on fragmented WhatsApp chat threads, manual paper registers, and standalone Excel spreadsheets creates severe administrative bottlenecks.
+Every growing enterprise across ${locationContext} eventually reaches a point where informal operational methods stop working. When transaction volume expands, relying on fragmented WhatsApp chat threads, manual paper registers, and standalone Excel spreadsheets creates severe administrative bottlenecks.
 
-At **Palnadu.dev**, our approach is direct: **Start with the problem. We build the solution.** In this engineering guide, we examine why traditional manual workflows break down under scale, how custom web applications solve operational drag, and how to execute a cost-effective implementation plan.
+At Palnadu.dev, our approach is direct: Start with the problem. We build the solution. In this engineering guide, we examine why traditional manual workflows break down under scale, how custom web applications solve operational drag, and how to execute a cost-effective implementation plan.
 
 ---
 
@@ -267,10 +274,10 @@ At **Palnadu.dev**, our approach is direct: **Start with the problem. We build t
 When commercial trading agencies, clinics, schools, and growing enterprises in Andhra Pradesh start out, informal communication channels feel convenient. Orders arrive via WhatsApp voice notes, clerks update quantities on standalone desktop computers, and owners spend evening hours reconciling ledgers.
 
 However, as order volume expands, this informal setup creates hidden operational drag:
-- **Data Fragmentation:** Inventory figures in the godown fail to sync with sales reps in the field.
-- **Accidental Overselling:** Two team members unknowingly commit the same stock batch to different customers.
-- **Lost Inquiries:** Prospective client inquiries get buried under hundreds of personal chat messages.
-- **Single Point of Failure:** Critical pricing rules and client histories live inside one employee's head rather than a secure, centralized database.
+- Data Fragmentation: Inventory figures in the godown fail to sync with sales reps in the field.
+- Accidental Overselling: Two team members unknowingly commit the same stock batch to different customers.
+- Lost Inquiries: Prospective client inquiries get buried under hundreds of personal chat messages.
+- Single Point of Failure: Critical pricing rules and client histories live inside one employee's head rather than a secure, centralized database.
 
 ---
 
@@ -278,9 +285,9 @@ However, as order volume expands, this informal setup creates hidden operational
 
 Many forward-thinking operators recognize these friction points and attempt to solve them by subscribing to off-the-shelf software tools. Within a few months, many abandon them because:
 
-1. **Inflexible Workflows:** Foreign SaaS tools assume standardized Western transaction models. They fail to accommodate regional partial UPI/cash advances, seasonal mandi credit terms, or local transport carrier memos.
-2. **Exorbitant Per-User Monthly Fees:** Paying $20 to $50 per staff member every month creates an ongoing cash drain for features regional teams will never utilize.
-3. **Zero Code or Data Ownership:** Storing proprietary supplier lists and pricing tiers on closed third-party servers exposes businesses to sudden price hikes and vendor lock-in.
+1. Inflexible Workflows: Foreign SaaS tools assume standardized Western transaction models. They fail to accommodate regional partial UPI/cash advances, seasonal mandi credit terms, or local transport carrier memos.
+2. Exorbitant Per-User Monthly Fees: Paying $20 to $50 per staff member every month creates an ongoing cash drain for features regional teams will never utilize.
+3. Zero Code or Data Ownership: Storing proprietary supplier lists and pricing tiers on closed third-party servers exposes businesses to sudden price hikes and vendor lock-in.
 
 ---
 
@@ -289,10 +296,10 @@ Many forward-thinking operators recognize these friction points and attempt to s
 Instead of forcing your business into rigid off-the-shelf molds, modern custom engineering delivers lightweight web applications tailored strictly around your real bottlenecks.
 
 ### Architectural Advantages:
-- **Sub-Second Performance:** Utilizing **Next.js (App Router)** and React Server Components ensures dashboards load instantly, even over standard 4G mobile networks in regional hubs.
-- **Single Source of Truth Database:** High-speed PostgreSQL or MongoDB databases unify warehouses, accounting desks, and mobile field staff in real time.
-- **Automated WhatsApp Integration:** Verified orders trigger official PDF invoices directly to buyers, eliminating manual paper preparation.
-- **100% Intellectual Property Ownership:** You own the entire Git source code repository and cloud deployment infrastructure with zero recurring software licensing fees.
+- Sub-Second Performance: Utilizing Next.js (App Router) and React Server Components ensures dashboards load instantly, even over standard 4G mobile networks in regional hubs.
+- Single Source of Truth Database: High-speed PostgreSQL or MongoDB databases unify warehouses, accounting desks, and mobile field staff in real time.
+- Automated WhatsApp Integration: Verified orders trigger official PDF invoices directly to buyers, eliminating manual paper preparation.
+- 100% Intellectual Property Ownership: You own the entire Git source code repository and cloud deployment infrastructure with zero recurring software licensing fees.
 
 ---
 
@@ -300,11 +307,11 @@ Instead of forcing your business into rigid off-the-shelf molds, modern custom e
 
 | Workflow Dimension | Fragmented Excel & WhatsApp | Palnadu.dev Custom Web Platform |
 |---|---|---|
-| **Data Sync Speed** | Delayed / Evening Manual Reconciliations | **Instant Real-Time Cloud Persistence** |
-| **Mobile Accessibility**| Awkward Pinch-to-Zoom Spreadsheets | **Mobile-First Responsive Interface** |
-| **Human Error Rate** | High (accidental formula overwrites) | **Built-in Form Validation Rules** |
-| **Client Transparency**| Informal Verbal Updates | **Automated WhatsApp PDF Invoices** |
-| **Long-Term Cost** | Recurring Staff Hours Wasted | **One-Time Investment, Zero Per-User Fees** |
+| Data Sync Speed | Delayed / Evening Manual Reconciliations | Instant Real-Time Cloud Persistence |
+| Mobile Accessibility | Awkward Pinch-to-Zoom Spreadsheets | Mobile-First Responsive Interface |
+| Human Error Rate | High (accidental formula overwrites) | Built-in Form Validation Rules |
+| Client Transparency | Informal Verbal Updates | Automated WhatsApp PDF Invoices |
+| Long-Term Cost | Recurring Staff Hours Wasted | One-Time Investment, Zero Per-User Fees |
 
 ---
 
@@ -327,7 +334,7 @@ Once the primary workflow is operating smoothly, connect secondary integrations 
 
 Whether you are automating an established regional business or launching a brand-new digital startup, our team provides honest technical advice and clean code.
 
-Explore our **[Web Application Development Services](/services/web-development)**, learn about **[Custom Software Solutions](/services/custom-software)**, or reach out directly through our **[Contact Page](/contact)** to discuss your project.`;
+Explore our [Web Application Development Services](/services/web-development), learn about [Custom Software Solutions](/services/custom-software), or reach out directly through our [Contact Page](/contact) to discuss your project.`;
 
     const excerpt = `Discover how modern web applications and business automation eliminate operational bottlenecks, spreadsheet errors, and WhatsApp chaos for growing enterprises in ${locationContext}.`;
 

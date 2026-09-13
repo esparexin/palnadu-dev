@@ -230,9 +230,9 @@ export class BlogAutomationService {
       const inlineImg1 = images[1];
       const inlineImg2 = images[2];
 
-      const img1Markdown = `\n\n![${inlineImg1.alt}](${inlineImg1.url})\n*Caption: ${inlineImg1.caption} (${inlineImg1.licenseType})*\n\n`;
+      const img1Markdown = `\n\n![${inlineImg1.alt}](${inlineImg1.url})\nCaption: ${inlineImg1.caption} (${inlineImg1.licenseType})\n\n`;
       const img2Markdown = inlineImg2
-        ? `\n\n![${inlineImg2.alt}](${inlineImg2.url})\n*Caption: ${inlineImg2.caption} (${inlineImg2.licenseType})*\n\n`
+        ? `\n\n![${inlineImg2.alt}](${inlineImg2.url})\nCaption: ${inlineImg2.caption} (${inlineImg2.licenseType})\n\n`
         : '';
 
       // Inject after Section 2 and Section 4
@@ -246,6 +246,12 @@ export class BlogAutomationService {
         enrichedContent = `${parts2[0]}${img2Markdown}## 5. ${parts2[1]}`;
       }
     }
+
+    // Sanitize any remaining asterisks (**bold** or *italic*) to maintain clean editorial typography
+    enrichedContent = enrichedContent
+      .replace(/\*\*([^*]+)\*\*/g, '$1')
+      .replace(/\*([^*\n]+)\*/g, '$1')
+      .replace(/\*\*/g, '');
 
     // 6. Check if auto-publish is enabled in settings
     let shouldPublish = forcePublish;

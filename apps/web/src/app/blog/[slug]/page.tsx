@@ -53,11 +53,18 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 }
 
-// Inline Markdown helper (bold, links, code)
+// Inline Markdown helper (links, code, clean plain typography without asterisks)
 function renderInline(text: string): React.ReactNode {
-  const regex = /(\[[^\]]+\]\([^)]+\)|\*\*[^*]+\*\*|`[^`]+`)/g;
-  const parts = text.split(regex);
-  if (parts.length === 1) return text;
+  // Strip any remaining asterisks so they never render as literal * or **
+  const clean = text
+    .replace(/\*\*([^*]+)\*\*/g, '$1')
+    .replace(/\*([^*\n]+)\*/g, '$1')
+    .replace(/\*\*/g, '')
+    .replace(/(?<=\s)\*(?=\s)/g, '-');
+
+  const regex = /(\[[^\]]+\]\([^)]+\)|`[^`]+`)/g;
+  const parts = clean.split(regex);
+  if (parts.length === 1) return clean;
 
   return parts.map((part, idx) => {
     if (part.startsWith('[') && part.includes('](')) {
@@ -73,13 +80,6 @@ function renderInline(text: string): React.ReactNode {
           </Link>
         );
       }
-    }
-    if (part.startsWith('**') && part.endsWith('**')) {
-      return (
-        <strong key={idx} className="font-bold text-palnadu-dark">
-          {part.slice(2, -2)}
-        </strong>
-      );
     }
     if (part.startsWith('`') && part.endsWith('`')) {
       return (
@@ -234,10 +234,11 @@ export default async function BlogPostPage({ params }: Props) {
                 return <hr key={idx} className="my-8 border-palnadu-border/80" />;
               }
 
-              // 2. Inline Markdown Images with optional caption
-              const imageMatch = trimmed.match(/^!\[([^\]]*)\]\((https?:\/\/[^)]+)\)(?:[\s\n]*\*Caption:\s*([^*]+)\*)?/);
+              // 2. Inline Markdown Images with optional caption (with or without asterisks)
+              const imageMatch = trimmed.match(/^!\[([^\]]*)\]\((https?:\/\/[^)]+)\)(?:[\s\n]*(?:\*?Caption:\s*([^*\n]+)\*?))?/);
               if (imageMatch) {
-                const [, alt, url, caption] = imageMatch;
+                const [, alt, url, rawCaption] = imageMatch;
+                const caption = rawCaption ? rawCaption.replace(/\*/g, '').trim() : '';
                 return (
                   <figure key={idx} className="my-8 rounded-xl overflow-hidden border border-palnadu-border shadow-2xs bg-palnadu-off-white">
                     <img
@@ -246,8 +247,8 @@ export default async function BlogPostPage({ params }: Props) {
                       className="w-full h-auto max-h-[500px] object-cover"
                     />
                     {caption && (
-                      <figcaption className="px-4 py-2.5 text-center text-xs text-palnadu-secondary italic bg-gray-50/80 border-t border-palnadu-border/60">
-                        {caption}
+                      <figcaption className="px-4 py-2.5 text-center text-xs text-palnadu-secondary bg-gray-50/80 border-t border-palnadu-border/60">
+                        Caption: {caption}
                       </figcaption>
                     )}
                   </figure>
