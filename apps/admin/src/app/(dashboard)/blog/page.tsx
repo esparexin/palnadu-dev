@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { api } from '@/lib/api';
 import type { BlogPost } from '@palnadu/types';
-import { Plus, Search, Edit2, Trash2, X, Globe, Eye, FileText, CheckCircle2, Sparkles, ExternalLink, UploadCloud, Loader2, Compass, Copy, Check, ListChecks, ArrowRight } from 'lucide-react';
+import { Plus, Search, Edit2, Trash2, X, Globe, Eye, FileText, CheckCircle2, Sparkles, ExternalLink, UploadCloud, Loader2, Compass, Copy, Check, ListChecks, ArrowRight, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { useToast } from '@/components/ui/toast';
 import { cn } from '@/lib/utils';
@@ -63,6 +63,14 @@ export default function BlogAdminPage() {
   const [deleting, setDeleting] = useState(false);
   const coverInputRef = useRef<HTMLInputElement>(null);
 
+  // Pagination & Counts State
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [totalPosts, setTotalPosts] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+  const [publishedCount, setPublishedCount] = useState(0);
+  const [draftCount, setDraftCount] = useState(0);
+
   // SEO Keyword Research Tool modal state
   const [keywordModalOpen, setKeywordModalOpen] = useState(false);
   const [keywordSeed, setKeywordSeed] = useState('billing software');
@@ -101,7 +109,10 @@ export default function BlogAdminPage() {
 
   const fetchPosts = () => {
     setLoading(true);
-    const params: Record<string, string> = { limit: '100' };
+    const params: Record<string, string> = {
+      page: String(currentPage),
+      limit: String(pageSize),
+    };
     if (search) params.search = search;
     if (statusFilter) params.status = statusFilter;
     if (categoryFilter) params.category = categoryFilter;
@@ -109,18 +120,32 @@ export default function BlogAdminPage() {
     Promise.all([
       api.blog.list(params),
       api.blog.categories(),
+      api.automation.status().catch(() => null),
     ])
-      .then(([postsRes, catRes]: [any, any]) => {
+      .then(([postsRes, catRes, autoRes]: [any, any, any]) => {
         setPosts(postsRes.data || []);
+        if (postsRes.meta) {
+          setTotalPosts(postsRes.meta.total || 0);
+          setTotalPages(postsRes.meta.totalPages || 1);
+        }
         setCategories(catRes.data || []);
+        if (autoRes?.data?.statistics) {
+          setPublishedCount(autoRes.data.statistics.publishedPosts || 0);
+          setDraftCount(autoRes.data.statistics.draftPosts || 0);
+        }
       })
       .catch(() => {})
       .finally(() => setLoading(false));
   };
 
+  // Reset to page 1 whenever filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, statusFilter, categoryFilter, pageSize]);
+
   useEffect(() => {
     fetchPosts();
-  }, [search, statusFilter, categoryFilter]);
+  }, [currentPage, pageSize, search, statusFilter, categoryFilter]);
 
   const openCreateModal = () => {
     setEditingPost(null);
@@ -301,10 +326,6 @@ export default function BlogAdminPage() {
     setTimeout(() => setCopiedKw(null), 2000);
   };
 
-  const totalCount = posts.length;
-  const publishedCount = posts.filter((p) => p.status === 'PUBLISHED').length;
-  const draftCount = posts.filter((p) => p.status === 'DRAFT').length;
-
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -364,7 +385,7 @@ export default function BlogAdminPage() {
           )}
         >
           <p className="text-[11px] font-semibold text-palnadu-secondary uppercase tracking-wider">Total Articles</p>
-          <p className="text-xl font-bold text-palnadu-dark mt-1">{loading ? '—' : totalCount}</p>
+          <p className="text-xl font-bold text-palnadu-dark mt-1">{loading && totalPosts === 0 ? '—' : totalPosts}</p>
         </button>
         <button
           onClick={() => setStatusFilter('PUBLISHED')}
@@ -374,7 +395,7 @@ export default function BlogAdminPage() {
           )}
         >
           <p className="text-[11px] font-semibold text-emerald-700 uppercase tracking-wider">Published on Google</p>
-          <p className="text-xl font-bold text-emerald-700 mt-1">{loading ? '—' : publishedCount}</p>
+          <p className="text-xl font-bold text-emerald-700 mt-1">{loading && publishedCount === 0 ? '—' : publishedCount}</p>
         </button>
         <button
           onClick={() => setStatusFilter('DRAFT')}
@@ -384,7 +405,7 @@ export default function BlogAdminPage() {
           )}
         >
           <p className="text-[11px] font-semibold text-amber-700 uppercase tracking-wider">Drafts Pending Review</p>
-          <p className="text-xl font-bold text-amber-700 mt-1">{loading ? '—' : draftCount}</p>
+          <p className="text-xl font-bold text-amber-700 mt-1">{loading && draftCount === 0 ? '—' : draftCount}</p>
         </button>
       </div>
 
@@ -445,39 +466,41 @@ export default function BlogAdminPage() {
         </div>
       </div>
 
-      {/* Articles Table */}
-      <div className="rounded-lg border border-palnadu-border bg-white shadow-2xs overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-xs">
-            <thead>
-              <tr className="border-b border-palnadu-border bg-palnadu-off-white/50 text-palnadu-secondary text-left font-semibold">
-                <th className="px-4 py-3">Article Title & Slug</th>
-                <th className="px-4 py-3">Category</th>
-                <th className="px-4 py-3">SEO Health</th>
-                <th className="px-4 py-3">Status</th>
-                <th className="px-4 py-3">Updated Date</th>
-                <th className="px-4 py-3 text-right">Actions</th>
+      {/* Articles Table with Internal Body Scrolling & Pagination */}
+      <div className="rounded-xl border border-palnadu-border bg-white shadow-2xs overflow-hidden flex flex-col">
+        {/* Scrollable Table Body Container with Sticky Header */}
+        <div className="overflow-x-auto overflow-y-auto max-h-[580px] sm:max-h-[640px]">
+          <table className="w-full text-xs border-collapse">
+            <thead className="sticky top-0 z-10 bg-palnadu-off-white border-b border-palnadu-border text-palnadu-secondary text-left font-semibold shadow-xs">
+              <tr>
+                <th className="px-4 py-3 bg-palnadu-off-white">Article Title & Slug</th>
+                <th className="px-4 py-3 bg-palnadu-off-white">Category</th>
+                <th className="px-4 py-3 bg-palnadu-off-white">SEO Health</th>
+                <th className="px-4 py-3 bg-palnadu-off-white">Status</th>
+                <th className="px-4 py-3 bg-palnadu-off-white">Updated Date</th>
+                <th className="px-4 py-3 text-right bg-palnadu-off-white">Actions</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="divide-y divide-palnadu-border/60 bg-white">
               {loading ? (
                 <tr>
-                  <td colSpan={5} className="px-4 py-10 text-center text-palnadu-secondary">
-                    Loading articles...
+                  <td colSpan={6} className="px-4 py-12 text-center text-palnadu-secondary">
+                    <Loader2 className="h-5 w-5 animate-spin mx-auto text-palnadu-blue mb-2" />
+                    <span>Loading articles...</span>
                   </td>
                 </tr>
               ) : posts.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-4 py-12 text-center text-palnadu-secondary">
+                  <td colSpan={6} className="px-4 py-12 text-center text-palnadu-secondary">
                     <p className="font-semibold text-palnadu-dark">No articles found</p>
-                    <p className="text-[11px] mt-1">Create your first blog post using the button above.</p>
+                    <p className="text-[11px] mt-1">Try adjusting your search query or status filter.</p>
                   </td>
                 </tr>
               ) : (
                 posts.map((post) => (
                   <tr
                     key={post.id}
-                    className="border-b border-palnadu-border/60 hover:bg-palnadu-light-blue/20 transition-colors"
+                    className="hover:bg-palnadu-light-blue/20 transition-colors"
                   >
                     {/* Title & Slug */}
                     <td className="px-4 py-3 max-w-md">
@@ -491,19 +514,19 @@ export default function BlogAdminPage() {
                     </td>
 
                     {/* Category */}
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-3 whitespace-nowrap">
                       <span className="inline-block px-2 py-0.5 rounded-md bg-palnadu-off-white border border-palnadu-border text-[10px] font-semibold text-palnadu-dark">
                         {post.category?.name || 'Unassigned'}
                       </span>
                     </td>
 
                     {/* SEO Health Badge */}
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-3 whitespace-nowrap">
                       <div className="flex items-center gap-1.5">
                         {post.seoTitle && post.seoDescription ? (
                           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-50 border border-emerald-200 text-emerald-800 font-semibold text-[10px]">
                             <Sparkles className="h-3 w-3 text-emerald-600" />
-                            <span>SEO Configured</span>
+                            <span>SEO Ready</span>
                           </span>
                         ) : (
                           <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-yellow-50 border border-yellow-200 text-yellow-800 text-[10px]">
@@ -514,7 +537,7 @@ export default function BlogAdminPage() {
                     </td>
 
                     {/* Status */}
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-3 whitespace-nowrap">
                       <span
                         className={cn(
                           'inline-flex rounded-md border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider',
@@ -528,12 +551,12 @@ export default function BlogAdminPage() {
                     </td>
 
                     {/* Date */}
-                    <td className="px-4 py-3 text-palnadu-secondary">
+                    <td className="px-4 py-3 text-palnadu-secondary whitespace-nowrap">
                       {new Date(post.updatedAt).toLocaleDateString()}
                     </td>
 
                     {/* Actions */}
-                    <td className="px-4 py-3 text-right space-x-1.5">
+                    <td className="px-4 py-3 text-right whitespace-nowrap space-x-1.5">
                       {post.status === 'DRAFT' && (
                         <button
                           onClick={() => quickPublish(post)}
@@ -541,7 +564,7 @@ export default function BlogAdminPage() {
                           title="1-Click Approve & Publish"
                         >
                           <CheckCircle2 className="h-3 w-3" />
-                          <span>Approve & Publish</span>
+                          <span>Approve</span>
                         </button>
                       )}
                       {post.status === 'PUBLISHED' && (
@@ -575,6 +598,93 @@ export default function BlogAdminPage() {
               )}
             </tbody>
           </table>
+        </div>
+
+        {/* Pagination Controls Bar */}
+        <div className="px-4 py-3 bg-white border-t border-palnadu-border flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-palnadu-secondary">
+          <div className="flex items-center gap-3">
+            <span>
+              Showing <span className="font-semibold text-palnadu-dark">{totalPosts === 0 ? 0 : (currentPage - 1) * pageSize + 1}</span> to{' '}
+              <span className="font-semibold text-palnadu-dark">{Math.min(currentPage * pageSize, totalPosts)}</span> of{' '}
+              <span className="font-semibold text-palnadu-dark">{totalPosts}</span> articles
+            </span>
+
+            <div className="flex items-center gap-1.5 pl-3 border-l border-palnadu-border/80">
+              <span>Per page:</span>
+              <select
+                value={pageSize}
+                onChange={(e) => setPageSize(Number(e.target.value))}
+                className="h-7 rounded border border-palnadu-border bg-white px-2 text-xs font-semibold text-palnadu-dark cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-palnadu-blue"
+              >
+                <option value={10}>10</option>
+                <option value={20}>20</option>
+                <option value={50}>50</option>
+                <option value={100}>100</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => setCurrentPage(1)}
+              disabled={currentPage <= 1 || loading}
+              className="p-1.5 rounded-md border border-palnadu-border hover:bg-gray-50 text-palnadu-dark disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+              title="First page"
+            >
+              <ChevronsLeft className="h-3.5 w-3.5" />
+            </button>
+            <button
+              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+              disabled={currentPage <= 1 || loading}
+              className="p-1.5 rounded-md border border-palnadu-border hover:bg-gray-50 text-palnadu-dark disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+              title="Previous page"
+            >
+              <ChevronLeft className="h-3.5 w-3.5" />
+            </button>
+
+            {/* Page number indicators */}
+            <div className="flex items-center gap-1 px-1">
+              {Array.from({ length: totalPages }, (_, i) => i + 1)
+                .filter((p) => p === 1 || p === totalPages || Math.abs(p - currentPage) <= 1)
+                .map((p, i, arr) => {
+                  const prev = arr[i - 1];
+                  const showEllipsis = prev && p - prev > 1;
+                  return (
+                    <div key={p} className="flex items-center gap-1">
+                      {showEllipsis && <span className="px-1 text-palnadu-secondary">…</span>}
+                      <button
+                        onClick={() => setCurrentPage(p)}
+                        className={cn(
+                          'h-7 min-w-[28px] px-2 rounded-md border text-xs font-semibold transition-colors cursor-pointer',
+                          currentPage === p
+                            ? 'bg-palnadu-blue border-palnadu-blue text-white'
+                            : 'border-palnadu-border bg-white text-palnadu-dark hover:bg-gray-50'
+                        )}
+                      >
+                        {p}
+                      </button>
+                    </div>
+                  );
+                })}
+            </div>
+
+            <button
+              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+              disabled={currentPage >= totalPages || loading}
+              className="p-1.5 rounded-md border border-palnadu-border hover:bg-gray-50 text-palnadu-dark disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+              title="Next page"
+            >
+              <ChevronRight className="h-3.5 w-3.5" />
+            </button>
+            <button
+              onClick={() => setCurrentPage(totalPages)}
+              disabled={currentPage >= totalPages || loading}
+              className="p-1.5 rounded-md border border-palnadu-border hover:bg-gray-50 text-palnadu-dark disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+              title="Last page"
+            >
+              <ChevronsRight className="h-3.5 w-3.5" />
+            </button>
+          </div>
         </div>
       </div>
 

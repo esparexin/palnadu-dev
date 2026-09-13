@@ -108,22 +108,21 @@ export class BlogService {
     page?: number;
     limit?: number;
     status?: PublishStatus;
+    categorySlug?: string;
     search?: string;
   } = {}) {
-    const { page = 1, limit = 20, status, search } = params;
+    const { page = 1, limit = 20, status, categorySlug, search } = params;
     const skip = (page - 1) * limit;
-    const where: Prisma.BlogPostWhereInput = {};
-
-    if (status) {
-      where.status = status;
-    }
-
-    if (search) {
-      where.OR = [
-        { title: { contains: search, mode: 'insensitive' } },
-        { excerpt: { contains: search, mode: 'insensitive' } },
-      ];
-    }
+    const where: Prisma.BlogPostWhereInput = {
+      ...(status && { status }),
+      ...(categorySlug && { category: { slug: categorySlug } }),
+      ...(search && {
+        OR: [
+          { title: { contains: search, mode: 'insensitive' } },
+          { excerpt: { contains: search, mode: 'insensitive' } },
+        ],
+      }),
+    };
 
     const [posts, total] = await Promise.all([
       this.prisma.blogPost.findMany({

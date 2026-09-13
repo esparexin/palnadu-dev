@@ -62,11 +62,13 @@ export class BlogController {
     @Query('limit') limit?: string,
     @Query('status') status?: string,
     @Query('search') search?: string,
+    @Query('category') category?: string,
   ) {
     const result = await this.blogService.findAllAdmin({
       page: page ? parseInt(page) : 1,
-      limit: limit ? parseInt(limit) : 20,
+      limit: limit ? parseInt(limit) : 10,
       status: status as PublishStatus | undefined,
+      categorySlug: category,
       search,
     });
     return { success: true, ...result };
