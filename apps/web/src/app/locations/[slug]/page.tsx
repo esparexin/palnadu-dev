@@ -67,6 +67,7 @@ export default async function LocationDetailPage({ params }: Props) {
       { '@type': 'AdministrativeArea', name: location.name },
       { '@type': 'AdministrativeArea', name: location.district },
       { '@type': 'AdministrativeArea', name: 'Andhra Pradesh' },
+      ...(location.surroundingMandals?.map((m) => ({ '@type': 'AdministrativeArea', name: m })) || []),
     ],
   };
 
@@ -202,6 +203,31 @@ export default async function LocationDetailPage({ params }: Props) {
                 ))}
               </div>
             </div>
+
+            {/* Surrounding Mandals & Corridors Served */}
+            {location.surroundingMandals && location.surroundingMandals.length > 0 && (
+              <div className="rounded-xl border border-palnadu-border bg-palnadu-off-white/40 p-6 space-y-3">
+                <div className="flex items-center gap-2 text-palnadu-dark">
+                  <MapPin className="h-4 w-4 text-palnadu-blue shrink-0" />
+                  <h3 className="text-sm font-bold">
+                    Serving {location.name} & Surrounding Mandals / Corridors:
+                  </h3>
+                </div>
+                <div className="flex flex-wrap gap-2 pt-1">
+                  {location.surroundingMandals.map((mandal) => (
+                    <span
+                      key={mandal}
+                      className="inline-flex items-center px-2.5 py-1 rounded-md bg-white border border-palnadu-border text-xs font-medium text-palnadu-dark shadow-2xs"
+                    >
+                      {mandal}
+                    </span>
+                  ))}
+                </div>
+                <p className="text-[11px] text-palnadu-secondary leading-relaxed">
+                  Traders, clinics, schools, and enterprises across these regional mandals receive direct engineering advisory and on-site support from Palnadu.dev.
+                </p>
+              </div>
+            )}
 
             {/* Common Operational Challenges Solved */}
             <div className="rounded-xl border border-red-200 bg-red-50/40 p-6 space-y-3">

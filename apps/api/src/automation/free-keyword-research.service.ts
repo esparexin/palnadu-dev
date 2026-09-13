@@ -13,6 +13,11 @@ export class FreeKeywordResearchService {
 
   // Common high-intent modifiers used by regional Indian searchers
   private readonly intentModifiers = [
+    'billing software',
+    'school software',
+    'hospital software',
+    'pharmacy software',
+    'pos software',
     'cost',
     'price',
     'near me',
@@ -25,12 +30,19 @@ export class FreeKeywordResearchService {
     'low cost',
   ];
 
-  // Core regional locations in Andhra Pradesh
+  // Core regional locations across Palnadu & Guntur Revenue Divisions
   private readonly defaultLocations = [
-    'Guntur',
     'Palnadu',
+    'Guntur',
     'Narasaraopet',
     'Chilakaluripet',
+    'Vinukonda',
+    'Sattenapalli',
+    'Macherla',
+    'Gurazala',
+    'Piduguralla',
+    'Tenali',
+    'Mangalagiri',
     'Andhra Pradesh',
   ];
 
