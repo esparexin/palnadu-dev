@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import { siteConfig } from '@palnadu/config';
+import { siteConfig, getBreadcrumbSchema, getOrganizationRef } from '@palnadu/config';
 import { api } from '@/lib/api';
 import { CtaSection } from '@/components/sections/cta-section';
 import { ArrowLeft, ArrowRight, CheckCircle2, Cpu, BarChart3, Building } from 'lucide-react';
@@ -61,43 +61,21 @@ export default async function CaseStudyPage({ params }: Props) {
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'CreativeWork',
+    '@id': `${siteConfig.url}/work/${slug}/#work`,
     name: study.title,
     headline: study.title,
     description: study.seoDescription || study.result,
-    creator: {
-      '@type': 'Organization',
-      name: 'Palnadu.dev',
-      url: siteConfig.url,
-    },
+    creator: getOrganizationRef(),
     about: study.problem,
     datePublished: study.createdAt,
     dateModified: study.updatedAt,
   };
 
-  const breadcrumbJsonLd = {
-    '@context': 'https://schema.org',
-    '@type': 'BreadcrumbList',
-    itemListElement: [
-      {
-        '@type': 'ListItem',
-        position: 1,
-        name: 'Home',
-        item: siteConfig.url,
-      },
-      {
-        '@type': 'ListItem',
-        position: 2,
-        name: 'Our Work',
-        item: `${siteConfig.url}/work`,
-      },
-      {
-        '@type': 'ListItem',
-        position: 3,
-        name: study.title,
-        item: `${siteConfig.url}/work/${slug}`,
-      },
-    ],
-  };
+  const breadcrumbJsonLd = getBreadcrumbSchema([
+    { name: 'Home', path: '' },
+    { name: 'Our Work', path: '/work' },
+    { name: study.title, path: `/work/${slug}` },
+  ]);
 
   return (
     <>

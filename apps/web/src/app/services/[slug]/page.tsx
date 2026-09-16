@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import { services, siteConfig } from '@palnadu/config';
+import { services, siteConfig, getBreadcrumbSchema, getOrganizationRef } from '@palnadu/config';
 import { Button } from '@/components/ui/button';
 import { CheckCircle2, HelpCircle, Layers, ArrowLeft } from 'lucide-react';
 
@@ -287,20 +287,11 @@ export default async function ServicePage({ params }: Props) {
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'Service',
+    '@id': `${siteConfig.url}/services/${slug}/#service`,
     name: service.title,
     description: service.shortDescription,
-    provider: {
-      '@type': 'ProfessionalService',
-      name: 'Palnadu.dev',
-      url: siteConfig.url,
-      telephone: siteConfig.contact.phone,
-      address: {
-        '@type': 'PostalAddress',
-        addressRegion: 'Andhra Pradesh',
-        addressCountry: 'IN',
-        addressLocality: 'Palnadu',
-      },
-    },
+    url: `${siteConfig.url}/services/${slug}`,
+    provider: getOrganizationRef(),
   };
 
   const faqJsonLd = content?.faq ? {
@@ -316,30 +307,11 @@ export default async function ServicePage({ params }: Props) {
     })),
   } : null;
 
-  const breadcrumbJsonLd = {
-    '@context': 'https://schema.org',
-    '@type': 'BreadcrumbList',
-    itemListElement: [
-      {
-        '@type': 'ListItem',
-        position: 1,
-        name: 'Home',
-        item: siteConfig.url,
-      },
-      {
-        '@type': 'ListItem',
-        position: 2,
-        name: 'Services',
-        item: `${siteConfig.url}/services`,
-      },
-      {
-        '@type': 'ListItem',
-        position: 3,
-        name: service.title,
-        item: `${siteConfig.url}/services/${slug}`,
-      },
-    ],
-  };
+  const breadcrumbJsonLd = getBreadcrumbSchema([
+    { name: 'Home', path: '' },
+    { name: 'Services', path: '/services' },
+    { name: service.title, path: `/services/${slug}` },
+  ]);
 
   return (
     <>

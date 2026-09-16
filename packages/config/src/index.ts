@@ -1,6 +1,7 @@
-// ─── Color Palette & Media (SSOT) ────────────────────────────
+// ─── Color Palette, Media & Schema (SSOT) ────────────────────────
 export * from './colors';
 export * from './media';
+export * from './schema';
 
 // ─── Site Configuration ───────────────────────────────────────
 

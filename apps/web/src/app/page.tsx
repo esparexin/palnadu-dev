@@ -1,13 +1,21 @@
 import { ScrollGlobe } from '@/components/ui/landing-page';
-import { siteConfig } from '@palnadu/config';
+import { siteConfig, getOrganizationSchema, getWebsiteSchema } from '@palnadu/config';
 
 // Comprehensive Google SEO Structured Data (JSON-LD)
 function JsonLd() {
+  const organizationSchema = getOrganizationSchema();
+  const websiteSchema = getWebsiteSchema();
+
   const professionalServiceSchema = {
     '@context': 'https://schema.org',
     '@type': 'ProfessionalService',
-    name: 'Palnadu.dev',
+    '@id': `${siteConfig.url}/#service`,
+    name: siteConfig.name,
     url: siteConfig.url,
+    parentOrganization: {
+      '@type': 'Organization',
+      '@id': `${siteConfig.url}/#organization`,
+    },
     logo: `${siteConfig.url}/logo.png`,
     image: `${siteConfig.url}/og.png`,
     description: siteConfig.description,
@@ -40,21 +48,10 @@ function JsonLd() {
     sameAs: [siteConfig.links.github, siteConfig.links.twitter, siteConfig.links.linkedin],
   };
 
-  const websiteSchema = {
-    '@context': 'https://schema.org',
-    '@type': 'WebSite',
-    name: 'Palnadu.dev',
-    url: siteConfig.url,
-    description: siteConfig.description,
-    publisher: {
-      '@type': 'Organization',
-      name: 'Palnadu.dev',
-    },
-  };
-
   const faqSchema = {
     '@context': 'https://schema.org',
     '@type': 'FAQPage',
+    '@id': `${siteConfig.url}/#faq`,
     mainEntity: [
       {
         '@type': 'Question',
@@ -79,11 +76,15 @@ function JsonLd() {
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(professionalServiceSchema) }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}
       />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteSchema) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(professionalServiceSchema) }}
       />
       <script
         type="application/ld+json"

@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { siteConfig } from '@palnadu/config';
+import { siteConfig, getBreadcrumbSchema } from '@palnadu/config';
 import { ContactSection } from '@/components/ui/contact';
 import { ShieldCheck, Clock, Users, ArrowRight, MessageSquare, Phone, Mail } from 'lucide-react';
 
@@ -17,11 +17,14 @@ export default function ContactPage() {
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'ContactPage',
+    '@id': `${siteConfig.url}/contact/#webpage`,
     name: 'Contact Palnadu.dev',
     url: `${siteConfig.url}/contact`,
     mainEntity: {
       '@type': 'Organization',
-      name: 'Palnadu.dev',
+      '@id': `${siteConfig.url}/#organization`,
+      name: siteConfig.name,
+      url: siteConfig.url,
       email: siteConfig.contact.email,
       telephone: siteConfig.contact.phone,
       address: {
@@ -33,11 +36,20 @@ export default function ContactPage() {
     },
   };
 
+  const breadcrumbJsonLd = getBreadcrumbSchema([
+    { name: 'Home', path: '' },
+    { name: 'Contact', path: '/contact' },
+  ]);
+
   return (
     <>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
       />
       <ContactSection title="Contact Our Software Engineers" />
 

@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import { siteConfig, imagePresets } from '@palnadu/config';
+import { siteConfig, imagePresets, getBreadcrumbSchema, getOrganizationRef } from '@palnadu/config';
 import { api } from '@/lib/api';
 import { CtaSection } from '@/components/sections/cta-section';
 import { Calendar, User, ArrowLeft, ArrowRight, Tag, Clock } from 'lucide-react';
@@ -111,6 +111,7 @@ export default async function BlogPostPage({ params }: Props) {
   const articleSchema = {
     '@context': 'https://schema.org',
     '@type': 'BlogPosting',
+    '@id': `${siteConfig.url}/blog/${slug}/#article`,
     headline: post.title,
     description: post.seoDescription || post.excerpt,
     image: post.coverImage || `${siteConfig.url}/og.png`,
@@ -122,7 +123,8 @@ export default async function BlogPostPage({ params }: Props) {
     },
     publisher: {
       '@type': 'Organization',
-      name: 'Palnadu.dev',
+      '@id': `${siteConfig.url}/#organization`,
+      name: siteConfig.name,
       logo: `${siteConfig.url}/logo.png`,
     },
     mainEntityOfPage: {
@@ -130,6 +132,12 @@ export default async function BlogPostPage({ params }: Props) {
       '@id': `${siteConfig.url}/blog/${slug}`,
     },
   };
+
+  const breadcrumbJsonLd = getBreadcrumbSchema([
+    { name: 'Home', path: '' },
+    { name: 'Blog', path: '/blog' },
+    { name: post.title, path: `/blog/${slug}` },
+  ]);
 
   const words = post.content ? post.content.split(/\s+/).length : 0;
   const readMinutes = Math.max(1, Math.ceil(words / 220));
@@ -143,6 +151,10 @@ export default async function BlogPostPage({ params }: Props) {
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(articleSchema) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
       />
 
       <article className="bg-white py-12 sm:py-16">

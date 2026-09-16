@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { siteConfig } from '@palnadu/config';
+import { siteConfig, getBreadcrumbSchema, getOrganizationRef } from '@palnadu/config';
 import { WorkClient } from './work-client';
 
 export const metadata: Metadata = {
@@ -15,35 +15,18 @@ export default function WorkPage() {
   const collectionJsonLd = {
     '@context': 'https://schema.org',
     '@type': 'CollectionPage',
+    '@id': `${siteConfig.url}/work/#webpage`,
     name: 'Our Work | Palnadu.dev',
     description:
       'A visual collection of our most recent works — each piece crafted with intention, emotion and style.',
     url: `${siteConfig.url}/work`,
-    creator: {
-      '@type': 'Organization',
-      name: 'Palnadu.dev',
-      url: siteConfig.url,
-    },
+    creator: getOrganizationRef(),
   };
 
-  const breadcrumbJsonLd = {
-    '@context': 'https://schema.org',
-    '@type': 'BreadcrumbList',
-    itemListElement: [
-      {
-        '@type': 'ListItem',
-        position: 1,
-        name: 'Home',
-        item: siteConfig.url,
-      },
-      {
-        '@type': 'ListItem',
-        position: 2,
-        name: 'Work',
-        item: `${siteConfig.url}/work`,
-      },
-    ],
-  };
+  const breadcrumbJsonLd = getBreadcrumbSchema([
+    { name: 'Home', path: '' },
+    { name: 'Work', path: '/work' },
+  ]);
 
   return (
     <>

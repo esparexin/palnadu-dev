@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import { coreLocations, siteConfig } from '@palnadu/config';
+import { coreLocations, siteConfig, getBreadcrumbSchema, getOrganizationRef } from '@palnadu/config';
 import { ArrowRight, MapPin, Building2, AlertCircle, CheckCircle2, HelpCircle, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { CtaSection } from '@/components/sections/cta-section';
@@ -51,12 +51,14 @@ export default async function LocationDetailPage({ params }: Props) {
   const localBusinessSchema = {
     '@context': 'https://schema.org',
     '@type': 'ProfessionalService',
+    '@id': `${siteConfig.url}/locations/${slug}/#business`,
     name: `Palnadu.dev — ${location.name}`,
     description: location.tagline,
     url: `${siteConfig.url}/locations/${slug}`,
     telephone: siteConfig.contact.phone,
     email: siteConfig.contact.email,
     priceRange: '₹₹ / $$',
+    parentOrganization: getOrganizationRef(),
     address: {
       '@type': 'PostalAddress',
       addressLocality: location.name,
@@ -84,30 +86,11 @@ export default async function LocationDetailPage({ params }: Props) {
     })),
   };
 
-  const breadcrumbSchema = {
-    '@context': 'https://schema.org',
-    '@type': 'BreadcrumbList',
-    itemListElement: [
-      {
-        '@type': 'ListItem',
-        position: 1,
-        name: 'Home',
-        item: siteConfig.url,
-      },
-      {
-        '@type': 'ListItem',
-        position: 2,
-        name: 'Locations',
-        item: `${siteConfig.url}/locations`,
-      },
-      {
-        '@type': 'ListItem',
-        position: 3,
-        name: location.name,
-        item: `${siteConfig.url}/locations/${slug}`,
-      },
-    ],
-  };
+  const breadcrumbSchema = getBreadcrumbSchema([
+    { name: 'Home', path: '' },
+    { name: 'Locations', path: '/locations' },
+    { name: location.name, path: `/locations/${slug}` },
+  ]);
 
   return (
     <>

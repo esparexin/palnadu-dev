@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { coreLocations, siteConfig } from '@palnadu/config';
+import { coreLocations, siteConfig, getBreadcrumbSchema, getOrganizationRef } from '@palnadu/config';
 import { SectionHeading } from '@/components/layout/section-heading';
 import { CtaSection } from '@/components/sections/cta-section';
 import { MapPin, ArrowRight, Building2, Globe } from 'lucide-react';
@@ -29,9 +29,11 @@ export default function LocationsPage() {
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'ItemList',
+    '@id': `${siteConfig.url}/locations/#itemlist`,
     name: 'Locations Served by Palnadu.dev',
     description: 'Regional software development hubs across Palnadu, Guntur, and coastal Andhra Pradesh.',
     url: `${siteConfig.url}/locations`,
+    provider: getOrganizationRef(),
     itemListElement: coreLocations.map((loc, idx) => ({
       '@type': 'ListItem',
       position: idx + 1,
@@ -41,24 +43,10 @@ export default function LocationsPage() {
     })),
   };
 
-  const breadcrumbJsonLd = {
-    '@context': 'https://schema.org',
-    '@type': 'BreadcrumbList',
-    itemListElement: [
-      {
-        '@type': 'ListItem',
-        position: 1,
-        name: 'Home',
-        item: siteConfig.url,
-      },
-      {
-        '@type': 'ListItem',
-        position: 2,
-        name: 'Locations',
-        item: `${siteConfig.url}/locations`,
-      },
-    ],
-  };
+  const breadcrumbJsonLd = getBreadcrumbSchema([
+    { name: 'Home', path: '' },
+    { name: 'Locations', path: '/locations' },
+  ]);
 
   return (
     <>

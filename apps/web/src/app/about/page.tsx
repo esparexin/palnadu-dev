@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { siteConfig } from '@palnadu/config';
+import { siteConfig, getOrganizationSchema, getBreadcrumbSchema } from '@palnadu/config';
 import { LampContainer } from '@/components/ui/lamp';
 import { CtaSection } from '@/components/sections/cta-section';
 
@@ -16,46 +16,21 @@ export default function AboutPage() {
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'AboutPage',
+    '@id': `${siteConfig.url}/about/#webpage`,
     name: 'About Palnadu.dev',
     description:
       'Palnadu.dev is a technology company built by developers from Palnadu with 8+ years of experience. We turn real-world problems into practical software.',
     url: `${siteConfig.url}/about`,
     mainEntity: {
       '@type': 'Organization',
-      name: 'Palnadu.dev',
-      url: siteConfig.url,
-      logo: `${siteConfig.url}/logo.png`,
-      description: siteConfig.description,
-      email: siteConfig.contact.email,
-      telephone: siteConfig.contact.phone,
-      address: {
-        '@type': 'PostalAddress',
-        addressRegion: 'Andhra Pradesh',
-        addressCountry: 'IN',
-        addressLocality: 'Palnadu',
-      },
-      sameAs: [siteConfig.links.github, siteConfig.links.twitter, siteConfig.links.linkedin],
+      '@id': `${siteConfig.url}/#organization`,
     },
   };
 
-  const breadcrumbJsonLd = {
-    '@context': 'https://schema.org',
-    '@type': 'BreadcrumbList',
-    itemListElement: [
-      {
-        '@type': 'ListItem',
-        position: 1,
-        name: 'Home',
-        item: siteConfig.url,
-      },
-      {
-        '@type': 'ListItem',
-        position: 2,
-        name: 'About Us',
-        item: `${siteConfig.url}/about`,
-      },
-    ],
-  };
+  const breadcrumbJsonLd = getBreadcrumbSchema([
+    { name: 'Home', path: '' },
+    { name: 'About Us', path: '/about' },
+  ]);
 
   return (
     <>

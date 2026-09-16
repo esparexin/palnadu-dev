@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { SectionHeading } from '@/components/layout/section-heading';
 import { CtaSection } from '@/components/sections/cta-section';
-import { imagePresets, siteConfig } from '@palnadu/config';
+import { imagePresets, siteConfig, getBreadcrumbSchema, getOrganizationRef } from '@palnadu/config';
 import { api } from '@/lib/api';
 import { Calendar, ArrowRight, Tag, Clock, Search } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -47,36 +47,18 @@ export default async function BlogPage({ searchParams }: Props) {
   const blogJsonLd = {
     '@context': 'https://schema.org',
     '@type': 'Blog',
+    '@id': `${siteConfig.url}/blog/#blog`,
     name: 'Palnadu.dev Engineering Blog',
     description:
       'Practical software engineering guides, startup MVP breakdowns, school websites, and local SEO insights by Palnadu.dev.',
     url: `${siteConfig.url}/blog`,
-    publisher: {
-      '@type': 'Organization',
-      name: 'Palnadu.dev',
-      url: siteConfig.url,
-      logo: `${siteConfig.url}/logo.png`,
-    },
+    publisher: getOrganizationRef(),
   };
 
-  const breadcrumbJsonLd = {
-    '@context': 'https://schema.org',
-    '@type': 'BreadcrumbList',
-    itemListElement: [
-      {
-        '@type': 'ListItem',
-        position: 1,
-        name: 'Home',
-        item: siteConfig.url,
-      },
-      {
-        '@type': 'ListItem',
-        position: 2,
-        name: 'Blog',
-        item: `${siteConfig.url}/blog`,
-      },
-    ],
-  };
+  const breadcrumbJsonLd = getBreadcrumbSchema([
+    { name: 'Home', path: '' },
+    { name: 'Blog', path: '/blog' },
+  ]);
 
   return (
     <>

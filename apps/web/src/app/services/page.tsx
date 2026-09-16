@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { services, siteConfig } from '@palnadu/config';
+import { services, siteConfig, getBreadcrumbSchema, getOrganizationRef } from '@palnadu/config';
 import { CinematicHero } from '@/components/ui/cinematic-landing-hero';
 import { CtaSection } from '@/components/sections/cta-section';
 
@@ -52,6 +52,7 @@ export default function ServicesPage() {
     description:
       'Web applications, mobile apps, MVP development, custom software, business automation, and technical consulting.',
     url: `${siteConfig.url}/services`,
+    provider: getOrganizationRef(),
     itemListElement: services.map((service, idx) => ({
       '@type': 'ListItem',
       position: idx + 1,
@@ -61,24 +62,10 @@ export default function ServicesPage() {
     })),
   };
 
-  const breadcrumbJsonLd = {
-    '@context': 'https://schema.org',
-    '@type': 'BreadcrumbList',
-    itemListElement: [
-      {
-        '@type': 'ListItem',
-        position: 1,
-        name: 'Home',
-        item: siteConfig.url,
-      },
-      {
-        '@type': 'ListItem',
-        position: 2,
-        name: 'Services',
-        item: `${siteConfig.url}/services`,
-      },
-    ],
-  };
+  const breadcrumbJsonLd = getBreadcrumbSchema([
+    { name: 'Home', path: '' },
+    { name: 'Services', path: '/services' },
+  ]);
 
   return (
     <>

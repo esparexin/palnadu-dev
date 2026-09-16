@@ -1,6 +1,13 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { siteConfig, sitemapPages } from '../dist/index.js';
+import {
+  siteConfig,
+  sitemapPages,
+  getOrganizationSchema,
+  getOrganizationRef,
+  getWebsiteSchema,
+  getBreadcrumbSchema,
+} from '../dist/index.js';
 
 describe('SEO Configuration & Domain Canonicalization SSOT', () => {
   it('should define canonical domain as https://www.palnadu.dev without trailing slash', () => {
@@ -57,5 +64,50 @@ describe('SEO Configuration & Domain Canonicalization SSOT', () => {
       const stats = fs.statSync(fullPath);
       assert.ok(stats.size > 0, `Favicon asset must not be empty: ${asset}`);
     }
+  });
+
+  it('should generate valid authorative Organization schema with canonical @id', () => {
+    const org = getOrganizationSchema();
+    assert.equal(org['@context'], 'https://schema.org');
+    assert.equal(org['@type'], 'Organization');
+    assert.equal(org['@id'], 'https://www.palnadu.dev/#organization');
+    assert.equal(org.name, 'Palnadu.dev');
+    assert.equal(org.legalName, 'Palnadu.dev');
+    assert.equal(org.url, 'https://www.palnadu.dev');
+    assert.equal(org.logo['@id'], 'https://www.palnadu.dev/#logo');
+    assert.ok(Array.isArray(org.knowsAbout) && org.knowsAbout.length > 0);
+  });
+
+  it('should generate lightweight Organization ref with matching @id', () => {
+    const ref = getOrganizationRef();
+    assert.equal(ref['@type'], 'Organization');
+    assert.equal(ref['@id'], 'https://www.palnadu.dev/#organization');
+    assert.equal(ref.name, 'Palnadu.dev');
+  });
+
+  it('should generate WebSite schema linked to Organization publisher', () => {
+    const website = getWebsiteSchema();
+    assert.equal(website['@context'], 'https://schema.org');
+    assert.equal(website['@type'], 'WebSite');
+    assert.equal(website['@id'], 'https://www.palnadu.dev/#website');
+    assert.equal(website.url, 'https://www.palnadu.dev');
+    assert.equal(website.publisher['@id'], 'https://www.palnadu.dev/#organization');
+  });
+
+  it('should generate BreadcrumbList with correct 1-based positions and absolute URLs', () => {
+    const breadcrumb = getBreadcrumbSchema([
+      { name: 'Home', path: '' },
+      { name: 'Services', path: '/services' },
+      { name: 'Web Development', path: '/services/web-development' },
+    ]);
+    assert.equal(breadcrumb['@context'], 'https://schema.org');
+    assert.equal(breadcrumb['@type'], 'BreadcrumbList');
+    assert.equal(breadcrumb.itemListElement.length, 3);
+    assert.equal(breadcrumb.itemListElement[0].position, 1);
+    assert.equal(breadcrumb.itemListElement[0].item, 'https://www.palnadu.dev');
+    assert.equal(breadcrumb.itemListElement[1].position, 2);
+    assert.equal(breadcrumb.itemListElement[1].item, 'https://www.palnadu.dev/services');
+    assert.equal(breadcrumb.itemListElement[2].position, 3);
+    assert.equal(breadcrumb.itemListElement[2].item, 'https://www.palnadu.dev/services/web-development');
   });
 });
