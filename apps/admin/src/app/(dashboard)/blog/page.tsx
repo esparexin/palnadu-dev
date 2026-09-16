@@ -6,6 +6,7 @@ import type { BlogPost } from '@palnadu/types';
 import { Plus, Search, Edit2, Trash2, X, Globe, Eye, FileText, CheckCircle2, Sparkles, ExternalLink, UploadCloud, Loader2, Compass, Copy, Check, ListChecks, ArrowRight, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { useToast } from '@/components/ui/toast';
+import { siteConfig } from '@palnadu/config';
 import { cn } from '@/lib/utils';
 
 interface BlogFormData {
@@ -569,7 +570,7 @@ export default function BlogAdminPage() {
                       )}
                       {post.status === 'PUBLISHED' && (
                         <a
-                          href={`https://palnadu.dev/blog/${post.slug}`}
+                          href={`${siteConfig.url}/blog/${post.slug}`}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="inline-flex items-center p-1.5 rounded-md text-palnadu-secondary hover:text-palnadu-blue hover:bg-palnadu-light-blue transition-colors"
@@ -949,7 +950,7 @@ export default function BlogAdminPage() {
                     </p>
                     <div className="rounded-lg border border-palnadu-border bg-white p-4 shadow-xs space-y-1">
                       <div className="text-[11px] text-[#202124] flex items-center gap-1 font-sans">
-                        <span>https://palnadu.dev</span>
+                        <span>{siteConfig.url}</span>
                         <span className="text-gray-400">›</span>
                         <span>blog</span>
                         <span className="text-gray-400">›</span>

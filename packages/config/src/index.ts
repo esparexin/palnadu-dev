@@ -6,11 +6,12 @@ export * from './media';
 
 export const siteConfig = {
   name: 'Palnadu.dev',
+  brandName: 'Palnadu.dev',
   title: 'Palnadu.dev — Start with the problem. We build the solution.',
   description:
     'Palnadu.dev helps startups, businesses, and individuals turn real-world problems and ideas into practical digital solutions.',
-  url: 'https://palnadu.dev',
-  ogImage: 'https://palnadu.dev/og.png',
+  url: 'https://www.palnadu.dev',
+  ogImage: 'https://www.palnadu.dev/og.png',
   creator: 'Palnadu.dev',
   keywords: [
     // ── 1. Core Palnadu Keywords ──

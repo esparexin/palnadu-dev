@@ -6,6 +6,7 @@ import type { Service } from '@palnadu/types';
 import { Plus, Edit2, Trash2, X, Briefcase, ExternalLink } from 'lucide-react';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { useToast } from '@/components/ui/toast';
+import { siteConfig } from '@palnadu/config';
 import { cn } from '@/lib/utils';
 
 interface ServiceFormData {
@@ -211,7 +212,7 @@ export default function ServicesAdminPage() {
                     </td>
                     <td className="px-4 py-3 text-right space-x-1.5">
                       <a
-                        href={`https://palnadu.dev/services/${service.slug}`}
+                        href={`${siteConfig.url}/services/${service.slug}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="inline-flex items-center p-1.5 rounded-md text-palnadu-secondary hover:text-palnadu-blue hover:bg-palnadu-light-blue transition-colors"

@@ -1,4 +1,5 @@
 import { MetadataRoute } from 'next';
+import { siteConfig } from '@palnadu/config';
 
 export default function robots(): MetadataRoute.Robots {
   return {
@@ -7,6 +8,6 @@ export default function robots(): MetadataRoute.Robots {
       allow: '/',
       disallow: ['/admin/', '/api/'],
     },
-    sitemap: 'https://palnadu.dev/sitemap.xml',
+    sitemap: `${siteConfig.url}/sitemap.xml`,
   };
 }
