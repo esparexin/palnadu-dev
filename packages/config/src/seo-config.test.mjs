@@ -35,4 +35,27 @@ describe('SEO Configuration & Domain Canonicalization SSOT', () => {
     const uniquePaths = new Set(paths);
     assert.equal(paths.length, uniquePaths.size, 'All paths in sitemapPages must be unique');
   });
+
+  it('should verify all required stable favicon assets exist on disk', async () => {
+    const fs = await import('node:fs');
+    const path = await import('node:path');
+    const { fileURLToPath } = await import('node:url');
+    const __dirname = path.dirname(fileURLToPath(import.meta.url));
+    const publicDir = path.resolve(__dirname, '../../../apps/web/public');
+
+    const requiredAssets = [
+      'favicon.ico',
+      'favicon-48.png',
+      'favicon-96.png',
+      'favicon-192.png',
+      'apple-touch-icon.png',
+    ];
+
+    for (const asset of requiredAssets) {
+      const fullPath = path.join(publicDir, asset);
+      assert.ok(fs.existsSync(fullPath), `Required favicon asset missing: ${asset}`);
+      const stats = fs.statSync(fullPath);
+      assert.ok(stats.size > 0, `Favicon asset must not be empty: ${asset}`);
+    }
+  });
 });
