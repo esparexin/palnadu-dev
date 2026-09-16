@@ -16,10 +16,11 @@ const rootDir = path.resolve(__dirname, '../../..');
 const headerFile = path.resolve(rootDir, 'apps/web/public/palnadu-logo-horizontal.png');
 const footerFile = path.resolve(rootDir, 'apps/web/public/palnadu-logo-white.png');
 const faviconFile = path.resolve(rootDir, 'apps/web/public/favicon.png');
+const ogFile = path.resolve(rootDir, 'apps/web/public/og.png');
 
 async function uploadToCloudinary(filePath, type) {
   const fileBuffer = fs.readFileSync(filePath);
-  const stats = fs.statSync(filePath);
+  const stats = fs.size ? stats : fs.statSync(filePath);
   const fileName = path.basename(filePath);
 
   return new Promise((resolve, reject) => {
@@ -53,17 +54,21 @@ async function uploadToCloudinary(filePath, type) {
 async function main() {
   console.log('--- Syncing Brand Assets to Cloudinary & Database ---');
 
-  console.log('\n[1/3] Uploading Header Logo to Cloudinary...');
+  console.log('\n[1/4] Uploading Header Logo to Cloudinary...');
   const headerAsset = await uploadToCloudinary(headerFile, 'header');
   console.log(`Header Logo uploaded: ${headerAsset.url}`);
 
-  console.log('\n[2/3] Uploading Footer Logo to Cloudinary...');
+  console.log('\n[2/4] Uploading Footer Logo to Cloudinary...');
   const footerAsset = await uploadToCloudinary(footerFile, 'footer');
   console.log(`Footer Logo uploaded: ${footerAsset.url}`);
 
-  console.log('\n[3/3] Uploading Favicon to Cloudinary...');
+  console.log('\n[3/4] Uploading Favicon to Cloudinary...');
   const faviconAsset = await uploadToCloudinary(faviconFile, 'favicon');
   console.log(`Favicon uploaded: ${faviconAsset.url}`);
+
+  console.log('\n[4/4] Uploading OpenGraph Card to Cloudinary...');
+  const ogAsset = await uploadToCloudinary(ogFile, 'ogImage');
+  console.log(`OpenGraph Card uploaded: ${ogAsset.url}`);
 
   // Fetch current setting to preserve other fields
   const current = await prisma.siteSetting.findUnique({ where: { key: 'branding' } });
@@ -74,7 +79,7 @@ async function main() {
     headerLogo: headerAsset,
     footerLogo: footerAsset,
     favicon: faviconAsset,
-    ogImage: rawCurrent.ogImage || { url: null, publicId: null },
+    ogImage: ogAsset,
     updatedAt: new Date().toISOString(),
     updatedBy: 'admin@palnadu.dev',
   };

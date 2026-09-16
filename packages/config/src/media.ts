@@ -12,7 +12,7 @@ export const brandAssets = {
     headerLogo: 'https://res.cloudinary.com/jescuj9a/image/upload/f_auto,q_auto/v1789543322/palnadu/branding/header/header_1789543321365.png',
     footerLogo: 'https://res.cloudinary.com/jescuj9a/image/upload/f_auto,q_auto/v1789543323/palnadu/branding/footer/footer_1789543322808.png',
     favicon: 'https://res.cloudinary.com/jescuj9a/image/upload/f_auto,q_auto/v1789543324/palnadu/branding/favicon/favicon_1789543324296.png',
-    ogImage: 'https://res.cloudinary.com/jescuj9a/image/upload/f_auto,q_auto/v1788959247/palnadu/brand/og-image.png',
+    ogImage: 'https://res.cloudinary.com/jescuj9a/image/upload/f_auto,q_auto/v1789543603/palnadu/branding/ogImage/ogImage_1789543602481.png',
   },
   // Canonical local fallbacks
   logo: '/logo.png',
@@ -23,7 +23,7 @@ export const brandAssets = {
   // Backwards compatibility aliases
   logoHorizontal: '/logo.png',
   logoDarkText: '/logo.png',
-  defaultOgImage: 'https://res.cloudinary.com/jescuj9a/image/upload/f_auto,q_auto/v1788959247/palnadu/brand/og-image.png',
+  defaultOgImage: 'https://res.cloudinary.com/jescuj9a/image/upload/f_auto,q_auto/v1789543603/palnadu/branding/ogImage/ogImage_1789543602481.png',
 } as const;
 
 export interface ImageTransformOptions {
