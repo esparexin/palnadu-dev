@@ -9,9 +9,9 @@
 export const brandAssets = {
   // Cloudinary Hosted CDN Assets (SSOT with auto-format & auto-quality)
   cloudinary: {
-    headerLogo: 'https://res.cloudinary.com/jescuj9a/image/upload/f_auto,q_auto/v1789038852/palnadu/branding/header/header_1789038850642.png',
-    footerLogo: 'https://res.cloudinary.com/jescuj9a/image/upload/f_auto,q_auto/v1789038867/palnadu/branding/footer/footer_1789038865194.png',
-    favicon: 'https://res.cloudinary.com/jescuj9a/image/upload/f_auto,q_auto/v1789038882/palnadu/branding/favicon/favicon_1789038881451.png',
+    headerLogo: 'https://res.cloudinary.com/jescuj9a/image/upload/f_auto,q_auto/v1789543322/palnadu/branding/header/header_1789543321365.png',
+    footerLogo: 'https://res.cloudinary.com/jescuj9a/image/upload/f_auto,q_auto/v1789543323/palnadu/branding/footer/footer_1789543322808.png',
+    favicon: 'https://res.cloudinary.com/jescuj9a/image/upload/f_auto,q_auto/v1789543324/palnadu/branding/favicon/favicon_1789543324296.png',
     ogImage: 'https://res.cloudinary.com/jescuj9a/image/upload/f_auto,q_auto/v1788959247/palnadu/brand/og-image.png',
   },
   // Canonical local fallbacks
