@@ -571,12 +571,29 @@ export default async function ServicePage({ params }: Props) {
                 Have a project requiring {service.title.toLowerCase()}?
               </h2>
               <p className="text-xs sm:text-sm text-palnadu-body max-w-md mx-auto leading-relaxed">
-                Talk directly with senior developers who understand real-world workflows in Palnadu and Guntur. We explain costs, limitations, and the cleanest architectural path forward.
+                Talk directly with senior developers who understand real-world workflows in{' '}
+                <Link href="/locations/palnadu" className="text-palnadu-blue underline hover:text-[#12487e]">
+                  Palnadu
+                </Link>
+                ,{' '}
+                <Link href="/locations/guntur" className="text-palnadu-blue underline hover:text-[#12487e]">
+                  Guntur
+                </Link>
+                , and{' '}
+                <Link href="/locations/narasaraopet" className="text-palnadu-blue underline hover:text-[#12487e]">
+                  Narasaraopet
+                </Link>
+                . We explain costs, limitations, and the cleanest architectural path forward.
               </p>
-              <div className="pt-2">
+              <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
                 <Button asChild className="bg-palnadu-blue text-white hover:bg-[#12487e] font-semibold text-sm h-11 px-7 shadow-xs">
                   <Link href="/contact">
                     Discuss Your Requirements →
+                  </Link>
+                </Button>
+                <Button asChild variant="outline" className="border-palnadu-border text-palnadu-dark hover:bg-palnadu-off-white text-sm h-11 px-6">
+                  <Link href="/work">
+                    See Verified Works
                   </Link>
                 </Button>
               </div>

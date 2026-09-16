@@ -142,6 +142,32 @@ export function Footer({ initialLogoUrl }: FooterProps = {}) {
           </div>
         </div>
 
+        {/* Regional Hubs Directory Links */}
+        {footerNavItems.locations && footerNavItems.locations.length > 0 && (
+          <div className="pt-6 border-t border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs text-palnadu-light-blue/80">
+            <div className="flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-wider text-palnadu-teal font-semibold shrink-0">
+              <span>Regional Hubs:</span>
+            </div>
+            <div className="flex flex-wrap gap-x-4 gap-y-1.5 text-xs">
+              {footerNavItems.locations.map((loc) => (
+                <Link
+                  key={loc.href}
+                  href={loc.href}
+                  className="hover:text-white transition-colors"
+                >
+                  {loc.title}
+                </Link>
+              ))}
+              <Link
+                href="/locations"
+                className="text-palnadu-teal hover:underline font-semibold"
+              >
+                All Locations →
+              </Link>
+            </div>
+          </div>
+        )}
+
         <Separator className="my-6 bg-white/10" />
 
         <div className="flex flex-col items-center justify-between gap-3 sm:flex-row text-xs text-palnadu-light-blue/70">

@@ -62,6 +62,15 @@ export const footerNavItems = {
     { title: 'Locations', href: '/locations' },
     { title: 'Contact', href: '/contact' },
   ],
+  locations: [
+    { title: 'Guntur', href: '/locations/guntur' },
+    { title: 'Palnadu', href: '/locations/palnadu' },
+    { title: 'Narasaraopet', href: '/locations/narasaraopet' },
+    { title: 'Chilakaluripet', href: '/locations/chilakaluripet' },
+    { title: 'Sattenapalle', href: '/locations/sattenapalle' },
+    { title: 'Vinukonda', href: '/locations/vinukonda' },
+    { title: 'Macherla', href: '/locations/macherla' },
+  ],
   legal: [
     { title: 'Privacy Policy', href: '/privacy' },
     { title: 'Terms of Service', href: '/terms' },

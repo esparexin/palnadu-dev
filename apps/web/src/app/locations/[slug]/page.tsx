@@ -248,20 +248,50 @@ export default async function LocationDetailPage({ params }: Props) {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {location.popularServices.map((serviceName, idx) => (
-                <div
-                  key={idx}
-                  className="p-5 rounded-xl border border-palnadu-border bg-white shadow-2xs hover:border-palnadu-blue transition-all space-y-2"
-                >
-                  <div className="flex items-center gap-2 text-palnadu-teal">
-                    <CheckCircle2 className="h-4 w-4 shrink-0" />
-                    <h3 className="text-sm font-bold text-palnadu-dark">{serviceName}</h3>
+              {location.popularServices.map((serviceName, idx) => {
+                const lower = serviceName.toLowerCase();
+                const targetSlug =
+                  lower.includes('website') ? 'website-development' :
+                  lower.includes('erp') || lower.includes('custom') || lower.includes('inventory') ? 'custom-software' :
+                  lower.includes('automation') || lower.includes('mandi') ? 'business-automation' :
+                  lower.includes('mobile') || lower.includes('android') ? 'android-app-development' :
+                  'web-development';
+
+                return (
+                  <div
+                    key={idx}
+                    className="p-5 rounded-xl border border-palnadu-border bg-white shadow-2xs hover:border-palnadu-blue transition-all space-y-2 flex flex-col justify-between"
+                  >
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2 text-palnadu-teal">
+                        <CheckCircle2 className="h-4 w-4 shrink-0" />
+                        <h3 className="text-sm font-bold text-palnadu-dark">{serviceName}</h3>
+                      </div>
+                      <p className="text-xs text-palnadu-secondary leading-relaxed">
+                        Designed around regional workflows, local GST reporting, and phone/tablet interfaces.
+                      </p>
+                    </div>
+                    <div className="pt-2 border-t border-palnadu-border/40">
+                      <Link
+                        href={`/services/${targetSlug}`}
+                        className="text-xs font-semibold text-palnadu-blue hover:underline inline-flex items-center gap-1"
+                      >
+                        <span>Explore our engineering capability</span>
+                        <ArrowRight className="h-3 w-3" />
+                      </Link>
+                    </div>
                   </div>
-                  <p className="text-xs text-palnadu-secondary leading-relaxed">
-                    Designed around regional workflows, local GST reporting, and phone/tablet interfaces.
-                  </p>
-                </div>
-              ))}
+                );
+              })}
+            </div>
+            <div className="pt-2 text-center">
+              <Link
+                href="/services"
+                className="text-xs sm:text-sm font-semibold text-palnadu-blue hover:underline inline-flex items-center gap-1.5"
+              >
+                <span>View all software engineering & digital services across Andhra Pradesh</span>
+                <ArrowRight className="h-3.5 w-3.5" />
+              </Link>
             </div>
           </div>
         </section>

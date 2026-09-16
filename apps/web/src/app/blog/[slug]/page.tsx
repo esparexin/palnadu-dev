@@ -369,10 +369,34 @@ export default async function BlogPostPage({ params }: Props) {
             <div className="h-10 w-10 rounded-full bg-palnadu-blue/20 text-palnadu-blue flex items-center justify-center font-bold text-xs shrink-0">
               PD
             </div>
-            <div className="space-y-1">
+            <div className="space-y-1.5">
               <h4 className="font-bold text-sm text-palnadu-dark">Palnadu.dev Engineering Team</h4>
               <p className="text-xs text-palnadu-secondary leading-relaxed">
-                Problem-first software developers based in Palnadu, Andhra Pradesh. We design web platforms, mobile apps, and business automation systems with 100% code ownership.
+                Problem-first software developers based in Palnadu, Andhra Pradesh. We engineer{' '}
+                <Link href="/services/web-development" className="text-palnadu-blue underline hover:text-[#12487e]">
+                  web applications
+                </Link>
+                ,{' '}
+                <Link href="/services/mobile-app-development" className="text-palnadu-blue underline hover:text-[#12487e]">
+                  mobile apps
+                </Link>
+                , and{' '}
+                <Link href="/services/business-automation" className="text-palnadu-blue underline hover:text-[#12487e]">
+                  business automation
+                </Link>{' '}
+                systems with 100% code ownership. Serving enterprises across{' '}
+                <Link href="/locations/guntur" className="text-palnadu-blue hover:underline">
+                  Guntur
+                </Link>
+                ,{' '}
+                <Link href="/locations/palnadu" className="text-palnadu-blue hover:underline">
+                  Palnadu
+                </Link>
+                , and{' '}
+                <Link href="/locations/narasaraopet" className="text-palnadu-blue hover:underline">
+                  Narasaraopet
+                </Link>
+                .
               </p>
             </div>
           </div>
