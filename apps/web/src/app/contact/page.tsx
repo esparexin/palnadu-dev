@@ -39,11 +39,7 @@ export default function ContactPage() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      <h1 className="sr-only">
-        Contact Palnadu.dev — Talk Directly with Software Developers in Palnadu & Guntur
-      </h1>
-
-      <ContactSection />
+      <ContactSection title="Contact Our Software Engineers" />
 
       {/* Extended Engagement Details (Boosts Word Count & Answers Customer Questions) */}
       <section className="py-14 sm:py-20 bg-palnadu-off-white/40 border-t border-palnadu-border">
