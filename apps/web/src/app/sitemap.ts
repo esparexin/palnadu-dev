@@ -21,6 +21,23 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.8,
   }));
 
+  // ── Dynamic: published case studies ──
+  let caseStudyPages: MetadataRoute.Sitemap = [];
+  try {
+    const res: any = await api.caseStudies.list();
+    const studies = res?.data || [];
+    caseStudyPages = studies
+      .filter((study: any) => study.status === 'PUBLISHED' || !study.status)
+      .map((study: any) => ({
+        url: `${baseUrl}/work/${study.slug}`,
+        lastModified: new Date(study.updatedAt || study.createdAt),
+        changeFrequency: 'monthly' as const,
+        priority: 0.8,
+      }));
+  } catch {
+    caseStudyPages = [];
+  }
+
   // ── Dynamic: published blog posts ──
   let blogPages: MetadataRoute.Sitemap = [];
   try {
@@ -36,5 +53,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     blogPages = [];
   }
 
-  return [...staticPages, ...servicePages, ...blogPages];
+  return [...staticPages, ...servicePages, ...caseStudyPages, ...blogPages];
 }

@@ -11,6 +11,18 @@ type Props = {
   params: Promise<{ slug: string }>;
 };
 
+export async function generateStaticParams() {
+  try {
+    const res: any = await api.caseStudies.list();
+    const studies = res?.data || [];
+    return studies
+      .filter((s: any) => s.status === 'PUBLISHED' || !s.status)
+      .map((s: any) => ({ slug: s.slug }));
+  } catch {
+    return [];
+  }
+}
+
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
 
