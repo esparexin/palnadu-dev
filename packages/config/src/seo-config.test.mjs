@@ -68,6 +68,35 @@ describe('SEO Configuration & Domain Canonicalization SSOT', () => {
     }
   });
 
+  it('should verify all required brand logo assets exist across web and admin', async () => {
+    const fs = await import('node:fs');
+    const path = await import('node:path');
+    const { fileURLToPath } = await import('node:url');
+    const __dirname = path.dirname(fileURLToPath(import.meta.url));
+    const webPublic = path.resolve(__dirname, '../../../apps/web/public');
+    const adminPublic = path.resolve(__dirname, '../../../apps/admin/public');
+
+    const brandFiles = [
+      'palnadu-logo-horizontal.png',
+      'palnadu-logo-white.png',
+      'palnadu-logo-horizontal.svg',
+      'palnadu-logo-white.svg',
+      'logo.png',
+      'favicon.ico',
+      'favicon-48.png',
+      'apple-touch-icon.png',
+    ];
+
+    for (const dir of [webPublic, adminPublic]) {
+      for (const file of brandFiles) {
+        const fullPath = path.join(dir, file);
+        assert.ok(fs.existsSync(fullPath), `Brand file missing: ${path.relative(__dirname, fullPath)}`);
+        const stats = fs.statSync(fullPath);
+        assert.ok(stats.size > 0, `Brand file must not be empty: ${file}`);
+      }
+    }
+  });
+
   it('should generate valid authorative Organization schema with canonical @id', () => {
     const org = getOrganizationSchema();
     assert.equal(org['@context'], 'https://schema.org');
