@@ -45,12 +45,14 @@ export const mainNavItems: NavItem[] = [
 
 export const footerNavItems = {
   services: [
-    { title: 'Idea Validation', href: '/services/idea-validation' },
+    { title: 'Website Development', href: '/services/website-development' },
     { title: 'Web Applications', href: '/services/web-development' },
-    { title: 'Mobile Applications', href: '/services/mobile-app-development' },
-    { title: 'MVP Development', href: '/services/mvp-development' },
+    { title: 'Android App Development', href: '/services/android-app-development' },
+    { title: 'iOS App Development', href: '/services/ios-app-development' },
     { title: 'Custom Software', href: '/services/custom-software' },
     { title: 'Business Automation', href: '/services/business-automation' },
+    { title: 'Digital Marketing & SEO', href: '/services/digital-marketing' },
+    { title: 'MVP Development', href: '/services/mvp-development' },
     { title: 'Technical Consulting', href: '/services/technical-consulting' },
   ],
   company: [
@@ -58,7 +60,6 @@ export const footerNavItems = {
     { title: 'Work', href: '/work' },
     { title: 'Blog', href: '/blog' },
     { title: 'Locations', href: '/locations' },
-    { title: 'Industries', href: '/industries' },
     { title: 'Contact', href: '/contact' },
   ],
   legal: [
@@ -71,11 +72,11 @@ export const footerNavItems = {
 
 export const services = [
   {
-    title: 'Idea Validation',
-    slug: 'idea-validation',
+    title: 'Website Development',
+    slug: 'website-development',
     shortDescription:
-      'Validate the problem, customer, competition, market opportunity, feasibility, and MVP direction.',
-    icon: 'Lightbulb',
+      'High-performance corporate websites, school platforms, and institutional portals engineered with Next.js.',
+    icon: 'Globe',
   },
   {
     title: 'Web Applications',
@@ -90,6 +91,27 @@ export const services = [
     shortDescription:
       'Build iOS, Android, and cross-platform mobile applications.',
     icon: 'Smartphone',
+  },
+  {
+    title: 'Android App Development',
+    slug: 'android-app-development',
+    shortDescription:
+      'Native and cross-platform Android mobile applications built for regional business operations and the Google Play Store.',
+    icon: 'Smartphone',
+  },
+  {
+    title: 'iOS App Development',
+    slug: 'ios-app-development',
+    shortDescription:
+      'Premium iOS mobile applications engineered for iPhone and iPad with clean architecture and App Store deployment.',
+    icon: 'Smartphone',
+  },
+  {
+    title: 'Idea Validation',
+    slug: 'idea-validation',
+    shortDescription:
+      'Validate the problem, customer, competition, market opportunity, feasibility, and MVP direction.',
+    icon: 'Lightbulb',
   },
   {
     title: 'MVP Development',
@@ -111,6 +133,13 @@ export const services = [
     shortDescription:
       'Reduce repetitive manual processes through practical automation.',
     icon: 'Zap',
+  },
+  {
+    title: 'Digital Marketing & SEO',
+    slug: 'digital-marketing',
+    shortDescription:
+      'Data-driven technical SEO, Google Search optimization, local search visibility, and digital growth for enterprises.',
+    icon: 'BarChart',
   },
   {
     title: 'Technical Consulting',

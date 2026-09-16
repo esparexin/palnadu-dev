@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {
   siteConfig,
   sitemapPages,
+  services,
   getOrganizationSchema,
   getOrganizationRef,
   getWebsiteSchema,
@@ -109,5 +110,27 @@ describe('SEO Configuration & Domain Canonicalization SSOT', () => {
     assert.equal(breadcrumb.itemListElement[1].item, 'https://www.palnadu.dev/services');
     assert.equal(breadcrumb.itemListElement[2].position, 3);
     assert.equal(breadcrumb.itemListElement[2].item, 'https://www.palnadu.dev/services/web-development');
+  });
+
+  it('should include all primary Palnadu.dev brand services with unique slugs', () => {
+    const requiredSlugs = [
+      'website-development',
+      'web-development',
+      'android-app-development',
+      'ios-app-development',
+      'business-automation',
+      'digital-marketing',
+    ];
+
+    const serviceSlugs = services.map((s) => s.slug);
+    const uniqueSlugs = new Set(serviceSlugs);
+    assert.equal(serviceSlugs.length, uniqueSlugs.size, 'Service slugs must be unique');
+
+    for (const required of requiredSlugs) {
+      assert.ok(
+        serviceSlugs.includes(required),
+        `Required Palnadu.dev service "${required}" must be registered in services list`
+      );
+    }
   });
 });

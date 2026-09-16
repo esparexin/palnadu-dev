@@ -5,9 +5,9 @@ import { CinematicHero } from '@/components/ui/cinematic-landing-hero';
 import { CtaSection } from '@/components/sections/cta-section';
 
 const actualServiceDetails: Record<string, { summary: string; deliverables: string[] }> = {
-  'idea-validation': {
-    summary: 'Validate real customer demand, competitor landscape, technical feasibility, and MVP direction before spending development capital.',
-    deliverables: ['Problem validation', 'Competitor audit', 'Feasibility report', 'MVP roadmap'],
+  'website-development': {
+    summary: 'High-performance corporate websites, school platforms, and institutional portals engineered with Next.js for instant loading and high conversion.',
+    deliverables: ['Corporate Websites', 'School & College Portals', 'Sub-second LCP', 'Schema SEO'],
   },
   'web-development': {
     summary: 'High-performance SaaS platforms, internal management portals, customer dashboards, and custom web applications built with Next.js and TypeScript.',
@@ -16,6 +16,18 @@ const actualServiceDetails: Record<string, { summary: string; deliverables: stri
   'mobile-app-development': {
     summary: 'Native & cross-platform iOS and Android applications designed around intuitive, friction-free everyday user workflows.',
     deliverables: ['iOS apps', 'Android apps', 'Offline data sync', 'App Store release'],
+  },
+  'android-app-development': {
+    summary: 'Native and cross-platform Android mobile applications engineered for regional business workflows, offline data collection, and Google Play Store release.',
+    deliverables: ['Android Business Apps', 'Offline-First Sync', 'Hardware Barcode Scanners', 'Play Store Release'],
+  },
+  'ios-app-development': {
+    summary: 'Premium iOS applications engineered for iPhone and iPad with fluid user experience, Apple App Store compliance, and rock-solid cloud integrations.',
+    deliverables: ['iPhone & iPad Apps', 'Swift / React Native', 'Apple Design Guidelines', 'App Store Approval'],
+  },
+  'idea-validation': {
+    summary: 'Validate real customer demand, competitor landscape, technical feasibility, and MVP direction before spending development capital.',
+    deliverables: ['Problem validation', 'Competitor audit', 'Feasibility report', 'MVP roadmap'],
   },
   'mvp-development': {
     summary: 'Lean minimum viable products built in 3 to 6-week sprints to validate business hypotheses with real paying users.',
@@ -28,6 +40,10 @@ const actualServiceDetails: Record<string, { summary: string; deliverables: stri
   'business-automation': {
     summary: 'Eliminate repetitive manual tasks by automating order processing, inventory updates, transactional notifications, and spreadsheets.',
     deliverables: ['Order pipelines', 'Inventory sync', 'Webhook alerts', 'Spreadsheet bridges'],
+  },
+  'digital-marketing': {
+    summary: 'Data-driven search engine optimization, Google Business Profile dominance, and local commercial visibility for enterprises.',
+    deliverables: ['Technical SEO Audits', 'Google Business (GBP)', 'Local 3-Pack Rankings', 'Search Intent Strategy'],
   },
   'technical-consulting': {
     summary: 'Direct, honest technical advice on system architecture, tech stack selection, database design, and cloud scaling risks.',
@@ -89,7 +105,7 @@ export default function ServicesPage() {
             <span className="text-white font-semibold">Palnadu.dev</span> builds custom web platforms, mobile applications, and automation systems tailored around your specific business operations.
           </>
         }
-        metricValue={7}
+        metricValue={services.length}
         metricLabel="Core Services"
         ctaHeading="Build what works."
         ctaDescription="Work directly with the software engineers designing and writing your application."
