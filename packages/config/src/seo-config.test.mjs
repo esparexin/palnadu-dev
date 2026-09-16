@@ -4,6 +4,7 @@ import {
   siteConfig,
   sitemapPages,
   services,
+  coreLocations,
   getOrganizationSchema,
   getOrganizationRef,
   getWebsiteSchema,
@@ -130,6 +131,35 @@ describe('SEO Configuration & Domain Canonicalization SSOT', () => {
       assert.ok(
         serviceSlugs.includes(required),
         `Required Palnadu.dev service "${required}" must be registered in services list`
+      );
+    }
+  });
+
+  it('should include all 7 authentic regional location hubs with geo coordinates and sitemap entries', () => {
+    const requiredHubs = [
+      'guntur',
+      'palnadu',
+      'narasaraopet',
+      'chilakaluripet',
+      'sattenapalle',
+      'vinukonda',
+      'macherla',
+    ];
+
+    const locationSlugs = coreLocations.map((l) => l.slug);
+    assert.equal(locationSlugs.length, 7, 'Must have exactly 7 core location hubs');
+
+    const sitemapPaths = sitemapPages.map((p) => p.path);
+
+    for (const hub of requiredHubs) {
+      const loc = coreLocations.find((l) => l.slug === hub);
+      assert.ok(loc, `Location hub "${hub}" must be registered in coreLocations`);
+      assert.ok(loc.name.length > 0, `Location "${hub}" must have a valid name`);
+      assert.ok(loc.economicProfile.length > 50, `Location "${hub}" must have authentic economic profile`);
+      assert.ok(loc.geo && typeof loc.geo.latitude === 'number' && typeof loc.geo.longitude === 'number', `Location "${hub}" must have numeric geo coordinates`);
+      assert.ok(
+        sitemapPaths.includes(`/locations/${hub}`),
+        `Location hub "/locations/${hub}" must be registered in sitemapPages`
       );
     }
   });

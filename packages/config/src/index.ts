@@ -257,6 +257,7 @@ export interface LocationData {
   keyIndustries: string[];
   commonPainPoints: string[];
   popularServices: string[];
+  geo?: { latitude: number; longitude: number };
   faq: { q: string; a: string }[];
 }
 
@@ -291,6 +292,7 @@ export const coreLocations: LocationData[] = [
       'High-Speed Next.js Corporate Websites',
       'B2B Wholesale Ordering Platforms',
     ],
+    geo: { latitude: 16.3067, longitude: 80.4365 },
     faq: [
       {
         q: 'Why should Guntur businesses choose custom software over ready-made accounting tools?',
@@ -331,6 +333,7 @@ export const coreLocations: LocationData[] = [
       'Local Business Websites with High-Speed Next.js',
       'Automated Billing & WhatsApp PDF Invoicing',
     ],
+    geo: { latitude: 16.2359, longitude: 80.0499 },
     faq: [
       {
         q: 'Where is Palnadu.dev based?',
@@ -371,6 +374,7 @@ export const coreLocations: LocationData[] = [
       'Clinic Patient Scheduling Applications',
       'Automated Ledger & Invoicing Software',
     ],
+    geo: { latitude: 16.2359, longitude: 80.0499 },
     faq: [
       {
         q: 'Can Palnadu.dev redesign an existing slow college or school website in Narasaraopet?',
@@ -407,6 +411,7 @@ export const coreLocations: LocationData[] = [
       'Professional Corporate Websites for Logistics Operators',
       'Automated WhatsApp LR / Consignment Slips',
     ],
+    geo: { latitude: 16.0892, longitude: 80.1672 },
     faq: [
       {
         q: 'Do you build custom fleet or lorry transport billing software?',
@@ -441,6 +446,7 @@ export const coreLocations: LocationData[] = [
       'Wholesale Billing Software with GST Reports',
       'High-Converting School & Business Websites',
     ],
+    geo: { latitude: 16.3962, longitude: 80.1504 },
     faq: [
       {
         q: 'Can we access our Sattenapalle mill software while traveling?',
@@ -474,6 +480,7 @@ export const coreLocations: LocationData[] = [
       'Mobile-Friendly Merchant Billing Systems',
       'SEO-Optimized Business Websites',
     ],
+    geo: { latitude: 16.0543, longitude: 79.7417 },
     faq: [
       {
         q: 'Does Palnadu.dev support businesses located in Vinukonda?',
@@ -507,6 +514,7 @@ export const coreLocations: LocationData[] = [
       'Hospitality & Hotel Web Platforms',
       'Industrial Supplier Corporate Websites',
     ],
+    geo: { latitude: 16.4807, longitude: 79.2965 },
     faq: [
       {
         q: 'Can we integrate weighbridge or gate entry records into our custom web portal?',

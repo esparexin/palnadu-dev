@@ -65,6 +65,13 @@ export default async function LocationDetailPage({ params }: Props) {
       addressRegion: 'Andhra Pradesh',
       addressCountry: 'IN',
     },
+    geo: location.geo
+      ? {
+          '@type': 'GeoCoordinates',
+          latitude: location.geo.latitude,
+          longitude: location.geo.longitude,
+        }
+      : undefined,
     areaServed: [
       { '@type': 'AdministrativeArea', name: location.name },
       { '@type': 'AdministrativeArea', name: location.district },
