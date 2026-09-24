@@ -9,73 +9,120 @@ export interface MetroHeroProps {
   title?: string;
   scrollHint?: string;
   tagline?: string;
-  signature?: { name: string; url: string } | false;
-  scrubDistance?: number;
   className?: string;
   style?: React.CSSProperties;
-  unlockOnEnd?: boolean;
-  children?: React.ReactNode;
 }
 
 const DEFAULT_VIDEO = "/videos/metro-hero.mp4";
-const DEFAULT_SIGNATURE = {
-  name: "Palnadu.dev",
-  url: "https://www.palnadu.dev",
-};
 
 export default function MetroHero({
   videoSrc = DEFAULT_VIDEO,
   title = "Digital Marketing",
-  scrollHint = "SCROLL TO EXPLORE GROWTH",
+  scrollHint = "Scroll to explore",
   tagline = "Grow With Us. Let Your Business Growth Show.",
-  signature = DEFAULT_SIGNATURE,
   className,
   style,
-  children,
 }: MetroHeroProps) {
-  const sectionRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
-  const [videoLoaded, setVideoLoaded] = useState(false);
-  const [scrollY, setScrollY] = useState(0);
+  const [scrollProgress, setScrollProgress] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
     const video = videoRef.current;
-    if (!video) return;
+    const container = containerRef.current;
+    if (!video || !container) return;
 
-    // Explicitly set muted & attempt autoplay
     video.muted = true;
-    const playPromise = video.play();
-    if (playPromise !== undefined) {
-      playPromise
-        .then(() => setVideoLoaded(true))
-        .catch(() => {
-          // Autoplay policy fallback: video remains ready for user interaction
-          setVideoLoaded(true);
-        });
+    let isSeeking = false;
+    let pendingTime: number | null = null;
+
+    const onLoadedMetadata = () => {
+      if (video.duration && !isNaN(video.duration)) {
+        setDuration(video.duration);
+        setIsReady(true);
+      }
+    };
+
+    if (video.readyState >= 1 && video.duration) {
+      onLoadedMetadata();
     }
 
-    const handleLoadedData = () => setVideoLoaded(true);
-    video.addEventListener("loadeddata", handleLoadedData);
-    video.addEventListener("canplay", handleLoadedData);
+    video.addEventListener("loadedmetadata", onLoadedMetadata);
+    video.addEventListener("canplay", onLoadedMetadata);
 
-    // Natural parallax scroll listener (throttled via RAF)
+    // Warm up the video decoder silently so seeks work immediately across all browsers
+    const warmUpVideo = () => {
+      const p = video.play();
+      if (p !== undefined) {
+        p.then(() => {
+          video.pause();
+          onLoadedMetadata();
+        }).catch(() => {
+          onLoadedMetadata();
+        });
+      }
+    };
+    warmUpVideo();
+
+    const onSeeked = () => {
+      isSeeking = false;
+      if (pendingTime !== null) {
+        const nextTime = pendingTime;
+        pendingTime = null;
+        seekTo(nextTime);
+      }
+    };
+    video.addEventListener("seeked", onSeeked);
+
+    function seekTo(targetTime: number) {
+      if (!video) return;
+      if (Math.abs(video.currentTime - targetTime) < 0.02) return;
+      if (isSeeking) {
+        pendingTime = targetTime;
+        return;
+      }
+      isSeeking = true;
+      video.currentTime = targetTime;
+    }
+
+    // Passive, non-blocking sticky scroll progress calculation
     let rafId: number;
     const handleScroll = () => {
       cancelAnimationFrame(rafId);
       rafId = requestAnimationFrame(() => {
-        setScrollY(window.scrollY);
+        if (!container) return;
+        const rect = container.getBoundingClientRect();
+        const scrollableDistance = rect.height - window.innerHeight;
+        if (scrollableDistance <= 0) return;
+
+        const currentProgress = Math.min(
+          Math.max(-rect.top / scrollableDistance, 0),
+          1
+        );
+        setScrollProgress(currentProgress);
+
+        // Map scroll progress to video time (scrubs from 0% to 75% scroll, holds at end from 75% to 100%)
+        const videoDuration = video.duration || duration;
+        if (videoDuration > 0) {
+          const videoProgress = Math.min(currentProgress / 0.75, 1);
+          seekTo(videoProgress * videoDuration);
+        }
       });
     };
 
     window.addEventListener("scroll", handleScroll, { passive: true });
+    handleScroll();
 
     return () => {
       cancelAnimationFrame(rafId);
       window.removeEventListener("scroll", handleScroll);
-      video.removeEventListener("loadeddata", handleLoadedData);
-      video.removeEventListener("canplay", handleLoadedData);
+      video.removeEventListener("loadedmetadata", onLoadedMetadata);
+      video.removeEventListener("canplay", onLoadedMetadata);
+      video.removeEventListener("seeked", onSeeked);
     };
-  }, []);
+  }, [duration]);
 
   const scrollToJourney = () => {
     const el = document.getElementById("growth-journey");
@@ -89,193 +136,212 @@ export default function MetroHero({
       });
     } else {
       window.scrollTo({
-        top: window.innerHeight,
+        top: window.innerHeight * 2,
         behavior: "smooth",
       });
     }
   };
 
-  // Parallax calculations (clean, bounds-checked)
-  const heroHeight = typeof window !== "undefined" ? window.innerHeight : 800;
-  const progress = Math.min(Math.max(scrollY / (heroHeight || 1), 0), 1);
-  const videoScale = 1 + progress * 0.08;
-  const contentOpacity = Math.max(1 - progress * 1.4, 0);
-  const contentTranslateY = progress * 60;
+  // Content visibility transitions based on scroll progress
+  // Phase 1: Title is visible from 0.0 to 0.35, then fades out
+  const titleOpacity = Math.max(1 - scrollProgress * 3.2, 0);
+  const titleTranslateY = scrollProgress * -40;
+
+  // Phase 2: Tagline and action buttons fade in from 0.35 to 0.65, stay solid to 1.0
+  const ctaOpacity = Math.min(Math.max((scrollProgress - 0.32) / 0.28, 0), 1);
+  const ctaTranslateY = Math.max((1 - ctaOpacity) * 24, 0);
+
+  // Subtle video scale as user scrolls down
+  const videoScale = 1 + scrollProgress * 0.06;
 
   return (
     <div
-      ref={sectionRef}
+      ref={containerRef}
       className={className}
       style={{
         position: "relative",
-        height: "100dvh",
-        minHeight: "600px",
         width: "100%",
-        overflow: "hidden",
-        backgroundColor: "#030814",
+        // 260vh gives ample scroll room to scrub the video naturally without body locking
+        height: "260vh",
         ...style,
       }}
     >
-      {/* Background Video with subtle parallax zoom */}
-      <video
-        ref={videoRef}
-        src={videoSrc}
-        autoPlay
-        loop
-        muted
-        playsInline
-        preload="auto"
+      {/* Sticky Viewport Container: pins smoothly while scrolling through the 260vh */}
+      <div
         style={{
-          position: "absolute",
-          inset: 0,
+          position: "sticky",
+          top: 0,
+          left: 0,
           width: "100%",
-          height: "100%",
-          objectFit: "cover",
-          transform: `scale(${videoScale})`,
-          transition: "transform 0.1s linear, opacity 0.6s ease",
-          opacity: videoLoaded ? 1 : 0.85,
-          pointerEvents: "none",
-        }}
-      />
-
-      {/* Cinematic Lighting & Contrast Overlays */}
-      <div
-        style={{
-          position: "absolute",
-          inset: 0,
-          background:
-            "radial-gradient(ellipse at center, rgba(3,8,20,0.3) 0%, rgba(3,8,20,0.7) 100%), linear-gradient(180deg, rgba(3,8,20,0.5) 0%, rgba(3,8,20,0.2) 40%, rgba(3,8,20,0.85) 100%)",
-          pointerEvents: "none",
-        }}
-      />
-
-      {/* Hero Foreground Content */}
-      <div
-        style={{
-          position: "absolute",
-          inset: 0,
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-          padding: "0 1.5rem",
-          textAlign: "center",
-          opacity: contentOpacity,
-          transform: `translateY(${contentTranslateY}px)`,
-          transition: "transform 0.1s linear",
-          zIndex: 10,
+          height: "100dvh",
+          minHeight: "600px",
+          overflow: "hidden",
+          backgroundColor: "#030814",
         }}
       >
-        <div className="max-w-4xl mx-auto space-y-4 sm:space-y-6">
-          {/* Badge */}
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-white text-xs font-semibold uppercase tracking-widest shadow-sm">
-            <span>Palnadu.dev</span>
-            <span className="text-palnadu-teal">•</span>
-            <span>Digital Growth Engine</span>
-          </div>
-
-          {/* Main Title */}
-          <h1
-            style={{
-              fontSize: "clamp(2rem, 6vw, 4.5rem)",
-              fontWeight: 900,
-              lineHeight: 1.08,
-              letterSpacing: "-0.03em",
-              color: "#ffffff",
-              textShadow: "0 4px 30px rgba(0, 0, 0, 0.7)",
-            }}
-          >
-            {title}
-          </h1>
-
-          {/* Tagline */}
-          <p
-            style={{
-              fontSize: "clamp(1rem, 2.2vw, 1.35rem)",
-              fontWeight: 500,
-              lineHeight: 1.4,
-              color: "rgba(235, 242, 255, 0.9)",
-              maxWidth: "680px",
-              margin: "0 auto",
-              textShadow: "0 2px 16px rgba(0, 0, 0, 0.6)",
-            }}
-          >
-            {tagline}
-          </p>
-
-          {/* Dual Action CTAs */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 pt-2">
-            <Link
-              href="/contact"
-              className="inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-full bg-palnadu-blue hover:bg-[#12487e] text-white font-bold text-sm shadow-xl hover:scale-105 active:scale-95 transition-all w-full sm:w-auto"
-            >
-              <span>Discuss Your Growth</span>
-              <ArrowRight className="h-4 w-4" />
-            </Link>
-
-            <button
-              type="button"
-              onClick={scrollToJourney}
-              className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-full bg-white/12 hover:bg-white/20 backdrop-blur-md border border-white/25 text-white font-semibold text-sm transition-all w-full sm:w-auto cursor-pointer"
-            >
-              <span>Explore Growth Journey</span>
-              <ChevronDown className="h-4 w-4" />
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Bottom Scroll Hint Indicator */}
-      <div
-        onClick={scrollToJourney}
-        style={{
-          position: "absolute",
-          left: "50%",
-          bottom: "clamp(20px, 4vh, 36px)",
-          transform: "translateX(-50%)",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          gap: 6,
-          color: "rgba(255, 255, 255, 0.75)",
-          fontSize: "11px",
-          fontWeight: 600,
-          letterSpacing: "0.2em",
-          cursor: "pointer",
-          zIndex: 10,
-          opacity: contentOpacity,
-          transition: "opacity 0.2s ease",
-        }}
-      >
-        <span>{scrollHint}</span>
-        <ChevronDown className="h-4 w-4 animate-bounce" />
-      </div>
-
-      {/* Optional Signature */}
-      {signature && (
-        <span
+        {/* Scroll-scrubbed Video Element */}
+        <video
+          ref={videoRef}
+          src={videoSrc}
+          muted
+          playsInline
+          preload="auto"
           style={{
             position: "absolute",
-            right: "1.5rem",
-            bottom: "1rem",
-            fontSize: "11px",
-            color: "rgba(255, 255, 255, 0.4)",
+            inset: 0,
+            width: "100%",
+            height: "100%",
+            objectFit: "cover",
+            transform: `scale(${videoScale})`,
+            transition: "transform 0.05s linear",
+            opacity: isReady ? 1 : 0.85,
+            pointerEvents: "none",
+          }}
+        />
+
+        {/* Ambient Darkening Gradient Overlays */}
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            background:
+              "radial-gradient(ellipse at center, rgba(3,8,20,0.2) 0%, rgba(3,8,20,0.65) 100%), linear-gradient(180deg, rgba(3,8,20,0.45) 0%, rgba(3,8,20,0.15) 40%, rgba(3,8,20,0.8) 100%)",
+            pointerEvents: "none",
+          }}
+        />
+
+        {/* Phase 1: Title Screen (Visible at top, fades on scroll) */}
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "0 1.5rem",
+            textAlign: "center",
+            opacity: titleOpacity,
+            transform: `translateY(${titleTranslateY}px)`,
+            pointerEvents: titleOpacity > 0.1 ? "auto" : "none",
             zIndex: 10,
           }}
         >
-          by{" "}
-          <a
-            href={signature.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{ color: "rgba(255, 255, 255, 0.6)", textDecoration: "none" }}
-          >
-            {signature.name}
-          </a>
-        </span>
-      )}
+          <div className="max-w-4xl mx-auto space-y-4">
+            <h1
+              style={{
+                fontSize: "clamp(2.5rem, 7vw, 5.5rem)",
+                fontWeight: 900,
+                lineHeight: 1.05,
+                letterSpacing: "-0.03em",
+                color: "#ffffff",
+                textShadow: "0 4px 30px rgba(0, 0, 0, 0.7)",
+              }}
+            >
+              {title}
+            </h1>
+          </div>
+        </div>
 
-      {children}
+        {/* Phase 2: Tagline and CTAs (Revealed as video finishes scrubbing) */}
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "0 1.5rem",
+            textAlign: "center",
+            opacity: ctaOpacity,
+            transform: `translateY(${ctaTranslateY}px)`,
+            pointerEvents: ctaOpacity > 0.2 ? "auto" : "none",
+            zIndex: 10,
+          }}
+        >
+          <div className="max-w-3xl mx-auto space-y-5 sm:space-y-6">
+            <p
+              style={{
+                fontSize: "clamp(1.2rem, 3.2vw, 2rem)",
+                fontWeight: 700,
+                lineHeight: 1.25,
+                color: "#ffffff",
+                textShadow: "0 4px 24px rgba(0, 0, 0, 0.7)",
+              }}
+            >
+              {tagline}
+            </p>
+
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 pt-2">
+              <Link
+                href="/contact"
+                className="inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-full bg-palnadu-blue hover:bg-[#12487e] text-white font-bold text-sm shadow-xl hover:scale-105 active:scale-95 transition-all w-full sm:w-auto"
+              >
+                <span>Contact Us</span>
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+
+              <button
+                type="button"
+                onClick={scrollToJourney}
+                className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-full bg-white/12 hover:bg-white/20 backdrop-blur-md border border-white/25 text-white font-semibold text-sm transition-all w-full sm:w-auto cursor-pointer"
+              >
+                <span>Explore Growth Journey</span>
+                <ChevronDown className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Scroll Progress Indicator Line at the very bottom */}
+        <div
+          style={{
+            position: "absolute",
+            left: 0,
+            right: 0,
+            bottom: 0,
+            height: 3,
+            backgroundColor: "rgba(255, 255, 255, 0.1)",
+            zIndex: 20,
+          }}
+        >
+          <div
+            style={{
+              height: "100%",
+              width: `${Math.min(scrollProgress * 100, 100)}%`,
+              backgroundColor: "rgba(255, 255, 255, 0.75)",
+              transition: "width 0.05s linear",
+            }}
+          />
+        </div>
+
+        {/* Bottom Scroll Hint: Visible at start, fades smoothly as user scrolls */}
+        <div
+          onClick={scrollToJourney}
+          style={{
+            position: "absolute",
+            left: "50%",
+            bottom: "clamp(20px, 4vh, 32px)",
+            transform: "translateX(-50%)",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: 4,
+            color: "rgba(255, 255, 255, 0.7)",
+            fontSize: "12px",
+            fontWeight: 500,
+            letterSpacing: "0.05em",
+            cursor: "pointer",
+            zIndex: 20,
+            opacity: titleOpacity,
+            transition: "opacity 0.2s ease",
+          }}
+        >
+          <span>{scrollHint}</span>
+          <ChevronDown className="h-4 w-4 animate-bounce" />
+        </div>
+      </div>
     </div>
   );
 }

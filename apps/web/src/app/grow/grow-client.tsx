@@ -307,14 +307,14 @@ export function GrowExperienceClient() {
   return (
     <div className="flex flex-col w-full bg-white text-palnadu-dark">
       {/* ─────────────────────────────────────────────────────────────
-          1. HERO SECTION: CINEMATIC AUTOPLAY VIDEO HERO
+          1. HERO SECTION: SCROLL-DRIVEN VIDEO HERO
          ───────────────────────────────────────────────────────────── */}
       <section className="relative w-full">
         <MetroHero
           videoSrc="/videos/metro-hero.mp4"
           title="Digital Marketing"
           tagline="Grow With Us. Let Your Business Growth Show."
-          scrollHint="SCROLL TO EXPLORE GROWTH"
+          scrollHint="Scroll to explore"
         />
       </section>
 
