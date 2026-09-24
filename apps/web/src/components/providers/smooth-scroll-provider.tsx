@@ -76,6 +76,12 @@ export function SmoothScrollProvider({ children }: { children: React.ReactNode }
         lenisRef.current.destroy();
         lenisRef.current = null;
       }
+      if (typeof document !== 'undefined') {
+        document.documentElement.classList.remove('lenis', 'lenis-smooth', 'lenis-stopped', 'lenis-scrolling');
+        document.body.style.position = '';
+        document.body.style.top = '';
+        document.body.style.overflow = '';
+      }
       observeElements();
       const timer = setTimeout(observeElements, 100);
       return () => {
