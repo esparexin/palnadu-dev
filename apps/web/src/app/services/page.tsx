@@ -6,141 +6,152 @@ import { CtaSection } from '@/components/sections/cta-section';
 
 const actualServiceDetails: Record<string, { summary: string; deliverables: string[] }> = {
   'website-development': {
-    summary: 'High-performance corporate websites, school platforms, and institutional portals engineered with Next.js for instant loading and high conversion.',
-    deliverables: ['Corporate Websites', 'School & College Portals', 'Sub-second LCP', 'Schema SEO'],
+    summary:
+      'High-performance corporate websites, school portals, and business platforms built with Next.js for fast page loading, clean mobile presentation, and strong search rankings.',
+    deliverables: ['Corporate Websites', 'School Portals', 'Speed Optimization', 'Structured Schema SEO'],
   },
   'web-development': {
-    summary: 'High-performance SaaS platforms, internal management portals, customer dashboards, and custom web applications built with Next.js and TypeScript.',
-    deliverables: ['SaaS products', 'Operations portals', 'Client dashboards', 'REST APIs'],
+    summary:
+      'Custom web platforms, customer dashboards, internal operations portals, and software tools built with Next.js and TypeScript for businesses that have outgrown generic software.',
+    deliverables: ['SaaS Products', 'Operations Portals', 'Client Dashboards', 'REST APIs'],
   },
   'mobile-app-development': {
-    summary: 'Native & cross-platform iOS and Android applications designed around intuitive, friction-free everyday user workflows.',
-    deliverables: ['iOS apps', 'Android apps', 'Offline data sync', 'App Store release'],
+    summary:
+      'Cross-platform iOS and Android mobile applications designed around straightforward daily workflows for regional businesses, field staff, and everyday customers.',
+    deliverables: ['iOS Apps', 'Android Apps', 'Offline Data Sync', 'App Store Release'],
   },
   'android-app-development': {
-    summary: 'Native and cross-platform Android mobile applications engineered for regional business workflows, offline data collection, and Google Play Store release.',
-    deliverables: ['Android Business Apps', 'Offline-First Sync', 'Hardware Barcode Scanners', 'Play Store Release'],
+    summary:
+      'Native Android applications engineered for regional business operations, offline data recording, and direct deployment to the Google Play Store.',
+    deliverables: ['Android Business Apps', 'Offline First Sync', 'Barcode Scanners', 'Play Store Publishing'],
   },
   'ios-app-development': {
-    summary: 'Premium iOS applications engineered for iPhone and iPad with fluid user experience, Apple App Store compliance, and rock-solid cloud integrations.',
-    deliverables: ['iPhone & iPad Apps', 'Swift / React Native', 'Apple Design Guidelines', 'App Store Approval'],
+    summary:
+      'Refined iOS applications designed for iPhone and iPad, following Apple Human Interface Guidelines with secure cloud synchronization and App Store approval.',
+    deliverables: ['iPhone and iPad Apps', 'Swift and React Native', 'Apple Design Standards', 'App Store Approval'],
   },
   'idea-validation': {
-    summary: 'Validate real customer demand, competitor landscape, technical feasibility, and MVP direction before spending development capital.',
-    deliverables: ['Problem validation', 'Competitor audit', 'Feasibility report', 'MVP roadmap'],
+    summary:
+      'Objective evaluation of customer demand, technical feasibility, and realistic development costs before investing capital into custom software.',
+    deliverables: ['Workflow Analysis', 'Competitor Review', 'Feasibility Assessment', 'Product Roadmap'],
   },
   'mvp-development': {
-    summary: 'Lean minimum viable products built in 3 to 6-week sprints to validate business hypotheses with real paying users.',
-    deliverables: ['3-6 week sprints', 'Core feature set', 'Live user testing', 'Post-launch plan'],
+    summary:
+      'Focused minimum viable products delivered in 3 to 6-week sprints to help businesses test their core offering with real paying customers quickly.',
+    deliverables: ['Fast Sprint Delivery', 'Essential Features', 'Payment Integration', 'Post-Launch Roadmap'],
   },
   'custom-software': {
-    summary: 'Software engineered specifically around your company’s operational workflows, eliminating rigid off-the-shelf workarounds.',
-    deliverables: ['Workflow mapping', 'Custom internal tools', 'Legacy replacement', '100% code ownership'],
+    summary:
+      'Software built specifically around your day-to-day business operations, eliminating awkward workarounds and recurring monthly subscription fees.',
+    deliverables: ['Tailored Internal Tools', 'Billing and Inventory', 'Data Migration', 'Complete Code Ownership'],
   },
   'business-automation': {
-    summary: 'Eliminate repetitive manual tasks by automating order processing, inventory updates, transactional notifications, and spreadsheets.',
-    deliverables: ['Order pipelines', 'Inventory sync', 'Webhook alerts', 'Spreadsheet bridges'],
+    summary:
+      'Practical automation that reduces repetitive office work, connects disparate spreadsheets and databases, and sends automated customer notifications.',
+    deliverables: ['Order Processing', 'Inventory Sync', 'WhatsApp Notifications', 'Automated Daily Reports'],
   },
   'digital-marketing': {
-    summary: 'Data-driven search engine optimization, Google Business Profile dominance, and local commercial visibility for enterprises.',
-    deliverables: ['Technical SEO Audits', 'Google Business (GBP)', 'Local 3-Pack Rankings', 'Search Intent Strategy'],
+    summary:
+      'Search engine optimization and Google Business Profile management designed to help regional customers find your business when looking for your services.',
+    deliverables: ['Technical SEO', 'Google Maps Visibility', 'Local Directory Listings', 'Lead Tracking'],
   },
   'technical-consulting': {
-    summary: 'Direct, honest technical advice on system architecture, tech stack selection, database design, and cloud scaling risks.',
-    deliverables: ['Architecture audits', 'Tech selection', 'Database design', 'Cost optimization'],
+    summary:
+      'Pragmatic technical guidance on architecture decisions, software vendor proposals, database design, and cloud hosting cost reduction.',
+    deliverables: ['Architecture Reviews', 'Vendor Proposal Audits', 'Database Optimization', 'Cloud Cost Reduction'],
   },
 };
 
 const products = [
   {
-    title: "Website Development",
-    link: "/services/website-development",
+    title: 'Website Development',
+    link: '/services/website-development',
     thumbnail:
-      "https://cdn.21st.dev/assets/mirror/00/0078af2419c8685262b4cb05ea3387bc1b4dc0aff1cc86784fa5c21355110f85.png",
+      'https://cdn.21st.dev/assets/mirror/00/0078af2419c8685262b4cb05ea3387bc1b4dc0aff1cc86784fa5c21355110f85.png',
   },
   {
-    title: "Web Applications",
-    link: "/services/web-development",
+    title: 'Web Applications',
+    link: '/services/web-development',
     thumbnail:
-      "https://cdn.21st.dev/assets/mirror/a9/a9e66d34a03bb780d87a046622415fe66996e805d1a55af26e3fbb0c6d161df5.png",
+      'https://cdn.21st.dev/assets/mirror/a9/a9e66d34a03bb780d87a046622415fe66996e805d1a55af26e3fbb0c6d161df5.png',
   },
   {
-    title: "Mobile Applications",
-    link: "/services/mobile-app-development",
+    title: 'Mobile Applications',
+    link: '/services/mobile-app-development',
     thumbnail:
-      "https://cdn.21st.dev/assets/mirror/14/14a2ca44971e7a57f400fb4234791307dc8a884480f088d55c93f1da810bec1b.png",
+      'https://cdn.21st.dev/assets/mirror/14/14a2ca44971e7a57f400fb4234791307dc8a884480f088d55c93f1da810bec1b.png',
   },
   {
-    title: "Android App Development",
-    link: "/services/android-app-development",
+    title: 'Android App Development',
+    link: '/services/android-app-development',
     thumbnail:
-      "https://cdn.21st.dev/assets/mirror/7e/7ec6b0631c5ec4bb73db25a679e53512881cda9505de9f99d5eea88386e395c7.png",
+      'https://cdn.21st.dev/assets/mirror/7e/7ec6b0631c5ec4bb73db25a679e53512881cda9505de9f99d5eea88386e395c7.png',
   },
   {
-    title: "iOS App Development",
-    link: "/services/ios-app-development",
+    title: 'iOS App Development',
+    link: '/services/ios-app-development',
     thumbnail:
-      "https://cdn.21st.dev/assets/mirror/fc/fc2bb00ed499d276e6a5d4443e6dcf098fac9f6766642a299a81c64789b0622e.png",
+      'https://cdn.21st.dev/assets/mirror/fc/fc2bb00ed499d276e6a5d4443e6dcf098fac9f6766642a299a81c64789b0622e.png',
   },
   {
-    title: "Idea Validation",
-    link: "/services/idea-validation",
+    title: 'Idea Validation',
+    link: '/services/idea-validation',
     thumbnail:
-      "https://cdn.21st.dev/assets/mirror/b5/b51f454a6a9bb89c7d7e7fc105f7d160f1153025cdf67e5c64a51a9b63c4a573.png",
+      'https://cdn.21st.dev/assets/mirror/b5/b51f454a6a9bb89c7d7e7fc105f7d160f1153025cdf67e5c64a51a9b63c4a573.png',
   },
   {
-    title: "MVP Development",
-    link: "/services/mvp-development",
+    title: 'MVP Development',
+    link: '/services/mvp-development',
     thumbnail:
-      "https://cdn.21st.dev/assets/mirror/3c/3cc4bdb349803dd76c89837cc1ca7dd4a113515584aa000312d80fdb1a413f04.png",
+      'https://cdn.21st.dev/assets/mirror/3c/3cc4bdb349803dd76c89837cc1ca7dd4a113515584aa000312d80fdb1a413f04.png',
   },
   {
-    title: "Custom Software",
-    link: "/services/custom-software",
+    title: 'Custom Software',
+    link: '/services/custom-software',
     thumbnail:
-      "https://cdn.21st.dev/assets/mirror/0e/0ef45b035d910971f334f4772f087a0e5dd98581949fc3ccbe5c2701ab56bb1d.png",
+      'https://cdn.21st.dev/assets/mirror/0e/0ef45b035d910971f334f4772f087a0e5dd98581949fc3ccbe5c2701ab56bb1d.png',
   },
   {
-    title: "Business Automation",
-    link: "/services/business-automation",
+    title: 'Business Automation',
+    link: '/services/business-automation',
     thumbnail:
-      "https://cdn.21st.dev/assets/mirror/8b/8b23235b5768392458daa681a9dda498119c1bf3f13fef09cc3a245380b6c667.png",
+      'https://cdn.21st.dev/assets/mirror/8b/8b23235b5768392458daa681a9dda498119c1bf3f13fef09cc3a245380b6c667.png',
   },
   {
-    title: "Digital Marketing & SEO",
-    link: "/services/digital-marketing",
+    title: 'Digital Marketing & SEO',
+    link: '/services/digital-marketing',
     thumbnail:
-      "https://cdn.21st.dev/assets/mirror/e5/e51c0891a3642cb996939dbd684f05c25be0eaae0b07d35e3bc116f4ac27851c.png",
+      'https://cdn.21st.dev/assets/mirror/e5/e51c0891a3642cb996939dbd684f05c25be0eaae0b07d35e3bc116f4ac27851c.png',
   },
   {
-    title: "Technical Consulting",
-    link: "/services/technical-consulting",
+    title: 'Technical Consulting',
+    link: '/services/technical-consulting',
     thumbnail:
-      "https://cdn.21st.dev/assets/mirror/3d/3d180ec296d869336365946cb2daefe986ecbd39d8a5d4a4048609ec1cb7ebbb.png",
+      'https://cdn.21st.dev/assets/mirror/3d/3d180ec296d869336365946cb2daefe986ecbd39d8a5d4a4048609ec1cb7ebbb.png',
   },
   {
-    title: "SaaS Platforms",
-    link: "/services/web-development",
+    title: 'SaaS Platforms',
+    link: '/services/web-development',
     thumbnail:
-      "https://cdn.21st.dev/assets/mirror/03/033a3e4edc9fbba9007dd73b8c0090e530387945d7de5f1feeb461dbee00a199.png",
+      'https://cdn.21st.dev/assets/mirror/03/033a3e4edc9fbba9007dd73b8c0090e530387945d7de5f1feeb461dbee00a199.png',
   },
   {
-    title: "School & College Portals",
-    link: "/services/website-development",
+    title: 'School & College Portals',
+    link: '/services/website-development',
     thumbnail:
-      "https://cdn.21st.dev/assets/mirror/b3/b3a5d3324e18812bd72162b467947892d436762fc40f61b4f5a38d806d9891e1.png",
+      'https://cdn.21st.dev/assets/mirror/b3/b3a5d3324e18812bd72162b467947892d436762fc40f61b4f5a38d806d9891e1.png',
   },
   {
-    title: "Billing & POS Systems",
-    link: "/services/custom-software",
+    title: 'Billing & POS Systems',
+    link: '/services/custom-software',
     thumbnail:
-      "https://cdn.21st.dev/assets/mirror/e1/e12f1285b2695143f5449c31ccb4594ce95cb90770941e25d7184bad0387807b.png",
+      'https://cdn.21st.dev/assets/mirror/e1/e12f1285b2695143f5449c31ccb4594ce95cb90770941e25d7184bad0387807b.png',
   },
   {
-    title: "Cloud ERP Solutions",
-    link: "/services/business-automation",
+    title: 'Cloud ERP Solutions',
+    link: '/services/business-automation',
     thumbnail:
-      "https://cdn.21st.dev/assets/mirror/f8/f8b50d29904a7459e1e1fd88ce60003155ce69597d2a4ab57cc25975783e6bd1.png",
+      'https://cdn.21st.dev/assets/mirror/f8/f8b50d29904a7459e1e1fd88ce60003155ce69597d2a4ab57cc25975783e6bd1.png',
   },
 ];
 
@@ -187,80 +198,81 @@ export default function ServicesPage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
       />
       <div className="bg-white">
-      {/* Parallax Product Showcase */}
-      <HeroParallax products={products} />
+        {/* Parallax Product Showcase */}
+        <HeroParallax products={products} />
 
-      {/* Actual Capabilities Directory */}
-      <section className="py-14 sm:py-20 bg-white border-t border-palnadu-border" id="capabilities-list">
-        <div className="container max-w-3xl">
-          <div className="mb-8">
-            <p className="text-xs font-mono uppercase tracking-widest text-palnadu-blue font-bold mb-1">
-              Directory
-            </p>
-            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight text-palnadu-dark leading-tight">
-              Software Engineering & Web Development Services
-            </h1>
-          </div>
+        {/* Core Capabilities Section */}
+        <section className="py-16 sm:py-24 bg-white border-t border-slate-200" id="capabilities-list">
+          <div className="container max-w-4xl mx-auto px-4 sm:px-6">
+            <div className="mb-10 sm:mb-14">
+              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-slate-900 leading-tight">
+                Software Engineering and Web Development Capabilities
+              </h2>
+              <p className="mt-3 text-base sm:text-lg text-slate-600 leading-relaxed max-w-2xl">
+                Every project at Palnadu.dev is built by software engineers working directly with business owners. We focus on dependable architecture, clear timelines, and software that genuinely supports your business operations.
+              </p>
+            </div>
 
-          {/* Clean Typographic List With Actual Services Content */}
-          <div className="divide-y divide-palnadu-border border-y border-palnadu-border">
-            {services.map((service, index) => {
-              const detail = actualServiceDetails[service.slug] || {
-                summary: service.shortDescription,
-                deliverables: [],
-              };
+            {/* Clean Editorial Services List */}
+            <div className="divide-y divide-slate-200 border-y border-slate-200">
+              {services.map((service) => {
+                const detail = actualServiceDetails[service.slug] || {
+                  summary: service.shortDescription,
+                  deliverables: [],
+                };
 
-              return (
-                <div
-                  key={service.slug}
-                  className="py-5 px-2 -mx-2 hover:bg-palnadu-light-blue/30 transition-colors"
-                >
-                  <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-2">
-                    <div className="flex items-baseline gap-3 sm:gap-4">
-                      <span className="font-mono text-xs text-palnadu-secondary font-bold shrink-0">
-                        0{index + 1}
-                      </span>
-                      <div>
-                        <Link
-                          href={`/services/${service.slug}`}
-                          className="text-base sm:text-lg font-bold text-palnadu-dark hover:text-palnadu-blue transition-colors"
-                        >
-                          {service.title}
-                        </Link>
-                        <p className="mt-1 text-[13px] sm:text-sm text-palnadu-body leading-relaxed max-w-xl">
+                return (
+                  <article
+                    key={service.slug}
+                    className="py-6 sm:py-8 first:pt-6 last:pb-6 transition-colors hover:bg-slate-50/60 rounded-xl px-3 -mx-3"
+                  >
+                    <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+                      <div className="max-w-2xl space-y-2">
+                        <h3 className="text-lg sm:text-xl font-bold text-slate-900 leading-snug">
+                          <Link
+                            href={`/services/${service.slug}`}
+                            className="text-slate-900 hover:text-palnadu-blue transition-colors"
+                          >
+                            {service.title}
+                          </Link>
+                        </h3>
+
+                        <p className="text-sm sm:text-base text-slate-600 leading-relaxed">
                           {detail.summary}
                         </p>
 
-                        {/* Deliverables tags */}
+                        {/* Deliverables as natural tags */}
                         {detail.deliverables.length > 0 && (
-                          <div className="flex flex-wrap gap-x-3 gap-y-1 mt-2.5">
+                          <div className="flex flex-wrap gap-2 pt-2">
                             {detail.deliverables.map((item) => (
-                              <span key={item} className="text-xs sm:text-[13px] text-palnadu-secondary flex items-center gap-1 font-mono">
-                                <span className="text-palnadu-teal">▪</span>
+                              <span
+                                key={item}
+                                className="text-xs text-slate-600 bg-slate-100 rounded-md px-2.5 py-1"
+                              >
                                 {item}
                               </span>
                             ))}
                           </div>
                         )}
                       </div>
+
+                      <div className="pt-1 sm:pt-0 shrink-0">
+                        <Link
+                          href={`/services/${service.slug}`}
+                          className="text-sm font-semibold text-palnadu-blue hover:text-[#12487e] transition-colors"
+                        >
+                          View service details
+                        </Link>
+                      </div>
                     </div>
-
-                    <Link
-                      href={`/services/${service.slug}`}
-                      className="text-xs sm:text-sm font-semibold text-palnadu-blue hover:underline shrink-0 pl-7 sm:pl-4 mt-1 sm:mt-0 inline-flex items-center gap-1"
-                    >
-                      <span>Explore</span>
-                      <span>→</span>
-                    </Link>
-                  </div>
-                </div>
-              );
-            })}
+                  </article>
+                );
+              })}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      <CtaSection />
+        <CtaSection />
       </div>
     </>
   );
