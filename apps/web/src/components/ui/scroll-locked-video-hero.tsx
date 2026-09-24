@@ -78,14 +78,30 @@ export default function MetroHero({
 
     function seekTo(targetTime: number) {
       if (!video) return;
-      if (Math.abs(video.currentTime - targetTime) < 0.02) return;
+      if (Math.abs(video.currentTime - targetTime) < 0.03) return;
       if (isSeeking) {
         pendingTime = targetTime;
         return;
       }
       isSeeking = true;
-      video.currentTime = targetTime;
+      // Use native fastSeek on WebKit (iOS Safari) if available for instant hardware-accelerated scrubbing
+      if (typeof (video as any).fastSeek === "function") {
+        (video as any).fastSeek(targetTime);
+      } else {
+        video.currentTime = targetTime;
+      }
     }
+
+    // Touch gesture activation for mobile video decoding permissions
+    const onTouchActivate = () => {
+      if (video.paused && video.readyState >= 1) {
+        const p = video.play();
+        if (p !== undefined) {
+          p.then(() => video.pause()).catch(() => {});
+        }
+      }
+    };
+    window.addEventListener("touchstart", onTouchActivate, { once: true, passive: true });
 
     // Passive, non-blocking sticky scroll progress calculation
     let rafId: number;
@@ -113,11 +129,14 @@ export default function MetroHero({
     };
 
     window.addEventListener("scroll", handleScroll, { passive: true });
+    window.addEventListener("touchmove", handleScroll, { passive: true });
     handleScroll();
 
     return () => {
       cancelAnimationFrame(rafId);
       window.removeEventListener("scroll", handleScroll);
+      window.removeEventListener("touchmove", handleScroll);
+      window.removeEventListener("touchstart", onTouchActivate);
       video.removeEventListener("loadedmetadata", onLoadedMetadata);
       video.removeEventListener("canplay", onLoadedMetadata);
       video.removeEventListener("seeked", onSeeked);
@@ -186,6 +205,13 @@ export default function MetroHero({
           muted
           playsInline
           preload="auto"
+          controls={false}
+          disablePictureInPicture
+          disableRemotePlayback
+          {...({
+            "webkit-playsinline": "true",
+            "x5-playsinline": "true",
+          } as any)}
           style={{
             position: "absolute",
             inset: 0,
@@ -319,9 +345,10 @@ export default function MetroHero({
           />
         </div>
 
-        {/* Bottom Scroll Hint: Visible at start, fades smoothly as user scrolls */}
+        {/* Bottom Scroll Chevron: Visible at start, fades smoothly as user scrolls */}
         <div
           onClick={scrollToJourney}
+          aria-label="Scroll to content"
           style={{
             position: "absolute",
             left: "50%",
@@ -330,19 +357,14 @@ export default function MetroHero({
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
-            gap: 4,
             color: "rgba(255, 255, 255, 0.7)",
-            fontSize: "12px",
-            fontWeight: 500,
-            letterSpacing: "0.05em",
             cursor: "pointer",
             zIndex: 20,
             opacity: titleOpacity,
             transition: "opacity 0.2s ease",
           }}
         >
-          <span>{scrollHint}</span>
-          <ChevronDown className="h-4 w-4 animate-bounce" />
+          <ChevronDown className="h-5 w-5 animate-bounce" />
         </div>
       </div>
     </div>
