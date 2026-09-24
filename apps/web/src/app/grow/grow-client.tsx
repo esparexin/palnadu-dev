@@ -307,7 +307,7 @@ export function GrowExperienceClient() {
   return (
     <div className="flex flex-col w-full bg-white text-palnadu-dark">
       {/* ─────────────────────────────────────────────────────────────
-          1. HERO SECTION: INTEGRATING SCROLL-LOCKED-VIDEO-HERO
+          1. HERO SECTION: CINEMATIC AUTOPLAY VIDEO HERO
          ───────────────────────────────────────────────────────────── */}
       <section className="relative w-full">
         <MetroHero
@@ -315,33 +315,7 @@ export function GrowExperienceClient() {
           title="Digital Marketing"
           tagline="Grow With Us. Let Your Business Growth Show."
           scrollHint="SCROLL TO EXPLORE GROWTH"
-          scrubDistance={2800}
-          unlockOnEnd={true}
-        >
-          {/* Quick jump to content button */}
-          <div className="absolute bottom-5 sm:bottom-6 left-1/2 -translate-x-1/2 z-20 w-auto px-4">
-            <button
-              type="button"
-              data-unlock="true"
-              onClick={() => {
-                if (typeof window !== "undefined") {
-                  window.dispatchEvent(new CustomEvent("unlock-video-hero"));
-                }
-                setTimeout(() => {
-                  const el = document.getElementById("growth-journey");
-                  if (el) {
-                    const rect = el.getBoundingClientRect();
-                    window.scrollTo({ top: rect.top + window.scrollY, behavior: "smooth" });
-                  }
-                }, 50);
-              }}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-white/90 text-xs font-semibold hover:bg-white/20 transition-colors shadow-lg active:scale-95 cursor-pointer"
-            >
-              <span>Explore Growth Journey</span>
-              <ChevronDown className="h-3.5 w-3.5 animate-bounce" />
-            </button>
-          </div>
-        </MetroHero>
+        />
       </section>
 
       {/* ─────────────────────────────────────────────────────────────
