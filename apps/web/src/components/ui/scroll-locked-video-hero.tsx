@@ -18,7 +18,7 @@ const DEFAULT_VIDEO = "/videos/metro-hero.mp4";
 export default function MetroHero({
   videoSrc = DEFAULT_VIDEO,
   title = "Digital Marketing",
-  scrollHint = "Scroll to explore",
+  scrollHint = "SCROLL TO EXPLORE GROWTH",
   tagline = "Grow With Us. Let Your Business Growth Show.",
   className,
   style,
@@ -227,7 +227,10 @@ export default function MetroHero({
             zIndex: 10,
           }}
         >
-          <div className="max-w-4xl mx-auto space-y-4">
+          <div className="max-w-4xl mx-auto space-y-3 sm:space-y-4">
+            <p className="text-xs sm:text-sm font-semibold uppercase tracking-widest text-cyan-300">
+              {scrollHint}
+            </p>
             <h1
               style={{
                 fontSize: "clamp(2.5rem, 7vw, 5.5rem)",

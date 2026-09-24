@@ -314,7 +314,7 @@ export function GrowExperienceClient() {
           videoSrc="/videos/metro-hero.mp4"
           title="Digital Marketing"
           tagline="Grow With Us. Let Your Business Growth Show."
-          scrollHint="Scroll to explore"
+          scrollHint="SCROLL TO EXPLORE GROWTH"
         />
       </section>
 
