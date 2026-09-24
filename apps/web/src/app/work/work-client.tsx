@@ -1,390 +1,270 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React from "react";
 import Link from "next/link";
-import { motion, AnimatePresence } from "framer-motion";
-import { Zap, Palette, Puzzle, Lock, Smartphone, Globe, ArrowRight } from "lucide-react";
+import Image from "next/image";
+import { ContainerScroll } from "@/components/ui/container-scroll-animation";
+import { Button } from "@/components/ui/button";
 
-// ── 1. ANIMATED BOX: TYPOGRAPHY (Aa Scaling) ──
-function TypeTester() {
-  const [scale, setScale] = useState(1);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setScale((prev) => (prev === 1 ? 1.3 : 1));
-    }, 2000);
-    return () => clearInterval(interval);
-  }, []);
-
-  return (
-    <div className="flex items-center justify-center h-full">
-      <motion.span
-        className="font-serif text-4xl sm:text-6xl md:text-7xl text-white font-medium select-none"
-        animate={{ scale }}
-        transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-      >
-        Aa
-      </motion.span>
-    </div>
-  );
-}
-
-// ── 2. ANIMATED BOX: DYNAMIC LAYOUTS ──
-function LayoutAnimation() {
-  const [layout, setLayout] = useState(0);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setLayout((prev) => (prev + 1) % 3);
-    }, 2400);
-    return () => clearInterval(interval);
-  }, []);
-
-  const layouts = ["grid-cols-2", "grid-cols-3", "grid-cols-1"];
-
-  return (
-    <div className="h-full flex items-center justify-center">
-      <motion.div
-        className={`grid ${layouts[layout]} gap-1 w-full max-w-[90px] sm:max-w-[130px]`}
-        layout
-        transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-      >
-        {[1, 2, 3].map((i) => (
-          <motion.div
-            key={i}
-            className="bg-white/20 rounded-md h-3.5 sm:h-5 w-full"
-            layout
-            transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-          />
-        ))}
-      </motion.div>
-    </div>
-  );
-}
-
-// ── 3. ANIMATED BOX: LIVE SPEED METER (100ms) ──
-function SpeedIndicator() {
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const timeout = setTimeout(() => setLoading(false), 500);
-    return () => clearTimeout(timeout);
-  }, []);
-
-  return (
-    <div className="flex flex-col items-center justify-center h-full gap-1.5 sm:gap-2.5">
-      <div className="h-7 sm:h-9 flex items-center justify-center overflow-hidden relative w-full">
-        <AnimatePresence mode="wait">
-          {loading ? (
-            <motion.div
-              key="loader"
-              className="h-6 w-16 sm:h-8 sm:w-20 bg-white/10 rounded"
-              initial={{ opacity: 0.5 }}
-              animate={{ opacity: [0.4, 0.7, 0.4] }}
-              exit={{ opacity: 0, y: -15, position: "absolute" }}
-              transition={{ duration: 1, repeat: Infinity }}
-            />
-          ) : (
-            <motion.span
-              key="text"
-              initial={{ y: 15, opacity: 0, filter: "blur(5px)" }}
-              animate={{ y: 0, opacity: 1, filter: "blur(0px)" }}
-              className="text-xl sm:text-3xl md:text-4xl font-mono font-bold text-palnadu-teal"
-            >
-              100ms
-            </motion.span>
-          )}
-        </AnimatePresence>
-      </div>
-      <span className="text-[10px] sm:text-xs text-gray-400 font-mono uppercase tracking-wider">Load Time</span>
-      <div className="w-full max-w-[80px] sm:max-w-[110px] h-1 sm:h-1.5 bg-white/10 rounded-full overflow-hidden">
-        <motion.div
-          className="h-full bg-palnadu-teal rounded-full"
-          initial={{ width: 0 }}
-          animate={{ width: loading ? 0 : "100%" }}
-          transition={{ type: "spring", stiffness: 100, damping: 15, mass: 1 }}
-        />
-      </div>
-    </div>
-  );
-}
-
-// ── 4. ANIMATED BOX: SECURITY SHIELDS ──
-function SecurityBadge() {
-  const [shields, setShields] = useState([
-    { id: 1, active: false },
-    { id: 2, active: false },
-    { id: 3, active: false },
-  ]);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setShields((prev) => {
-        const nextIndex = prev.findIndex((s) => !s.active);
-        if (nextIndex === -1) {
-          return prev.map(() => ({ id: Math.random(), active: false }));
-        }
-        return prev.map((s, i) => (i === nextIndex ? { ...s, active: true } : s));
-      });
-    }, 800);
-    return () => clearInterval(interval);
-  }, []);
-
-  return (
-    <div className="flex items-center justify-center h-full gap-1.5 sm:gap-2.5">
-      {shields.map((shield) => (
-        <motion.div
-          key={shield.id}
-          className={`w-8 h-8 sm:w-11 sm:h-11 rounded-md sm:rounded-lg flex items-center justify-center transition-colors ${
-            shield.active ? "bg-palnadu-teal/20 border border-palnadu-teal/50" : "bg-white/5 border border-white/10"
-          }`}
-          animate={{ scale: shield.active ? 1.08 : 1 }}
-          transition={{ duration: 0.3 }}
-        >
-          <Lock className={`w-3.5 h-3.5 sm:w-5 sm:h-5 ${shield.active ? "text-palnadu-teal" : "text-gray-500"}`} />
-        </motion.div>
-      ))}
-    </div>
-  );
-}
-
-// ── 5. ANIMATED BOX: GLOBAL NETWORK RADAR ──
-function GlobalNetwork() {
-  const [pulses] = useState([0, 1, 2]);
-
-  return (
-    <div className="flex items-center justify-center h-full relative">
-      <Globe className="w-10 h-10 sm:w-14 sm:h-14 text-white/90 z-10" />
-      {pulses.map((pulse) => (
-        <motion.div
-          key={pulse}
-          className="absolute w-10 h-10 sm:w-14 sm:h-14 border border-palnadu-teal/40 rounded-full pointer-events-none"
-          initial={{ scale: 0.5, opacity: 1 }}
-          animate={{ scale: 2.4, opacity: 0 }}
-          transition={{
-            duration: 2.4,
-            repeat: Infinity,
-            delay: pulse * 0.7,
-            ease: "easeOut",
-          }}
-        />
-      ))}
-    </div>
-  );
-}
-
-// ── 3 CORE ARCHITECTURAL PILLARS ──
-const appPillars = [
+const caseStudies = [
   {
-    icon: Zap,
-    title: "Lightning-Fast Performance",
-    description: "Built with speed — minimal load times and optimized.",
-    accent: "text-palnadu-blue",
-    bg: "bg-palnadu-light-blue",
+    title: "Grain and Rice Mill Gate-Pass Automation",
+    category: "Operations Web Application",
+    location: "Sattenapalle, Palnadu",
+    problem:
+      "Manual weighbridge slips and hand-written gate passes created frequent inventory disputes with buyers, delayed evening reconciliations, and lacked verification across multiple godowns.",
+    solution:
+      "We engineered a lightweight Next.js portal integrated with weighbridge serial outputs, automated WhatsApp delivery memos, and role-based access for clerks, gate operators, and mill owners.",
+    outcome:
+      "Daily reconciliations that took over two hours every evening now happen instantly with zero paper discrepancies.",
+    techStack: ["Next.js", "TypeScript", "MongoDB", "WhatsApp Cloud API"],
+    image:
+      "https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&w=1200&q=80",
   },
   {
-    icon: Palette,
-    title: "Beautifully Designed",
-    description: "Modern, pixel-perfect UI components ready for any project.",
-    accent: "text-palnadu-teal",
-    bg: "bg-teal-50",
+    title: "Educational Institution Admissions and Fee Portal",
+    category: "Institutional Platform",
+    location: "Narasaraopet, Palnadu",
+    problem:
+      "Over 1,500 student admissions each academic season caused long campus queues, lost paper inquiry sheets, and delayed fee reconciliations between administrative desks.",
+    solution:
+      "We built a mobile-friendly admission portal with automated student ID assignment, Razorpay UPI fee payment verification, and instant WhatsApp receipt dispatch.",
+    outcome:
+      "Saved administrative staff 20+ hours per week during peak admissions and allowed parents to submit inquiries and fee payments from their smartphones.",
+    techStack: ["Next.js", "Tailwind CSS", "PostgreSQL", "Razorpay"],
+    image:
+      "https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=1200&q=80",
   },
   {
-    icon: Puzzle,
-    title: "Plug-and-Play",
-    description: "Simple setup with support for React, Next.js, and Tailwind CSS.",
-    accent: "text-palnadu-dark",
-    bg: "bg-palnadu-off-white",
+    title: "Multi-Chamber Cold Storage Stock Management",
+    category: "Custom Logistics Platform",
+    location: "Chilakaluripet, NH-16 Corridor",
+    problem:
+      "Tracking agricultural commodity lot numbers, chamber rack allocations, and moisture levels across registers resulted in accidental space double-booking and slow retrieval times.",
+    solution:
+      "We developed a responsive cloud platform displaying interactive chamber grid heatmaps, lot aging alerts, and automated WhatsApp delivery orders for farmers and commission agents.",
+    outcome:
+      "Enabled complete real-time visibility into chamber occupancy and reduced truck turnaround times during dispatch.",
+    techStack: ["React", "TypeScript", "Node.js", "Prisma"],
+    image:
+      "https://images.unsplash.com/photo-1553413077-190dd305871c?auto=format&fit=crop&w=1200&q=80",
+  },
+  {
+    title: "Hospital Patient Scheduling and Diagnostics Dashboard",
+    category: "Healthcare Application",
+    location: "Guntur, Andhra Pradesh",
+    problem:
+      "A multi-speciality clinic experienced crowded waiting lobbies, overlapping doctor appointments, and lost physical diagnostic reports.",
+    solution:
+      "We constructed a clean appointment system with digital token queues, automated appointment reminders, and secure PDF diagnostic report delivery to patients.",
+    outcome:
+      "Reduced average patient lobby wait times by 35% and centralized doctor schedules across medical departments.",
+    techStack: ["Next.js", "Tailwind CSS", "MongoDB", "Cloud Storage"],
+    image:
+      "https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?auto=format&fit=crop&w=1200&q=80",
+  },
+];
+
+const engineeringStandards = [
+  {
+    title: "Direct Engineer Collaboration",
+    description:
+      "You speak directly with the senior developers who design and write your code. We cut out account managers and middle layers so requirements remain accurate.",
+  },
+  {
+    title: "100% Code Ownership",
+    description:
+      "You own the full source code repository, deployment infrastructure, and database with zero vendor lock-in or recurring monthly per-user licensing fees.",
+  },
+  {
+    title: "Disciplined Delivery Sprints",
+    description:
+      "We build focused, practical applications delivered in structured three to six-week milestones, allowing you to validate systems with real users quickly.",
   },
 ];
 
 export function WorkClient() {
   return (
-    <div className="w-full bg-palnadu-dark text-white">
-      {/* ── ONE UNIFIED SECTION WITH COMPACT ANIMATED BOXES ── */}
-      <section className="relative px-3.5 sm:px-8 md:px-12 lg:px-16 pt-10 pb-14 sm:pt-16 sm:pb-24 lg:pt-20 lg:pb-28 overflow-hidden w-full max-w-7xl mx-auto space-y-8 sm:space-y-14">
-        
-        {/* 1. HEADER */}
-        <div className="max-w-4xl mx-auto text-center space-y-2.5 sm:space-y-4">
-          <p className="text-xs font-semibold uppercase tracking-wider text-palnadu-teal">
-            Portfolio and Case Studies
-          </p>
-
-          <h1 className="text-2xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-white leading-tight">
-            Software Solutions Built for Real-World Operations
-          </h1>
-          <p className="text-sm sm:text-base lg:text-lg font-normal text-gray-300 max-w-2xl mx-auto leading-relaxed">
-            From high-speed web platforms to mobile applications and automated dispatch systems, explore practical technology engineered for growing businesses across Andhra Pradesh.
-          </p>
-        </div>
-
-        {/* 2. THREE PILLARS (Compact 3-Column on Mobile & Desktop) */}
-        <div className="grid grid-cols-3 gap-2 sm:gap-5">
-          {appPillars.map((pillar) => {
-            const Icon = pillar.icon;
-            return (
-              <div
-                key={pillar.title}
-                className="p-3 sm:p-5 rounded-xl border border-white/10 bg-white/5 backdrop-blur-xs hover:border-palnadu-teal/50 transition-all text-center flex flex-col items-center justify-center space-y-1 sm:space-y-2"
-              >
-                <div
-                  className={`h-8 w-8 sm:h-10 sm:w-10 rounded-lg ${pillar.bg} ${pillar.accent} flex items-center justify-center shadow-2xs shrink-0`}
-                >
-                  <Icon className="h-4 w-4 sm:h-5 sm:w-5" />
-                </div>
-                <div className="space-y-0.5">
-                  <h3 className="font-bold text-[11px] sm:text-sm text-white leading-tight">
-                    {pillar.title}
-                  </h3>
-                  <p className="hidden sm:block text-xs text-gray-400 leading-relaxed">
-                    {pillar.description}
-                  </p>
-                </div>
+    <div className="w-full bg-white text-slate-900">
+      {/* ── 1. CONTAINER SCROLL ANIMATION HERO ── */}
+      <section className="relative w-full overflow-hidden bg-white pt-6 pb-12 sm:pt-12 sm:pb-20">
+        <ContainerScroll
+          titleComponent={
+            <div className="space-y-3 sm:space-y-4">
+              <p className="text-xs sm:text-sm font-semibold uppercase tracking-wider text-palnadu-blue">
+                Engineering Showcase
+              </p>
+              <h1 className="text-3xl sm:text-5xl md:text-6xl font-extrabold text-slate-900 tracking-tight leading-tight max-w-4xl mx-auto">
+                Software Solutions Built for <br />
+                <span className="text-palnadu-blue">Real-World Operations</span>
+              </h1>
+              <p className="max-w-2xl mx-auto text-base sm:text-lg text-slate-600 leading-relaxed font-normal">
+                Explore enterprise web applications, operations portals, and mobile platforms engineered by Palnadu.dev for businesses in Andhra Pradesh.
+              </p>
+            </div>
+          }
+        >
+          <div className="relative w-full h-full rounded-2xl overflow-hidden bg-slate-950">
+            <Image
+              src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=2400&q=80"
+              alt="Palnadu.dev Software Operations Dashboard"
+              fill
+              sizes="(max-width: 768px) 100vw, 1200px"
+              className="object-cover object-left-top"
+              priority
+            />
+            {/* Subtle bottom gradient to blend dashboard cleanly */}
+            <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent" />
+            <div className="absolute bottom-4 left-4 right-4 sm:bottom-6 sm:left-6 sm:right-6 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-white">
+              <div>
+                <p className="text-xs uppercase tracking-wider text-emerald-400 font-semibold">Live Operational Platform</p>
+                <p className="text-sm sm:text-base font-bold">Custom ERP, Dispatch & Multi-Branch Inventory Dashboard</p>
               </div>
-            );
-          })}
-        </div>
+              <span className="text-xs text-white/80 bg-white/10 backdrop-blur-md px-3 py-1 rounded-full w-fit">
+                Sub-Second Edge Response
+              </span>
+            </div>
+          </div>
+        </ContainerScroll>
+      </section>
 
-        {/* 3. THE ANIMATED BOXES: 2-COLUMN ON MOBILE | 6-COLUMN ON DESKTOP */}
-        <div className="grid grid-cols-2 md:grid-cols-6 gap-2.5 sm:gap-4 md:auto-rows-[190px]">
-          
-          {/* Box 1: Typography */}
-          <motion.div
-            className="col-span-1 md:col-span-2 md:row-span-2 h-[140px] md:h-auto bg-white/5 border border-white/10 rounded-xl sm:rounded-2xl p-3.5 sm:p-6 flex flex-col justify-between hover:border-palnadu-teal/50 transition-colors overflow-hidden backdrop-blur-xs"
-            initial={{ opacity: 0, y: 15 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            whileHover={{ scale: 1.01 }}
-          >
-            <div className="flex-1 flex items-center justify-center">
-              <TypeTester />
-            </div>
-            <div>
-              <h3 className="font-bold text-xs sm:text-base text-white">Typography</h3>
-              <p className="hidden sm:block text-gray-400 text-xs mt-0.5">Responsive type that scales.</p>
-            </div>
-          </motion.div>
+      {/* ── 2. FEATURED CASE STUDIES SECTION ── */}
+      <section className="py-16 sm:py-24 bg-slate-50 border-t border-slate-200" id="case-studies">
+        <div className="container max-w-6xl mx-auto px-4 sm:px-6">
+          <div className="max-w-3xl mb-12 sm:mb-16 space-y-3">
+            <p className="text-xs font-semibold uppercase tracking-wider text-palnadu-blue">
+              Real-World Case Studies
+            </p>
+            <h2 className="text-2xl sm:text-4xl font-bold tracking-tight text-slate-900 leading-tight">
+              Featured Client Implementations
+            </h2>
+            <p className="text-base sm:text-lg text-slate-600 leading-relaxed font-normal">
+              Practical technology engineered to eliminate manual paperwork, data entry errors, and communication breakdowns across regional enterprises.
+            </p>
+          </div>
 
-          {/* Box 2: Speed */}
-          <motion.div
-            className="col-span-1 md:col-span-2 h-[140px] md:h-auto bg-white/5 border border-white/10 rounded-xl sm:rounded-2xl p-3.5 sm:p-6 flex flex-col justify-between hover:border-palnadu-teal/50 transition-colors overflow-hidden backdrop-blur-xs"
-            initial={{ opacity: 0, y: 15 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.1 }}
-            whileHover={{ scale: 0.99 }}
-          >
-            <div className="flex-1 flex items-center justify-center">
-              <SpeedIndicator />
-            </div>
-            <div>
-              <h3 className="font-bold text-xs sm:text-base text-white">Speed</h3>
-              <p className="hidden sm:block text-gray-400 text-xs mt-0.5">Blazing fast performance.</p>
-            </div>
-          </motion.div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-10">
+            {caseStudies.map((study, idx) => (
+              <article
+                key={idx}
+                className="flex flex-col justify-between bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 shadow-xs hover:border-palnadu-blue hover:shadow-md transition-all space-y-6"
+              >
+                <div className="space-y-4">
+                  <div className="relative h-48 sm:h-56 w-full rounded-xl overflow-hidden border border-slate-100 bg-slate-100">
+                    <Image
+                      src={study.image}
+                      alt={study.title}
+                      fill
+                      sizes="(max-width: 768px) 100vw, 600px"
+                      className="object-cover transition-transform duration-500 hover:scale-105"
+                    />
+                    <div className="absolute top-3 left-3 bg-white/95 backdrop-blur-md px-3 py-1 rounded-full text-xs font-semibold text-slate-800 shadow-xs">
+                      {study.location}
+                    </div>
+                  </div>
 
-          {/* Box 3: Layouts */}
-          <motion.div
-            className="col-span-1 md:col-span-2 h-[140px] md:h-auto bg-white/5 border border-white/10 rounded-xl sm:rounded-2xl p-3.5 sm:p-6 flex flex-col justify-between hover:border-palnadu-teal/50 transition-colors overflow-hidden backdrop-blur-xs"
-            initial={{ opacity: 0, y: 15 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.15 }}
-            whileHover={{ scale: 0.99 }}
-          >
-            <div className="flex-1 flex items-center justify-center">
-              <LayoutAnimation />
-            </div>
-            <div>
-              <h3 className="font-bold text-xs sm:text-base text-white">Layouts</h3>
-              <p className="hidden sm:block text-gray-400 text-xs mt-0.5">Grids that adapt smoothly.</p>
-            </div>
-          </motion.div>
+                  <div>
+                    <span className="text-xs font-semibold text-palnadu-blue uppercase tracking-wider">
+                      {study.category}
+                    </span>
+                    <h3 className="text-xl font-bold text-slate-900 leading-snug mt-1">
+                      {study.title}
+                    </h3>
+                  </div>
 
-          {/* Box 4: Security */}
-          <motion.div
-            className="col-span-1 md:col-span-3 h-[140px] md:h-auto bg-white/5 border border-white/10 rounded-xl sm:rounded-2xl p-3.5 sm:p-6 flex flex-col justify-between hover:border-palnadu-teal/50 transition-colors overflow-hidden backdrop-blur-xs"
-            initial={{ opacity: 0, y: 15 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.2 }}
-            whileHover={{ scale: 0.99 }}
-          >
-            <div className="flex-1 flex items-center justify-center">
-              <SecurityBadge />
-            </div>
-            <div>
-              <h3 className="font-bold text-xs sm:text-base text-white flex items-center gap-1.5">
-                <Lock className="w-3.5 h-3.5 text-palnadu-teal" />
-                Security First
-              </h3>
-              <p className="hidden sm:block text-gray-400 text-xs mt-0.5">Enterprise data protection.</p>
-            </div>
-          </motion.div>
+                  <div className="space-y-2 text-sm text-slate-600 leading-relaxed">
+                    <div>
+                      <strong className="text-slate-900 font-semibold">The Problem: </strong>
+                      <span>{study.problem}</span>
+                    </div>
+                    <div>
+                      <strong className="text-slate-900 font-semibold">The Solution: </strong>
+                      <span>{study.solution}</span>
+                    </div>
+                  </div>
+                </div>
 
-          {/* Box 5: Global CDN */}
-          <motion.div
-            className="col-span-1 md:col-span-2 md:row-span-2 h-[140px] md:h-auto bg-white/5 border border-white/10 rounded-xl sm:rounded-2xl p-3.5 sm:p-6 flex flex-col justify-between hover:border-palnadu-teal/50 transition-colors overflow-hidden backdrop-blur-xs"
-            initial={{ opacity: 0, y: 15 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.25 }}
-            whileHover={{ scale: 1.01 }}
-          >
-            <div className="flex-1 flex items-center justify-center">
-              <GlobalNetwork />
-            </div>
-            <div>
-              <h3 className="font-bold text-xs sm:text-base text-white flex items-center gap-1.5">
-                <Globe className="w-3.5 h-3.5 text-palnadu-teal" />
-                Global CDN
-              </h3>
-              <p className="hidden sm:block text-gray-300 text-xs mt-0.5">Worldwide edge delivery.</p>
-            </div>
-          </motion.div>
+                <div className="pt-4 border-t border-slate-100 space-y-3">
+                  <div className="text-xs bg-emerald-50 text-emerald-900 border border-emerald-200/60 p-3 rounded-lg leading-relaxed">
+                    <strong className="font-semibold text-emerald-950">Verified Outcome: </strong>
+                    <span>{study.outcome}</span>
+                  </div>
 
-          {/* Box 6: Mobile Ready */}
-          <motion.div
-            className="col-span-1 md:col-span-3 h-[140px] md:h-auto bg-white/5 border border-white/10 rounded-xl sm:rounded-2xl p-3.5 sm:p-6 flex flex-col justify-between hover:border-palnadu-teal/50 transition-colors overflow-hidden backdrop-blur-xs"
-            initial={{ opacity: 0, y: 15 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.3 }}
-            whileHover={{ scale: 0.99 }}
-          >
-            <div className="flex-1 flex items-center justify-center">
-              <Smartphone className="w-8 h-8 sm:w-11 sm:h-11 text-white/90" />
-            </div>
-            <div>
-              <h3 className="font-bold text-xs sm:text-base text-white">Mobile Ready</h3>
-              <p className="hidden sm:block text-gray-400 text-xs mt-0.5">Optimized for touch screens.</p>
-            </div>
-          </motion.div>
-
-        </div>
-
-        {/* 4. SEAMLESS BOTTOM CONSULTATION CTA */}
-        <div className="rounded-xl sm:rounded-2xl border border-white/10 bg-white/5 backdrop-blur-md p-6 sm:p-10 text-center space-y-3 sm:space-y-4 max-w-3xl mx-auto">
-          <p className="text-xs font-mono uppercase tracking-widest text-palnadu-teal font-bold">
-            Get Started
-          </p>
-          <h2 className="text-xl sm:text-3xl font-extrabold tracking-tight text-white">
-            Have an idea or need to build a practical application?
-          </h2>
-          <p className="text-xs sm:text-sm text-gray-300 max-w-lg mx-auto">
-            Work directly with our senior developers. We evaluate technical feasibility, estimate realistic costs, and engineer what works.
-          </p>
-          <div className="pt-1.5">
-            <Link
-              href="/contact"
-              className="inline-flex items-center gap-2 px-6 py-3 sm:px-8 sm:py-3.5 rounded-md font-semibold text-xs sm:text-sm bg-palnadu-teal text-white hover:bg-[#157c5c] shadow-xs transition-colors"
-            >
-              <span>Tell Us What You Want To Build</span>
-              <ArrowRight className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-            </Link>
+                  <div className="flex flex-wrap gap-1.5 pt-1">
+                    {study.techStack.map((tech) => (
+                      <span
+                        key={tech}
+                        className="text-xs text-slate-600 bg-slate-100 px-2.5 py-1 rounded-md"
+                      >
+                        {tech}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </article>
+            ))}
           </div>
         </div>
+      </section>
 
+      {/* ── 3. ENGINEERING STANDARDS ── */}
+      <section className="py-16 sm:py-24 bg-white border-t border-slate-200">
+        <div className="container max-w-5xl mx-auto px-4 sm:px-6">
+          <div className="max-w-3xl mb-12 space-y-3">
+            <p className="text-xs font-semibold uppercase tracking-wider text-palnadu-blue">
+              Our Development Approach
+            </p>
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-slate-900 leading-tight">
+              Why Companies Trust Palnadu.dev
+            </h2>
+            <p className="text-base sm:text-lg text-slate-600 leading-relaxed font-normal">
+              We approach every engagement with straightforward engineering principles designed to protect your capital and deliver dependable software.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8">
+            {engineeringStandards.map((std, idx) => (
+              <div
+                key={idx}
+                className="bg-slate-50/60 rounded-xl p-6 border border-slate-200 space-y-2.5"
+              >
+                <h3 className="text-base sm:text-lg font-bold text-slate-900 leading-snug">
+                  {std.title}
+                </h3>
+                <p className="text-sm text-slate-600 leading-relaxed font-normal">
+                  {std.description}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── 4. BOTTOM CONSULTATION CARD ── */}
+      <section className="py-16 sm:py-20 bg-slate-900 text-white border-t border-slate-800">
+        <div className="container max-w-3xl mx-auto px-4 text-center space-y-5">
+          <h2 className="text-2xl sm:text-4xl font-bold tracking-tight text-white leading-tight">
+            Have a project or manual process to solve?
+          </h2>
+          <p className="text-sm sm:text-base text-slate-300 max-w-xl mx-auto leading-relaxed font-normal">
+            Talk directly with senior developers who write your software. We evaluate technical feasibility, estimate realistic costs, and engineer what works.
+          </p>
+          <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
+            <Button
+              asChild
+              className="bg-palnadu-blue hover:bg-[#12487e] text-white font-semibold px-7 h-11 text-sm rounded-lg shadow-sm"
+            >
+              <Link href="/contact">Schedule an Engineering Consultation</Link>
+            </Button>
+            <Button
+              asChild
+              variant="outline"
+              className="border-slate-700 bg-transparent text-white hover:bg-slate-800 font-semibold px-6 h-11 text-sm rounded-lg"
+            >
+              <Link href="/services">Explore All Services</Link>
+            </Button>
+          </div>
+        </div>
       </section>
     </div>
   );

@@ -17,6 +17,14 @@ const nextConfig = {
         protocol: 'https',
         hostname: 'cdn.21st.dev',
       },
+      {
+        protocol: 'https',
+        hostname: 'images.unsplash.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'ui.aceternity.com',
+      },
     ],
   },
   async headers() {
