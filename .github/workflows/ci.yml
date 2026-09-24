@@ -36,7 +36,7 @@ jobs:
         run: pnpm db:generate
 
       - name: Build packages and apps
-        run: pnpm build
+        run: pnpm db:generate && npx turbo build --concurrency=2
 
       - name: Run tests
         run: pnpm test
