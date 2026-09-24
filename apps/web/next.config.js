@@ -13,6 +13,10 @@ const nextConfig = {
         protocol: 'https',
         hostname: '**.palnadu.dev',
       },
+      {
+        protocol: 'https',
+        hostname: 'cdn.21st.dev',
+      },
     ],
   },
   async headers() {
