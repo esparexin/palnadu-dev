@@ -206,7 +206,11 @@ export default function BlogAdminPage() {
         seoDescription: formData.seoDescription || undefined,
         ogImage: formData.ogImage || formData.coverImage || undefined,
         status: formData.status,
-        publishDate: formData.status === 'PUBLISHED' ? new Date().toISOString() : undefined,
+        publishDate: editingPost?.publishDate
+          ? editingPost.publishDate
+          : formData.status === 'PUBLISHED'
+          ? new Date().toISOString()
+          : undefined,
       };
 
       if (editingPost) {

@@ -111,8 +111,41 @@ export class BlogAutomationService {
     private imageService: ImageSourcingService,
   ) {}
 
+  // Dynamic Industry & Regional Matrix to ensure perpetual topic generation
+  private readonly dynamicServices = [
+    { service: 'Cloud ERP and Billing Software', category: 'website-development' },
+    { service: 'E-Commerce Portals and Online Ordering Apps', category: 'app-development' },
+    { service: 'Digital Admissions and School Management Platforms', category: 'school-websites' },
+    { service: 'Clinic and Diagnostic Lab Management Systems', category: 'website-development' },
+    { service: 'Rice Mill Gate-Pass and Inventory Software', category: 'website-development' },
+    { service: 'Cotton Ginning Dispatch and Weighbridge Automation', category: 'website-development' },
+    { service: 'Mobile Field Sales and Delivery Tracking Apps', category: 'app-development' },
+    { service: 'Local Google Maps SEO and Search Authority', category: 'local-seo-business' },
+    { service: 'Cold Storage Stock and Dispatch Systems', category: 'website-development' },
+    { service: 'Automobile Service and Spare Parts Billing POS', category: 'website-development' },
+    { service: 'Real Estate Property Portals and Inflow Systems', category: 'website-development' },
+    { service: 'Microfinance and Loan Accounting Software', category: 'startups' },
+  ];
+
+  private readonly dynamicLocations = [
+    'Narasaraopet',
+    'Guntur',
+    'Chilakaluripet',
+    'Vinukonda',
+    'Sattenapalli',
+    'Macherla',
+    'Piduguralla',
+    'Tenali',
+    'Mangalagiri',
+    'Bapatla',
+    'Palnadu District',
+    'Andhra Pradesh',
+  ];
+
   /**
-   * Identifies queue items that haven't been generated in the database yet
+   * Identifies queue items that haven't been generated in the database yet.
+   * If predefined items are completed, dynamically generates new candidate topics
+   * so the automation never stalls or repeats existing articles.
    */
   async getPendingQueueItems() {
     const existingPosts = await this.prisma.blogPost.findMany({
@@ -121,7 +154,7 @@ export class BlogAutomationService {
     const existingSlugs = new Set(existingPosts.map((p) => p.slug));
     const existingTitles = new Set(existingPosts.map((p) => p.title.toLowerCase().trim()));
 
-    return this.topicQueue.map((item) => {
+    const baseQueue = this.topicQueue.map((item) => {
       const slug = item.topic
         .toLowerCase()
         .trim()
@@ -136,6 +169,36 @@ export class BlogAutomationService {
         status: isGenerated ? ('COMPLETED' as const) : ('PENDING' as const),
       };
     });
+
+    const pending = baseQueue.filter((item) => !item.isGenerated);
+
+    // If static queue is exhausted or low, dynamically generate next batch candidates
+    if (pending.length < 10) {
+      for (const s of this.dynamicServices) {
+        for (const loc of this.dynamicLocations) {
+          const topic = `How ${s.service} Modernizes Growing Businesses in ${loc}`;
+          const slug = topic
+            .toLowerCase()
+            .trim()
+            .replace(/[^\w\s-]/g, '')
+            .replace(/[\s_-]+/g, '-')
+            .replace(/^-+|-+$/g, '');
+
+          if (!existingSlugs.has(slug) && !existingTitles.has(topic.toLowerCase().trim())) {
+            baseQueue.push({
+              categorySlug: s.category,
+              topic,
+              targetLocation: `${loc}, Andhra Pradesh`,
+              slug,
+              isGenerated: false,
+              status: 'PENDING' as const,
+            });
+          }
+        }
+      }
+    }
+
+    return baseQueue;
   }
 
   /**
@@ -170,11 +233,13 @@ export class BlogAutomationService {
     const queueStatus = await this.getPendingQueueItems();
     const pendingItems = queueStatus.filter((item) => !item.isGenerated);
 
-    // Prioritize pending items first; if fewer than count, pad with remaining items
-    const queue =
-      pendingItems.length >= count
-        ? pendingItems.slice(0, count)
-        : [...pendingItems, ...queueStatus.filter((i) => i.isGenerated)].slice(0, count);
+    // Only generate pending (ungenerated) items — never re-run already-generated posts
+    const queue = pendingItems.slice(0, count);
+
+    if (queue.length === 0) {
+      this.logger.log('All topics in queue have been generated. No new articles to create.');
+      return results;
+    }
 
     for (const item of queue) {
       try {
@@ -279,7 +344,6 @@ export class BlogAutomationService {
         canonicalUrl: draft.canonicalUrl,
         ogImage: coverImage,
         status: publishStatus,
-        publishDate: shouldPublish ? new Date() : null,
         imageMetadata: images as any,
         faqData: draft.faq as any,
       },
