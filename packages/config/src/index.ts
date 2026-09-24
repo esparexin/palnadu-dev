@@ -36,6 +36,7 @@ export interface NavItem {
 
 export const mainNavItems: NavItem[] = [
   { title: 'Home', href: '/' },
+  { title: 'Grow', href: '/grow' },
   { title: 'About', href: '/about' },
   { title: 'Services', href: '/services' },
   { title: 'Work', href: '/work' },
@@ -541,6 +542,7 @@ export interface SitemapPage {
 export const sitemapPages: SitemapPage[] = [
   // ── Core ──
   { path: '',            changeFrequency: 'weekly',  priority: 1.0 },
+  { path: '/grow',       changeFrequency: 'weekly',  priority: 0.9 },
   { path: '/about',      changeFrequency: 'monthly', priority: 0.7 },
   { path: '/services',   changeFrequency: 'monthly', priority: 0.9 },
   { path: '/work',       changeFrequency: 'monthly', priority: 0.7 },

@@ -7,7 +7,6 @@ import { Menu, X, ArrowRight } from 'lucide-react';
 import { mainNavItems } from '@palnadu/config';
 import { Button } from '@/components/ui/button';
 import { BrandLogo } from '@/components/ui/brand-logo';
-import { api } from '@/lib/api';
 import { cn } from '@/lib/utils';
 
 interface NavbarProps {
@@ -16,32 +15,21 @@ interface NavbarProps {
 
 export function Navbar({ initialLogoUrl }: NavbarProps = {}) {
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [customLogoUrl, setCustomLogoUrl] = useState<string | null>(initialLogoUrl || null);
+  const customLogoUrl = initialLogoUrl || null;
   const pathname = usePathname();
-
-  // Fetch active custom logo if configured
-  useEffect(() => {
-    api.settings
-      .branding()
-      .then((res) => {
-        if (res.success && res.data?.headerLogo?.url) {
-          setCustomLogoUrl(res.data.headerLogo.url);
-        } else if (res.success && res.data?.logoUrl) {
-          setCustomLogoUrl(res.data.logoUrl);
-        }
-      })
-      .catch(() => {});
-  }, []);
 
   // Close menu automatically on route change
   useEffect(() => {
     setMobileOpen(false);
   }, [pathname]);
 
-  // Handle Escape key and body scroll lock
+  // Handle Escape key and body scroll lock (safely avoid conflicting with fixed position locks)
   useEffect(() => {
     if (mobileOpen) {
-      document.body.style.overflow = 'hidden';
+      const prevOverflow = document.body.style.overflow;
+      if (document.body.style.position !== 'fixed') {
+        document.body.style.overflow = 'hidden';
+      }
 
       const handleKeyDown = (e: KeyboardEvent) => {
         if (e.key === 'Escape') {
@@ -51,11 +39,11 @@ export function Navbar({ initialLogoUrl }: NavbarProps = {}) {
 
       window.addEventListener('keydown', handleKeyDown);
       return () => {
-        document.body.style.overflow = '';
+        if (document.body.style.position !== 'fixed') {
+          document.body.style.overflow = prevOverflow || '';
+        }
         window.removeEventListener('keydown', handleKeyDown);
       };
-    } else {
-      document.body.style.overflow = '';
     }
   }, [mobileOpen]);
 
@@ -99,10 +87,11 @@ export function Navbar({ initialLogoUrl }: NavbarProps = {}) {
             </Button>
           </div>
 
-          {/* Mobile menu button */}
+          {/* Mobile menu button — zero tap delay with touch-manipulation */}
           <button
-            className="inline-flex items-center justify-center rounded-lg p-2.5 text-palnadu-dark hover:text-palnadu-blue hover:bg-palnadu-light-blue md:hidden cursor-pointer"
-            onClick={() => setMobileOpen(!mobileOpen)}
+            type="button"
+            className="inline-flex items-center justify-center rounded-lg p-2.5 text-palnadu-dark hover:text-palnadu-blue hover:bg-palnadu-light-blue md:hidden cursor-pointer touch-manipulation active:scale-90 transition-transform select-none"
+            onClick={() => setMobileOpen((prev) => !prev)}
             aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
             aria-expanded={mobileOpen}
           >
@@ -110,15 +99,16 @@ export function Navbar({ initialLogoUrl }: NavbarProps = {}) {
           </button>
         </nav>
 
-        {/* Mobile Navigation Drawer — Direct links, no dropdown */}
+        {/* Mobile Navigation Drawer — Fast 150ms Hardware-Accelerated Appearance */}
         {mobileOpen && (
-          <div className="relative z-50 border-t border-palnadu-border bg-white shadow-xl md:hidden animate-fade-in">
+          <div className="relative z-50 border-t border-palnadu-border bg-white shadow-xl md:hidden transition-all duration-150 ease-out animate-in fade-in slide-in-from-top-2 duration-150">
             <div className="container space-y-1.5 py-4">
               {mainNavItems.map((item) => (
                 <div key={item.href} className="border-b border-palnadu-border/50 pb-1.5">
                   <Link
                     href={item.href}
-                    className="block rounded-md px-3 py-2 text-base font-semibold text-palnadu-dark hover:text-palnadu-blue hover:bg-palnadu-light-blue transition-colors"
+                    prefetch={true}
+                    className="block rounded-md px-3 py-2 text-base font-semibold text-palnadu-dark hover:text-palnadu-blue hover:bg-palnadu-light-blue active:bg-palnadu-light-blue transition-colors touch-manipulation"
                     onClick={() => setMobileOpen(false)}
                   >
                     {item.title}
@@ -126,9 +116,10 @@ export function Navbar({ initialLogoUrl }: NavbarProps = {}) {
                 </div>
               ))}
               <div className="pt-2">
-                <Button asChild className="w-full bg-palnadu-blue text-white hover:bg-[#12487e] h-10">
+                <Button asChild className="w-full bg-palnadu-blue text-white hover:bg-[#12487e] h-10 touch-manipulation">
                   <Link
                     href="/contact"
+                    prefetch={true}
                     className="flex items-center justify-center gap-1.5"
                     onClick={() => setMobileOpen(false)}
                   >
@@ -142,10 +133,10 @@ export function Navbar({ initialLogoUrl }: NavbarProps = {}) {
         )}
       </header>
 
-      {/* Backdrop Overlay for outside tap to close */}
+      {/* Backdrop Overlay for outside tap to close — Clean opacity without GPU-stalling blur */}
       {mobileOpen && (
         <div
-          className="fixed inset-0 top-[66px] z-40 bg-black/40 backdrop-blur-xs md:hidden animate-fade-in"
+          className="fixed inset-0 top-[66px] z-40 bg-black/35 md:hidden transition-opacity duration-150 ease-out"
           onClick={() => setMobileOpen(false)}
           aria-hidden="true"
         />

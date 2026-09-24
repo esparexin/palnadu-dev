@@ -19,18 +19,26 @@ export class BlogService {
     });
   }
 
-  // Public: published articles only
+  // Public: published articles (and optionally archived articles)
   async findPublished(params: {
     page?: number;
     limit?: number;
     categorySlug?: string;
     search?: string;
+    status?: PublishStatus;
+    includeArchived?: boolean;
   } = {}) {
-    const { page = 1, limit = 12, categorySlug, search } = params;
+    const { page = 1, limit = 12, categorySlug, search, status, includeArchived } = params;
     const skip = (page - 1) * limit;
 
+    const allowedStatuses = status
+      ? [status]
+      : includeArchived
+      ? [PublishStatus.PUBLISHED, PublishStatus.ARCHIVED]
+      : [PublishStatus.PUBLISHED];
+
     const where: Prisma.BlogPostWhereInput = {
-      status: PublishStatus.PUBLISHED,
+      status: allowedStatuses.length === 1 ? allowedStatuses[0] : { in: allowedStatuses },
       ...(categorySlug && { category: { slug: categorySlug } }),
       ...(search && {
         OR: [
@@ -65,12 +73,12 @@ export class BlogService {
     };
   }
 
-  // Public: single post by slug with related posts
+  // Public: single post by slug with related posts (supports published & archived)
   async findBySlug(slug: string) {
     const post = await this.prisma.blogPost.findFirst({
       where: {
         slug,
-        status: PublishStatus.PUBLISHED,
+        status: { in: [PublishStatus.PUBLISHED, PublishStatus.ARCHIVED] },
       },
       include: {
         author: { select: { id: true, name: true, avatar: true } },
@@ -82,7 +90,7 @@ export class BlogService {
 
     const relatedPosts = await this.prisma.blogPost.findMany({
       where: {
-        status: PublishStatus.PUBLISHED,
+        status: { in: [PublishStatus.PUBLISHED, PublishStatus.ARCHIVED] },
         id: { not: post.id },
         ...(post.categoryId ? { categoryId: post.categoryId } : {}),
       },

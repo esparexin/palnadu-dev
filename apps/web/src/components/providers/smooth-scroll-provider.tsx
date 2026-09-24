@@ -4,6 +4,13 @@ import { useEffect, useRef } from 'react';
 import { usePathname } from 'next/navigation';
 import Lenis from 'lenis';
 
+/**
+ * Pages that rely on scroll-driven animations (video scrub, stacking cards,
+ * motion useScroll) need pixel-accurate native scroll — Lenis smooth-wheel
+ * easing would desync those animations. Skip Lenis on these routes.
+ */
+const NATIVE_SCROLL_ROUTES = ['/grow'];
+
 export function SmoothScrollProvider({ children }: { children: React.ReactNode }) {
   const lenisRef = useRef<Lenis | null>(null);
   const pathname = usePathname();
@@ -16,6 +23,7 @@ export function SmoothScrollProvider({ children }: { children: React.ReactNode }
     window.scrollTo(0, 0);
   }, [pathname]);
 
+  // Re-run on pathname change so Lenis is destroyed/re-created per route
   useEffect(() => {
     // Scroll Reveal Intersection Observer for smooth transition effects
     const observer = new IntersectionObserver(
@@ -56,7 +64,27 @@ export function SmoothScrollProvider({ children }: { children: React.ReactNode }
       };
     }
 
-    // On desktop, initialize Lenis for smooth mouse-wheel transitions
+    // Skip Lenis on routes that need pixel-accurate native scroll
+    // (video scrub heroes, stacking card decks, motion useScroll)
+    const needsNativeScroll = NATIVE_SCROLL_ROUTES.some(
+      (route) => pathname === route || pathname.startsWith(route + '/')
+    );
+
+    if (needsNativeScroll) {
+      // Destroy any existing Lenis instance from a previous route
+      if (lenisRef.current) {
+        lenisRef.current.destroy();
+        lenisRef.current = null;
+      }
+      observeElements();
+      const timer = setTimeout(observeElements, 100);
+      return () => {
+        clearTimeout(timer);
+        observer.disconnect();
+      };
+    }
+
+    // On desktop (non-native-scroll routes), initialize Lenis for smooth transitions
     const lenis = new Lenis({
       duration: 1.0,
       easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
@@ -64,6 +92,7 @@ export function SmoothScrollProvider({ children }: { children: React.ReactNode }
       gestureOrientation: 'vertical',
       smoothWheel: true,
       wheelMultiplier: 1.0,
+      syncTouch: false,
       infinite: false,
     });
 
@@ -105,8 +134,9 @@ export function SmoothScrollProvider({ children }: { children: React.ReactNode }
       document.removeEventListener('click', handleAnchorClick);
       observer.disconnect();
       lenis.destroy();
+      lenisRef.current = null;
     };
-  }, []);
+  }, [pathname]);
 
   return <>{children}</>;
 }

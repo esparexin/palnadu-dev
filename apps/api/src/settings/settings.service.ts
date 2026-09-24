@@ -54,6 +54,9 @@ const ALLOWED_MIME_TYPES: Record<AssetType, string[]> = {
 @Injectable()
 export class SettingsService implements OnModuleInit {
   private readonly logger = new Logger(SettingsService.name);
+  private brandingCache: FullBrandingConfig | null = null;
+  private brandingCacheExpiry: number = 0;
+  private static readonly CACHE_TTL_MS = 60_000; // 60 seconds
 
   constructor(private prisma: PrismaService) {}
 
@@ -72,6 +75,12 @@ export class SettingsService implements OnModuleInit {
    * Get complete branding configuration (Header, Footer, Favicon, Social)
    */
   async getBranding(): Promise<FullBrandingConfig> {
+    // Return cached result if still valid
+    const now = Date.now();
+    if (this.brandingCache && now < this.brandingCacheExpiry) {
+      return this.brandingCache;
+    }
+
     try {
       const record = await this.prisma.siteSetting.findUnique({
         where: { key: 'branding' },
@@ -103,7 +112,7 @@ export class SettingsService implements OnModuleInit {
       const favicon = val.favicon || { ...EMPTY_ASSET };
       const ogImage = val.ogImage || { ...EMPTY_ASSET };
 
-      return {
+      const result: FullBrandingConfig = {
         headerLogo,
         footerLogo,
         favicon,
@@ -111,10 +120,22 @@ export class SettingsService implements OnModuleInit {
         updatedAt: val.updatedAt || new Date().toISOString(),
         updatedBy: val.updatedBy || null,
       };
+
+      // Cache the successful result
+      this.brandingCache = result;
+      this.brandingCacheExpiry = Date.now() + SettingsService.CACHE_TTL_MS;
+
+      return result;
     } catch (err) {
       this.logger.error('Failed to retrieve branding settings', err);
       return DEFAULT_BRANDING;
     }
+  }
+
+  /** Invalidate branding cache (call after uploads/removals) */
+  private invalidateBrandingCache() {
+    this.brandingCache = null;
+    this.brandingCacheExpiry = 0;
   }
 
   private getPropertyKey(type: AssetType): 'headerLogo' | 'footerLogo' | 'favicon' | 'ogImage' {
@@ -263,6 +284,7 @@ export class SettingsService implements OnModuleInit {
     });
 
     this.logger.log(`Branding ${type} asset updated by ${userEmail || 'admin'}`);
+    this.invalidateBrandingCache();
     return newConfig;
   }
 
@@ -305,6 +327,7 @@ export class SettingsService implements OnModuleInit {
     });
 
     this.logger.log(`Branding ${type} asset removed by ${userEmail || 'admin'}`);
+    this.invalidateBrandingCache();
     return newConfig;
   }
 }

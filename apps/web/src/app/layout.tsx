@@ -38,7 +38,10 @@ interface ActiveBranding {
 
 async function getActiveBranding(): Promise<ActiveBranding> {
   try {
-    const res = await fetch(`${API_URL}/api/settings/branding`, { next: { revalidate: 30 } });
+    const res = await fetch(`${API_URL}/api/settings/branding`, {
+      next: { revalidate: 30 },
+      signal: AbortSignal.timeout(1200),
+    });
     if (res.ok) {
       const json = await res.json();
       if (json.success && json.data) {

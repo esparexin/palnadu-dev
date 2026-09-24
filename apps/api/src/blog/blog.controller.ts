@@ -29,12 +29,16 @@ export class BlogController {
     @Query('limit') limit?: string,
     @Query('category') category?: string,
     @Query('search') search?: string,
+    @Query('status') status?: string,
+    @Query('includeArchived') includeArchived?: string,
   ) {
     const result = await this.blogService.findPublished({
       page: page ? parseInt(page) : 1,
       limit: limit ? parseInt(limit) : 12,
       categorySlug: category,
       search,
+      status: status as PublishStatus | undefined,
+      includeArchived: includeArchived === 'true' || includeArchived === '1',
     });
     return { success: true, ...result };
   }
