@@ -206,16 +206,16 @@ export function WorkClient() {
         
         {/* 1. HEADER */}
         <div className="max-w-4xl mx-auto text-center space-y-2.5 sm:space-y-4">
-          <p className="text-xs font-mono uppercase tracking-widest text-palnadu-teal font-bold">
-            About our apps
+          <p className="text-xs font-semibold uppercase tracking-wider text-palnadu-teal">
+            Portfolio and Case Studies
           </p>
 
-          <h1 className="text-2xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-white leading-[1.16]">
-            A visual collection of our most recent works
-            <span className="block text-sm sm:text-2xl lg:text-3xl font-normal text-gray-300 mt-1.5 sm:mt-3">
-              — each piece crafted with intention, emotion and style.
-            </span>
+          <h1 className="text-2xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-white leading-tight">
+            Software Solutions Built for Real-World Operations
           </h1>
+          <p className="text-sm sm:text-base lg:text-lg font-normal text-gray-300 max-w-2xl mx-auto leading-relaxed">
+            From high-speed web platforms to mobile applications and automated dispatch systems, explore practical technology engineered for growing businesses across Andhra Pradesh.
+          </p>
         </div>
 
         {/* 2. THREE PILLARS (Compact 3-Column on Mobile & Desktop) */}

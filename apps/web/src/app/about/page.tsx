@@ -46,7 +46,7 @@ export default function AboutPage() {
       {/* Lamp Hero Showcase */}
       <LampContainer className="min-h-[65vh] sm:min-h-[75vh]">
         <div className="mx-auto max-w-2xl space-y-3.5 text-center">
-          <p className="text-xs font-mono uppercase tracking-widest text-cyan-400 font-bold">
+          <p className="text-xs font-semibold uppercase tracking-wider text-cyan-400">
             About Palnadu.dev
           </p>
           <h1 className="bg-gradient-to-br from-white via-slate-100 to-slate-400 py-1 bg-clip-text text-2xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-transparent leading-tight">
