@@ -69,18 +69,13 @@ export const HeroParallax = ({
     springConfig
   );
 
-  // Proportional vertical positioning (never pushed -700px offscreen on mobile)
+  // Smooth vertical positioning starting BELOW the header (never pulled up into the title)
   const translateY = useSpring(
     useTransform(
       scrollYProgress,
-      [0, 0.25],
-      isMobile ? [-60, 80] : [-420, 260]
+      [0, 0.3],
+      isMobile ? [0, 60] : [0, 120]
     ),
-    springConfig
-  );
-
-  const opacity = useSpring(
-    useTransform(scrollYProgress, [0, 0.15], [0.6, 1]),
     springConfig
   );
 
@@ -95,9 +90,8 @@ export const HeroParallax = ({
           rotateX,
           rotateZ,
           translateY,
-          opacity,
         }}
-        className="w-full"
+        className="w-full mt-4 sm:mt-8"
       >
         <motion.div className="flex flex-row-reverse space-x-reverse space-x-6 sm:space-x-12 md:space-x-16 mb-8 sm:mb-12 md:mb-16">
           {firstRow.map((product) => (
@@ -133,11 +127,11 @@ export const HeroParallax = ({
 
 export const Header = () => {
   return (
-    <div className="max-w-7xl relative mx-auto pt-6 pb-12 sm:pt-12 sm:pb-24 px-4 w-full left-0 top-0">
-      <h1 className="text-3xl sm:text-5xl md:text-6xl font-bold tracking-tight text-palnadu-dark leading-tight max-w-4xl">
+    <div className="max-w-7xl relative mx-auto pt-6 pb-6 sm:pt-10 sm:pb-10 px-4 w-full left-0 top-0 z-20">
+      <h1 className="text-3xl sm:text-5xl md:text-6xl font-extrabold tracking-tight text-slate-900 leading-tight max-w-4xl">
         Software Engineering and Web Development Services
       </h1>
-      <p className="max-w-2xl text-base sm:text-lg md:text-xl mt-4 sm:mt-6 text-palnadu-body leading-relaxed">
+      <p className="max-w-2xl text-base sm:text-lg md:text-xl mt-4 sm:mt-5 text-slate-600 leading-relaxed font-normal">
         We build high-performance web applications, mobile apps, and custom
         software for businesses across Palnadu, Guntur, and coastal Andhra
         Pradesh. Every platform is designed around real operational workflows.
@@ -176,18 +170,18 @@ export const ProductCard = ({
           alt={product.title}
         />
 
-        {/* Backdrop Gradient: Always visible on mobile so text is legible; deepens on desktop hover */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/35 to-transparent transition-opacity duration-300 group-hover/product:from-black/95 group-hover/product:via-black/50" />
+        {/* High-contrast backdrop gradient: ensures white title is razor sharp against any background */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/55 to-transparent transition-opacity duration-300 group-hover/product:from-black group-hover/product:via-black/70" />
 
-        {/* Service Title & Route Badge: Always visible and readable on all screens */}
-        <div className="absolute inset-x-0 bottom-0 p-4 sm:p-5 flex flex-col justify-end">
-          <p className="text-[11px] sm:text-xs font-medium text-emerald-300 tracking-wide mb-1">
+        {/* Service Title & Route Badge: 100% clear and legible on all devices */}
+        <div className="absolute inset-x-0 bottom-0 p-4 sm:p-5 flex flex-col justify-end z-10">
+          <p className="text-[11px] sm:text-xs font-semibold text-emerald-400 tracking-wide mb-1">
             Engineering Service
           </p>
-          <h2 className="text-base sm:text-lg md:text-xl font-bold text-white leading-snug drop-shadow-sm">
+          <h2 className="text-base sm:text-lg md:text-xl font-extrabold text-white leading-snug drop-shadow-md">
             {product.title}
           </h2>
-          <span className="text-xs text-white/75 mt-1 sm:mt-1.5 inline-flex items-center gap-1 font-medium transition-colors group-hover/product:text-white">
+          <span className="text-xs text-white/90 mt-1 sm:mt-1.5 inline-flex items-center gap-1 font-semibold transition-colors group-hover/product:text-white">
             Learn more
           </span>
         </div>
