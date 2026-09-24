@@ -228,7 +228,7 @@ export class BlogAutomationService {
    * Generates a batch of distinct articles across rotating categories,
    * prioritizing pending ungenerated topics first.
    */
-  async generateBatch(count = 5): Promise<GenerationResult[]> {
+  async generateBatch(count = 5, forcePublish = false): Promise<GenerationResult[]> {
     const results: GenerationResult[] = [];
     const queueStatus = await this.getPendingQueueItems();
     const pendingItems = queueStatus.filter((item) => !item.isGenerated);
@@ -243,7 +243,7 @@ export class BlogAutomationService {
 
     for (const item of queue) {
       try {
-        const generated = await this.generateSingleArticle(item.topic, item.categorySlug, item.targetLocation);
+        const generated = await this.generateSingleArticle(item.topic, item.categorySlug, item.targetLocation, forcePublish);
         results.push(generated);
       } catch (err) {
         this.logger.error(`Failed generating article for "${item.topic}": ${err instanceof Error ? err.message : err}`);

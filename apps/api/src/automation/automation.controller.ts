@@ -51,7 +51,7 @@ export class AutomationController {
     },
   ) {
     if (body.batchCount && body.batchCount > 1) {
-      const results = await this.automationService.generateBatch(body.batchCount);
+      const results = await this.automationService.generateBatch(body.batchCount, body.forcePublish ?? false);
       return {
         success: true,
         message: `Successfully generated ${results.length} automated articles.`,
