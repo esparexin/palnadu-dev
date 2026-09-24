@@ -38,16 +38,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     caseStudyPages = [];
   }
 
-  // ── Dynamic: published blog posts ──
+  // ── Dynamic: published & archived blog posts ──
   let blogPages: MetadataRoute.Sitemap = [];
   try {
-    const res: any = await api.blog.list({ page: '1', limit: '100' });
+    const res: any = await api.blog.list({ page: '1', limit: '500', includeArchived: 'true' });
     const posts = res?.data || [];
     blogPages = posts.map((post: any) => ({
       url: `${baseUrl}/blog/${post.slug}`,
       lastModified: new Date(post.updatedAt || post.createdAt),
       changeFrequency: 'monthly' as const,
-      priority: 0.8,
+      priority: post.status === 'ARCHIVED' ? 0.5 : 0.8,
     }));
   } catch {
     blogPages = [];

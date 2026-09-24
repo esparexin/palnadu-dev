@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { api } from '@/lib/api';
 import type { BlogPost } from '@palnadu/types';
-import { Plus, Search, Edit2, Trash2, X, Globe, Eye, FileText, CheckCircle2, Sparkles, ExternalLink, UploadCloud, Loader2, Compass, Copy, Check, ListChecks, ArrowRight, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
+import { Plus, Search, Edit2, Trash2, X, Globe, Eye, FileText, CheckCircle2, Sparkles, ExternalLink, UploadCloud, Loader2, Compass, Copy, Check, ListChecks, ArrowRight, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Archive } from 'lucide-react';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { useToast } from '@/components/ui/toast';
 import { siteConfig } from '@palnadu/config';
@@ -19,7 +19,7 @@ interface BlogFormData {
   seoTitle: string;
   seoDescription: string;
   ogImage: string;
-  status: 'DRAFT' | 'PUBLISHED';
+  status: 'DRAFT' | 'PUBLISHED' | 'ARCHIVED';
 }
 
 const initialFormData: BlogFormData = {
@@ -71,6 +71,7 @@ export default function BlogAdminPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [publishedCount, setPublishedCount] = useState(0);
   const [draftCount, setDraftCount] = useState(0);
+  const [archivedCount, setArchivedCount] = useState(0);
 
   // SEO Keyword Research Tool modal state
   const [keywordModalOpen, setKeywordModalOpen] = useState(false);
@@ -133,6 +134,7 @@ export default function BlogAdminPage() {
         if (autoRes?.data?.statistics) {
           setPublishedCount(autoRes.data.statistics.publishedPosts || 0);
           setDraftCount(autoRes.data.statistics.draftPosts || 0);
+          setArchivedCount(autoRes.data.statistics.archivedPosts || 0);
         }
       })
       .catch(() => {})
@@ -377,7 +379,7 @@ export default function BlogAdminPage() {
       </div>
 
       {/* KPI Overview (Clickable Quick Filters) */}
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <button
           onClick={() => setStatusFilter('')}
           className={cn(
@@ -407,6 +409,16 @@ export default function BlogAdminPage() {
         >
           <p className="text-[11px] font-semibold text-amber-700 uppercase tracking-wider">Drafts Pending Review</p>
           <p className="text-xl font-bold text-amber-700 mt-1">{loading && draftCount === 0 ? '—' : draftCount}</p>
+        </button>
+        <button
+          onClick={() => setStatusFilter('ARCHIVED')}
+          className={cn(
+            "rounded-lg border bg-white p-3.5 shadow-2xs text-left transition-all cursor-pointer",
+            statusFilter === 'ARCHIVED' ? "border-purple-500 ring-1 ring-purple-500 bg-purple-50/20" : "border-palnadu-border hover:border-gray-300"
+          )}
+        >
+          <p className="text-[11px] font-semibold text-purple-700 uppercase tracking-wider">Archived Articles</p>
+          <p className="text-xl font-bold text-purple-700 mt-1">{loading && archivedCount === 0 ? '—' : archivedCount}</p>
         </button>
       </div>
 
@@ -463,6 +475,7 @@ export default function BlogAdminPage() {
             <option value="">All Statuses</option>
             <option value="PUBLISHED">Published</option>
             <option value="DRAFT">Drafts Only</option>
+            <option value="ARCHIVED">Archived Articles</option>
           </select>
         </div>
       </div>
@@ -544,7 +557,9 @@ export default function BlogAdminPage() {
                           'inline-flex rounded-md border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider',
                           post.status === 'PUBLISHED'
                             ? 'bg-emerald-100 text-emerald-800 border-emerald-200'
-                            : 'bg-gray-100 text-gray-700 border-gray-200'
+                            : post.status === 'ARCHIVED'
+                            ? 'bg-purple-100 text-purple-800 border-purple-200'
+                            : 'bg-amber-100 text-amber-800 border-amber-200'
                         )}
                       >
                         {post.status}
@@ -793,11 +808,12 @@ export default function BlogAdminPage() {
                       <label className="text-xs font-semibold text-palnadu-dark">Publication Status</label>
                       <select
                         value={formData.status}
-                        onChange={(e) => setFormData({ ...formData, status: e.target.value as 'DRAFT' | 'PUBLISHED' })}
+                        onChange={(e) => setFormData({ ...formData, status: e.target.value as 'DRAFT' | 'PUBLISHED' | 'ARCHIVED' })}
                         className="w-full h-8 rounded-md border border-palnadu-border bg-white px-3 text-xs text-palnadu-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-palnadu-blue cursor-pointer"
                       >
                         <option value="DRAFT">Draft (Internal Only)</option>
                         <option value="PUBLISHED">Published (Live on Google & Site)</option>
+                        <option value="ARCHIVED">Archived (Delisted from Active Feed)</option>
                       </select>
                     </div>
                   </div>
@@ -973,6 +989,10 @@ export default function BlogAdminPage() {
                   {formData.status === 'PUBLISHED' ? (
                     <span className="text-emerald-700 font-semibold flex items-center gap-1">
                       <CheckCircle2 className="h-3 w-3" /> Will be live and indexed by Google
+                    </span>
+                  ) : formData.status === 'ARCHIVED' ? (
+                    <span className="text-purple-700 font-semibold flex items-center gap-1">
+                      <Archive className="h-3 w-3" /> Will be preserved in Historical Archive
                     </span>
                   ) : (
                     'Will be saved privately as Draft'

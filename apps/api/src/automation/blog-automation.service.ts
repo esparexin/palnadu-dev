@@ -338,6 +338,7 @@ export class BlogAutomationService {
     const totalPosts = await this.prisma.blogPost.count();
     const draftPosts = await this.prisma.blogPost.count({ where: { status: 'DRAFT' } });
     const publishedPosts = await this.prisma.blogPost.count({ where: { status: 'PUBLISHED' } });
+    const archivedPosts = await this.prisma.blogPost.count({ where: { status: 'ARCHIVED' } });
 
     const autoPublishSetting = await this.prisma.siteSetting.findUnique({
       where: { key: 'auto_publish_blogs' },
@@ -355,6 +356,7 @@ export class BlogAutomationService {
         totalPosts,
         draftPosts,
         publishedPosts,
+        archivedPosts,
         queuePending: pendingCount,
         queueCompleted: completedCount,
       },

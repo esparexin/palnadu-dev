@@ -2,13 +2,14 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
 
 interface FetchOptions extends RequestInit {
   params?: Record<string, string>;
+  next?: { revalidate?: number; tags?: string[] };
 }
 
 export async function apiClient<T>(
   endpoint: string,
   options: FetchOptions = {},
 ): Promise<T> {
-  const { params, ...fetchOptions } = options;
+  const { params, next, ...fetchOptions } = options;
 
   let url = `${API_URL}${endpoint}`;
   if (params) {
@@ -24,6 +25,7 @@ export async function apiClient<T>(
         ...fetchOptions.headers,
       },
       ...fetchOptions,
+      ...(next ? { next } : {}),
     });
   } catch (networkErr) {
     throw new Error(
@@ -60,20 +62,20 @@ export const api = {
       apiClient('/api/leads', { method: 'POST', body: JSON.stringify(data) }),
   },
   services: {
-    list: () => apiClient('/api/services'),
-    getBySlug: (slug: string) => apiClient(`/api/services/${slug}`),
+    list: () => apiClient('/api/services', { next: { revalidate: 300 } }),
+    getBySlug: (slug: string) => apiClient(`/api/services/${slug}`, { next: { revalidate: 300 } }),
   },
   caseStudies: {
-    list: () => apiClient('/api/case-studies'),
-    getBySlug: (slug: string) => apiClient(`/api/case-studies/${slug}`),
+    list: () => apiClient('/api/case-studies', { next: { revalidate: 300 } }),
+    getBySlug: (slug: string) => apiClient(`/api/case-studies/${slug}`, { next: { revalidate: 300 } }),
   },
   blog: {
     list: (params?: Record<string, string>) =>
-      apiClient('/api/blog', { params }),
-    getBySlug: (slug: string) => apiClient(`/api/blog/${slug}`),
-    categories: () => apiClient<{ success: boolean; data: any[] }>('/api/blog/categories'),
+      apiClient('/api/blog', { params, next: { revalidate: 60 } }),
+    getBySlug: (slug: string) => apiClient(`/api/blog/${slug}`, { next: { revalidate: 60 } }),
+    categories: () => apiClient<{ success: boolean; data: any[] }>('/api/blog/categories', { next: { revalidate: 300 } }),
   },
   settings: {
-    branding: () => apiClient<{ success: boolean; data: any }>('/api/settings/branding'),
+    branding: () => apiClient<{ success: boolean; data: any }>('/api/settings/branding', { next: { revalidate: 60 } }),
   },
 };

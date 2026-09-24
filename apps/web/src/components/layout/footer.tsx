@@ -1,11 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { siteConfig, footerNavItems } from '@palnadu/config';
 import { Separator } from '@/components/ui/separator';
 import { BrandLogo } from '@/components/ui/brand-logo';
-import { api } from '@/lib/api';
 import { ArrowUpRight } from 'lucide-react';
 
 interface FooterProps {
@@ -13,20 +11,7 @@ interface FooterProps {
 }
 
 export function Footer({ initialLogoUrl }: FooterProps = {}) {
-  const [customFooterLogoUrl, setCustomFooterLogoUrl] = useState<string | null>(initialLogoUrl || null);
-
-  useEffect(() => {
-    api.settings
-      .branding()
-      .then((res) => {
-        if (res.success && res.data?.footerLogo?.url) {
-          setCustomFooterLogoUrl(res.data.footerLogo.url);
-        } else if (res.success && res.data?.headerLogo?.url) {
-          setCustomFooterLogoUrl(res.data.headerLogo.url);
-        }
-      })
-      .catch(() => {});
-  }, []);
+  const customFooterLogoUrl = initialLogoUrl || null;
 
   return (
     <footer className="bg-palnadu-dark text-white" role="contentinfo">
