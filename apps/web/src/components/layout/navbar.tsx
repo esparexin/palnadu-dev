@@ -23,13 +23,13 @@ export function Navbar({ initialLogoUrl }: NavbarProps = {}) {
     setMobileOpen(false);
   }, [pathname]);
 
-  // Handle Escape key and body scroll lock (safely avoid conflicting with fixed position locks)
+  // Handle Escape key and body scroll lock (iOS-compatible)
   useEffect(() => {
     if (mobileOpen) {
-      const prevOverflow = document.body.style.overflow;
-      if (document.body.style.position !== 'fixed') {
-        document.body.style.overflow = 'hidden';
-      }
+      const scrollY = window.scrollY;
+      document.body.style.position = 'fixed';
+      document.body.style.top = `-${scrollY}px`;
+      document.body.style.width = '100%';
 
       const handleKeyDown = (e: KeyboardEvent) => {
         if (e.key === 'Escape') {
@@ -39,9 +39,10 @@ export function Navbar({ initialLogoUrl }: NavbarProps = {}) {
 
       window.addEventListener('keydown', handleKeyDown);
       return () => {
-        if (document.body.style.position !== 'fixed') {
-          document.body.style.overflow = prevOverflow || '';
-        }
+        document.body.style.position = '';
+        document.body.style.top = '';
+        document.body.style.width = '';
+        window.scrollTo(0, scrollY);
         window.removeEventListener('keydown', handleKeyDown);
       };
     }
@@ -49,9 +50,9 @@ export function Navbar({ initialLogoUrl }: NavbarProps = {}) {
 
   return (
     <>
-      {/* 1. Header — fixed height via CSS variable */}
+      {/* 1. Header — fixed on mobile for reliable positioning, sticky on desktop */}
       <header
-        className="sticky top-0 z-50 w-full border-b border-palnadu-border bg-white/95 backdrop-blur-md supports-[backdrop-filter]:bg-white/80"
+        className="sticky top-0 z-50 w-full border-b border-palnadu-border bg-white/95 backdrop-blur-md supports-[backdrop-filter]:bg-white/80 md:sticky"
         style={{ height: 'var(--header-height)' }}
       >
         {/* Accent top line */}
@@ -98,19 +99,31 @@ export function Navbar({ initialLogoUrl }: NavbarProps = {}) {
             onClick={() => setMobileOpen((prev) => !prev)}
             aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
             aria-expanded={mobileOpen}
+            aria-controls="mobile-menu"
           >
             {mobileOpen ? <X className="h-5 w-5 text-palnadu-blue" /> : <Menu className="h-5 w-5" />}
           </button>
         </nav>
       </header>
 
-      {/* 2. Mobile Menu — Fixed below header, independently scrollable */}
+      {/* 2. Backdrop Overlay — Full viewport, below header z-index */}
       {mobileOpen && (
         <div
-          className="fixed left-0 right-0 z-[60] bg-white border-b border-palnadu-border shadow-xl md:hidden max-h-[calc(100vh-var(--header-height))] overflow-y-auto transition-all duration-150 ease-out animate-in fade-in slide-in-from-top-2 duration-150"
+          className="fixed inset-0 z-40 bg-black/35 md:hidden transition-opacity duration-150 ease-out"
+          onClick={() => setMobileOpen(false)}
+          aria-hidden="true"
+        />
+      )}
+
+      {/* 3. Mobile Menu — Fixed below header, content height (not forced full viewport) */}
+      {mobileOpen && (
+        <div
+          id="mobile-menu"
+          className="fixed left-0 right-0 z-50 bg-white border-b border-palnadu-border shadow-xl md:hidden overflow-hidden transition-all duration-150 ease-out animate-in fade-in slide-in-from-top-2 duration-150"
           style={{ top: 'var(--header-height)' }}
           role="dialog"
           aria-modal="true"
+          aria-labelledby="mobile-menu-label"
         >
           <div className="container space-y-1.5 py-4">
             {mainNavItems.map((item) => (
@@ -140,16 +153,6 @@ export function Navbar({ initialLogoUrl }: NavbarProps = {}) {
             </div>
           </div>
         </div>
-      )}
-
-      {/* 3. Backdrop Overlay — Full viewport below header, no gap */}
-      {mobileOpen && (
-        <div
-          className="fixed inset-0 z-50 bg-black/35 md:hidden transition-opacity duration-150 ease-out"
-          style={{ top: 'var(--header-height)' }}
-          onClick={() => setMobileOpen(false)}
-          aria-hidden="true"
-        />
       )}
     </>
   );
