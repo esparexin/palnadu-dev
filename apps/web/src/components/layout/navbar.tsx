@@ -23,36 +23,25 @@ export function Navbar({ initialLogoUrl }: NavbarProps = {}) {
     setMobileOpen(false);
   }, [pathname]);
 
-  // Handle Escape key and body scroll lock (iOS-compatible)
+  // Handle Escape key - no body position:fixed lock to avoid reflow
   useEffect(() => {
-    if (mobileOpen) {
-      const scrollY = window.scrollY;
-      document.body.style.position = 'fixed';
-      document.body.style.top = `-${scrollY}px`;
-      document.body.style.width = '100%';
+    if (!mobileOpen) return;
 
-      const handleKeyDown = (e: KeyboardEvent) => {
-        if (e.key === 'Escape') {
-          setMobileOpen(false);
-        }
-      };
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setMobileOpen(false);
+      }
+    };
 
-      window.addEventListener('keydown', handleKeyDown);
-      return () => {
-        document.body.style.position = '';
-        document.body.style.top = '';
-        document.body.style.width = '';
-        window.scrollTo(0, scrollY);
-        window.removeEventListener('keydown', handleKeyDown);
-      };
-    }
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
   }, [mobileOpen]);
 
   return (
     <>
-      {/* 1. Header — fixed on mobile for reliable positioning, sticky on desktop */}
+      {/* 1. Header — fixed on mobile, sticky on desktop */}
       <header
-        className="sticky top-0 z-50 w-full border-b border-palnadu-border bg-white/95 backdrop-blur-md supports-[backdrop-filter]:bg-white/80 md:sticky"
+        className="fixed top-0 z-50 w-full border-b border-palnadu-border bg-white/95 backdrop-blur-md supports-[backdrop-filter]:bg-white/80 md:sticky md:relative"
         style={{ height: 'var(--header-height)' }}
       >
         {/* Accent top line */}
@@ -96,63 +85,85 @@ export function Navbar({ initialLogoUrl }: NavbarProps = {}) {
           <button
             type="button"
             className="inline-flex items-center justify-center rounded-lg p-2.5 text-palnadu-dark hover:text-palnadu-blue hover:bg-palnadu-light-blue md:hidden cursor-pointer touch-manipulation active:scale-90 transition-transform select-none"
-            onClick={() => setMobileOpen((prev) => !prev)}
-            aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
+            onClick={() => setMobileOpen(true)}
+            aria-label="Open menu"
             aria-expanded={mobileOpen}
-            aria-controls="mobile-menu"
+            aria-controls="mobile-sidebar"
           >
-            {mobileOpen ? <X className="h-5 w-5 text-palnadu-blue" /> : <Menu className="h-5 w-5" />}
+            <Menu className="h-5 w-5" />
           </button>
         </nav>
       </header>
 
-      {/* 2. Backdrop Overlay — Full viewport, below header z-index */}
+      {/* 2. Backdrop Overlay — Full viewport, opacity-only animation, hardware accelerated */}
       {mobileOpen && (
         <div
-          className="fixed inset-0 z-40 bg-black/35 md:hidden transition-opacity duration-150 ease-out"
+          className="fixed inset-0 z-50 bg-black/35 md:hidden will-change-opacity transition-opacity duration-150 ease-out"
+          style={{ opacity: 1 }}
           onClick={() => setMobileOpen(false)}
           aria-hidden="true"
         />
       )}
 
-      {/* 3. Mobile Menu — Fixed below header, content height (not forced full viewport) */}
+      {/* 3. Mobile Sidebar Drawer — Right-side, transform-based animation, hardware accelerated */}
       {mobileOpen && (
-        <div
-          id="mobile-menu"
-          className="fixed left-0 right-0 z-50 bg-white border-b border-palnadu-border shadow-xl md:hidden overflow-hidden transition-all duration-150 ease-out animate-in fade-in slide-in-from-top-2 duration-150"
-          style={{ top: 'var(--header-height)' }}
+        <aside
+          id="mobile-sidebar"
+          className="fixed top-0 right-0 z-60 h-full w-[85%] max-w-sm bg-white shadow-2xl md:hidden will-change-transform transition-transform duration-200 ease-out"
+          style={{
+            transform: 'translateX(0)',
+            height: '100dvh',
+          }}
           role="dialog"
           aria-modal="true"
-          aria-labelledby="mobile-menu-label"
+          aria-labelledby="mobile-sidebar-label"
         >
-          <div className="container space-y-1.5 py-4">
-            {mainNavItems.map((item) => (
-              <div key={item.href} className="border-b border-palnadu-border/50 pb-1.5">
-                <Link
-                  href={item.href}
-                  prefetch={true}
-                  className="block rounded-md px-3 py-2 text-base font-semibold text-palnadu-dark hover:text-palnadu-blue hover:bg-palnadu-light-blue active:bg-palnadu-light-blue transition-colors touch-manipulation"
-                  onClick={() => setMobileOpen(false)}
-                >
-                  {item.title}
-                </Link>
-              </div>
-            ))}
-            <div className="pt-2">
-              <Button asChild className="w-full bg-palnadu-blue text-white hover:bg-[#12487e] h-10 touch-manipulation">
-                <Link
-                  href="/contact"
-                  prefetch={true}
-                  className="flex items-center justify-center gap-1.5"
-                  onClick={() => setMobileOpen(false)}
-                >
-                  <span>Discuss your idea</span>
-                  <ArrowRight className="h-4 w-4" />
-                </Link>
-              </Button>
-            </div>
+          {/* Sidebar Header with Close Button */}
+          <div className="flex h-16 items-center justify-between border-b border-palnadu-border px-4">
+            <span id="mobile-sidebar-label" className="text-sm font-semibold text-palnadu-dark">
+              Menu
+            </span>
+            <button
+              type="button"
+              className="inline-flex items-center justify-center rounded-lg p-2 text-palnadu-dark hover:text-palnadu-blue hover:bg-palnadu-light-blue cursor-pointer touch-manipulation active:scale-90 transition-transform select-none"
+              onClick={() => setMobileOpen(false)}
+              aria-label="Close menu"
+            >
+              <X className="h-5 w-5" />
+            </button>
           </div>
-        </div>
+
+          {/* Sidebar Content — Independently Scrollable */}
+          <div className="flex-1 overflow-y-auto py-4">
+            <nav className="container space-y-1.5" aria-label="Mobile navigation">
+              {mainNavItems.map((item) => (
+                <div key={item.href} className="border-b border-palnadu-border/50 pb-1.5">
+                  <Link
+                    href={item.href}
+                    prefetch={true}
+                    className="block rounded-md px-3 py-3 text-base font-semibold text-palnadu-dark hover:text-palnadu-blue hover:bg-palnadu-light-blue active:bg-palnadu-light-blue transition-colors touch-manipulation"
+                    onClick={() => setMobileOpen(false)}
+                  >
+                    {item.title}
+                  </Link>
+                </div>
+              ))}
+              <div className="pt-2">
+                <Button asChild className="w-full bg-palnadu-blue text-white hover:bg-[#12487e] h-11 touch-manipulation">
+                  <Link
+                    href="/contact"
+                    prefetch={true}
+                    className="flex items-center justify-center gap-2"
+                    onClick={() => setMobileOpen(false)}
+                  >
+                    <span>Discuss your idea</span>
+                    <ArrowRight className="h-4 w-4" />
+                  </Link>
+                </Button>
+              </div>
+            </nav>
+          </div>
+        </aside>
       )}
     </>
   );
