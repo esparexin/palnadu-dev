@@ -1,5 +1,9 @@
 @import "@palnadu/ui/globals.css";
 
+:root {
+  --header-height: 64.5px;
+}
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -145,4 +149,20 @@ input:focus, textarea:focus, select:focus {
 }
 ::-webkit-scrollbar-thumb:hover {
   background: var(--color-primary-blue);
+}
+
+/* ── Mobile Menu Animation Keyframes (no @tailwindcss/animate plugin) ── */
+@layer utilities {
+  @keyframes fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  @keyframes slide-in-from-top-2 {
+    from { opacity: 0; transform: translateY(-0.5rem); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .animate-in { animation: fade-in 0.15s ease-out forwards; }
+  .slide-in-from-top-2 { animation: slide-in-from-top-2 0.15s ease-out forwards; }
+  .duration-150 { animation-duration: 150ms; }
+  .ease-out { animation-timing-function: ease-out; }
 }

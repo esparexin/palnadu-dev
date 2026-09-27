@@ -9,7 +9,7 @@ import Lenis from 'lenis';
  * motion useScroll) need pixel-accurate native scroll — Lenis smooth-wheel
  * easing would desync those animations. Skip Lenis on these routes.
  */
-const NATIVE_SCROLL_ROUTES = ['/grow'];
+const NATIVE_SCROLL_ROUTES = ['/grow', '/'];
 
 export function SmoothScrollProvider({ children }: { children: React.ReactNode }) {
   const lenisRef = useRef<Lenis | null>(null);

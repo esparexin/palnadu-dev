@@ -49,7 +49,11 @@ export function Navbar({ initialLogoUrl }: NavbarProps = {}) {
 
   return (
     <>
-      <header className="sticky top-0 z-50 w-full border-b border-palnadu-border bg-white/95 backdrop-blur-md supports-[backdrop-filter]:bg-white/80">
+      {/* 1. Header — fixed height via CSS variable */}
+      <header
+        className="sticky top-0 z-50 w-full border-b border-palnadu-border bg-white/95 backdrop-blur-md supports-[backdrop-filter]:bg-white/80"
+        style={{ height: 'var(--header-height)' }}
+      >
         {/* Accent top line */}
         <div className="h-0.5 w-full bg-palnadu-blue" />
         <nav className="container flex h-16 items-center justify-between" aria-label="Main navigation">
@@ -98,45 +102,51 @@ export function Navbar({ initialLogoUrl }: NavbarProps = {}) {
             {mobileOpen ? <X className="h-5 w-5 text-palnadu-blue" /> : <Menu className="h-5 w-5" />}
           </button>
         </nav>
-
-        {/* Mobile Navigation Drawer — Fast 150ms Hardware-Accelerated Appearance */}
-        {mobileOpen && (
-          <div className="relative z-50 border-t border-palnadu-border bg-white shadow-xl md:hidden transition-all duration-150 ease-out animate-in fade-in slide-in-from-top-2 duration-150">
-            <div className="container space-y-1.5 py-4">
-              {mainNavItems.map((item) => (
-                <div key={item.href} className="border-b border-palnadu-border/50 pb-1.5">
-                  <Link
-                    href={item.href}
-                    prefetch={true}
-                    className="block rounded-md px-3 py-2 text-base font-semibold text-palnadu-dark hover:text-palnadu-blue hover:bg-palnadu-light-blue active:bg-palnadu-light-blue transition-colors touch-manipulation"
-                    onClick={() => setMobileOpen(false)}
-                  >
-                    {item.title}
-                  </Link>
-                </div>
-              ))}
-              <div className="pt-2">
-                <Button asChild className="w-full bg-palnadu-blue text-white hover:bg-[#12487e] h-10 touch-manipulation">
-                  <Link
-                    href="/contact"
-                    prefetch={true}
-                    className="flex items-center justify-center gap-1.5"
-                    onClick={() => setMobileOpen(false)}
-                  >
-                    <span>Discuss your idea</span>
-                    <ArrowRight className="h-4 w-4" />
-                  </Link>
-                </Button>
-              </div>
-            </div>
-          </div>
-        )}
       </header>
 
-      {/* Backdrop Overlay for outside tap to close — Clean opacity without GPU-stalling blur */}
+      {/* 2. Mobile Menu — Fixed below header, independently scrollable */}
       {mobileOpen && (
         <div
-          className="fixed inset-0 top-[66px] z-40 bg-black/35 md:hidden transition-opacity duration-150 ease-out"
+          className="fixed left-0 right-0 z-[60] bg-white border-b border-palnadu-border shadow-xl md:hidden max-h-[calc(100vh-var(--header-height))] overflow-y-auto transition-all duration-150 ease-out animate-in fade-in slide-in-from-top-2 duration-150"
+          style={{ top: 'var(--header-height)' }}
+          role="dialog"
+          aria-modal="true"
+        >
+          <div className="container space-y-1.5 py-4">
+            {mainNavItems.map((item) => (
+              <div key={item.href} className="border-b border-palnadu-border/50 pb-1.5">
+                <Link
+                  href={item.href}
+                  prefetch={true}
+                  className="block rounded-md px-3 py-2 text-base font-semibold text-palnadu-dark hover:text-palnadu-blue hover:bg-palnadu-light-blue active:bg-palnadu-light-blue transition-colors touch-manipulation"
+                  onClick={() => setMobileOpen(false)}
+                >
+                  {item.title}
+                </Link>
+              </div>
+            ))}
+            <div className="pt-2">
+              <Button asChild className="w-full bg-palnadu-blue text-white hover:bg-[#12487e] h-10 touch-manipulation">
+                <Link
+                  href="/contact"
+                  prefetch={true}
+                  className="flex items-center justify-center gap-1.5"
+                  onClick={() => setMobileOpen(false)}
+                >
+                  <span>Discuss your idea</span>
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 3. Backdrop Overlay — Full viewport below header, no gap */}
+      {mobileOpen && (
+        <div
+          className="fixed inset-0 z-50 bg-black/35 md:hidden transition-opacity duration-150 ease-out"
+          style={{ top: 'var(--header-height)' }}
           onClick={() => setMobileOpen(false)}
           aria-hidden="true"
         />
