@@ -1,16 +1,53 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import {
+  SeoStrategy,
+  SearchIntent,
+  INTENT_GUIDANCE,
+  VALID_INTENTS,
+  defaultStrategy,
+  str,
+  arr,
+  objArr,
+  normaliseSlug,
+  extractHeadings,
+  parseLooseJson,
+} from './seo-strategy';
 
 export interface GeneratedBlogDraft {
+  /**
+   * True when this draft came from the static fallback template rather than the
+   * LLM. The fallback is the SAME body for every topic with only the title and
+   * location substituted, which is precisely the bulk-generated pattern Google
+   * treats as scaled content abuse. Such drafts are never auto-published; see
+   * SeoValidationService `content_originality`.
+   */
+  isTemplateFallback: boolean;
   title: string;
   slug: string;
+  // The H1 shown on the page. Usually equals title, but the requirement asks for
+  // them to be separately validated, so they are tracked independently.
+  h1: string;
   excerpt: string;
   content: string;
+  metaTitle: string;
+  metaDescription: string;
   seoTitle: string;
   seoDescription: string;
   canonicalUrl: string;
   keywords: string[];
+  primaryKeyword: string;
+  secondaryKeywords: string[];
+  relatedKeywords: string[];
+  longTailKeywords: string[];
+  searchIntent: string;
+  h2Headings: string[];
+  h3Headings: string[];
+  internalLinks: { anchor: string; url: string }[];
+  externalReferences: { title: string; url: string }[];
+  imageSuggestions: { alt: string; caption: string }[];
   faq: { q: string; a: string }[];
+  tags: string[];
   categorySlug: string;
   readingMinutes: number;
 }
@@ -69,9 +106,11 @@ export class ContentResearchService {
     topicTitle: string,
     categorySlug: string,
     targetLocation?: string,
+    strategy?: SeoStrategy,
   ): Promise<GeneratedBlogDraft> {
     const researchContext = await this.conductResearch(topicTitle);
     const locationContext = targetLocation || 'Palnadu and Guntur, Andhra Pradesh';
+    const s = strategy ?? defaultStrategy(topicTitle, categorySlug, locationContext);
 
     const systemPrompt = `You are a senior software engineer and technical writer at Palnadu.dev, an engineering studio in Palnadu and Guntur, Andhra Pradesh.
 Core engineering principles:
@@ -84,17 +123,44 @@ Core engineering principles:
 7. Zero plagiarism: Formulate 100% original sentence structures and real practical examples from ${locationContext}.
 8. SEO Keywords: Weave target keywords naturally into the title, the first 100 words, at least one H2 heading, and 2-3 body paragraphs without keyword stuffing.`;
 
+    // Intent is the contract with the reader: the article must answer the
+    // question that someone searching this way actually has.
+    const intentGuidance = INTENT_GUIDANCE[s.searchIntent] ?? INTENT_GUIDANCE.INFORMATIONAL;
+
     const userPrompt = `Write an authentic, human-grade technical and business article about: "${topicTitle}".
 Category: ${categorySlug}
 Regional Context: ${locationContext}
 Research background:
 ${researchContext}
 
+SEARCH INTENT: ${s.searchIntent}
+${intentGuidance}
+
+KEYWORD STRATEGY (use naturally, never stuff):
+- Primary keyword: ${s.primaryKeyword}
+- Secondary keywords: ${s.secondaryKeywords.join(', ') || '(none)'}
+- Related keywords: ${s.relatedKeywords.join(', ') || '(none)'}
+- Long-tail keywords: ${s.longTailKeywords.join(', ') || '(none)'}
+Target tags: ${s.tags.join(', ') || '(none)'}
+
+INTERNAL LINKS TO INCLUDE (use these exact URLs):
+${s.internalLinks.length ? s.internalLinks.map((l) => `- ${l.url} — anchor text: "${l.anchor}"`).join('\n') : '- (none required)'}
+
+EXTERNAL REFERENCES (cite where genuinely useful):
+${s.externalReferences.length ? s.externalReferences.map((r) => `- ${r.title} — ${r.url}`).join('\n') : '- (none required)'}
+
+IMAGE SUGGESTIONS (the pipeline will source licensed images):
+${s.imageSuggestions.length ? s.imageSuggestions.map((i) => `- alt: "${i.alt}" — caption: "${i.caption}"`).join('\n') : '- (none required)'}
+
+FAQ OPPORTUNITIES (answer each in the body, and repeat in the faq array):
+${s.faqOpportunities.map((q) => `- ${q}`).join('\n') || '- (none required)'}
+
 Content Requirements:
 - Length: 1,200 to 1,600 words of substantive, useful reading.
 - Tone: Written by a seasoned developer talking directly to an intelligent business owner.
-- Markdown: Proper H1 for title, clean H2/H3 headings, occasional code or architectural blocks, clean comparison table, and natural internal links (e.g., [Web Development Services](/services/web-development), [Custom Software](/services/custom-software), [Contact Page](/contact)).
+- Markdown: Proper H1 for title, clean H2/H3 headings, occasional code or architectural blocks, clean comparison table, and natural internal links.
 - Zero robotic filler or decorative symbols.
+- Open by answering the searcher's question directly. Do not open with generic scene-setting.
 
 Return strictly a valid JSON object matching this schema:
 {
@@ -102,42 +168,95 @@ Return strictly a valid JSON object matching this schema:
   "slug": "kebab-case-url-slug",
   "excerpt": "Clear, grounded 2-sentence summary (140-160 characters, no emojis)",
   "content": "Full markdown text (minimum 1,200 words, clean paragraphs, zero emojis)",
+  "h1": "The on-page H1 heading",
+  "metaTitle": "Meta title under 60 characters including | Palnadu.dev",
+  "metaDescription": "Meta description under 155 characters explaining the practical problem solved",
   "seoTitle": "SEO title under 60 characters with | Palnadu.dev",
   "seoDescription": "Meta description under 155 characters explaining the practical problem solved",
-  "keywords": ["primary keyword", "secondary keyword", "location keyword", "intent keyword"],
+  "primaryKeyword": "the single main keyword",
+  "secondaryKeywords": ["secondary keyword", "another secondary keyword"],
+  "relatedKeywords": ["closely related keyword"],
+  "longTailKeywords": ["a longer specific search phrase"],
+  "searchIntent": "one of: ${Object.keys(INTENT_GUIDANCE).join(', ')}",
+  "h2Headings": ["An H2 heading from the article"],
+  "h3Headings": ["An H3 subheading from the article"],
+  "internalLinks": [{ "anchor": "anchor text", "url": "/services/web-development" }],
+  "externalReferences": [{ "title": "reference title", "url": "https://example.com" }],
+  "imageSuggestions": [{ "alt": "descriptive alt text", "caption": "short caption" }],
   "faq": [
     { "q": "Practical question an owner would ask?", "a": "Direct, honest answer" },
     { "q": "Practical question about technical complexity?", "a": "Direct, honest answer" },
     { "q": "Practical question about cost or timeline?", "a": "Direct, honest answer" }
-  ]
+  ],
+  "tags": ["short tag", "another tag"]
 }`;
 
-    // Attempt generation with configured LLM
-    const llmDraft = await this.callLLM(systemPrompt, userPrompt);
-    if (llmDraft) {
+    // Attempt generation with the configured provider.
+    const llmResult = await this.callLLM(systemPrompt, userPrompt, s);
+    if (llmResult) {
+      const { draft: llmDraft, provider } = llmResult;
       // Rigorously sanitize any stray asterisks (**bold** or *italic*)
       const cleanContent = (llmDraft.content || '')
         .replace(/\*\*([^*]+)\*\*/g, '$1')
         .replace(/\*([^*\n]+)\*/g, '$1')
         .replace(/\*\*/g, '');
       const words = cleanContent.split(/\s+/).length;
+      const slug = normaliseSlug(llmDraft.slug || topicTitle);
+
+      // The LLM may omit strategy fields; fall back to what we asked for so
+      // downstream validation always has a complete SEO payload.
+      const primaryKeyword = str(llmDraft.primaryKeyword) || s.primaryKeyword;
+      const secondaryKeywords = arr(llmDraft.secondaryKeywords).length
+        ? arr(llmDraft.secondaryKeywords)
+        : s.secondaryKeywords;
+      const metaTitle = str(llmDraft.metaTitle) || str(llmDraft.seoTitle) || `${primaryKeyword} | Palnadu.dev`;
+
       return {
-        ...llmDraft,
+        isTemplateFallback: false,
+        title: str(llmDraft.title) || topicTitle,
+        slug,
+        h1: str(llmDraft.h1) || str(llmDraft.title) || topicTitle,
+        excerpt: str(llmDraft.excerpt) || '',
         content: cleanContent,
-        canonicalUrl: `/blog/${llmDraft.slug}`,
+        metaTitle: metaTitle.slice(0, 70),
+        metaDescription: (str(llmDraft.metaDescription) || str(llmDraft.seoDescription) || '').slice(0, 175),
+        seoTitle: (str(llmDraft.seoTitle) || metaTitle).slice(0, 70),
+        seoDescription: (str(llmDraft.seoDescription) || str(llmDraft.metaDescription) || '').slice(0, 175),
+        canonicalUrl: `/blog/${slug}`,
+        keywords: arr(llmDraft.keywords),
+        primaryKeyword,
+        secondaryKeywords,
+        relatedKeywords: arr(llmDraft.relatedKeywords).length ? arr(llmDraft.relatedKeywords) : s.relatedKeywords,
+        longTailKeywords: arr(llmDraft.longTailKeywords).length ? arr(llmDraft.longTailKeywords) : s.longTailKeywords,
+        searchIntent: str(llmDraft.searchIntent) || s.searchIntent,
+        h2Headings: arr(llmDraft.h2Headings).length ? arr(llmDraft.h2Headings) : extractHeadings(cleanContent, 2),
+        h3Headings: arr(llmDraft.h3Headings).length ? arr(llmDraft.h3Headings) : extractHeadings(cleanContent, 3),
+        internalLinks: objArr(llmDraft.internalLinks, ['anchor', 'url']).length
+          ? objArr(llmDraft.internalLinks, ['anchor', 'url'])
+          : s.internalLinks,
+        externalReferences: objArr(llmDraft.externalReferences, ['title', 'url']),
+        imageSuggestions: objArr(llmDraft.imageSuggestions, ['alt', 'caption']),
+        faq: objArr(llmDraft.faq, ['q', 'a']),
+        tags: arr(llmDraft.tags).length ? arr(llmDraft.tags) : s.tags,
         categorySlug,
         readingMinutes: Math.max(1, Math.ceil(words / 220)),
-      };
+        // Provenance for the audit trail: which provider actually wrote this.
+        llmProvider: provider,
+      } as GeneratedBlogDraft & { llmProvider: string };
     }
 
     // High-quality structured fallback engine
-    return this.generateStructuredFallback(topicTitle, categorySlug, locationContext);
+    return this.generateStructuredFallback(topicTitle, categorySlug, locationContext, s);
   }
 
   /**
    * Calls available LLM provider (Gemini, Claude, or OpenAI)
    */
-  private async callLLM(systemPrompt: string, userPrompt: string): Promise<any | null> {
+  private async callLLM(
+    systemPrompt: string,
+    userPrompt: string,
+    strategy: SeoStrategy,
+  ): Promise<{ draft: any; provider: string } | null> {
     // 1. Try Google Gemini if configured (with automatic model resilience fallback)
     if (this.geminiApiKey) {
       const geminiModels = ['gemini-3.6-flash', 'gemini-3.5-flash', 'gemini-flash-latest'];
@@ -168,7 +287,7 @@ Return strictly a valid JSON object matching this schema:
             const rawText = json.candidates?.[0]?.content?.parts?.[0]?.text;
             if (rawText) {
               this.logger.log(`Successfully generated content via live Google Gemini (${model})`);
-              return JSON.parse(rawText);
+              return { draft: parseLooseJson(rawText), provider: `gemini:${model}` };
             }
           } else {
             const errText = await res.text();
@@ -204,7 +323,7 @@ Return strictly a valid JSON object matching this schema:
           const json = await res.json();
           const text = json.content?.[0]?.text;
           if (text) {
-            return JSON.parse(text);
+            return { draft: parseLooseJson(text), provider: 'anthropic:claude-3-5-sonnet' };
           }
         }
       } catch (err) {
@@ -235,7 +354,7 @@ Return strictly a valid JSON object matching this schema:
           const json = await res.json();
           const text = json.choices?.[0]?.message?.content;
           if (text) {
-            return JSON.parse(text);
+            return { draft: parseLooseJson(text), provider: 'openai:gpt-4o-mini' };
           }
         }
       } catch (err) {
@@ -253,6 +372,7 @@ Return strictly a valid JSON object matching this schema:
     topicTitle: string,
     categorySlug: string,
     locationContext: string,
+    s: SeoStrategy,
   ): GeneratedBlogDraft {
     const slug = topicTitle
       .toLowerCase()
@@ -338,13 +458,22 @@ Explore our [Web Application Development Services](/services/web-development), l
 
     const excerpt = `Discover how modern web applications and business automation eliminate operational bottlenecks, spreadsheet errors, and WhatsApp chaos for growing enterprises in ${locationContext}.`;
 
+    const metaTitle = `${topicTitle.slice(0, 45)} | Palnadu.dev`;
+    const metaDescription = excerpt.slice(0, 155);
+
     return {
+      // Identical body for every topic except the title/location substitution.
+      // Flagged so publishing validation can block auto-publication.
+      isTemplateFallback: true,
       title: topicTitle,
       slug,
+      h1: topicTitle,
       excerpt,
       content,
-      seoTitle: `${topicTitle.slice(0, 45)} | Palnadu.dev`,
-      seoDescription: excerpt.slice(0, 155),
+      metaTitle,
+      metaDescription,
+      seoTitle: metaTitle,
+      seoDescription: metaDescription,
       canonicalUrl: `/blog/${slug}`,
       keywords: [
         'software development Palnadu',
@@ -352,6 +481,16 @@ Explore our [Web Application Development Services](/services/web-development), l
         'business automation software Andhra Pradesh',
         'custom software engineering',
       ],
+      primaryKeyword: s.primaryKeyword,
+      secondaryKeywords: s.secondaryKeywords,
+      relatedKeywords: s.relatedKeywords,
+      longTailKeywords: s.longTailKeywords,
+      searchIntent: s.searchIntent,
+      h2Headings: extractHeadings(content, 2),
+      h3Headings: extractHeadings(content, 3),
+      internalLinks: s.internalLinks,
+      externalReferences: s.externalReferences,
+      imageSuggestions: s.imageSuggestions,
       faq: [
         {
           q: `How does custom software benefit businesses in ${locationContext}?`,
@@ -367,7 +506,9 @@ Explore our [Web Application Development Services](/services/web-development), l
         },
       ],
       categorySlug,
+      tags: s.tags,
       readingMinutes: Math.ceil(content.split(/\s+/).length / 220),
-    };
+      llmProvider: 'fallback:structured-template',
+    } as GeneratedBlogDraft & { llmProvider: string };
   }
 }

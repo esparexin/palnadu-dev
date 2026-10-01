@@ -5,7 +5,32 @@ import { BlogAutomationService } from './blog-automation.service';
 import { ContentResearchService } from './content-research.service';
 import { ImageSourcingService } from './image-sourcing.service';
 import { FreeKeywordResearchService } from './free-keyword-research.service';
+import { TopicDiscoveryService } from './topic-discovery.service';
+import { ContentSimilarityService } from './content-similarity.service';
+import { SeoValidationService } from './seo-validation.service';
 import { AutomationController } from './automation.controller';
+
+// Reference sources. Credential-gated adapters are always registered so the
+// admin UI can report their status; each reports itself unavailable until its
+// credentials are provisioned.
+import {
+  GoogleAutocompleteSource,
+  GoogleTrendsSource,
+  PageSpeedInsightsSource,
+  GoogleSearchConsoleSource,
+  GoogleKeywordPlannerSource,
+  SemrushSource,
+  AhrefsSource,
+  AnswerThePublicSource,
+  ScreamingFrogSource,
+  ReferenceSource,
+} from './seo-sources';
+
+/**
+ * Discovery sources are provided as a multi-value token so TopicDiscoveryService
+ * receives every adapter and decides which are usable at runtime.
+ */
+export const REFERENCE_SOURCES = 'REFERENCE_SOURCES';
 
 @Module({
   imports: [
@@ -18,12 +43,44 @@ import { AutomationController } from './automation.controller';
     ContentResearchService,
     ImageSourcingService,
     FreeKeywordResearchService,
+    TopicDiscoveryService,
+    ContentSimilarityService,
+    SeoValidationService,
+
+    GoogleAutocompleteSource,
+    GoogleTrendsSource,
+    PageSpeedInsightsSource,
+    GoogleSearchConsoleSource,
+    GoogleKeywordPlannerSource,
+    SemrushSource,
+    AhrefsSource,
+    AnswerThePublicSource,
+    ScreamingFrogSource,
+    {
+      provide: REFERENCE_SOURCES,
+      inject: [
+        GoogleAutocompleteSource,
+        GoogleTrendsSource,
+        PageSpeedInsightsSource,
+        GoogleSearchConsoleSource,
+        GoogleKeywordPlannerSource,
+        SemrushSource,
+        AhrefsSource,
+        AnswerThePublicSource,
+        ScreamingFrogSource,
+      ],
+      useFactory: (...sources: ReferenceSource[]): ReferenceSource[] => sources,
+    },
   ],
   exports: [
     BlogAutomationService,
     ContentResearchService,
     ImageSourcingService,
     FreeKeywordResearchService,
+    TopicDiscoveryService,
+    ContentSimilarityService,
+    SeoValidationService,
+    REFERENCE_SOURCES,
   ],
 })
 export class AutomationModule {}

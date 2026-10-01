@@ -5,6 +5,7 @@ import { Roles } from '../common/decorators/roles.decorator';
 import { UserRole } from '@prisma/client';
 import { BlogAutomationService } from './blog-automation.service';
 import { FreeKeywordResearchService } from './free-keyword-research.service';
+import { TopicDiscoveryService } from './topic-discovery.service';
 import { PrismaService } from '../prisma.service';
 
 @Controller('admin/automation')
@@ -14,6 +15,7 @@ export class AutomationController {
   constructor(
     private automationService: BlogAutomationService,
     private keywordService: FreeKeywordResearchService,
+    private discoveryService: TopicDiscoveryService,
     private prisma: PrismaService,
   ) {}
 
@@ -39,6 +41,56 @@ export class AutomationController {
     return { success: true, data: status };
   }
 
+  /**
+   * Availability and capabilities of every reference source. Sources requiring
+   * credentials report `unconfigured` until those are provisioned; nothing is
+   * scraped and no private data is implied by a public URL.
+   */
+  @Get('sources')
+  async getSources() {
+    const sources = await this.discoveryService.sourceStatuses();
+    return {
+      success: true,
+      data: sources.map((s) => ({
+        ...s,
+        note:
+          s.availability === 'unconfigured'
+            ? 'Requires an account or API credential. No public data is available for this source.'
+            : 'Public endpoint, no credential required.',
+      })),
+    };
+  }
+
+  /** What the site already covers: topics, keywords, intents. */
+  @Get('coverage')
+  async getCoverage() {
+    return { success: true, data: await this.discoveryService.coverageReport() };
+  }
+
+  /** Pull new search opportunities into the queue through the dedup gate. */
+  @Post('discover')
+  async discover(@Body() body: { limit?: number } = {}) {
+    const result = await this.automationService.discoverAndEnqueue(body.limit ?? 40);
+    return {
+      success: true,
+      message:
+        `Discovered ${result.discovered} candidate topic(s); ${result.enqueued} enqueued, ` +
+        `${result.rejected.length} rejected as duplicates.`,
+      data: result,
+    };
+  }
+
+  /** Recent generation attempts, for auditing why a post exists. */
+  @Get('audit-log')
+  async auditLog(@Query('limit') limit?: string) {
+    const take = Math.min(Number(limit ?? 50) || 50, 200);
+    const logs = await this.prisma.blogGenerationLog.findMany({
+      orderBy: { createdAt: 'desc' },
+      take,
+    });
+    return { success: true, data: logs };
+  }
+
   @Post('generate')
   async triggerGenerate(
     @Body()
@@ -51,18 +103,27 @@ export class AutomationController {
     },
   ) {
     if (body.batchCount && body.batchCount > 1) {
-      const results = await this.automationService.generateBatch(body.batchCount, body.forcePublish ?? false);
+      const { results, rejected } = await this.automationService.generateBatch(
+        body.batchCount,
+        body.forcePublish ?? false,
+      );
       return {
         success: true,
-        message: `Successfully generated ${results.length} automated articles.`,
-        data: results,
+        message:
+          `Generated ${results.length} article(s); ` +
+          `${rejected.length} topic(s) rejected as duplicates or failed validation.`,
+        data: { results, rejected },
       };
     }
 
-    const pending = await this.automationService.getNextPendingTopic();
+    // No explicit topic: take the next pending item from the durable queue.
+    const queue = await this.automationService.getPendingQueueItems();
+    const pending = queue.find((i: any) => !i.isGenerated && i.status === 'PENDING') as
+      | { topic: string; categorySlug: string; targetLocation: string | null }
+      | undefined;
     const topic = body.topic || pending?.topic || 'How Digital Transformation and Modern Web Apps Accelerate Growth for Regional Enterprises';
     const categorySlug = body.categorySlug || pending?.categorySlug || 'website-development';
-    const targetLocation = body.targetLocation || pending?.targetLocation;
+    const targetLocation = body.targetLocation || pending?.targetLocation || undefined;
 
     const result = await this.automationService.generateSingleArticle(
       topic,

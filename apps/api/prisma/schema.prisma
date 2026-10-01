@@ -212,6 +212,19 @@ model BlogPost {
   id             String        @id @default(auto()) @map("_id") @db.ObjectId
   title          String
   slug           String        @unique
+  // Stable identity of the automation topic this post was generated from.
+  // Title/slug are LLM-authored presentation metadata and must NOT be used for
+  // identity: the LLM rewords both on every run, so matching on them lets one
+  // topic produce many posts.
+  //
+  // This is the database-level guarantee required by the automation design:
+  // one topicKey => at most one post, enforced by a unique index rather than by
+  // application checks alone. Legacy rows must be backfilled before the index
+  // can be created (see prisma/backfill-topic-key.ts); on MongoDB a unique index
+  // also constrains null, so the column is deliberately non-nullable.
+  topicKey       String        @unique @map("topic_key")
+  // Original topic text as discovered, kept for audit and similarity checks.
+  topic          String?
   excerpt        String?
   content        String
   coverImage     String?
@@ -227,13 +240,109 @@ model BlogPost {
   status         PublishStatus @default(DRAFT)
   imageMetadata  Json?
   faqData        Json?
+
+  // ── SEO strategy (produced before generation, drives the LLM prompt) ──
+  primaryKeyword    String?
+  secondaryKeywords String[]
+  relatedKeywords   String[]
+  longTailKeywords  String[]
+  searchIntent      String?
+  tags              String[]
+  internalLinks     Json?
+  externalRefs      Json?
+
+  // ── Generation provenance ──
+  llmProvider      String?
+  referenceSources String[]
+
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
 
   @@index([status])
   @@index([authorId])
   @@index([publishDate])
+  @@index([searchIntent])
+  @@index([primaryKeyword])
   @@map("blog_posts")
+  topics BlogTopic[]
+}
+
+// ── Durable topic queue ────────────────────────────────────────────────────
+// Topics are persisted (not held in memory) so a restart, a second worker, or
+// an overlapping cron tick cannot re-generate a topic that is already done or
+// in flight. topicKey is the stable identity; the human-readable topic text and
+// the LLM-authored title/slug are presentation metadata only.
+enum TopicStatus {
+  PENDING
+  CLAIMED
+  COMPLETED
+  FAILED
+}
+
+model BlogTopic {
+  id          String      @id @default(auto()) @map("_id") @db.ObjectId
+  topicKey    String      @unique @map("topic_key")
+  topic       String
+  categorySlug String
+  targetLocation String?
+  searchIntent   String?
+  primaryKeyword String?
+  keywords       String[]
+  referenceSources String[]
+  status      TopicStatus @default(PENDING)
+
+  // Failure handling: a failed topic is retried, never silently dropped.
+  attempts    Int      @default(0)
+  lastError   String?
+  nextRetryAt DateTime?
+
+  // Optimistic-concurrency lease so two workers cannot claim the same topic.
+  claimedAt   DateTime?
+  claimedBy   String?
+
+  postId      String?  @unique @db.ObjectId
+  post        BlogPost? @relation(fields: [postId], references: [id])
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([status, nextRetryAt])
+  @@index([status, claimedAt])
+  @@map("blog_topics")
+}
+
+// ── Audit trail ────────────────────────────────────────────────────────────
+// One row per generation attempt, written whether the attempt succeeded or not,
+// so it is always possible to answer "why was this blog created, and from which
+// research signals?".
+model BlogGenerationLog {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  topicKey    String?  @map("topic_key")
+  topic       String?
+  postId      String?  @db.ObjectId
+
+  primaryKeyword    String?
+  secondaryKeywords String[]
+  searchIntent      String?
+  referenceSources  String[]
+
+  generatedTitle String?
+  generatedSlug  String?
+  llmProvider    String?  @map("llm_provider")
+
+  validationResult String?
+  similarityResult String?
+
+  status          PublishStatus?
+  publishedUrl    String?   @map("published_url")
+  failureReason   String?   @map("failure_reason")
+  durationMs      Int?      @map("duration_ms")
+
+  createdAt DateTime @default(now())
+
+  @@index([topicKey])
+  @@index([createdAt])
+  @@map("blog_generation_logs")
 }
 
 model BlogCategory {
