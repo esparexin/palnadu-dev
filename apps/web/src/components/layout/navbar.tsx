@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Menu, X, ArrowRight } from 'lucide-react';
@@ -23,7 +23,7 @@ export function Navbar({ initialLogoUrl }: NavbarProps = {}) {
     setMobileOpen(false);
   }, [pathname]);
 
-  // Handle Escape key - no body position:fixed lock to avoid reflow
+  // Handle Escape key
   useEffect(() => {
     if (!mobileOpen) return;
 
@@ -37,11 +37,39 @@ export function Navbar({ initialLogoUrl }: NavbarProps = {}) {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [mobileOpen]);
 
+  // Lock background scroll while the menu is open.
+  // position:fixed + negative top pins the viewport without reflow, and is the
+  // only approach that reliably blocks iOS momentum scrolling behind an overlay.
+  // Every value is restored on close, including the exact scroll position.
+  const scrollLockRef = useRef(0);
+
+  useEffect(() => {
+    if (!mobileOpen) return;
+
+    scrollLockRef.current = window.scrollY;
+
+    const body = document.body;
+    body.style.position = 'fixed';
+    body.style.top = `-${scrollLockRef.current}px`;
+    body.style.left = '0';
+    body.style.right = '0';
+    body.style.width = '100%';
+
+    return () => {
+      body.style.position = '';
+      body.style.top = '';
+      body.style.left = '';
+      body.style.right = '';
+      body.style.width = '';
+      window.scrollTo(0, scrollLockRef.current);
+    };
+  }, [mobileOpen]);
+
   return (
     <>
       {/* 1. Header — fixed on mobile, sticky on desktop */}
       <header
-        className="fixed top-0 z-50 w-full border-b border-palnadu-border bg-white/95 backdrop-blur-md supports-[backdrop-filter]:bg-white/80 md:sticky md:relative"
+        className="fixed top-0 z-[60] w-full border-b border-palnadu-border bg-white/95 backdrop-blur-md supports-[backdrop-filter]:bg-white/80 md:sticky md:relative"
         style={{ height: 'var(--header-height)' }}
       >
         {/* Accent top line */}
@@ -81,60 +109,45 @@ export function Navbar({ initialLogoUrl }: NavbarProps = {}) {
             </Button>
           </div>
 
-          {/* Mobile menu button — zero tap delay with touch-manipulation */}
+          {/* Mobile menu button — doubles as the close control, zero tap delay with touch-manipulation */}
           <button
             type="button"
             className="inline-flex items-center justify-center rounded-lg p-2.5 text-palnadu-dark hover:text-palnadu-blue hover:bg-palnadu-light-blue md:hidden cursor-pointer touch-manipulation active:scale-90 transition-transform select-none"
-            onClick={() => setMobileOpen(true)}
-            aria-label="Open menu"
+            onClick={() => setMobileOpen((open) => !open)}
+            aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
             aria-expanded={mobileOpen}
             aria-controls="mobile-sidebar"
           >
-            <Menu className="h-5 w-5" />
+            {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
         </nav>
       </header>
 
-      {/* 2. Backdrop Overlay — Full viewport, opacity-only animation, hardware accelerated */}
+      {/* 2. Backdrop Overlay — Full viewport, below header and drawer */}
       {mobileOpen && (
         <div
-          className="fixed inset-0 z-50 bg-black/35 md:hidden will-change-opacity transition-opacity duration-150 ease-out"
+          className="fixed inset-0 z-40 bg-black/35 md:hidden touch-none transition-opacity duration-150 ease-out"
           style={{ opacity: 1 }}
           onClick={() => setMobileOpen(false)}
           aria-hidden="true"
         />
       )}
 
-      {/* 3. Mobile Sidebar Drawer — Right-side, transform-based animation, hardware accelerated */}
+      {/* 3. Mobile Sidebar Drawer — Right-side, sits below the fixed header */}
       {mobileOpen && (
         <aside
           id="mobile-sidebar"
-          className="fixed top-0 right-0 z-60 h-full w-[85%] max-w-sm bg-white shadow-2xl md:hidden will-change-transform transition-transform duration-200 ease-out"
+          className="fixed right-0 z-50 w-[85%] max-w-sm bg-white shadow-2xl md:hidden flex flex-col"
           style={{
-            transform: 'translateX(0)',
-            height: '100dvh',
+            top: 'var(--header-height)',
+            height: 'calc(100dvh - var(--header-height))',
           }}
           role="dialog"
           aria-modal="true"
-          aria-labelledby="mobile-sidebar-label"
+          aria-label="Mobile navigation"
         >
-          {/* Sidebar Header with Close Button */}
-          <div className="flex h-16 items-center justify-between border-b border-palnadu-border px-4">
-            <span id="mobile-sidebar-label" className="text-sm font-semibold text-palnadu-dark">
-              Menu
-            </span>
-            <button
-              type="button"
-              className="inline-flex items-center justify-center rounded-lg p-2 text-palnadu-dark hover:text-palnadu-blue hover:bg-palnadu-light-blue cursor-pointer touch-manipulation active:scale-90 transition-transform select-none"
-              onClick={() => setMobileOpen(false)}
-              aria-label="Close menu"
-            >
-              <X className="h-5 w-5" />
-            </button>
-          </div>
-
           {/* Sidebar Content — Independently Scrollable */}
-          <div className="flex-1 overflow-y-auto py-4">
+          <div className="flex-1 overflow-y-auto overscroll-contain py-4">
             <nav className="container space-y-1.5" aria-label="Mobile navigation">
               {mainNavItems.map((item) => (
                 <div key={item.href} className="border-b border-palnadu-border/50 pb-1.5">
