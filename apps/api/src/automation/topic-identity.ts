@@ -14,15 +14,22 @@
  * Two different titles, one topicKey, therefore never two posts.
  */
 
-export type SearchIntent =
-  | 'INFORMATIONAL'
-  | 'HOW_TO'
-  | 'COMMERCIAL_INVESTIGATION'
-  | 'COMPARISON'
-  | 'LOCAL'
-  | 'PROBLEM_SOLING'
-  | 'PRODUCT_SERVICE_RESEARCH'
-  | 'FAQ';
+export type { SearchIntent } from './seo-strategy';
+import type { SearchIntent } from './seo-strategy';
+import {
+  detectLanguage,
+  foldTokenToConcept,
+  isMeaninglessToken,
+  detectScript,
+  extractConcepts,
+  extractLocation,
+  detectIntentMultilingual,
+  teluguToAscii,
+  toAsciiSlug,
+  ContentLanguage,
+  ScriptKind,
+} from './script-utils';
+
 
 /** Intent ordered by commercial proximity — used for topic diversification. */
 export const INTENT_ORDER: SearchIntent[] = [
@@ -153,58 +160,77 @@ export interface CanonicalTopic {
   service: string | null;
   /** Significant tokens, useful for keyword/similarity work. */
   tokens: string[];
+  /** Publication language of the source phrase. */
+  language: ContentLanguage;
+  /** Dominant script of the source phrase. */
+  script: ScriptKind;
+  /**
+   * Language-neutral concept ids (subject/aspect). These are what make
+   * cross-language identity possible: a Telugu and an English article about
+   * the same subject resolve to the same ids, so their keys collide by design.
+   */
+  concepts: string[];
 }
 
 function normaliseWhitespace(input: string): string {
   return input
-    .replace(/[‘’“”]/g, "'")
-    .replace(/[–—]/g, '-')
+    .replace(/[\u2018\u2019]/g, "'")
+    .replace(/[\u201C\u201D]/g, '"')
+    .replace(/[\u2013\u2014]/g, '-')
     .replace(/\s+/g, ' ')
     .trim();
 }
 
-/** Detect the single strongest intent for a phrase. */
+/** Detect the single strongest intent for a phrase, in either language. */
 export function detectIntent(phrase: string): SearchIntent {
-  const lower = ` ${phrase.toLowerCase()} `;
-
-  // Comparison is checked first: "how to compare X vs Y" is still a comparison.
-  for (const { intent, patterns } of INTENT_PATTERNS) {
-    if (patterns.some((p) => p.test(lower))) return intent;
-  }
-  return 'INFORMATIONAL';
+  return detectIntentMultilingual(phrase, detectLanguage(phrase)) as SearchIntent;
 }
 
 /**
  * Build the canonical, stable identity for a topic phrase.
  *
- * Deterministic and pure: the same phrase always yields the same key, and two
- * differently-worded phrases covering the same search topic collapse to one key
- * because filler words are removed and the remaining significant tokens are
- * sorted before hashing into the key.
+ * Identity is concept-first and language-neutral:
+ *
+ *   title -> script/language detection -> concept + location + intent
+ *         -> canonical topicKey
+ *
+ * Concept ids come from a curated bilingual lexicon, so a Telugu phrase and an
+ * English phrase describing the same search subject produce the same ids without
+ * any string comparison between the two languages. Transliteration is used only
+ * to keep the *key itself* URL-safe and readable; it is never the sole basis for
+ * deciding that two topics are the same.
+ *
+ * Within a language, remaining significant tokens (ASCII-folded) keep the key
+ * specific to sub-topics the concept lexicon does not enumerate.
  */
 export function canonicalizeTopic(rawTopic: string): CanonicalTopic {
   const phrase = normaliseWhitespace(rawTopic);
-  const lower = phrase.toLowerCase();
+  const script = detectScript(phrase);
+  const language = detectLanguage(phrase);
 
-  // 1. Detect and strip location so it becomes a structured part of the key.
-  let location: string | null = null;
+  // 1. Language-neutral signals: these make cross-language keys converge.
+  const concepts = extractConcepts(phrase);
+  const location = extractLocation(phrase, language);
+  const intent = detectIntentMultilingual(phrase, language) as SearchIntent;
+
+  // 2. Fold the remaining text for sub-topic specificity. Transliterate first so
+  //    Telugu contributes ASCII tokens rather than disappearing.
+  const folded = script === 'telugu' || script === 'mixed' ? teluguToAscii(phrase) : phrase;
+  const lower = folded.toLowerCase();
+
   let working = lower;
-  for (const hint of LOCATION_HINTS) {
-    const idx = working.indexOf(hint);
-    if (idx !== -1) {
-      location = hint.replace(/\s+/g, '-');
-      // remove the location phrase plus a trailing/leading preposition
-      working = `${working.slice(0, idx)} ${working.slice(idx + hint.length)}`
-        .replace(/\s+(in|near|around|for|at|of)\s*$/, '')
-        .replace(/^\s*(in|near|around|for|at|of)\s+/, '')
-        .replace(/\s+/g, ' ')
-        .trim();
-      break;
-    }
+  if (location) {
+    // Remove the canonical location token and adjacent prepositions.
+    working = working
+      .split(location)
+      .join(' ')
+      .replace(/\s+(in|near|around|for|at|of|లో|ల)\s*$/i, '')
+      .replace(/^\s*(in|near|around|for|at|of|లో|ల)\s+/i, '')
+      .replace(/\s+/g, ' ')
+      .trim();
   }
 
-  // 2. Detect the service/entity head term. This becomes its own key segment,
-  //    so its individual words are excluded from the distinguishing tokens.
+  // 3. Detect the service/entity head term from the folded text.
   let service: string | null = null;
   let serviceWordSet = new Set<string>();
   for (const hint of SERVICE_HINTS) {
@@ -215,46 +241,115 @@ export function canonicalizeTopic(rawTopic: string): CanonicalTopic {
     }
   }
 
-  // 3. Strip filler, keep significant tokens.
+  // 4. Residual tokens.
   const rawTokens = working
     .replace(/[^a-z0-9\s-]/g, ' ')
     .split(/[\s-]+/)
     .map((t) => t.trim())
     .filter(Boolean);
 
-  // 3a. Drop filler, and drop the service words (already represented by the
-  //     `service` segment) so they cannot fragment the key.
   const significant = rawTokens.filter(
     (t) => !STOPWORDS.has(t) && !serviceWordSet.has(t) && !SERVICE_WORDS.has(t) && t.length > 1,
   );
 
-  // Fall back to raw tokens if a phrase was all filler.
   const base = (significant.length > 0 ? significant : rawTokens).slice(0, 8);
 
-  // 4. Apply semantic normalisation so synonyms of one concept collapse
-  //    ("pricing" and "cost" are the same search topic).
+  // 5. Fold residual tokens to concept ids where the lexicon recognises them.
+  //    This is what makes the key language-neutral: literal Telugu and English
+  //    words are both replaced by a shared id, so only genuinely novel
+  //    sub-topics survive as literal text.
+  const foldedConcepts: string[] = [];
+  const literalTokens: string[] = [];
+
+  for (const token of base) {
+    const synonym = SYNONYMS[token];
+    const candidate = synonym ?? token;
+
+    const concept = foldTokenToConcept(candidate);
+    if (concept) {
+      foldedConcepts.push(concept);
+      continue;
+    }
+
+    // Transliteration noise (postpositions, case endings) is not a sub-topic.
+    if (script === 'telugu' || script === 'mixed') {
+      if (isMeaninglessToken(candidate)) continue;
+    }
+
+    literalTokens.push(candidate);
+  }
+
   const tokens = base.map((t) => SYNONYMS[t] ?? t);
 
-  // 5. Sorted, de-duplicated tokens make word order and repetition irrelevant:
-  //    "cost website development" and "website development cost" collapse, and
-  //    a token repeated for emphasis does not fragment the key.
-  const tokenKey = [...new Set(tokens)].sort().join('-');
+  // Literal tokens only earn a place in the key when the lexicon could not
+  // classify the topic at all. If concepts were found, an unrecognised word is
+  // far more likely to be phrasing than a distinct subject, and including it
+  // would break cross-language convergence.
+  const literalKey =
+    concepts.length === 0
+      ? [...new Set(literalTokens)].sort().join('-')
+      : '';
 
-  const parts = [service, tokenKey, location].filter(Boolean);
-  const topicKey = parts.join('-')
-    .replace(/[^a-z0-9-]/g, '-')
-    .replace(/-+/g, '-')
-    .replace(/^-|-$/g, '')
-    .slice(0, 120);
+  // Concepts split into two kinds:
+  //
+  //   subject:* — WHAT the topic is about. Always part of identity.
+  //   aspect:*  — WHICH commercial/transactional facet is asked about.
+  //
+  // Commercial facets (cost, comparison, best) genuinely distinguish different
+  // searches and stay in the key, otherwise "website development cost in Guntur"
+  // and "website development in Guntur" would collapse into one post and one
+  // would never be published.
+  //
+  // Procedural facets (howto) are excluded: they describe how the question is
+  // phrased rather than what is being asked, so including them would stop
+  // "how much does a website cost" and "website pricing guide" from being
+  // recognised as the same underlying subject.
+  const PHASING_CONCEPTS = new Set(['aspect:howto']);
+  const allConcepts = [...new Set([...concepts, ...foldedConcepts])].sort();
+  const identityConcepts = allConcepts.filter((c) => !PHASING_CONCEPTS.has(c));
+  const conceptKey = identityConcepts.join('+');
+
+  // 6. Assemble: concept ids first (language-neutral), then location. Literal
+  //    words appear only when nothing could be classified.
+  const parts = [conceptKey || service, literalKey, location].filter(Boolean);
+
+  const topicKey =
+    parts
+      .join('-')
+      .replace(/[^a-z0-9+-]/g, '-')
+      .replace(/-{2,}/g, '-')
+      .replace(/^-|-$/g, '')
+      .slice(0, 120) || `topic-${stableHash(phrase)}`;
 
   return {
     topicKey,
     normalizedTopic: tokens.join(' '),
-    intent: detectIntent(phrase),
+    intent,
     location,
     service,
     tokens,
+    language,
+    script,
+    concepts,
   };
+}
+
+/**
+ * Deterministic ASCII slug for a topic, safe for any script.
+ * Never returns an empty string.
+ */
+export function topicSlug(rawTopic: string): string {
+  return toAsciiSlug(rawTopic);
+}
+
+/** Stable FNV-1a hash, used only when no usable tokens could be derived. */
+function stableHash(input: string): string {
+  let h = 0x811c9dc5;
+  for (let i = 0; i < input.length; i++) {
+    h ^= input.charCodeAt(i);
+    h = Math.imul(h, 0x01000193) >>> 0;
+  }
+  return h.toString(36).slice(0, 10);
 }
 
 /** Convenience: identity only. */

@@ -68,7 +68,9 @@ describe('stable topic identity', () => {
     const a = 'How Much Does Website Development Cost in Guntur?';
     const b = 'Website Development Pricing in Guntur: Complete Guide';
 
-    assert.equal(toTopicKey(a), 'website-development-cost-guntur');
+    // Keys are concept-first, so the canonical form is
+    // <commercial facets>+<subject>+<location>.
+    assert.equal(toTopicKey(a), 'aspect-cost+subject-web-dev-guntur');
     assert.equal(toTopicKey(a), toTopicKey(b));
   });
 
@@ -141,7 +143,7 @@ describe('stable topic identity', () => {
 describe('content similarity', () => {
   const existingPost = {
     id: 'p1',
-    topicKey: 'website-development-cost-guntur',
+    topicKey: 'aspect-cost+subject-web-dev-guntur',
     topic: 'Website Development Cost in Guntur',
     title: 'How Much Does a Website Cost in Guntur?',
     slug: 'how-much-does-a-website-cost-in-guntur',
