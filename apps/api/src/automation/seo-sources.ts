@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { existsSync, readFileSync } from 'node:fs';
 import { canonicalizeTopic, SearchIntent } from './topic-identity';
 
 /**
@@ -568,11 +569,8 @@ export class ScreamingFrogSource implements ReferenceSource {
   readExport(): string | null {
     if (!this.exportPath) return null;
     try {
-      // Imported lazily so the file system is only touched when configured.
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
-      const fs = require('node:fs') as typeof import('node:fs');
-      if (!fs.existsSync(this.exportPath)) return null;
-      return fs.readFileSync(this.exportPath, 'utf8');
+      if (!existsSync(this.exportPath)) return null;
+      return readFileSync(this.exportPath, 'utf8');
     } catch (err) {
       this.logger.warn(`Screaming Frog export unreadable: ${String(err)}`);
       return null;

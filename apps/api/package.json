@@ -8,14 +8,15 @@
     "build": "nest build -p tsconfig.build.json",
     "start": "nest start",
     "start:prod": "node dist/main",
-    "lint": "eslint \"{src,test}/**/*.ts\"",
+    "lint": "eslint \"{src,test,prisma}/**/*.ts\" --quiet",
     "clean": "rm -rf dist node_modules",
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
     "db:migrate": "prisma migrate dev",
     "db:seed": "ts-node prisma/seed.ts",
     "db:backfill-topic-key": "ts-node prisma/backfill-topic-key.ts",
-    "test": "node --test \"test/**/*.test.mjs\""
+    "test": "node --test \"test/**/*.test.mjs\"",
+    "lint:warnings": "eslint \"{src,test,prisma}/**/*.ts\""
   },
   "dependencies": {
     "@nestjs/common": "^10.4.0",
@@ -41,6 +42,7 @@
     "zod": "^3.23.0"
   },
   "devDependencies": {
+    "@eslint/js": "^9.39.5",
     "@nestjs/cli": "^10.4.0",
     "@nestjs/schematics": "^10.2.0",
     "@types/bcryptjs": "^2.4.0",
@@ -48,8 +50,11 @@
     "@types/multer": "^1.4.0",
     "@types/node": "^22.0.0",
     "@types/passport-jwt": "^4.0.0",
+    "eslint": "^9.39.5",
+    "eslint-config-prettier": "^9.0.0",
     "prisma": "^5.22.0",
     "ts-node": "^10.9.0",
-    "typescript": "^5.6.0"
+    "typescript": "^5.6.0",
+    "typescript-eslint": "^8.0.0"
   }
 }

@@ -144,7 +144,10 @@ export function extractHeadings(markdown: string, level: 2 | 3): string[] {
  * prepend prose; a bare JSON.parse would throw and silently drop the whole
  * generation into the fallback path.
  */
-export function parseLooseJson(raw: string): any {
+// The model's response shape is validated field-by-field at the call site via
+// str()/arr()/objArr(), so an open object type is correct here rather than a
+// hand-written interface that would still need defensive narrowing.
+export function parseLooseJson(raw: string): Record<string, unknown> {
   const text = raw.trim();
 
   const fenced = text.match(/```(?:json)?\s*([\s\S]*?)```/i);

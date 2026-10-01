@@ -6,8 +6,9 @@
     "dev": "next dev --port 3000",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
-    "clean": "rm -rf .next .turbo node_modules"
+    "lint": "eslint . --quiet",
+    "clean": "rm -rf .next .turbo node_modules",
+    "lint:warnings": "eslint ."
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",
@@ -33,14 +34,17 @@
     "zod": "^3.23.0"
   },
   "devDependencies": {
+    "@next/eslint-plugin-next": "^15.5.0",
     "@palnadu/eslint-config": "workspace:*",
     "@tailwindcss/typography": "^0.5.20",
     "@types/node": "^22.0.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "autoprefixer": "^10.4.0",
+    "eslint": "^9.39.5",
     "postcss": "^8.4.0",
     "tailwindcss": "^3.4.0",
-    "typescript": "^5.6.0"
+    "typescript": "^5.6.0",
+    "typescript-eslint": "^8.0.0"
   }
 }

@@ -527,7 +527,7 @@ export class BlogAutomationService {
     // A refusal is not fatal: the topic may already be queued or already
     // published, in which case the existing row is returned rather than
     // generating a second article for the same subject.
-    let topicKey = enqueued.topicKey;
+    const topicKey = enqueued.topicKey;
     if (!enqueued.enqueued) {
       if (!topicKey) {
         throw new Error(`Cannot generate an unnamed topic.`);

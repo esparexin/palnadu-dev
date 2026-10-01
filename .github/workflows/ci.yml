@@ -38,5 +38,8 @@ jobs:
       - name: Build packages and apps
         run: pnpm db:generate && npx turbo build --concurrency=2
 
+      - name: Lint
+        run: pnpm lint
+
       - name: Run tests
         run: pnpm test

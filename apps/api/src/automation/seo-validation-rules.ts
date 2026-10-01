@@ -19,8 +19,15 @@ import { VALID_INTENTS } from './seo-strategy';
 import type { GeneratedBlogDraft } from './content-research.service';
 import type { SimilarityResult } from './content-similarity-rules';
 
-/** Emoji and legacy-symbol ranges the editorial standard forbids. */
-const EMOJI_RE = /[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE0F}]/u;
+/**
+ * Emoji and legacy-symbol ranges the editorial standard forbids.
+ *
+ * Ranges are written with explicit \u escapes and grouped so no adjacent pair
+ * forms a surrogate boundary: \u{1F300}-\u{1FAFF} are astral code points, so the
+ * range must be expressed per code point rather than as raw characters.
+ */
+const EMOJI_RE =
+  /[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]|\u{FE0F}/u;
 
 export type CheckName =
   | 'topic_uniqueness'
