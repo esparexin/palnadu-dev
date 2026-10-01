@@ -133,22 +133,22 @@ export function Navbar({ initialLogoUrl }: NavbarProps = {}) {
         />
       )}
 
-      {/* 3. Mobile Sidebar Drawer — Right-side, sits below the fixed header */}
+      {/* 3. Mobile Sidebar Drawer — Floating card, sized to its content below the fixed header */}
       {mobileOpen && (
         <aside
           id="mobile-sidebar"
-          className="fixed right-0 z-50 w-[85%] max-w-sm bg-white shadow-2xl md:hidden flex flex-col"
+          className="fixed right-2 z-50 w-[80%] max-w-[19rem] flex flex-col overflow-hidden rounded-2xl bg-white shadow-2xl md:hidden"
           style={{
-            top: 'var(--header-height)',
-            height: 'calc(100dvh - var(--header-height))',
+            top: 'calc(var(--header-height) + 0.5rem)',
+            maxHeight: 'calc(100dvh - var(--header-height) - 1.5rem)',
           }}
           role="dialog"
           aria-modal="true"
           aria-label="Mobile navigation"
         >
-          {/* Sidebar Content — Independently Scrollable */}
-          <div className="flex-1 overflow-y-auto overscroll-contain py-4">
-            <nav className="container space-y-1.5" aria-label="Mobile navigation">
+          {/* Sidebar Content — Independently Scrollable, scrolls only if content exceeds the cap */}
+          <div className="overflow-y-auto overscroll-contain">
+            <nav className="px-4 py-3 space-y-1" aria-label="Mobile navigation">
               {mainNavItems.map((item) => (
                 <div key={item.href} className="border-b border-palnadu-border/50 pb-1.5">
                   <Link
