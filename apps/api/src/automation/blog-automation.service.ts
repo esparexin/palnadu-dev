@@ -9,7 +9,13 @@ import { SeoValidationService } from './seo-validation.service';
 import { TopicDiscoveryService } from './topic-discovery.service';
 import { DiscoveredTopic } from './seo-sources';
 import { canonicalizeTopic, SearchIntent, toTopicKey } from './topic-identity';
-import { allocateQuota, type BilingualQuota } from './bilingual-quota';
+import {
+  allocateQuota,
+  readBilingualConfig,
+  BILINGUAL_QUOTA_DEFAULT,
+  type BilingualQuota,
+  type BilingualConfig,
+} from './bilingual-quota';
 import { PublishStatus, TopicStatus, BlogLanguage } from '@prisma/client';
 
 export interface GenerationResult {
@@ -513,10 +519,23 @@ export class BlogAutomationService {
         this.logger.warn(`discovery step failed (non-fatal): ${String(err)}`);
       }
 
-      const { results, rejected } = await this.generateBatch(5, false, workerId);
-      this.logger.log(
-        `Daily blog automation batch completed. ${results.length} generated, ${rejected.length} rejected.`,
-      );
+      const bilingual = await this.readBilingualSwitch();
+      if (bilingual.enabled) {
+        const { results, rejected } = await this.generateBilingualBatch(
+          bilingual.quota,
+          false,
+          workerId,
+        );
+        this.logger.log(
+          `Daily bilingual batch completed (${bilingual.quota.te} te + ${bilingual.quota.en} en quota). ` +
+            `${results.length} generated, ${rejected.length} rejected.`,
+        );
+      } else {
+        const { results, rejected } = await this.generateBatch(5, false, workerId);
+        this.logger.log(
+          `Daily blog automation batch completed. ${results.length} generated, ${rejected.length} rejected.`,
+        );
+      }
     } catch (err) {
       this.logger.error(`Daily blog automation cron failed: ${err instanceof Error ? err.message : err}`);
     }
@@ -818,6 +837,7 @@ export class BlogAutomationService {
       existingSlugs: new Set(existingSlugs.map((p) => p.slug)),
       existingTitles: new Set(existingTitles.map((p) => p.title.toLowerCase().trim())),
       wordCount,
+      language,
     });
 
     const similaritySummary = similarity.nearest
@@ -1016,6 +1036,83 @@ export class BlogAutomationService {
   }
 
   /** Automation status, queue health, and what the site already covers. */
+  /**
+   * Reads the bilingual switch + quota from site settings.
+   * Missing settings mean disabled with default quota — never enabled.
+   */
+  async readBilingualSwitch(): Promise<BilingualConfig> {
+    const rows = await this.prisma.siteSetting.findMany({
+      where: {
+        key: {
+          in: ['bilingual_generation_enabled', 'bilingual_quota_te', 'bilingual_quota_en'],
+        },
+      },
+    });
+    const byKey = new Map(rows.map((r) => [r.key, r.value]));
+    return readBilingualConfig((key) => byKey.get(key));
+  }
+
+  /**
+   * Inspect bilingual mode: switch state, effective quota, and per-language
+   * pending backlog so an operator can see what the next cycle would claim.
+   */
+  async getBilingualStatus(): Promise<
+    BilingualConfig & { pending: { te: number; en: number } }
+  > {
+    const config = await this.readBilingualSwitch();
+    const [te, en] = await Promise.all([
+      this.prisma.blogTopic.count({
+        where: { status: TopicStatus.PENDING, language: BlogLanguage.te },
+      }),
+      this.prisma.blogTopic.count({
+        where: { status: TopicStatus.PENDING, language: BlogLanguage.en },
+      }),
+    ]);
+    return { ...config, pending: { te, en } };
+  }
+
+  /**
+   * Update the bilingual switch and/or quota. Only provided fields change;
+   * omitted fields keep their stored values. Quota values are sanitized by
+   * the same rules as reads, so a bad write cannot arm an absurd batch.
+   */
+  async setBilingualConfig(input: {
+    enabled?: boolean;
+    te?: number;
+    en?: number;
+  }): Promise<BilingualConfig> {
+    const entries: Array<[string, boolean | number, string]> = [];
+    if (input.enabled !== undefined) {
+      entries.push([
+        'bilingual_generation_enabled',
+        Boolean(input.enabled),
+        'Whether scheduled runs generate per-language bilingual batches',
+      ]);
+    }
+    if (input.te !== undefined) {
+      entries.push([
+        'bilingual_quota_te',
+        Math.max(0, Math.floor(input.te)),
+        'Telugu articles per bilingual cycle',
+      ]);
+    }
+    if (input.en !== undefined) {
+      entries.push([
+        'bilingual_quota_en',
+        Math.max(0, Math.floor(input.en)),
+        'English articles per bilingual cycle',
+      ]);
+    }
+    for (const [key, value, description] of entries) {
+      await this.prisma.siteSetting.upsert({
+        where: { key },
+        update: { value },
+        create: { key, value, description },
+      });
+    }
+    return this.readBilingualSwitch();
+  }
+
   async getStatus() {
     const [totalPosts, draftPosts, publishedPosts, archivedPosts, failedTopics, claimedTopics] =
       await Promise.all([
