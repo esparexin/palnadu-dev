@@ -61,6 +61,23 @@ export const INTENT_GUIDANCE: Record<SearchIntent, string> = {
     'The reader has a specific question. Answer it in the first paragraph, then expand with the detail needed to act.',
 };
 
+/**
+ * Telugu writing guidance appended to the generation prompt for `te` drafts.
+ *
+ * Kept as a named export (not buried in a template literal) so tests can
+ * assert on each requirement individually. Covers what the generic directive
+ * does not: Telugu SEO conventions, sentence rhythm, and the exact boundary
+ * between allowed English tokens and forbidden mixed-language body copy.
+ */
+export const TELUGU_STYLE_GUIDANCE = `TELUGU WRITING GUIDANCE:
+- Tone: direct and practical, as if explaining to a shop owner in Guntur. Short sentences. No ornamental openings.
+- Script discipline: body sentences in Telugu script. English is allowed ONLY for: proper nouns (Palnadu.dev, Next.js, WhatsApp, Google), technical terms with no common Telugu equivalent on first use — always followed immediately by the Telugu explanation in parentheses — and URLs. Never write whole English sentences or paragraphs.
+- No romanized Telugu (no "website kharchu" written in Latin letters anywhere in human-readable fields).
+- SEO in Telugu: place the primary keyword verbatim in the title, the first 100 words, and at least one H2. Telugu readers search in Telugu script, so transliterated or English keywords do not count toward placement.
+- Meta title under 60 characters, meta description under 155 characters, counted in characters as displayed.
+- Headings answer questions directly; the H1 states the topic, H2s state the key answers.
+- FAQ answers must be complete in Telugu without requiring the reader to follow a link.`;
+
 /** Conservative defaults, used when no discovery data is available. */
 export function defaultStrategy(
   topicTitle: string,

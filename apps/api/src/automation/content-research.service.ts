@@ -12,6 +12,7 @@ import {
   normaliseSlug,
   extractHeadings,
   parseLooseJson,
+  TELUGU_STYLE_GUIDANCE,
 } from './seo-strategy';
 import { toAsciiSlug } from './script-utils';
 import { BlogLanguage } from '@prisma/client';
@@ -136,7 +137,7 @@ Core engineering principles:
     // Telugu-speaking readers. Only the URL slug stays ASCII (transliterated),
     // because slugs must satisfy the kebab-case validator downstream.
     const languageDirective = writeTelugu
-      ? `OUTPUT LANGUAGE: Telugu. Write every human-readable field (title, h1, excerpt, content, metaTitle, metaDescription, seoTitle, seoDescription, keywords, headings, faq, tags, image alt text and captions) entirely in Telugu script (తెలుగు). Do not mix English sentences into the body; English proper nouns (Palnadu.dev, Next.js, WhatsApp) and the /services/* and /contact URLs stay as-is. The "slug" field must be ASCII kebab-case: transliterate the Telugu title (e.g. "వెబ్‌సైట్ ఖర్చు" -> "vebsait-kharchu").\n\n`
+      ? `OUTPUT LANGUAGE: Telugu. Write every human-readable field (title, h1, excerpt, content, metaTitle, metaDescription, seoTitle, seoDescription, keywords, headings, faq, tags, image alt text and captions) entirely in Telugu script (తెలుగు).\n\n${TELUGU_STYLE_GUIDANCE}\n\nThe "slug" field must be ASCII kebab-case: transliterate the Telugu title (e.g. "వెబ్‌సైట్ ఖర్చు" -> "vebsait-kharchu").\n\n`
       : '';
 
     const userPrompt = `${languageDirective}Write an authentic, human-grade technical and business article about: "${topicTitle}".

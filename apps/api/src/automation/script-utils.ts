@@ -57,6 +57,21 @@ export function detectScript(text: string): ScriptKind {
   return 'unknown';
 }
 
+/**
+ * Fraction of letter characters written in Telugu script (0..1).
+ *
+ * Used by the publish gate to verify a `te`-tagged draft is actually Telugu:
+ * an English body saved under a Telugu tag is a mixed-language row, the same
+ * failure mode the generation fallback guards against. Counts letters only so
+ * digits, punctuation, URLs, and proper nouns do not dilute the ratio.
+ */
+export function teluguScriptRatio(text: string): number {
+  const telugu = (text.match(/[ఀ-౿]/g) ?? []).length;
+  const latin = (text.match(/[A-Za-z]/g) ?? []).length;
+  const total = telugu + latin;
+  return total === 0 ? 0 : telugu / total;
+}
+
 /** Resolve the publication language for a phrase. */
 export function detectLanguage(text: string): ContentLanguage {
   // Count letters rather than testing presence, so one stray brand name in a

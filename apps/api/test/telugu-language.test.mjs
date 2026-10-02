@@ -19,6 +19,7 @@ const require = createRequire(import.meta.url);
 
 let su; // script-utils
 let ti; // topic-identity
+let st; // seo-strategy (Telugu style guidance)
 
 before(() => {
   const outDir = mkdtempSync(join(tmpdir(), 'telugu-test-'));
@@ -43,6 +44,7 @@ before(() => {
   );
   su = require(join(outDir, 'script-utils.js'));
   ti = require(join(outDir, 'topic-identity.js'));
+  st = require(join(outDir, 'seo-strategy.js'));
 });
 
 // Genuine Telugu fixtures, paired with their English equivalents.
@@ -288,5 +290,46 @@ describe('mixed English/Telugu duplicate detection', () => {
     const key = ti.canonicalizeTopic('Website డెవలప్మెంట్ ఖర్చు గుంటూర్');
     assert.ok(key.topicKey.length > 0);
     assert.equal(key.script, 'mixed');
+  });
+});
+describe('Telugu script coverage', () => {
+  it('measures the Telugu letter fraction, ignoring digits and URLs', () => {
+    assert.equal(su.teluguScriptRatio('గుంటూర్ వెబ్‌సైట్'), 1);
+    assert.equal(su.teluguScriptRatio('Website cost guide'), 0);
+    assert.equal(su.teluguScriptRatio(''), 0);
+    assert.equal(su.teluguScriptRatio('123 https://x.com/a'), 0);
+    const mixed = su.teluguScriptRatio('గుంటూర్ Website ఖర్చు cost');
+    assert.ok(mixed > 0 && mixed < 1, `expected a proper fraction, got ${mixed}`);
+  });
+
+  it('does not let proper nouns or code flip a Telugu article', () => {
+    // A realistic Telugu paragraph mentioning Palnadu.dev, Next.js and a URL
+    // must still read as overwhelmingly Telugu.
+    const body = 'గుంటూర్‌లో వ్యాపారం కోసం Palnadu.dev వెబ్‌సైట్‌ను Next.js తో నిర్మిస్తుంది. https://palnadu.dev/contact లో సంప్రదించండి. ఖర్చు, సమయం మరియు నాణ్యత గురించి వివరంగా మాట్లాడుకుందాం.';
+    assert.ok(su.teluguScriptRatio(body) >= 0.5, `ratio was ${su.teluguScriptRatio(body)}`);
+  });
+
+  it('catches an English body masquerading as Telugu', () => {
+    const body = 'Website development cost in Guntur depends on features. Contact us for a quote today.';
+    assert.ok(su.teluguScriptRatio(body) < 0.5, `ratio was ${su.teluguScriptRatio(body)}`);
+  });
+});
+
+describe('Telugu style guidance', () => {
+  it('forbids romanized Telugu and English body copy', () => {
+    assert.match(st.TELUGU_STYLE_GUIDANCE, /[Nn]o romanized Telugu/);
+    assert.match(st.TELUGU_STYLE_GUIDANCE, /body sentences in Telugu script/);
+    assert.match(st.TELUGU_STYLE_GUIDANCE, /Never write whole English sentences/);
+  });
+
+  it('requires Telugu-script keywords for Telugu SEO placement', () => {
+    assert.match(st.TELUGU_STYLE_GUIDANCE, /primary keyword verbatim/);
+    assert.match(st.TELUGU_STYLE_GUIDANCE, /transliterated or English keywords do not count/);
+  });
+
+  it('keeps proper nouns, technical terms, and URLs in English', () => {
+    assert.match(st.TELUGU_STYLE_GUIDANCE, /Palnadu\.dev/);
+    assert.match(st.TELUGU_STYLE_GUIDANCE, /URLs/);
+    assert.match(st.TELUGU_STYLE_GUIDANCE, /parentheses/);
   });
 });
