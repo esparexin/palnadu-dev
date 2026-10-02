@@ -510,6 +510,51 @@ describe('publishing validation', () => {
     const outcome = run({ isTemplateFallback: false });
     assert.equal(outcome.passed, true, outcome.summary);
   });
+
+  // ── Telugu drafts must actually be Telugu ─────────────────────────────────
+  it('passes a genuinely Telugu draft on script coverage', () => {
+    const teBody = Array.from(
+      { length: 40 },
+      () => 'గుంటూర్‌లో వ్యాపారం కోసం వెబ్‌సైట్ ఖర్చు గురించి వివరంగా మాట్లాడుకుందాం Palnadu.dev.',
+    ).join(' ');
+    const outcome = run(
+      {
+        title: 'గుంటూర్‌లో వెబ్‌సైట్ డెవలప్మెంట్ ఖర్చు ఎంత?',
+        content: teBody,
+        primaryKeyword: 'వెబ్‌సైట్ ఖర్చు',
+        secondaryKeywords: ['గుంటూర్ ధర'],
+      },
+      { language: 'te' },
+    );
+    const check = outcome.checks.find((c) => c.name === 'telugu_script_coverage');
+    assert.ok(check, 'script coverage check should run for te drafts');
+    assert.equal(check.blocking, true);
+    assert.equal(check.passed, true, check.detail);
+  });
+
+  it('blocks an English body saved under a Telugu tag', () => {
+    const outcome = run(
+      {
+        title: 'Website Development Cost in Guntur',
+        content: Array.from({ length: 40 }, () => 'Website development cost in Guntur depends on features.').join(
+          ' ',
+        ),
+      },
+      { language: 'te' },
+    );
+    const check = outcome.checks.find((c) => c.name === 'telugu_script_coverage');
+    assert.ok(check, 'script coverage check should run for te drafts');
+    assert.equal(check.passed, false);
+    assert.match(check.detail, /not Telugu/);
+  });
+
+  it('skips the script check entirely for English drafts', () => {
+    for (const language of [undefined, 'en']) {
+      const outcome = run({}, language === undefined ? {} : { language });
+      const check = outcome.checks.find((c) => c.name === 'telugu_script_coverage');
+      assert.equal(check, undefined, 'no script check outside te drafts');
+    }
+  });
 });
 
 // ═══════════════════════════════════════════════════════════════════════════

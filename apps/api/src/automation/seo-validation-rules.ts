@@ -16,6 +16,7 @@
  */
 
 import { VALID_INTENTS } from './seo-strategy';
+import { teluguScriptRatio } from './script-utils';
 import type { GeneratedBlogDraft } from './content-research.service';
 import type { SimilarityResult } from './content-similarity-rules';
 
@@ -42,6 +43,7 @@ export type CheckName =
   | 'category'
   | 'canonical_url'
   | 'template_fallback_marker'
+  | 'telugu_script_coverage'
   | 'final_publishing_validation';
 
 export interface CheckResult {
@@ -78,6 +80,11 @@ export interface ValidationInput {
   existingSlugs: Set<string>;
   existingTitles: Set<string>;
   wordCount: number;
+  /**
+   * Language being validated. Optional so existing callers keep working;
+   * when 'te', the Telugu script-coverage check applies.
+   */
+  language?: 'en' | 'te';
 }
 
 /**
@@ -163,6 +170,25 @@ export function validate(input: ValidationInput): ValidationOutcome {
       ? 'template fallback: forced to DRAFT regardless of the auto-publish setting'
       : 'LLM-generated original content',
   });
+
+  // 4c. Telugu script coverage. A `te`-tagged draft whose body is mostly
+  //     Latin script is a mixed-language row: either the LLM ignored the
+  //     language directive or English copy leaked in. Blocking, because such
+  //     a row would publish English content under a Telugu tag and URL.
+  //     Threshold 0.5 keeps proper nouns, URLs, and code spans harmless while
+  //     catching an English body decisively.
+  if (input.language === 'te') {
+    const ratio = teluguScriptRatio(`${d.title}\n${d.content}`);
+    checks.push({
+      name: 'telugu_script_coverage',
+      passed: ratio >= 0.5,
+      blocking: true,
+      detail:
+        ratio >= 0.5
+          ? `Telugu script ratio ${(ratio * 100).toFixed(0)}%`
+          : `only ${(ratio * 100).toFixed(0)}% Telugu script — body is not Telugu`,
+    });
+  }
 
   // 5. Title uniqueness and sanity.
   const titleNorm = d.title.toLowerCase().trim();

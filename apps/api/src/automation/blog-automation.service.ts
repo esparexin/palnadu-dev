@@ -9,6 +9,13 @@ import { SeoValidationService } from './seo-validation.service';
 import { TopicDiscoveryService } from './topic-discovery.service';
 import { DiscoveredTopic } from './seo-sources';
 import { canonicalizeTopic, SearchIntent, toTopicKey } from './topic-identity';
+import {
+  allocateQuota,
+  readBilingualConfig,
+  BILINGUAL_QUOTA_DEFAULT,
+  type BilingualQuota,
+  type BilingualConfig,
+} from './bilingual-quota';
 import { PublishStatus, TopicStatus, BlogLanguage } from '@prisma/client';
 
 export interface GenerationResult {
@@ -431,6 +438,45 @@ export class BlogAutomationService {
     return { ...candidate, status: TopicStatus.CLAIMED };
   }
 
+  /**
+   * Atomically claims the next workable topic *in one language*.
+   *
+   * Same lease semantics as claimNextTopic, plus a language filter so the
+   * bilingual allocator can draw its per-language quota without one language
+   * starving the other. Unused unless the bilingual switch is enabled.
+   */
+  private async claimNextTopicForLanguage(
+    workerId: string,
+    language: BlogLanguage,
+    maxAttempts: number,
+  ): Promise<ClaimedTopic | null> {
+    const now = new Date();
+    const staleBefore = new Date(now.getTime() - 30 * 60 * 1000);
+
+    const candidate = await this.prisma.blogTopic.findFirst({
+      where: {
+        status: TopicStatus.PENDING,
+        language,
+        attempts: { lt: maxAttempts },
+      },
+      orderBy: { createdAt: 'asc' },
+    });
+    if (!candidate) return null;
+
+    const claim = await this.prisma.blogTopic.updateMany({
+      where: {
+        id: candidate.id,
+        // Only claim if still pending, so two workers cannot both win.
+        status: { in: [TopicStatus.PENDING, TopicStatus.FAILED] },
+        OR: [{ claimedAt: null }, { claimedAt: { lt: staleBefore } }],
+      },
+      data: { status: TopicStatus.CLAIMED, claimedAt: now, claimedBy: workerId },
+    });
+
+    if (claim.count === 0) return null; // lost the race
+    return { ...candidate, status: TopicStatus.CLAIMED };
+  }
+
   /** Returns a failed topic to the queue for a later retry. Never deletes it. */
   private async releaseTopic(
     topicKey: string,
@@ -473,10 +519,23 @@ export class BlogAutomationService {
         this.logger.warn(`discovery step failed (non-fatal): ${String(err)}`);
       }
 
-      const { results, rejected } = await this.generateBatch(5, false, workerId);
-      this.logger.log(
-        `Daily blog automation batch completed. ${results.length} generated, ${rejected.length} rejected.`,
-      );
+      const bilingual = await this.readBilingualSwitch();
+      if (bilingual.enabled) {
+        const { results, rejected } = await this.generateBilingualBatch(
+          bilingual.quota,
+          false,
+          workerId,
+        );
+        this.logger.log(
+          `Daily bilingual batch completed (${bilingual.quota.te} te + ${bilingual.quota.en} en quota). ` +
+            `${results.length} generated, ${rejected.length} rejected.`,
+        );
+      } else {
+        const { results, rejected } = await this.generateBatch(5, false, workerId);
+        this.logger.log(
+          `Daily blog automation batch completed. ${results.length} generated, ${rejected.length} rejected.`,
+        );
+      }
     } catch (err) {
       this.logger.error(`Daily blog automation cron failed: ${err instanceof Error ? err.message : err}`);
     }
@@ -499,39 +558,82 @@ export class BlogAutomationService {
     for (let i = 0; i < count; i++) {
       const topic = await this.claimNextTopic(workerId, this.maxAttempts);
       if (!topic) break;
-
-      const topicKey = topic.topicKey;
-      try {
-        const generated = await this.generateForTopic(topic, forcePublish, workerId);
-        results.push(generated);
-      } catch (err) {
-        const detail = err instanceof Error ? err.message : String(err);
-        const reason: RejectionReason =
-          detail.startsWith('validation:') ? 'validation_failed' : 'generation_failed';
-        rejected.push({ topicKey, topic: topic.topic, reason, detail });
-
-        // Retryable failures return to the queue; a permanent rejection (bad
-        // content) is parked so we do not burn LLM calls re-testing it forever.
-        const permanent = reason === 'validation_failed';
-        await this.prisma.blogTopic.update({
-          where: { topicKey_language: { topicKey, language: topic.language } },
-          data: {
-            attempts: { increment: 1 },
-            lastError: detail.slice(0, 500),
-            status: permanent ? TopicStatus.FAILED : TopicStatus.PENDING,
-            nextRetryAt: permanent ? null : new Date(Date.now() + this.retryDelayMs),
-            claimedAt: null,
-            claimedBy: null,
-          },
-        });
-        this.logger.error(`topicKey="${topicKey}" ${reason}: ${detail}`);
-
-        // Give up on this topic and move on so the batch still makes progress.
-        if (permanent) continue;
-      }
+      await this.attemptTopic(topic, forcePublish, workerId, results, rejected);
     }
 
     return { results, rejected };
+  }
+
+  /**
+   * Generates one bilingual cycle: up to quota.te Telugu + quota.en English
+   * articles, claimed oldest-first per language.
+   *
+   * Dormant unless the bilingual switch is enabled (see Phase 4 wiring): with
+   * the switch off, the cron keeps calling generateBatch exactly as today.
+   */
+  async generateBilingualBatch(
+    quota: BilingualQuota,
+    forcePublish = false,
+    workerId = `manual:${process.pid}:${Date.now()}`,
+  ): Promise<{ results: GenerationResult[]; rejected: RejectedTopic[] }> {
+    const results: GenerationResult[] = [];
+    const rejected: RejectedTopic[] = [];
+
+    // Snapshot the pending queue once so allocation sees a stable picture;
+    // claiming itself stays atomic per topic via the lease.
+    const pending = await this.prisma.blogTopic.findMany({
+      where: { status: TopicStatus.PENDING, attempts: { lt: this.maxAttempts } },
+      orderBy: { createdAt: 'asc' },
+    });
+    const selected = allocateQuota(pending, quota);
+
+    for (const row of selected) {
+      const topic = await this.claimNextTopicForLanguage(workerId, row.language, this.maxAttempts);
+      // Another worker may have taken it between snapshot and claim.
+      if (!topic) continue;
+      await this.attemptTopic(topic, forcePublish, workerId, results, rejected);
+    }
+
+    return { results, rejected };
+  }
+
+  /**
+   * Single attempt shared by both batch paths: generate, and on failure park
+   * or release the topic so the batch keeps making progress.
+   */
+  private async attemptTopic(
+    topic: ClaimedTopic,
+    forcePublish: boolean,
+    workerId: string,
+    results: GenerationResult[],
+    rejected: RejectedTopic[],
+  ): Promise<void> {
+    const topicKey = topic.topicKey;
+    try {
+      const generated = await this.generateForTopic(topic, forcePublish, workerId);
+      results.push(generated);
+    } catch (err) {
+      const detail = err instanceof Error ? err.message : String(err);
+      const reason: RejectionReason =
+        detail.startsWith('validation:') ? 'validation_failed' : 'generation_failed';
+      rejected.push({ topicKey, topic: topic.topic, reason, detail });
+
+      // Retryable failures return to the queue; a permanent rejection (bad
+      // content) is parked so we do not burn LLM calls re-testing it forever.
+      const permanent = reason === 'validation_failed';
+      await this.prisma.blogTopic.update({
+        where: { topicKey_language: { topicKey, language: topic.language } },
+        data: {
+          attempts: { increment: 1 },
+          lastError: detail.slice(0, 500),
+          status: permanent ? TopicStatus.FAILED : TopicStatus.PENDING,
+          nextRetryAt: permanent ? null : new Date(Date.now() + this.retryDelayMs),
+          claimedAt: null,
+          claimedBy: null,
+        },
+      });
+      this.logger.error(`topicKey="${topicKey}" ${reason}: ${detail}`);
+    }
   }
 
   /** Backoff window before a transient failure is retried. */
@@ -735,6 +837,7 @@ export class BlogAutomationService {
       existingSlugs: new Set(existingSlugs.map((p) => p.slug)),
       existingTitles: new Set(existingTitles.map((p) => p.title.toLowerCase().trim())),
       wordCount,
+      language,
     });
 
     const similaritySummary = similarity.nearest
@@ -933,6 +1036,83 @@ export class BlogAutomationService {
   }
 
   /** Automation status, queue health, and what the site already covers. */
+  /**
+   * Reads the bilingual switch + quota from site settings.
+   * Missing settings mean disabled with default quota — never enabled.
+   */
+  async readBilingualSwitch(): Promise<BilingualConfig> {
+    const rows = await this.prisma.siteSetting.findMany({
+      where: {
+        key: {
+          in: ['bilingual_generation_enabled', 'bilingual_quota_te', 'bilingual_quota_en'],
+        },
+      },
+    });
+    const byKey = new Map(rows.map((r) => [r.key, r.value]));
+    return readBilingualConfig((key) => byKey.get(key));
+  }
+
+  /**
+   * Inspect bilingual mode: switch state, effective quota, and per-language
+   * pending backlog so an operator can see what the next cycle would claim.
+   */
+  async getBilingualStatus(): Promise<
+    BilingualConfig & { pending: { te: number; en: number } }
+  > {
+    const config = await this.readBilingualSwitch();
+    const [te, en] = await Promise.all([
+      this.prisma.blogTopic.count({
+        where: { status: TopicStatus.PENDING, language: BlogLanguage.te },
+      }),
+      this.prisma.blogTopic.count({
+        where: { status: TopicStatus.PENDING, language: BlogLanguage.en },
+      }),
+    ]);
+    return { ...config, pending: { te, en } };
+  }
+
+  /**
+   * Update the bilingual switch and/or quota. Only provided fields change;
+   * omitted fields keep their stored values. Quota values are sanitized by
+   * the same rules as reads, so a bad write cannot arm an absurd batch.
+   */
+  async setBilingualConfig(input: {
+    enabled?: boolean;
+    te?: number;
+    en?: number;
+  }): Promise<BilingualConfig> {
+    const entries: Array<[string, boolean | number, string]> = [];
+    if (input.enabled !== undefined) {
+      entries.push([
+        'bilingual_generation_enabled',
+        Boolean(input.enabled),
+        'Whether scheduled runs generate per-language bilingual batches',
+      ]);
+    }
+    if (input.te !== undefined) {
+      entries.push([
+        'bilingual_quota_te',
+        Math.max(0, Math.floor(input.te)),
+        'Telugu articles per bilingual cycle',
+      ]);
+    }
+    if (input.en !== undefined) {
+      entries.push([
+        'bilingual_quota_en',
+        Math.max(0, Math.floor(input.en)),
+        'English articles per bilingual cycle',
+      ]);
+    }
+    for (const [key, value, description] of entries) {
+      await this.prisma.siteSetting.upsert({
+        where: { key },
+        update: { value },
+        create: { key, value, description },
+      });
+    }
+    return this.readBilingualSwitch();
+  }
+
   async getStatus() {
     const [totalPosts, draftPosts, publishedPosts, archivedPosts, failedTopics, claimedTopics] =
       await Promise.all([

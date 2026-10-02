@@ -148,6 +148,41 @@ export class AutomationController {
     };
   }
 
+  /**
+   * Inspect bilingual mode without changing anything: switch state, effective
+   * quota, and per-language pending backlog (i.e. what the next cycle would
+   * claim if the switch were on).
+   */
+  @Get('bilingual')
+  async getBilingual() {
+    return { success: true, data: await this.automationService.getBilingualStatus() };
+  }
+
+  /**
+   * Toggle bilingual mode and/or quotas. Changing the switch is restricted
+   * like auto-publish: it alters what the scheduled cron produces.
+   * Everything defaults to off — this endpoint only arms what it is told to.
+   */
+  @Patch('bilingual')
+  @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
+  async updateBilingual(@Body() body: { enabled?: boolean; te?: number; en?: number } = {}) {
+    if (
+      body.enabled === undefined &&
+      body.te === undefined &&
+      body.en === undefined
+    ) {
+      throw new BadRequestException('Provide at least one of: enabled, te, en.');
+    }
+    const data = await this.automationService.setBilingualConfig(body);
+    return {
+      success: true,
+      message: data.enabled
+        ? `Bilingual mode ON: ${data.quota.te} Telugu + ${data.quota.en} English per cycle.`
+        : 'Bilingual mode OFF: scheduled runs stay English-only.',
+      data,
+    };
+  }
+
   @Patch('settings')
   @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
   async updateSettings(@Body() body: { autoPublish: boolean }) {

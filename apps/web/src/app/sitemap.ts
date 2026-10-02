@@ -17,7 +17,37 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     lastModified: new Date(),
     changeFrequency: page.changeFrequency,
     priority: page.priority,
+    // The Telugu blog index alternates with the English one; both always
+    // exist, so both alternates are always safe to emit.
+    ...(page.path === '/blog'
+      ? {
+          alternates: {
+            languages: {
+              en: `${baseUrl}/blog`,
+              te: `${baseUrl}/te/blog`,
+              'x-default': `${baseUrl}/blog`,
+            },
+          },
+        }
+      : {}),
   }));
+
+  // ── Telugu blog index (paired with /blog above) ──
+  const teBlogIndex: MetadataRoute.Sitemap = [
+    {
+      url: `${baseUrl}/te/blog`,
+      lastModified: new Date(),
+      changeFrequency: 'weekly' as const,
+      priority: 0.8,
+      alternates: {
+        languages: {
+          en: `${baseUrl}/blog`,
+          te: `${baseUrl}/te/blog`,
+          'x-default': `${baseUrl}/blog`,
+        },
+      },
+    },
+  ];
 
   // ── Dynamic: individual service pages ──
   const servicePages: MetadataRoute.Sitemap = services.map((service) => ({
@@ -73,5 +103,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     blogPages = [];
   }
 
-  return [...staticPages, ...servicePages, ...caseStudyPages, ...blogPages];
+  return [...staticPages, ...teBlogIndex, ...servicePages, ...caseStudyPages, ...blogPages];
 }
