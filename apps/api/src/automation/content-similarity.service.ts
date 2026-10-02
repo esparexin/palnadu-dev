@@ -1,5 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import type { PrismaService } from '../prisma.service';
+// NOTE: value import, deliberately not `import type`. Nest resolves constructor
+// dependencies from emitted decorator metadata; a type-only import erases to
+// `Function` and the whole API refuses to boot with an unresolvable dependency.
+import { PrismaService } from '../prisma.service';
 import {
   scoreAgainstCorpus,
   ExistingArticle,

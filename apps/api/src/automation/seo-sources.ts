@@ -4,6 +4,17 @@ import { existsSync, readFileSync } from 'node:fs';
 import { canonicalizeTopic, SearchIntent } from './topic-identity';
 
 /**
+ * DI token for the discovery-source adapters.
+ *
+ * Lives here — not in automation.module.ts — because topic-discovery.service
+ * needs it and the module needs the service. Defining it in the module
+ * created a CommonJS import cycle that left the token `undefined` at
+ * decoration time, so Nest could not resolve the dependency and the whole
+ * API refused to boot.
+ */
+export const REFERENCE_SOURCES = 'REFERENCE_SOURCES';
+
+/**
  * A candidate search topic discovered from a reference source.
  */
 export interface DiscoveredTopic {

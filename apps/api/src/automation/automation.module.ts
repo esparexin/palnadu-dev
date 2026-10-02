@@ -24,13 +24,11 @@ import {
   AnswerThePublicSource,
   ScreamingFrogSource,
   ReferenceSource,
+  REFERENCE_SOURCES,
 } from './seo-sources';
 
-/**
- * Discovery sources are provided as a multi-value token so TopicDiscoveryService
- * receives every adapter and decides which are usable at runtime.
- */
-export const REFERENCE_SOURCES = 'REFERENCE_SOURCES';
+// Re-exported so existing import sites keep working.
+export { REFERENCE_SOURCES };
 
 @Module({
   imports: [
