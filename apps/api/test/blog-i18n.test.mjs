@@ -164,6 +164,15 @@ describe('language backfill planning', () => {
     );
     assert.deepEqual(plan, { postIds: [], topicIds: [] });
   });
+
+  it('extracts hex ids from Extended JSON without mangling them', () => {
+    // Regression: String({ $oid }) yields "[object Object]", which Prisma
+    // rejects as a malformed ObjectID and fails the backfill run.
+    assert.equal(backfill.toHexId({ $oid: '6abf5425d0b6c2401bb206c7' }), '6abf5425d0b6c2401bb206c7');
+    assert.equal(backfill.toHexId('6abf5425d0b6c2401bb206c7'), '6abf5425d0b6c2401bb206c7');
+    assert.throws(() => backfill.toHexId({ nope: 1 }), /Unrecognized _id shape/);
+    assert.throws(() => backfill.toHexId(null), /Unrecognized _id shape/);
+  });
 });
 
 describe('schema constraints', () => {

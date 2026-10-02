@@ -34,7 +34,7 @@
  * Run with:  pnpm --filter @palnadu/api db:backfill-language [--dry-run]
  */
 import { PrismaClient } from '@prisma/client';
-import { planLanguageBackfill } from '../src/blog/language-backfill';
+import { planLanguageBackfill, toHexId } from '../src/blog/language-backfill';
 
 const prisma = new PrismaClient();
 const DRY_RUN = process.argv.includes('--dry-run');
@@ -68,8 +68,12 @@ async function main() {
     language?: unknown;
   }[];
 
-  const posts = rawPosts.map((d) => ({ id: String(d._id), slug: d.slug, language: d.language }));
-  const topics = rawTopics.map((d) => ({ id: String(d._id), topicKey: d.topicKey, language: d.language }));
+  // $runCommandRaw returns Extended JSON: _id arrives as { $oid: '...' },
+  // and String() on that yields "[object Object]" — an invalid ObjectID that
+  // fails the update. Extract the hex string explicitly.
+  const rawId = (d: { _id: unknown }): string => toHexId(d._id);
+  const posts = rawPosts.map((d) => ({ id: rawId(d), slug: d.slug, language: d.language }));
+  const topics = rawTopics.map((d) => ({ id: rawId(d), topicKey: d.topicKey, language: d.language }));
 
   const plan = planLanguageBackfill(posts, topics);
   const postsToFix = posts.filter((p) => plan.postIds.includes(p.id));
@@ -79,13 +83,25 @@ async function main() {
   console.log(`Queued topics: ${topics.length} total, ${topicsToFix.length} physically missing language`);
 
   if (!DRY_RUN) {
+    // Raw updates, deliberately NOT via the model API: production documents
+    // predate other required fields (notably topic_key), and the generated
+    // client validates full documents on write, failing with P2032 before
+    // touching anything. A targeted $set of one field needs no such
+    // validation and keeps this migration isolated from the topicKey
+    // migration, which stays a separate decision.
     for (const p of postsToFix) {
       const language = TE_LANGUAGE_OVERRIDES.has(p.slug) ? 'te' : 'en';
-      await prisma.blogPost.update({ where: { id: p.id }, data: { language } });
+      await prisma.$runCommandRaw({
+        update: 'blog_posts',
+        updates: [{ q: { _id: { $oid: p.id } }, u: { $set: { language } } }],
+      });
       console.log(`  post ${p.slug} -> ${language}`);
     }
     for (const t of topicsToFix) {
-      await prisma.blogTopic.update({ where: { id: t.id }, data: { language: 'en' } });
+      await prisma.$runCommandRaw({
+        update: 'blog_topics',
+        updates: [{ q: { _id: { $oid: t.id } }, u: { $set: { language: 'en' } } }],
+      });
       console.log(`  topic ${t.topicKey} -> en`);
     }
   }
