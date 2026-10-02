@@ -63,13 +63,15 @@ function createStore() {
     logs,
 
     async createTopic(data) {
-      // Mirrors the unique index on topicKey.
-      if (topics.some((t) => t.topicKey === data.topicKey)) {
-        const err = new Error('E11000 duplicate key error collection: blog_topics topic_key');
+      // Mirrors the compound unique index on (topicKey, language): the same
+      // subject may be queued once per language, never twice in one language.
+      const language = data.language ?? 'en';
+      if (topics.some((t) => t.topicKey === data.topicKey && (t.language ?? 'en') === language)) {
+        const err = new Error('E11000 duplicate key error collection: blog_topics topic_key_1_language_1');
         err.code = 'P2002';
         throw err;
       }
-      const row = { id: `t${topics.length + 1}`, status: 'PENDING', attempts: 0, ...data };
+      const row = { id: `t${topics.length + 1}`, status: 'PENDING', attempts: 0, language, ...data };
       topics.push(row);
       return row;
     },
@@ -83,20 +85,23 @@ function createStore() {
     },
 
     async createPost({ data }) {
-      // The database-level guarantee: one topicKey => at most one post.
-      if (posts.some((p) => p.topicKey === data.topicKey)) {
+      // The database-level guarantee: one (topicKey, language) pair => at most
+      // one post. A Telugu counterpart of an English post is allowed; a second
+      // post in the same language is not.
+      const language = data.language ?? 'en';
+      if (posts.some((p) => p.topicKey === data.topicKey && (p.language ?? 'en') === language)) {
         const err = new Error(
-          `E11000 duplicate key error collection: blog_posts topic_key (${data.topicKey})`,
+          `E11000 duplicate key error collection: blog_posts topic_key_1_language_1 (${data.topicKey}, ${language})`,
         );
         err.code = 'P2002';
         throw err;
       }
-      if (posts.some((p) => p.slug === data.slug)) {
-        const err = new Error('E11000 duplicate key error collection: blog_posts slug');
+      if (posts.some((p) => p.slug === data.slug && (p.language ?? 'en') === language)) {
+        const err = new Error('E11000 duplicate key error collection: blog_posts language_1_slug_1');
         err.code = 'P2002';
         throw err;
       }
-      const row = { id: `p${posts.length + 1}`, ...data };
+      const row = { id: `p${posts.length + 1}`, language, ...data };
       posts.push(row);
       return row;
     },
@@ -385,5 +390,76 @@ describe('durable topic queue', () => {
     const reclaimed = await q.claim('healthy-worker');
     assert.ok(reclaimed, 'a stale claim is reclaimable');
     assert.equal(reclaimed.topicKey, t.topicKey);
+  });
+});
+
+// ── Bilingual queue behaviour ─────────────────────────────────────────────
+// Queue and post identity is per (topicKey, language): the same subject may
+// exist once per language, never twice in one language.
+describe('bilingual topic queue', () => {
+  const EN_TOPIC = 'Website Development Cost in Guntur';
+  const TE_TOPIC = 'గుంటూర్‌లో వెబ్‌సైట్ డెవలప్మెంట్ ఖర్చు ఎంతి?';
+
+  it('enqueues the same subject in English and Telugu', async () => {
+    const store = createStore();
+    const key = toTopicKey(EN_TOPIC);
+    assert.equal(toTopicKey(TE_TOPIC), key, 'precondition: shared cross-language identity');
+
+    const en = await store.createTopic({ topicKey: key, topic: EN_TOPIC, language: 'en' });
+    const te = await store.createTopic({ topicKey: key, topic: TE_TOPIC, language: 'te' });
+    assert.equal(store.topics.length, 2);
+    assert.equal(en.language, 'en');
+    assert.equal(te.language, 'te');
+  });
+
+  it('refuses the same subject twice in one language', async () => {
+    const store = createStore();
+    const key = toTopicKey(EN_TOPIC);
+    await store.createTopic({ topicKey: key, topic: EN_TOPIC, language: 'en' });
+
+    await assert.rejects(
+      () => store.createTopic({ topicKey: key, topic: 'reworded English version', language: 'en' }),
+      /duplicate key/i,
+    );
+    assert.equal(store.topics.length, 1);
+  });
+
+  it('stores an English and a Telugu post under one topicKey', async () => {
+    const store = createStore();
+    const key = toTopicKey(EN_TOPIC);
+
+    await store.createPost({ data: { topicKey: key, language: 'en', slug: 'website-cost-guntur', title: 'EN Title' } });
+    await store.createPost({ data: { topicKey: key, language: 'te', slug: 'website-cost-guntur-te', title: 'TE Title' } });
+    assert.equal(store.posts.length, 2);
+  });
+
+  it('refuses a second post for the same topicKey in the same language', async () => {
+    const store = createStore();
+    const key = toTopicKey(EN_TOPIC);
+
+    await store.createPost({ data: { topicKey: key, language: 'en', slug: 'a', title: 'A' } });
+    await assert.rejects(
+      () => store.createPost({ data: { topicKey: key, language: 'en', slug: 'b', title: 'B' } }),
+      /duplicate key/i,
+    );
+    assert.equal(store.posts.length, 1);
+  });
+
+  it('allows the same slug string in different languages', async () => {
+    // Slugs are unique per locale, not globally: /blog/x and /te/blog/x differ
+    // by path prefix, so the identical string is legitimate in both.
+    const store = createStore();
+    await store.createPost({ data: { topicKey: 'k1', language: 'en', slug: 'shared-slug', title: 'EN' } });
+    await store.createPost({ data: { topicKey: 'k2', language: 'te', slug: 'shared-slug', title: 'TE' } });
+    assert.equal(store.posts.length, 2);
+  });
+
+  it('still refuses a repeated slug within one language', async () => {
+    const store = createStore();
+    await store.createPost({ data: { topicKey: 'k1', language: 'en', slug: 'same-slug', title: 'A' } });
+    await assert.rejects(
+      () => store.createPost({ data: { topicKey: 'k2', language: 'en', slug: 'same-slug', title: 'B' } }),
+      /duplicate key/i,
+    );
   });
 });

@@ -384,6 +384,12 @@ abstract class CredentialGatedSource implements ReferenceSource {
 
 @Injectable()
 export class GoogleSearchConsoleSource extends CredentialGatedSource {
+  // Explicit constructor: Nest resolves DI from the subclass's own
+  // design:paramtypes, not the inherited constructor. Without this,
+  // ConfigService injects as undefined and every credential check throws.
+  constructor(config: ConfigService) {
+    super(config);
+  }
   readonly id: ReferenceSourceId = 'google-search-console';
   readonly capabilities = ['search queries', 'page performance', 'content gap analysis'];
   readonly credentialKeys = ['GSC_ACCESS_TOKEN', 'GSC_SITE_URL'];
@@ -428,6 +434,12 @@ export class GoogleSearchConsoleSource extends CredentialGatedSource {
 
 @Injectable()
 export class GoogleKeywordPlannerSource extends CredentialGatedSource {
+  // Explicit constructor: Nest resolves DI from the subclass's own
+  // design:paramtypes, not the inherited constructor. Without this,
+  // ConfigService injects as undefined and every credential check throws.
+  constructor(config: ConfigService) {
+    super(config);
+  }
   readonly id: ReferenceSourceId = 'google-keyword-planner';
   readonly capabilities = ['search volume', 'keyword difficulty', 'commercial intent'];
   readonly credentialKeys = ['GOOGLE_ADS_DEVELOPER_TOKEN', 'GOOGLE_ADS_CLIENT_ID', 'GOOGLE_ADS_CLIENT_SECRET'];
@@ -443,6 +455,12 @@ export class GoogleKeywordPlannerSource extends CredentialGatedSource {
 
 @Injectable()
 export class SemrushSource extends CredentialGatedSource {
+  // Explicit constructor: Nest resolves DI from the subclass's own
+  // design:paramtypes, not the inherited constructor. Without this,
+  // ConfigService injects as undefined and every credential check throws.
+  constructor(config: ConfigService) {
+    super(config);
+  }
   readonly id: ReferenceSourceId = 'semrush';
   readonly capabilities = ['competitor research', 'content gaps', 'keyword difficulty'];
   readonly credentialKeys = ['SEMRUSH_API_KEY'];
@@ -480,6 +498,12 @@ export class SemrushSource extends CredentialGatedSource {
 
 @Injectable()
 export class AhrefsSource extends CredentialGatedSource {
+  // Explicit constructor: Nest resolves DI from the subclass's own
+  // design:paramtypes, not the inherited constructor. Without this,
+  // ConfigService injects as undefined and every credential check throws.
+  constructor(config: ConfigService) {
+    super(config);
+  }
   readonly id: ReferenceSourceId = 'ahrefs';
   readonly capabilities = ['content gaps', 'competitor research', 'backlink profile'];
   readonly credentialKeys = ['AHREFS_API_TOKEN'];
@@ -519,6 +543,12 @@ export class AhrefsSource extends CredentialGatedSource {
 
 @Injectable()
 export class AnswerThePublicSource extends CredentialGatedSource {
+  // Explicit constructor: Nest resolves DI from the subclass's own
+  // design:paramtypes, not the inherited constructor. Without this,
+  // ConfigService injects as undefined and every credential check throws.
+  constructor(config: ConfigService) {
+    super(config);
+  }
   readonly id: ReferenceSourceId = 'answerthepublic';
   readonly capabilities = ['related questions', 'FAQ discovery', 'content gap questions'];
   readonly credentialKeys = ['ATP_API_KEY'];

@@ -8,8 +8,16 @@
  * rows must exist before the new client (or a `db push`) touches them.
  *
  * What it does:
- *   - every blog post missing `language` becomes `en` (all legacy content is English)
+ *   - every blog post missing `language` becomes `en`, EXCEPT the slugs in
+ *     TE_LANGUAGE_OVERRIDES, which are known Telugu content and become `te`.
+ *     A schema default is migration safety, not a language classifier: the
+ *     dry run proved the default would have mislabelled real Telugu posts.
  *   - every queued topic missing `language` becomes `en`
+ *
+ * Auditable override list (approved 2026-10-02; do not extend silently —
+ * each entry is a reviewed content decision, not a heuristic):
+ *   - upi-mdr: Telugu-titled UPI article, Telugu body
+ *   - 22000: Telugu-titled Subhash Chandra article, Telugu body
  *
  * Safe to re-run: rows that already have a language are never touched, so it
  * is idempotent, and Telugu rows written later are left alone.
@@ -30,6 +38,9 @@ import { planLanguageBackfill } from '../src/blog/language-backfill';
 
 const prisma = new PrismaClient();
 const DRY_RUN = process.argv.includes('--dry-run');
+
+/** Reviewed Telugu content that must not receive the `en` default. */
+export const TE_LANGUAGE_OVERRIDES = new Set(['upi-mdr', '22000']);
 
 async function main() {
   if (DRY_RUN) console.log('(dry run: no writes will happen)');
@@ -69,8 +80,9 @@ async function main() {
 
   if (!DRY_RUN) {
     for (const p of postsToFix) {
-      await prisma.blogPost.update({ where: { id: p.id }, data: { language: 'en' } });
-      console.log(`  post ${p.slug} -> en`);
+      const language = TE_LANGUAGE_OVERRIDES.has(p.slug) ? 'te' : 'en';
+      await prisma.blogPost.update({ where: { id: p.id }, data: { language } });
+      console.log(`  post ${p.slug} -> ${language}`);
     }
     for (const t of topicsToFix) {
       await prisma.blogTopic.update({ where: { id: t.id }, data: { language: 'en' } });
@@ -78,9 +90,14 @@ async function main() {
     }
   }
 
+  const tePlanned = postsToFix.filter((p) => TE_LANGUAGE_OVERRIDES.has(p.slug));
+  if (tePlanned.length > 0) {
+    console.log(`Telugu overrides: ${tePlanned.map((p) => p.slug).join(', ')} -> te`);
+  }
+
   console.log(
     DRY_RUN
-      ? `Would backfill ${postsToFix.length} post(s) and ${topicsToFix.length} topic(s).`
+      ? `Would backfill ${postsToFix.length} post(s) (${tePlanned.length} te, ${postsToFix.length - tePlanned.length} en) and ${topicsToFix.length} topic(s).`
       : `Backfilled ${postsToFix.length} post(s) and ${topicsToFix.length} topic(s).`,
   );
 }

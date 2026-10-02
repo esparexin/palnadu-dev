@@ -33,6 +33,9 @@ export interface QueueCandidate {
   keywords?: string[];
   referenceSources?: string[];
   source: 'curated-rotation' | 'matrix' | 'discovery' | 'manual';
+  /** Language to generate in. Defaults to English; the per-cycle bilingual
+   *  allocator (not yet enabled) will set this per quota. */
+  language?: BlogLanguage;
 }
 
 /** A queue row leased by one worker for the duration of a generation attempt. */
@@ -44,6 +47,7 @@ export type ClaimedTopic = {
   targetLocation: string | null;
   referenceSources: string[];
   status: TopicStatus;
+  language: BlogLanguage;
 };
 
 /** Why a candidate topic was not turned into a post. */
@@ -209,8 +213,12 @@ export class BlogAutomationService {
    * completed or in flight.
    */
   async getPendingQueueItems() {
-    const generatedTopicKeys = new Set(
-      (await this.prisma.blogPost.findMany({ select: { topicKey: true } })).map((p) => p.topicKey),
+    // Generated identity is per (topicKey, language): an English post must not
+    // mark its Telugu counterpart as done, or translations could never be made.
+    const generatedKeys = new Set(
+      (await this.prisma.blogPost.findMany({ select: { topicKey: true, language: true } })).map(
+        (p) => `${p.topicKey}::${p.language}`,
+      ),
     );
 
     // The curated rotation is a seed, not the source of truth. It is upserted so
@@ -219,7 +227,7 @@ export class BlogAutomationService {
       ...this.topicQueue.map(
         (t): QueueCandidate => ({ ...t, source: 'curated-rotation' }),
       ),
-      ...this.matrixCandidates(generatedTopicKeys),
+      ...this.matrixCandidates(generatedKeys),
     ];
 
     for (const seed of seeds) {
@@ -230,33 +238,37 @@ export class BlogAutomationService {
       orderBy: { createdAt: 'asc' },
     });
 
-    return rows.map((row) => ({
-      topicKey: row.topicKey,
-      topic: row.topic,
-      categorySlug: row.categorySlug,
-      targetLocation: row.targetLocation,
-      searchIntent: (row.searchIntent as SearchIntent) ?? null,
-      primaryKeyword: row.primaryKeyword,
-      referenceSources: row.referenceSources,
-      slug: row.topicKey,
-      isGenerated: row.status === TopicStatus.COMPLETED || generatedTopicKeys.has(row.topicKey),
-      status:
-        row.status === TopicStatus.COMPLETED || generatedTopicKeys.has(row.topicKey)
+    return rows.map((row) => {
+      const done =
+        row.status === TopicStatus.COMPLETED || generatedKeys.has(`${row.topicKey}::${row.language}`);
+      return {
+        topicKey: row.topicKey,
+        topic: row.topic,
+        categorySlug: row.categorySlug,
+        targetLocation: row.targetLocation,
+        searchIntent: (row.searchIntent as SearchIntent) ?? null,
+        primaryKeyword: row.primaryKeyword,
+        referenceSources: row.referenceSources,
+        slug: row.topicKey,
+        language: row.language,
+        isGenerated: done,
+        status: done
           ? ('COMPLETED' as const)
           : row.status === TopicStatus.CLAIMED
             ? ('CLAIMED' as const)
             : row.status === TopicStatus.FAILED
               ? ('FAILED' as const)
               : ('PENDING' as const),
-      attempts: row.attempts,
-    }));
+        attempts: row.attempts,
+      };
+    });
   }
 
   /**
    * Expands the service x location matrix, filtered by topics already generated
    * or queued so the matrix cannot re-offer a topic that is done.
    */
-  private matrixCandidates(generatedTopicKeys: Set<string>): QueueCandidate[] {
+  private matrixCandidates(generatedKeys: Set<string>): QueueCandidate[] {
     const out: QueueCandidate[] = [];
     const seen = new Set<string>();
 
@@ -264,7 +276,8 @@ export class BlogAutomationService {
       for (const loc of this.dynamicLocations) {
         const topic = `How ${s.service} Modernizes Growing Businesses in ${loc}`;
         const topicKey = toTopicKey(topic);
-        if (generatedTopicKeys.has(topicKey) || seen.has(topicKey)) continue;
+        // Matrix seeds are English; scope the check to the English identity.
+        if (generatedKeys.has(`${topicKey}::${BlogLanguage.en}`) || seen.has(topicKey)) continue;
         seen.add(topicKey);
         out.push({
           categorySlug: s.category,
@@ -285,21 +298,31 @@ export class BlogAutomationService {
   async enqueueTopic(candidate: QueueCandidate): Promise<{ enqueued: boolean; topicKey: string; reason?: string }> {
     const topicKey = toTopicKey(candidate.topic);
     if (!topicKey) return { enqueued: false, topicKey: '', reason: 'empty topic' };
+    const language = candidate.language ?? BlogLanguage.en;
 
-    // 1. Exact identity check against the unique index.
-    const existing = await this.prisma.blogTopic.findUnique({ where: { topicKey } });
+    // 1. Exact identity check against the unique index, scoped to language so
+    //    a Telugu row never collides with its English counterpart.
+    const existing = await this.prisma.blogTopic.findUnique({
+      where: { topicKey_language: { topicKey, language } },
+    });
     if (existing) return { enqueued: false, topicKey, reason: 'already queued' };
 
-    // 2. Same for anything already published.
+    // 2. Same for anything already published, in the same language.
     const generated = await this.prisma.blogPost.findUnique({
-      where: { topicKey },
+      where: { topicKey_language: { topicKey, language } },
       select: { id: true },
     });
     if (generated) return { enqueued: false, topicKey, reason: 'already generated' };
 
     // 3. Similarity check: a differently-worded topic covering the same subject
-    //    is refused, rather than re-titled into a second article.
-    const similarity = await this.similarityService.isLikelyDuplicateTopic(candidate.topic, new Set());
+    //    is refused, rather than re-titled into a second article. Scoped to the
+    //    candidate language so a Telugu topic is never refused merely because
+    //    its English counterpart exists.
+    const similarity = await this.similarityService.isLikelyDuplicateTopic(
+      candidate.topic,
+      new Set(),
+      language,
+    );
     if (similarity) {
       return { enqueued: false, topicKey, reason: 'overlaps existing content' };
     }
@@ -311,9 +334,10 @@ export class BlogAutomationService {
         data: {
           topicKey,
           topic: candidate.topic,
-          // The automated queue is English-only. Telugu generation is not
-          // enabled; the per-cycle allocator will set this when it is.
-          language: BlogLanguage.en,
+          // Queued language travels with the row from here on: claim,
+          // generation, validation and persistence all read it back rather
+          // than assuming English.
+          language,
           categorySlug: candidate.categorySlug,
           targetLocation: candidate.targetLocation ?? null,
           searchIntent: candidate.searchIntent ?? canonical.intent,
@@ -408,12 +432,19 @@ export class BlogAutomationService {
   }
 
   /** Returns a failed topic to the queue for a later retry. Never deletes it. */
-  private async releaseTopic(topicKey: string, error: string, nextRetryAt: Date): Promise<void> {
-    const row = await this.prisma.blogTopic.findUnique({ where: { topicKey } });
+  private async releaseTopic(
+    topicKey: string,
+    language: BlogLanguage,
+    error: string,
+    nextRetryAt: Date,
+  ): Promise<void> {
+    const row = await this.prisma.blogTopic.findUnique({
+      where: { topicKey_language: { topicKey, language } },
+    });
     if (!row) return;
 
     await this.prisma.blogTopic.update({
-      where: { topicKey },
+      where: { topicKey_language: { topicKey, language } },
       data: {
         // The topic stays in the queue. Only the attempt counter advances, so a
         // transient LLM failure does not permanently remove the topic.
@@ -483,7 +514,7 @@ export class BlogAutomationService {
         // content) is parked so we do not burn LLM calls re-testing it forever.
         const permanent = reason === 'validation_failed';
         await this.prisma.blogTopic.update({
-          where: { topicKey },
+          where: { topicKey_language: { topicKey, language: topic.language } },
           data: {
             attempts: { increment: 1 },
             lastError: detail.slice(0, 500),
@@ -519,12 +550,14 @@ export class BlogAutomationService {
     categorySlug: string,
     targetLocation?: string,
     forcePublish = false,
+    language: BlogLanguage = BlogLanguage.en,
   ): Promise<GenerationResult> {
     const enqueued = await this.enqueueTopic({
       categorySlug,
       topic,
       targetLocation,
       source: 'manual',
+      language,
     });
 
     // A refusal is not fatal: the topic may already be queued or already
@@ -536,7 +569,9 @@ export class BlogAutomationService {
         throw new Error(`Cannot generate an unnamed topic.`);
       }
       this.logger.log(`manual generate for "${topic}" refused (${enqueued.reason}); using existing row if present.`);
-      const existing = await this.prisma.blogPost.findUnique({ where: { topicKey } });
+      const existing = await this.prisma.blogPost.findUnique({
+        where: { topicKey_language: { topicKey, language } },
+      });
       if (existing) {
         return {
           id: existing.id,
@@ -546,7 +581,7 @@ export class BlogAutomationService {
           status: existing.status,
           wordCount: existing.content.split(/\s+/).length,
           imagesCount: 0,
-          url: `/blog/${existing.slug}`,
+          url: language === BlogLanguage.te ? `/te/blog/${existing.slug}` : `/blog/${existing.slug}`,
           topicKey,
         };
       }
@@ -554,7 +589,9 @@ export class BlogAutomationService {
       throw new Error(`Topic refused: ${enqueued.reason}.`);
     }
 
-    const queued = await this.prisma.blogTopic.findUnique({ where: { topicKey } });
+    const queued = await this.prisma.blogTopic.findUnique({
+      where: { topicKey_language: { topicKey, language } },
+    });
     if (!queued) throw new Error(`Topic ${topicKey} could not be queued.`);
 
     return this.generateForTopic(
@@ -574,20 +611,27 @@ export class BlogAutomationService {
    * rejected attempt never leaves a partial blog behind.
    */
   async generateForTopic(
-    topicRow: { topicKey: string; topic: string; categorySlug: string; targetLocation: string | null; referenceSources: string[] },
+    topicRow: {
+      topicKey: string;
+      topic: string;
+      categorySlug: string;
+      targetLocation: string | null;
+      referenceSources: string[];
+      language: BlogLanguage;
+    },
     forcePublish = false,
     workerId = 'manual',
   ): Promise<GenerationResult> {
     const started = Date.now();
-    const { topicKey, topic, categorySlug } = topicRow;
-    this.logger.log(`Generating article for topicKey="${topicKey}" [${categorySlug}]`);
+    const { topicKey, topic, categorySlug, language } = topicRow;
+    this.logger.log(`Generating ${language} article for topicKey="${topicKey}" [${categorySlug}]`);
 
     const logFailure = async (reason: string, extra: Record<string, unknown> = {}) => {
       await this.prisma.blogGenerationLog.create({
         data: {
           topicKey,
           topic,
-          language: BlogLanguage.en,
+          language,
           primaryKeyword: extra.primaryKeyword as string | undefined,
           secondaryKeywords: (extra.secondaryKeywords as string[] | undefined) ?? [],
           searchIntent: extra.searchIntent as string | undefined,
@@ -604,7 +648,12 @@ export class BlogAutomationService {
     };
 
     // 1. SEO strategy. Derived from the discovered keyword signals when present.
-    const strategy: SeoStrategy = defaultStrategy(topic, categorySlug, topicRow.targetLocation ?? 'Guntur, Andhra Pradesh');
+    const strategy: SeoStrategy = defaultStrategy(
+      topic,
+      categorySlug,
+      topicRow.targetLocation ?? 'Guntur, Andhra Pradesh',
+      language,
+    );
     if (topicRow.referenceSources?.length) {
       strategy.searchIntent = (strategy.searchIntent ?? 'INFORMATIONAL') as SearchIntent;
     }
@@ -623,7 +672,8 @@ export class BlogAutomationService {
       throw new Error('No admin author found in database for blog generation.');
     }
 
-    // 4. Generate. Any throw here leaves the topic retryable with no row written.
+    // 4. Generate, in the queued language. Any throw here leaves the topic
+    //    retryable with no row written.
     let draft;
     try {
       draft = await this.researchService.generateArticle(
@@ -631,6 +681,7 @@ export class BlogAutomationService {
         categorySlug,
         topicRow.targetLocation ?? undefined,
         strategy,
+        language,
       );
     } catch (err) {
       await logFailure(`generation_failed: ${err instanceof Error ? err.message : String(err)}`);
@@ -645,21 +696,32 @@ export class BlogAutomationService {
 
     const wordCount = enrichedContent.split(/\s+/).length;
 
-    // 6. Similarity check against everything already on the site.
-    const similarity = await this.similarityService.check({
-      topic,
-      title: draft.title,
-      slug: draft.slug,
-      primaryKeyword: draft.primaryKeyword,
-      secondaryKeywords: draft.secondaryKeywords,
-      searchIntent: draft.searchIntent,
-      content: enrichedContent,
-    });
+    // 6. Similarity check against everything already on the site. Same-language
+    //    overlap is a duplicate; cross-language overlap on the same topicKey is
+    //    a translation candidate and must NOT block generation.
+    const similarity = await this.similarityService.check(
+      {
+        topic,
+        title: draft.title,
+        slug: draft.slug,
+        primaryKeyword: draft.primaryKeyword,
+        secondaryKeywords: draft.secondaryKeywords,
+        searchIntent: draft.searchIntent,
+        content: enrichedContent,
+        language,
+      },
+    );
 
-    // 7. Full publishing validation gate.
-    const [existingSlugs, existingTitles] = await Promise.all([
-      this.prisma.blogPost.findMany({ select: { slug: true } }),
-      this.prisma.blogPost.findMany({ select: { title: true } }),
+    // 7. Full publishing validation gate. Slug/title collision sets are scoped
+    //    to this language: slugs are only unique per locale, and a Telugu title
+    //    can never collide with an English one.
+    const [existingSlugs, existingTitles, sameTopicSameLang] = await Promise.all([
+      this.prisma.blogPost.findMany({ where: { language }, select: { slug: true } }),
+      this.prisma.blogPost.findMany({ where: { language }, select: { title: true } }),
+      this.prisma.blogPost.findUnique({
+        where: { topicKey_language: { topicKey, language } },
+        select: { id: true },
+      }),
     ]);
 
     const validation = this.validationService.validate({
@@ -669,7 +731,7 @@ export class BlogAutomationService {
       categorySlug,
       categoryExists: !!category,
       similarity,
-      topicKeyTaken: false, // re-checked atomically by the unique index on insert
+      topicKeyTaken: !!sameTopicSameLang, // + re-checked atomically by the unique index on insert
       existingSlugs: new Set(existingSlugs.map((p) => p.slug)),
       existingTitles: new Set(existingTitles.map((p) => p.title.toLowerCase().trim())),
       wordCount,
@@ -721,18 +783,17 @@ export class BlogAutomationService {
 
     const publishStatus: PublishStatus = shouldPublish ? PublishStatus.PUBLISHED : PublishStatus.DRAFT;
 
-    // 9. Persist. The unique index on topicKey is the final authority: if
-    //    anything raced us, this throws rather than creating a duplicate.
+    // 9. Persist. The unique index on (topicKey, language) is the final
+    //    authority: if anything raced us, this throws rather than creating a
+    //    duplicate. Explicit rather than relying on the schema default so the
+    //    language of automated posts is visible at the write site.
     let post;
     try {
       post = await this.prisma.blogPost.create({
         data: {
           topicKey,
           topic,
-          // The automated queue is English-only; Telugu generation is not
-          // enabled. Explicit rather than relying on the schema default so the
-          // language of automated posts is visible at the write site.
-          language: BlogLanguage.en,
+          language,
           title: draft.title,
           slug: draft.slug,
           excerpt: draft.excerpt,
@@ -777,7 +838,7 @@ export class BlogAutomationService {
 
     // 10. Mark the queue row complete and record the audit trail.
     await this.prisma.blogTopic.update({
-      where: { topicKey },
+      where: { topicKey_language: { topicKey, language } },
       data: { status: TopicStatus.COMPLETED, postId: post.id, claimedAt: null, claimedBy: null },
     });
 
@@ -785,7 +846,7 @@ export class BlogAutomationService {
       data: {
         topicKey,
         topic,
-        language: BlogLanguage.en,
+        language,
         postId: post.id,
         primaryKeyword: draft.primaryKeyword,
         secondaryKeywords: draft.secondaryKeywords,
@@ -844,7 +905,7 @@ export class BlogAutomationService {
       status: publishStatus,
       wordCount,
       imagesCount: images.length,
-      url: `/blog/${post.slug}`,
+      url: post.language === BlogLanguage.te ? `/te/blog/${post.slug}` : `/blog/${post.slug}`,
       topicKey,
     };
   }

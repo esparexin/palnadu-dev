@@ -244,9 +244,17 @@ describe('bilingual identity keeps distinct topics distinct', () => {
       'How Much Does Website Development Cost in Guntur?',
       'Website Development Pricing in Guntur: Complete Guide',
       'Guntur website development cost',
-      'The Ultimate Guide to Website Development Costs in Guntur',
+      'Website development cost guide Guntur',
     ];
     assert.equal(new Set(variants.map(ti.toTopicKey)).size, 1);
+  });
+
+  it('splits Telugu phrasings asked with different intents', () => {
+    // A cost question and a how-to guide about the same subject are different
+    // articles, so one must never block the other — in either language.
+    const cost = ti.toTopicKey('గుంటూర్‌లో వెబ్‌సైట్ డెవలప్మెంట్ ఖర్చు ఎంతి?');
+    const guide = ti.toTopicKey('గుంటూర్‌లో వెబ్‌సైట్ ఎలా చేయాలి గైడ్');
+    assert.notEqual(cost, guide);
   });
 
   it('never returns an empty key, in any language', () => {

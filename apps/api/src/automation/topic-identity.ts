@@ -135,18 +135,11 @@ const SERVICE_WORDS = new Set([
   'store', 'ecommerce', 'service', 'services', 'company', 'companies', 'agency',
 ]);
 
-/**
- * Intent modifiers detected in the raw topic phrase.
- */
-const INTENT_PATTERNS: { intent: SearchIntent; patterns: RegExp[] }[] = [
-  { intent: 'COMPARISON', patterns: [/\bvs\.?\b/, /\bversus\b/, /\bcompare\b/, /\bcomparison\b/, /\bwhich is better\b/, /\bdifference between\b/, /\balternative(s)?\b/] },
-  { intent: 'HOW_TO', patterns: [/\bhow to\b/, /\bhow do\b/, /\bhow can\b/, /\bsteps?\b/, /\bguide to\b/, /\btutorial\b/] },
-  { intent: 'COMMERCIAL_INVESTIGATION', patterns: [/\bbest\b/, /\btop \d+\b/, /\breview\b/, /\bpricing\b/, /\bprice\b/, /\bcost\b/, /\baffordable\b/, /\bquotes?\b/, /\bbudget\b/] },
-  { intent: 'LOCAL', patterns: [/\bin [a-z]+$/, /\bnear me\b/, /\blocal\b/] },
-  { intent: 'PROBLEM_SOLING', patterns: [/\bfix\b/, /\bsolve\b/, /\btroubleshoot/, /\bproblem\b/, /\berror\b/, /\bbroken\b/, /\bnot working\b/, /\bfailing\b/] },
-  { intent: 'FAQ', patterns: [/\bfaq\b/, /\bquestions?\b/, /\bq&a\b/, /\bmeaning of\b/, /\bwhat is\b/, /\bwhat are\b/, /\bwhy do\b/, /\bwhy does\b/] },
-  { intent: 'PRODUCT_SERVICE_RESEARCH', patterns: [/\bsoftware\b/, /\bplatform\b/, /\bapp\b/, /\bsystem\b/, /\btool\b/, /\bsolution\b/, /\bcompany\b/, /\bagency\b/, /\bdeveloper/] },
-];
+// NOTE: there is exactly one intent classifier in this codebase:
+// detectIntentMultilingual in script-utils.ts, which handles both languages.
+// An earlier revision kept a second English-only table here; the two tables
+// silently disagreed on some inputs (e.g. "fees"), splitting topicKeys that
+// should have matched. Do not reintroduce a parallel table.
 
 export interface CanonicalTopic {
   /** Stable identity. Never derived from LLM output. */
@@ -309,9 +302,17 @@ export function canonicalizeTopic(rawTopic: string): CanonicalTopic {
   const identityConcepts = allConcepts.filter((c) => !PHASING_CONCEPTS.has(c));
   const conceptKey = identityConcepts.join('+');
 
-  // 6. Assemble: concept ids first (language-neutral), then location. Literal
-  //    words appear only when nothing could be classified.
-  const parts = [conceptKey || service, literalKey, location].filter(Boolean);
+  // 6. Assemble: concept ids first (language-neutral), then location, then
+  //    intent. Literal words appear only when nothing could be classified.
+  //
+  //    Intent is part of identity by design: the same subject asked with a
+  //    different search intent (a cost question vs a how-to guide) is a
+  //    different article, so one English post must not block Telugu posts on
+  //    other intents — or English posts on other intents — from being created.
+  //    Cross-language pairs still converge because intent detection is
+  //    language-aware on both sides.
+  const intentSlug = intent.toLowerCase().replace(/_/g, '-');
+  const parts = [conceptKey || service, literalKey, location, intentSlug].filter(Boolean);
 
   const topicKey =
     parts

@@ -1,8 +1,8 @@
-import { Controller, Get, Post, Patch, Body, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Body, Query, UseGuards, BadRequestException } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
-import { UserRole } from '@prisma/client';
+import { UserRole, BlogLanguage } from '@prisma/client';
 import { BlogAutomationService } from './blog-automation.service';
 import { FreeKeywordResearchService } from './free-keyword-research.service';
 import { TopicDiscoveryService } from './topic-discovery.service';
@@ -100,8 +100,16 @@ export class AutomationController {
       targetLocation?: string;
       forcePublish?: boolean;
       batchCount?: number;
+      language?: string;
     },
   ) {
+    // Manual generation only: the scheduled bilingual allocator is not enabled,
+    // so language arrives explicitly per call and defaults to English.
+    const language =
+      body.language === 'te' ? BlogLanguage.te : body.language === 'en' || !body.language ? BlogLanguage.en : null;
+    if (!language) {
+      throw new BadRequestException(`Invalid language '${body.language}'. Expected 'en' or 'te'.`);
+    }
     if (body.batchCount && body.batchCount > 1) {
       const { results, rejected } = await this.automationService.generateBatch(
         body.batchCount,
@@ -130,6 +138,7 @@ export class AutomationController {
       categorySlug,
       targetLocation,
       Boolean(body.forcePublish),
+      language,
     );
 
     return {

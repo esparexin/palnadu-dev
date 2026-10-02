@@ -327,7 +327,7 @@ export const CONCEPT_LEXICON: ConceptEntry[] = [
   { id: 'aspect:cost', en: ['cost', 'costs', 'price', 'pricing', 'rates', 'fees', 'charges', 'budget', 'quote'], te: ['ఖర్చు', 'ఖర్చులు', 'ధర', 'ధరలు', 'రేట్లు', 'ఫీలు', 'బడ్జెట్'] },
   { id: 'aspect:time', en: ['time', 'timeline', 'duration', 'how long', 'days', 'weeks'], te: ['సమయం', 'వ్యవధి', 'ఎంత సమయం'] },
   { id: 'aspect:howto', en: ['how to', 'how do', 'steps', 'guide', 'process'], te: ['ఎలా', 'ఎట్టి', 'క్రమం', 'గైడ్', 'ప్రాసెస్'] },
-  { id: 'aspect:comparison', en: ['vs', 'versus', 'compare', 'comparison', 'difference', 'better'], te: ['తేడా', 'పోలిక', 'అంతరం'] },
+  { id: 'aspect:comparison', en: ['vs', 'versus', 'compare', 'comparison', 'difference', 'better'], te: ['వర్సెస్', 'తేడా', 'పోలిక', 'అంతరం'] },
   { id: 'aspect:best', en: ['best', 'top', 'review', 'recommended'], te: ['ఉత్తమ', 'అత్యుత్తమ', 'సిఫారసు'] },
 ];
 
@@ -344,12 +344,12 @@ export const LOCATION_CONCEPTS: Record<ContentLanguage, Record<string, string>> 
   te: {
     'గుంటూర్': 'guntur', 'గుంటూరు': 'guntur',
     'పాలనాడు': 'palnadu',
-    'నరసాపురం': 'narasaraopet', 'నరసారావుపేట': 'narasaraopet',
+    'నరసాపురం': 'narasaraopet', 'నరసారావుపేట': 'narasaraopet', 'నరసరావుపేట': 'narasaraopet',
     'చిలకాలురిపేట': 'chilakaluripet',
     'వినుకొండ': 'vinukonda',
     'సత్తెనపల్లి': 'sattenapalle',
     'మచిర్ల': 'macherla', 'మాచేర్ల': 'macherla',
-    'పిడుగురallas': 'piduguralla', 'పిడుగురాల్ల': 'piduguralla',
+    'పిడుగురాళ్ల': 'piduguralla', 'పిడుగురాల్ల': 'piduguralla',
     'తెనాలి': 'tenali',
     'మంగళగిరి': 'mangalagiri',
     'బాపట్ల': 'bapatla',
@@ -367,10 +367,13 @@ export const LOCATION_CONCEPTS: Record<ContentLanguage, Record<string, string>> 
 const TELUGU_INTENT_PATTERNS: { intent: ContentIntent; patterns: RegExp[] }[] = [
   // Latin "vs" is check FIRST: Indian business writing uses "vs" inside Telugu
   // sentences, and the Telugu markers for comparison may be absent entirely.
-  { intent: 'COMPARISON', patterns: [/\bvs\.?\b/i, /\bversus\b/i, /తేడా/, /పోలిక/, /ఏది మంచి/, /ఏది ఉత్తమ/] },
+  { intent: 'COMPARISON', patterns: [/\bvs\.?\b/i, /\bversus\b/i, /వర్సెస్/, /తేడా/, /పోలిక/, /ఏది మంచి/, /ఏది ఉత్తమ/] },
   { intent: 'HOW_TO', patterns: [/ఎలా/, /ఎట్టి/, /క్రమం/, /గైడ్/, /పద్ధతి/] },
   { intent: 'COMMERCIAL_INVESTIGATION', patterns: [/ఖర్చు/, /ధర/, /రేటు/, /ఫీ/, /బడ్జెట్/, /ఉత్తమ/] },
-  { intent: 'LOCAL', patterns: [/ఇక్కడ/, /ఇక్కడి/, /దగ్గర/, /అందుకు/, /నా ప్రాంతంలో/] },
+  // Locative case (X-లో = "in X") is the most common Telugu location
+  // construction, mirroring English "in <place>". Checked after COMMERCIAL so
+  // a cost question about a place stays commercial, exactly like English.
+  { intent: 'LOCAL', patterns: [/ఇక్కడ/, /ఇక్కడి/, /దగ్గర/, /అందుకు/, /నా ప్రాంతంలో/, /లో/] },
   { intent: 'PROBLEM_SOLING', patterns: [/సమస్య/, /పరిష్కార/, /ఎందుకు పనిచేయడం లేదు/, /ఖరాప్/] },
   { intent: 'FAQ', patterns: [/ఏమిటి/, /ఏమిటి/, /అర్థం/, /ఎందుకు/] },
 ];
@@ -448,7 +451,7 @@ export function detectIntentMultilingual(text: string, lang: ContentLanguage): C
   const english: { intent: ContentIntent; patterns: RegExp[] }[] = [
     { intent: 'COMPARISON', patterns: [/\bvs\.?\b/, /\bversus\b/, /\bcompare\b/, /\bcomparison\b/, /which is better/, /difference between/, /\balternative/] },
     { intent: 'HOW_TO', patterns: [/\bhow to\b/, /\bhow do\b/, /\bhow can\b/, /\bsteps?\b/, /\bguide to\b/, /\btutorial\b/] },
-    { intent: 'COMMERCIAL_INVESTIGATION', patterns: [/\bbest\b/, /\btop \d+\b/, /\breview/, /\bpricing\b/, /\bprice\b/, /\bcost/, /\baffordable\b/, /\bquotes?\b/, /\bbudget\b/, /\brates?\b/] },
+    { intent: 'COMMERCIAL_INVESTIGATION', patterns: [/\bbest\b/, /\btop \d+\b/, /\breview/, /\bpricing\b/, /\bprice\b/, /\bcost/, /\bfees?\b/, /\bcharges?\b/, /\baffordable\b/, /\bquotes?\b/, /\bbudget\b/, /\brates?\b/] },
     { intent: 'LOCAL', patterns: [/\bnear me\b/, /\bin [a-z]+$/, /\blocal\b/] },
     { intent: 'PROBLEM_SOLING', patterns: [/\bfix\b/, /\bsolve/, /troubleshoot/, /\bproblem/, /\berror/, /\bbroken\b/, /not working/] },
     { intent: 'FAQ', patterns: [/\bfaq\b/, /\bquestions?\b/, /\bq&a\b/, /\bmeaning of\b/, /\bwhat is\b/, /\bwhat are\b/, /\bwhy do\b/, /\bwhy does\b/] },

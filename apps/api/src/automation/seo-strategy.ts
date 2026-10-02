@@ -66,15 +66,44 @@ export function defaultStrategy(
   topicTitle: string,
   categorySlug: string,
   locationContext: string,
+  language: 'en' | 'te' = 'en',
 ): SeoStrategy {
-  const primaryKeyword = topicTitle
-    .toLowerCase()
-    .replace(/^(how|what|why|when|which|the|a|an)\s+/, '')
-    .replace(/[^\w\s-]/g, '')
-    .trim()
-    .slice(0, 70);
+  // The English pipeline strips question openers and ASCII-folds; applied to
+  // Telugu that would erase the entire keyword. Telugu keeps its own text.
+  const primaryKeyword =
+    language === 'te'
+      ? topicTitle.replace(/\s+/g, ' ').trim().slice(0, 70)
+      : topicTitle
+          .toLowerCase()
+          .replace(/^(how|what|why|when|which|the|a|an)\s+/, '')
+          .replace(/[^\w\s-]/g, '')
+          .trim()
+          .slice(0, 70);
 
   const loc = locationContext.split(',')[0]?.trim() ?? 'Guntur';
+
+  if (language === 'te') {
+    return {
+      primaryKeyword,
+      secondaryKeywords: [`${primaryKeyword} ${loc}`, `${primaryKeyword} ఖర్చు`],
+      relatedKeywords: [`ఉత్తమ ${primaryKeyword}`, `${primaryKeyword} గైడ్`],
+      longTailKeywords: [`${primaryKeyword} ఎంత ఖర్చు అవుతుంది`],
+      searchIntent: 'INFORMATIONAL',
+      tags: [categorySlug, loc.toLowerCase()],
+      internalLinks: [
+        { anchor: 'Web Development Services', url: '/services/web-development' },
+        { anchor: 'Custom Software', url: '/services/custom-software' },
+        { anchor: 'Contact Page', url: '/contact' },
+      ],
+      externalReferences: [],
+      imageSuggestions: [{ alt: primaryKeyword, caption: 'ఆచరణాత్మక అమలు' }],
+      faqOpportunities: [
+        `${primaryKeyword} ఖర్చు ఎంత?`,
+        `${primaryKeyword} కు ఎంత సమయం పడుతుంది?`,
+        `చిన్న వ్యాపారానికి ${primaryKeyword} అవసరమా?`,
+      ],
+    };
+  }
 
   return {
     primaryKeyword,

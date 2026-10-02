@@ -13,6 +13,8 @@ import {
   extractHeadings,
   parseLooseJson,
 } from './seo-strategy';
+import { toAsciiSlug } from './script-utils';
+import { BlogLanguage } from '@prisma/client';
 
 export interface GeneratedBlogDraft {
   /**
@@ -107,10 +109,12 @@ export class ContentResearchService {
     categorySlug: string,
     targetLocation?: string,
     strategy?: SeoStrategy,
+    language: BlogLanguage = BlogLanguage.en,
   ): Promise<GeneratedBlogDraft> {
     const researchContext = await this.conductResearch(topicTitle);
     const locationContext = targetLocation || 'Palnadu and Guntur, Andhra Pradesh';
     const s = strategy ?? defaultStrategy(topicTitle, categorySlug, locationContext);
+    const writeTelugu = language === BlogLanguage.te;
 
     const systemPrompt = `You are a senior software engineer and technical writer at Palnadu.dev, an engineering studio in Palnadu and Guntur, Andhra Pradesh.
 Core engineering principles:
@@ -127,7 +131,15 @@ Core engineering principles:
     // question that someone searching this way actually has.
     const intentGuidance = INTENT_GUIDANCE[s.searchIntent] ?? INTENT_GUIDANCE.INFORMATIONAL;
 
-    const userPrompt = `Write an authentic, human-grade technical and business article about: "${topicTitle}".
+    // Telugu generation: the entire article — title, headings, body, excerpt,
+    // meta fields, keywords, FAQ — must be written in Telugu script for
+    // Telugu-speaking readers. Only the URL slug stays ASCII (transliterated),
+    // because slugs must satisfy the kebab-case validator downstream.
+    const languageDirective = writeTelugu
+      ? `OUTPUT LANGUAGE: Telugu. Write every human-readable field (title, h1, excerpt, content, metaTitle, metaDescription, seoTitle, seoDescription, keywords, headings, faq, tags, image alt text and captions) entirely in Telugu script (తెలుగు). Do not mix English sentences into the body; English proper nouns (Palnadu.dev, Next.js, WhatsApp) and the /services/* and /contact URLs stay as-is. The "slug" field must be ASCII kebab-case: transliterate the Telugu title (e.g. "వెబ్‌సైట్ ఖర్చు" -> "vebsait-kharchu").\n\n`
+      : '';
+
+    const userPrompt = `${languageDirective}Write an authentic, human-grade technical and business article about: "${topicTitle}".
 Category: ${categorySlug}
 Regional Context: ${locationContext}
 Research background:
@@ -201,7 +213,12 @@ Return strictly a valid JSON object matching this schema:
         .replace(/\*([^*\n]+)\*/g, '$1')
         .replace(/\*\*/g, '');
       const words = cleanContent.split(/\s+/).length;
-      const slug = normaliseSlug(llmDraft.slug || topicTitle);
+      // Telugu titles cannot survive the ASCII slug normalizer (it would strip
+      // every character); transliterate instead. toAsciiSlug never returns an
+      // empty string, so validation always receives a well-formed slug.
+      const slug = writeTelugu
+        ? toAsciiSlug(str(llmDraft.slug) || topicTitle)
+        : normaliseSlug(llmDraft.slug || topicTitle);
 
       // The LLM may omit strategy fields; fall back to what we asked for so
       // downstream validation always has a complete SEO payload.
@@ -245,7 +262,13 @@ Return strictly a valid JSON object matching this schema:
       } as GeneratedBlogDraft & { llmProvider: string };
     }
 
-    // High-quality structured fallback engine
+    // High-quality structured fallback engine. English-only by construction:
+    // its body is a fixed English template, so using it for a Telugu post
+    // would persist English content under a `te` language tag. Fail loudly
+    // instead so the topic stays retryable and no mixed-language row is born.
+    if (writeTelugu) {
+      throw new Error('LLM generation failed and no Telugu fallback template exists; topic remains retryable.');
+    }
     return this.generateStructuredFallback(topicTitle, categorySlug, locationContext, s);
   }
 

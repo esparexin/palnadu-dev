@@ -68,21 +68,32 @@ describe('stable topic identity', () => {
     const a = 'How Much Does Website Development Cost in Guntur?';
     const b = 'Website Development Pricing in Guntur: Complete Guide';
 
-    // Keys are concept-first, so the canonical form is
-    // <commercial facets>+<subject>+<location>.
-    assert.equal(toTopicKey(a), 'aspect-cost+subject-web-dev-guntur');
+    // Keys are concept-first with intent last, so the canonical form is
+    // <commercial facets>+<subject>+<location>+<intent>.
+    assert.equal(toTopicKey(a), 'aspect-cost+subject-web-dev-guntur-commercial-investigation');
     assert.equal(toTopicKey(a), toTopicKey(b));
   });
 
-  it('collapses word order and filler variations', () => {
+  it('collapses word order and filler variations within one intent', () => {
     const { toTopicKey } = mod.identity;
     const variants = [
       'website development cost guntur',
       'Guntur website development cost',
-      'The Ultimate Guide to Website Development Costs in Guntur',
       'How much does website development cost in guntur',
+      'Website development pricing in Guntur',
     ];
     assert.equal(new Set(variants.map(toTopicKey)).size, 1);
+  });
+
+  it('splits the same subject asked with a different intent', () => {
+    const { toTopicKey, canonicalizeTopic } = mod.identity;
+    // Same subject and location, but a cost question vs a how-to guide are
+    // different articles: one must never block the other from being created.
+    const cost = toTopicKey('Website Development Cost in Guntur');
+    const guide = toTopicKey('The Ultimate Guide to Website Development Costs in Guntur');
+    assert.notEqual(cost, guide);
+    assert.equal(canonicalizeTopic('Website Development Cost in Guntur').intent, 'COMMERCIAL_INVESTIGATION');
+    assert.equal(canonicalizeTopic('The Ultimate Guide to Website Development Costs in Guntur').intent, 'HOW_TO');
   });
 
   it('keeps genuinely different topics distinct', () => {
@@ -143,7 +154,7 @@ describe('stable topic identity', () => {
 describe('content similarity', () => {
   const existingPost = {
     id: 'p1',
-    topicKey: 'aspect-cost+subject-web-dev-guntur',
+    topicKey: 'aspect-cost+subject-web-dev-guntur-commercial-investigation',
     topic: 'Website Development Cost in Guntur',
     title: 'How Much Does a Website Cost in Guntur?',
     slug: 'how-much-does-a-website-cost-in-guntur',
@@ -151,6 +162,7 @@ describe('content similarity', () => {
     secondaryKeywords: ['website price guntur', 'web design cost andhra'],
     searchIntent: 'COMMERCIAL_INVESTIGATION',
     content: 'x'.repeat(500),
+    language: 'en',
   };
 
   it('flags an identical topicKey as a hard duplicate', () => {
@@ -160,11 +172,52 @@ describe('content similarity', () => {
         topic: 'Website Development Pricing in Guntur: Complete Guide',
         primaryKeyword: 'website development cost guntur',
         searchIntent: 'COMMERCIAL_INVESTIGATION',
+        language: 'en',
       },
       [existingPost],
     );
     assert.equal(result.isDuplicate, true);
     assert.match(result.nearest.reasons.join(' '), /identical topicKey/);
+  });
+
+  it('reports a same-topicKey match in another language as a translation candidate, not a duplicate', () => {
+    const { scoreAgainstCorpus } = mod.similarity;
+    const result = scoreAgainstCorpus(
+      {
+        topic: 'గుంటూర్‌లో వెబ్‌సైట్ డెవలప్మెంట్ ఖర్చు ఎంతి?',
+        primaryKeyword: 'వెబ్‌సైట్ డెవలప్మెంట్ ఖర్చు గుంటూర్',
+        searchIntent: 'COMMERCIAL_INVESTIGATION',
+        language: 'te',
+      },
+      [existingPost],
+    );
+    assert.equal(result.isDuplicate, false);
+    assert.ok(
+      result.matches.some((m) => m.reasons.join(' ').includes('translation candidate')),
+      'expected a translation-candidate match, got: ' + JSON.stringify(result.matches),
+    );
+  });
+
+  it('still flags a same-language rewording as a duplicate', () => {
+    const { scoreAgainstCorpus } = mod.similarity;
+    const otherEnPost = {
+      ...existingPost,
+      id: 'p2',
+      topicKey: 'aspect-cost+subject-web-dev-guntur-how-to',
+      topic: 'How to Build a Website in Guntur',
+      title: 'How to Build a Website in Guntur',
+      slug: 'how-to-build-a-website-in-guntur',
+    };
+    const result = scoreAgainstCorpus(
+      {
+        topic: 'Website Development Pricing in Guntur: Complete Guide',
+        primaryKeyword: 'website development cost guntur',
+        searchIntent: 'COMMERCIAL_INVESTIGATION',
+        language: 'en',
+      },
+      [otherEnPost, existingPost],
+    );
+    assert.equal(result.isDuplicate, true);
   });
 
   it('detects the same subject written differently', () => {

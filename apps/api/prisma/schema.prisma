@@ -246,12 +246,14 @@ model BlogPost {
   // identity: the LLM rewords both on every run, so matching on them lets one
   // topic produce many posts.
   //
-  // This is the database-level guarantee required by the automation design:
-  // one topicKey => at most one post, enforced by a unique index rather than by
-  // application checks alone. Legacy rows must be backfilled before the index
+  // This is the database-level guarantee required by the automation design,
+  // scoped per language: one (topicKey, language) pair => at most one post.
+  // A global topicKey unique would forbid the Telugu counterpart of an
+  // English post, which is exactly the translation pairing the bilingual
+  // engine must allow. Legacy rows must be backfilled before the index
   // can be created (see prisma/backfill-topic-key.ts); on MongoDB a unique index
   // also constrains null, so the column is deliberately non-nullable.
-  topicKey       String        @unique @map("topic_key")
+  topicKey       String        @map("topic_key")
   // Original topic text as discovered, kept for audit and similarity checks.
   topic          String?
   excerpt        String?
@@ -288,6 +290,7 @@ model BlogPost {
   updatedAt      DateTime      @updatedAt
 
   @@unique([language, slug])
+  @@unique([topicKey, language])
   @@index([status])
   @@index([authorId])
   @@index([publishDate])
@@ -313,7 +316,9 @@ enum TopicStatus {
 
 model BlogTopic {
   id          String      @id @default(auto()) @map("_id") @db.ObjectId
-  topicKey    String      @unique @map("topic_key")
+  // Queue identity is per (topic, language): the same subject queued for
+  // Telugu generation must not collide with its English row, and vice versa.
+  topicKey    String      @map("topic_key")
   topic       String
   // Language this queued topic will be generated in. English-only today;
   // the per-cycle 3te+2en allocator (not yet enabled) will claim by language.
@@ -342,6 +347,7 @@ model BlogTopic {
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
+  @@unique([topicKey, language])
   @@index([status, nextRetryAt])
   @@index([status, claimedAt])
   @@index([language, status])

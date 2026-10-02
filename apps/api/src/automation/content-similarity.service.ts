@@ -32,6 +32,7 @@ export class ContentSimilarityService {
         secondaryKeywords: true,
         searchIntent: true,
         content: true,
+        language: true,
       },
     });
     return posts.map((p) => ({
@@ -44,6 +45,7 @@ export class ContentSimilarityService {
       secondaryKeywords: p.secondaryKeywords ?? [],
       searchIntent: p.searchIntent,
       content: p.content,
+      language: p.language ?? null,
     }));
   }
 
@@ -63,16 +65,30 @@ export class ContentSimilarityService {
   /**
    * Cheap pre-flight used while triaging a batch of discovered topics, so an
    * obvious duplicate is never enqueued in the first place.
+   *
+   * Language-aware: a same-topicKey match in another language is a translation
+   * candidate, not a duplicate — it must not block enqueueing.
    */
-  async isLikelyDuplicateTopic(topic: string, knownTopicKeys: Set<string>): Promise<boolean> {
+  async isLikelyDuplicateTopic(
+    topic: string,
+    knownTopicKeys: Set<string>,
+    language?: string | null,
+  ): Promise<boolean> {
     const key = canonicalizeTopic(topic).topicKey;
     if (knownTopicKeys.has(key)) return true;
 
     const existing = await this.loadExisting();
-    return existing.some(
-      (post) =>
-        !!post.topicKey &&
-        topicTokenOverlap(topic, post.topic ?? post.title) >= DEFAULT_THRESHOLDS.topicOverlap,
-    );
+    return existing.some((post) => {
+      if (!post.topicKey) return false;
+      if (post.topicKey === key) {
+        // Same key, other language → translation candidate, not a duplicate.
+        if (language && post.language && post.language !== language) return false;
+        return true;
+      }
+      // Cross-language text overlap is script noise; only same-language (or
+      // unknown-language) text counts.
+      if (language && post.language && post.language !== language) return false;
+      return topicTokenOverlap(topic, post.topic ?? post.title) >= DEFAULT_THRESHOLDS.topicOverlap;
+    });
   }
 }

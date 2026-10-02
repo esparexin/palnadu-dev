@@ -22,6 +22,9 @@ export interface ExistingArticle {
   secondaryKeywords: string[];
   searchIntent?: string | null;
   content: string;
+  /** Language of the existing post. Absent on legacy callers: unknown language
+   *  never suppresses a match, it only disables the cross-language exemption. */
+  language?: string | null;
 }
 
 export interface SimilarityInput {
@@ -32,6 +35,9 @@ export interface SimilarityInput {
   secondaryKeywords?: string[];
   searchIntent?: SearchIntent | string | null;
   content?: string;
+  /** Language being generated. When set, same-topicKey matches in another
+   *  language are reported as translation candidates, not duplicates. */
+  language?: string | null;
 }
 
 export interface SimilarityMatch {
@@ -140,11 +146,35 @@ export function scoreAgainstCorpus(
 
   const matches: SimilarityMatch[] = [];
 
+  // Text-overlap rules below compare words, which are script-bound: Telugu and
+  // English text essentially never overlap meaningfully. Cross-language
+  // duplication is therefore governed by topicKey identity (concept-based and
+  // script-independent), not by text scores. When both languages are known and
+  // differ, only the topicKey rule runs.
+  const sameLanguageAs = (post: ExistingArticle): boolean | null => {
+    if (!candidate.language || !post.language) return null;
+    return candidate.language === post.language;
+  };
+
   for (const post of corpus) {
     const reasons: string[] = [];
+    const sameLang = sameLanguageAs(post);
 
-    // 1. Identical stable identity — decisive.
+    // 1. Identical stable identity — decisive within a language, informational
+    //    across languages. A Telugu article on the same topicKey as an English
+    //    post is a translation candidate: it must be linked explicitly via
+    //    linkTranslations, never inferred from this score, and never blocked.
     if (post.topicKey && post.topicKey === candidateKey) {
+      if (sameLang === false) {
+        matches.push({
+          postId: post.id,
+          title: post.title,
+          slug: post.slug,
+          score: 1,
+          reasons: ['translation candidate: same topicKey in another language'],
+        });
+        continue;
+      }
       matches.push({
         postId: post.id,
         title: post.title,
@@ -154,6 +184,10 @@ export function scoreAgainstCorpus(
       });
       continue;
     }
+
+    // Cross-language text comparison is noise (different scripts share almost
+    // no tokens); skip rules 2-6 and let topicKey identity decide.
+    if (sameLang === false) continue;
 
     // 2. Topic text overlap (symmetric, order-insensitive).
     const otherTopic = post.topic ?? post.title;
