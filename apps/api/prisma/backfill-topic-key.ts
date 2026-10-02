@@ -1,70 +1,91 @@
 /**
- * Backfill `blog_posts.topicKey` before the unique index is created.
+ * Backfill `blog_posts.topicKey` for legacy rows that predate stable identity.
  *
- * The field is non-nullable and unique, so legacy rows (written before stable
- * topic identity existed) must be given a key first. This script derives a key
- * from the post's own title — the best available signal for legacy content —
- * and de-duplicates by appending a short suffix when two posts normalise to the
- * same key, so the index can be created without data loss.
+ * Production currently has 66 posts with NO topic_key at all, which blocks
+ * two things: creating the @@unique([topicKey, language]) index, and running
+ * the new API code (its reads expect the non-nullable field). This migration
+ * is deliberately separate from the language migration: same mechanics,
+ * different decision, independently reviewable and rollback-able.
  *
- * Run with:  pnpm --filter @palnadu/api db:backfill-topic-key
+ * What it does:
+ * - derives each missing key from the post title via the SAME canonical
+ *   identity new topics use (concept-first, cross-language, intent-suffixed),
+ *   so a backfilled key means exactly what a generated key means;
+ * - appends `-2`, `-3`, … on collision. A suffixed key is an honest duplicate
+ *   flag, not silent data loss: those posts need editorial review, not
+ *   deletion (deletion decisions stay out of migrations entirely).
  *
- * This is a data migration, not a schema migration: review output before
- * relying on it, since derived keys for legacy posts are best-effort.
+ * Writes go through targeted raw `$set` commands, not the model API: legacy
+ * documents predate other required fields and the generated client validates
+ * whole documents on write (P2032). Raw reads are used for the same reason
+ * the language backfill uses them — the client materializes `@default`s on
+ * read and would report "0 missing".
+ *
+ * Reversal: re-run with the field unset per id, or simply leave the values:
+ * they are deterministic derivations of titles and harmless if the index is
+ * later dropped. Schema reversal: remove the compound uniques, `db:push`.
+ *
+ * Run with:  pnpm --filter @palnadu/api db:backfill-topic-key [--dry-run]
  */
 import { PrismaClient } from '@prisma/client';
+import { toHexId } from '../src/blog/language-backfill';
+import { assignTopicKeys } from '../src/blog/topic-key-backfill';
 
 const prisma = new PrismaClient();
-
-/** Same normalization as the automation's topic identity module. */
-function toTopicKey(topic: string): string {
-  return topic
-    .toLowerCase()
-    .trim()
-    .replace(/[^\w\s-]/g, '')
-    .replace(/[\s_-]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-    .slice(0, 100);
-}
+const DRY_RUN = process.argv.includes('--dry-run');
 
 async function main() {
-  const posts = await prisma.blogPost.findMany({
-    select: { id: true, title: true, slug: true, topicKey: true },
-    orderBy: { createdAt: 'asc' },
-  });
+  if (DRY_RUN) console.log('(dry run: no writes will happen)');
 
-  const missing = posts.filter((p) => !p.topicKey);
-  console.log(`Total posts: ${posts.length}`);
-  console.log(`Missing topicKey: ${missing.length}`);
+  const rows = (await prisma.$runCommandRaw({
+    find: 'blog_posts',
+    projection: { slug: 1, title: 1, language: 1, topic_key: 1 },
+  })) as any;
+  const raw = (rows?.cursor?.firstBatch ?? []) as {
+    _id: unknown;
+    slug: string;
+    title: string;
+    language?: unknown;
+    topic_key?: unknown;
+  }[];
 
-  if (missing.length === 0) {
-    console.log('Nothing to backfill.');
-    return;
-  }
+  const missing = raw.filter((d) => d.topic_key === undefined || d.topic_key === null);
+  console.log(`Blog posts: ${raw.length} total, ${missing.length} physically missing topic_key`);
 
-  const taken = new Set(
-    posts.filter((p) => p.topicKey).map((p) => p.topicKey as string),
+  const assignments = assignTopicKeys(
+    missing.map((d) => ({
+      id: toHexId(d._id),
+      slug: d.slug,
+      title: d.title,
+      language: d.language,
+    })),
   );
 
-  let updated = 0;
-  for (const post of missing) {
-    const base = toTopicKey(post.title) || toTopicKey(post.slug) || post.slug;
-
-    // Guarantee uniqueness by suffixing on collision with an already-used key.
-    let key = base;
-    let n = 2;
-    while (taken.has(key)) {
-      key = `${base}-${n}`;
-      n += 1;
-    }
-    taken.add(key);
-
-    await prisma.blogPost.update({ where: { id: post.id }, data: { topicKey: key } });
-    console.log(`  ${post.slug} -> ${key}`);
-    updated += 1;
+  const suffixed = assignments.filter((a) => a.suffixed);
+  for (const a of assignments) {
+    console.log(`  ${a.slug} -> ${a.topicKey}${a.suffixed ? '  [SUFFIXED — needs editorial review]' : ''}`);
+  }
+  if (suffixed.length > 0) {
+    console.log(
+      `Note: ${suffixed.length} post(s) collided and received suffixed keys. ` +
+        `These are true duplicates awaiting an editorial decision, not an error.`,
+    );
   }
 
-  console.log(`Backfilled ${updated} post(s).`);
+  if (!DRY_RUN) {
+    for (const a of assignments) {
+      await prisma.$runCommandRaw({
+        update: 'blog_posts',
+        updates: [{ q: { _id: { $oid: a.id } }, u: { $set: { topic_key: a.topicKey } } }],
+      });
+    }
+  }
+
+  console.log(
+    DRY_RUN
+      ? `Would backfill ${assignments.length} post(s).`
+      : `Backfilled ${assignments.length} post(s).`,
+  );
 }
 
 main()

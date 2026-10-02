@@ -20,10 +20,11 @@ const require = createRequire(import.meta.url);
  * imported directly, so the tests exercise the real shipped logic.
  */
 
-const SOURCES = ['blog-translations.ts', 'language-backfill.ts'];
+const SOURCES = ['blog-translations.ts', 'language-backfill.ts', 'topic-key-backfill.ts'];
 
 let translations;
 let backfill;
+let topicKeys;
 
 const here = dirname(fileURLToPath(import.meta.url));
 
@@ -48,9 +49,12 @@ before(() => {
     { cwd: join(here, '..'), stdio: 'pipe' },
   );
 
+  // tsc preserves relative structure when compiling across src/blog and
+  // src/automation, so requires use the nested paths.
   const req = (name) => require(join(outDir, name));
-  translations = req('blog-translations.js');
-  backfill = req('language-backfill.js');
+  translations = req('blog/blog-translations.js');
+  backfill = req('blog/language-backfill.js');
+  topicKeys = req('blog/topic-key-backfill.js');
 });
 
 /** Extract one model block from schema.prisma text. */
@@ -215,5 +219,46 @@ describe('schema constraints', () => {
   it('keeps the generation log language optional so legacy rows need no backfill', () => {
     const log = modelBlock(schema, 'BlogGenerationLog');
     assert.match(log, /language\s+BlogLanguage\?/);
+  });
+});
+
+describe('topicKey backfill planning', () => {
+  it('derives canonical keys from titles, suffixing only on collision', () => {
+    const out = topicKeys.assignTopicKeys([
+      { id: 'a', slug: 'website-cost-guntur', title: 'Website Development Cost in Guntur' },
+      { id: 'b', slug: 'website-pricing-guntur', title: 'Website Development Pricing in Guntur' },
+      { id: 'c', slug: 'school-portal', title: 'School Admission Portal Software' },
+    ]);
+    // First two normalize identically (same subject+location+intent).
+    assert.equal(out[0].topicKey, out[1].topicKey.replace(/-2$/, ''));
+    assert.equal(out[0].suffixed, false);
+    assert.equal(out[1].suffixed, true);
+    assert.match(out[1].topicKey, /-2$/);
+    assert.equal(out[2].suffixed, false);
+  });
+
+  it('resolves Telugu titles through the same concept identity', () => {
+    const out = topicKeys.assignTopicKeys([
+      { id: 'a', slug: 'upi-mdr', title: 'UPIపై MDR ఛార్జీలు ఎందుకు?' },
+    ]);
+    assert.ok(out[0].topicKey.length > 0, 'Telugu title must yield a non-empty key');
+    assert.ok(!/[^a-z0-9+-]/.test(out[0].topicKey.replace(/-/g, '')), 'key must stay URL-safe');
+  });
+
+  it('respects pre-taken keys so re-runs never collide', () => {
+    const first = topicKeys.assignTopicKeys([
+      { id: 'a', slug: 'x', title: 'Website Development Cost in Guntur' },
+    ]);
+    const out = topicKeys.assignTopicKeys(
+      [{ id: 'b', slug: 'y', title: 'Website Development Cost in Guntur' }],
+      new Set([first[0].topicKey]),
+    );
+    assert.notEqual(out[0].topicKey, first[0].topicKey);
+    assert.equal(out[0].suffixed, true);
+  });
+
+  it('falls back to slug when the title yields nothing usable', () => {
+    const out = topicKeys.assignTopicKeys([{ id: 'a', slug: '22000', title: '!!!' }]);
+    assert.ok(out[0].topicKey.length > 0);
   });
 });

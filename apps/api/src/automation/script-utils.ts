@@ -391,11 +391,17 @@ export type ContentIntent =
 /** Concepts recognised in a phrase, as language-neutral ids. */
 export function extractConcepts(text: string): string[] {
   const lower = text.toLowerCase();
+  // Hyphens are orthographic noise ("e-commerce" vs "ecommerce" vs
+  // "e commerce"): match against both the raw and the de-hyphenated text so a
+  // hyphenated surface form can never miss its concept. (Found because legacy
+  // "e-commerce portals" titles produced literal-soup keys.)
+  const dehyphenated = lower.replace(/-/g, ' ');
   const found = new Set<string>();
 
   for (const entry of CONCEPT_LEXICON) {
     for (const form of entry.en) {
-      if (lower.includes(form.toLowerCase())) {
+      const f = form.toLowerCase();
+      if (lower.includes(f) || dehyphenated.includes(f)) {
         found.add(entry.id);
         break;
       }

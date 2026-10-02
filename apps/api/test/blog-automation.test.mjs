@@ -85,6 +85,18 @@ describe('stable topic identity', () => {
     assert.equal(new Set(variants.map(toTopicKey)).size, 1);
   });
 
+  it('matches hyphenated surface forms to their concept', () => {
+    const { toTopicKey } = mod.identity;
+    // "e-commerce" must resolve exactly like "ecommerce" / "e commerce":
+    // otherwise the residual tokens spill into the key as literal soup.
+    assert.equal(
+      toTopicKey('How E-Commerce Portals Modernize Growing Businesses in Guntur'),
+      toTopicKey('How Ecommerce Portals Modernize Growing Businesses in Guntur'),
+    );
+    const key = toTopicKey('How E-Commerce Portals and Online Ordering Apps Modernizes Growing Businesses in Guntur');
+    assert.ok(!/apps-businesses-commerce-growing/.test(key), `literal soup leaked into key: ${key}`);
+  });
+
   it('splits the same subject asked with a different intent', () => {
     const { toTopicKey, canonicalizeTopic } = mod.identity;
     // Same subject and location, but a cost question vs a how-to guide are
