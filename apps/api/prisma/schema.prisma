@@ -43,6 +43,15 @@ enum PublishStatus {
   ARCHIVED
 }
 
+// Publication language of a blog post.
+// Lowercase values are deliberate: they double as URL path segments
+// (`/blog/<slug>` for English, `/te/blog/<slug>` for Telugu) and as
+// hreflang codes, so no mapping layer can drift out of sync.
+enum BlogLanguage {
+  en
+  te
+}
+
 enum ProjectStage {
   JUST_AN_IDEA
   EXISTING_BUSINESS
@@ -211,7 +220,27 @@ model CaseStudy {
 model BlogPost {
   id             String        @id @default(auto()) @map("_id") @db.ObjectId
   title          String
-  slug           String        @unique
+  // Slugs are unique *per language*, not globally: a Telugu translation may
+  // legitimately reuse the same slug string as its English counterpart because
+  // the URLs differ by path prefix (`/blog/x` vs `/te/blog/x`).
+  // The old global `slug @unique` is replaced by the compound below.
+  slug           String
+  // Publication language. Required with an `en` default so every existing
+  // English row keeps working; legacy documents missing the field must be
+  // backfilled to `en` (see prisma/backfill-language.ts) before `db push`,
+  // because MongoDB has no column defaults to fill them in.
+  language       BlogLanguage  @default(en)
+  // Which localized versions belong together. This is the *localization*
+  // relationship, deliberately separate from `topicKey`, which answers "is
+  // this topic already represented?". A group may hold one English article
+  // plus one or more Telugu articles covering different search intents, so it
+  // is intentionally NOT inferred from matching topicKeys.
+  //
+  // Deliberately not unique: MongoDB compound unique indexes reject multiple
+  // documents with a null key, which would break every ungrouped post. The
+  // one-post-per-language-per-group invariant is enforced in
+  // BlogService.linkTranslations (see blog-translations.ts) instead.
+  translationGroupId String?   @map("translation_group_id")
   // Stable identity of the automation topic this post was generated from.
   // Title/slug are LLM-authored presentation metadata and must NOT be used for
   // identity: the LLM rewords both on every run, so matching on them lets one
@@ -258,11 +287,14 @@ model BlogPost {
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
 
+  @@unique([language, slug])
   @@index([status])
   @@index([authorId])
   @@index([publishDate])
   @@index([searchIntent])
   @@index([primaryKeyword])
+  @@index([language, status])
+  @@index([translationGroupId])
   @@map("blog_posts")
   topics BlogTopic[]
 }
@@ -283,6 +315,10 @@ model BlogTopic {
   id          String      @id @default(auto()) @map("_id") @db.ObjectId
   topicKey    String      @unique @map("topic_key")
   topic       String
+  // Language this queued topic will be generated in. English-only today;
+  // the per-cycle 3te+2en allocator (not yet enabled) will claim by language.
+  // Same backfill rule as BlogPost: legacy rows missing the field become `en`.
+  language    BlogLanguage @default(en)
   categorySlug String
   targetLocation String?
   searchIntent   String?
@@ -308,6 +344,7 @@ model BlogTopic {
 
   @@index([status, nextRetryAt])
   @@index([status, claimedAt])
+  @@index([language, status])
   @@map("blog_topics")
 }
 
@@ -320,6 +357,9 @@ model BlogGenerationLog {
   topicKey    String?  @map("topic_key")
   topic       String?
   postId      String?  @db.ObjectId
+  // Optional so legacy log rows need no backfill; new attempts always set it.
+  // Lets per-cycle auditing distinguish the 3 te + 2 en quota when enabled.
+  language    BlogLanguage?
 
   primaryKeyword    String?
   secondaryKeywords String[]

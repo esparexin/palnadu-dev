@@ -16,7 +16,8 @@
     "db:seed": "ts-node prisma/seed.ts",
     "db:backfill-topic-key": "ts-node prisma/backfill-topic-key.ts",
     "test": "node --test \"test/**/*.test.mjs\"",
-    "lint:warnings": "eslint \"{src,test,prisma}/**/*.ts\""
+    "lint:warnings": "eslint \"{src,test,prisma}/**/*.ts\"",
+    "db:backfill-language": "ts-node prisma/backfill-language.ts"
   },
   "dependencies": {
     "@nestjs/common": "^10.4.0",

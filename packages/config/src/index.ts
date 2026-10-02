@@ -2,6 +2,7 @@
 export * from './colors';
 export * from './media';
 export * from './schema';
+export * from './blog-i18n';
 
 // ─── Site Configuration ───────────────────────────────────────
 

@@ -11,11 +11,11 @@ import {
   Request,
   NotFoundException,
 } from '@nestjs/common';
-import { BlogService } from './blog.service';
+import { BlogService, parseLanguage } from './blog.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
-import { PublishStatus } from '@prisma/client';
+import { PublishStatus, BlogLanguage } from '@prisma/client';
 
 @Controller()
 export class BlogController {
@@ -31,6 +31,7 @@ export class BlogController {
     @Query('search') search?: string,
     @Query('status') status?: string,
     @Query('includeArchived') includeArchived?: string,
+    @Query('language') language?: string,
   ) {
     const result = await this.blogService.findPublished({
       page: page ? parseInt(page) : 1,
@@ -39,6 +40,7 @@ export class BlogController {
       search,
       status: status as PublishStatus | undefined,
       includeArchived: includeArchived === 'true' || includeArchived === '1',
+      language: parseLanguage(language),
     });
     return { success: true, ...result };
   }
@@ -50,8 +52,10 @@ export class BlogController {
   }
 
   @Get('blog/:slug')
-  async getBySlug(@Param('slug') slug: string) {
-    const post = await this.blogService.findBySlug(slug);
+  async getBySlug(@Param('slug') slug: string, @Query('language') language?: string) {
+    // Defaults to English: existing callers (and `/blog/<slug>` URLs) keep
+    // resolving exactly as before. Telugu pages pass `language=te`.
+    const post = await this.blogService.findBySlug(slug, parseLanguage(language) ?? BlogLanguage.en);
     if (!post) throw new NotFoundException(`Article '${slug}' not found`);
     return { success: true, data: post };
   }
@@ -67,6 +71,7 @@ export class BlogController {
     @Query('status') status?: string,
     @Query('search') search?: string,
     @Query('category') category?: string,
+    @Query('language') language?: string,
   ) {
     const result = await this.blogService.findAllAdmin({
       page: page ? parseInt(page) : 1,
@@ -74,6 +79,7 @@ export class BlogController {
       status: status as PublishStatus | undefined,
       categorySlug: category,
       search,
+      language: parseLanguage(language),
     });
     return { success: true, ...result };
   }
@@ -94,6 +100,8 @@ export class BlogController {
     const post = await this.blogService.create({
       title: body.title,
       slug: body.slug,
+      language: body.language !== undefined ? parseLanguage(body.language) : undefined,
+      translationGroupId: body.translationGroupId || undefined,
       excerpt: body.excerpt || undefined,
       content: body.content,
       coverImage: body.coverImage || undefined,
@@ -107,6 +115,17 @@ export class BlogController {
       ...(body.categoryId && { category: { connect: { id: body.categoryId } } }),
     });
     return { success: true, data: post };
+  }
+
+  @Post('admin/blog/link-translations')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('SUPER_ADMIN', 'ADMIN', 'EDITOR')
+  async linkTranslations(@Body() body: { postIds: string[]; translationGroupId?: string }) {
+    if (!Array.isArray(body?.postIds)) {
+      throw new NotFoundException('postIds must be an array of post ids');
+    }
+    const result = await this.blogService.linkTranslations(body.postIds, body.translationGroupId);
+    return { success: true, data: result };
   }
 
   @Patch('admin/blog/:id')

@@ -1,5 +1,11 @@
 import { MetadataRoute } from 'next';
-import { siteConfig, sitemapPages, services } from '@palnadu/config';
+import {
+  siteConfig,
+  sitemapPages,
+  services,
+  buildBlogSitemapEntries,
+  type BlogLocale,
+} from '@palnadu/config';
 import { api } from '@/lib/api';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
@@ -38,16 +44,30 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     caseStudyPages = [];
   }
 
-  // ── Dynamic: published & archived blog posts ──
+  // ── Dynamic: published & archived blog posts, both languages ──
+  // Deliberately unfiltered by language: every locale gets its own URL.
+  // Entries are deduplicated by URL and carry hreflang alternates only for
+  // translations that exist in this same dataset.
   let blogPages: MetadataRoute.Sitemap = [];
   try {
     const res: any = await api.blog.list({ page: '1', limit: '500', includeArchived: 'true' });
     const posts = res?.data || [];
-    blogPages = posts.map((post: any) => ({
-      url: `${baseUrl}/blog/${post.slug}`,
-      lastModified: new Date(post.updatedAt || post.createdAt),
-      changeFrequency: 'monthly' as const,
-      priority: post.status === 'ARCHIVED' ? 0.5 : 0.8,
+    blogPages = buildBlogSitemapEntries(
+      baseUrl,
+      posts.map((post: any) => ({
+        slug: post.slug,
+        language: (post.language ?? 'en') as BlogLocale,
+        status: post.status,
+        updatedAt: post.updatedAt,
+        createdAt: post.createdAt,
+        translationGroupId: post.translationGroupId ?? null,
+      })),
+    ).map((entry) => ({
+      url: entry.url,
+      lastModified: entry.lastModified,
+      changeFrequency: entry.changeFrequency,
+      priority: entry.priority,
+      ...(entry.alternates ? { alternates: entry.alternates } : {}),
     }));
   } catch {
     blogPages = [];

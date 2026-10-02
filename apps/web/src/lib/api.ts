@@ -72,7 +72,14 @@ export const api = {
   blog: {
     list: (params?: Record<string, string>) =>
       apiClient('/api/blog', { params, next: { revalidate: 60 } }),
-    getBySlug: (slug: string) => apiClient(`/api/blog/${slug}`, { next: { revalidate: 60 } }),
+    // `language` scopes the lookup to one locale (`en` for /blog/<slug>,
+    // `te` for /te/blog/<slug>). Posts are resolved per language, so a slug
+    // in the wrong locale 404s instead of rendering the other language.
+    getBySlug: (slug: string, language?: 'en' | 'te') =>
+      apiClient(`/api/blog/${slug}`, {
+        params: language ? { language } : undefined,
+        next: { revalidate: 60 },
+      }),
     categories: () => apiClient<{ success: boolean; data: any[] }>('/api/blog/categories', { next: { revalidate: 300 } }),
   },
   settings: {

@@ -41,6 +41,9 @@ export default async function BlogPage({ searchParams }: Props) {
         page: String(currentPage),
         limit,
         includeArchived: 'true',
+        // The English listing shows English posts only. Telugu posts resolve
+        // exclusively under /te/blog/<slug>, never here.
+        language: 'en',
         ...(isArchiveView ? { status: 'ARCHIVED' } : {}),
         ...(category ? { category } : {}),
         ...(search ? { search } : {}),

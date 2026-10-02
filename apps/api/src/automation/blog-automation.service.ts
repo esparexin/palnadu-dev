@@ -9,7 +9,7 @@ import { SeoValidationService } from './seo-validation.service';
 import { TopicDiscoveryService } from './topic-discovery.service';
 import { DiscoveredTopic } from './seo-sources';
 import { canonicalizeTopic, SearchIntent, toTopicKey } from './topic-identity';
-import { PublishStatus, TopicStatus } from '@prisma/client';
+import { PublishStatus, TopicStatus, BlogLanguage } from '@prisma/client';
 
 export interface GenerationResult {
   id: string;
@@ -311,6 +311,9 @@ export class BlogAutomationService {
         data: {
           topicKey,
           topic: candidate.topic,
+          // The automated queue is English-only. Telugu generation is not
+          // enabled; the per-cycle allocator will set this when it is.
+          language: BlogLanguage.en,
           categorySlug: candidate.categorySlug,
           targetLocation: candidate.targetLocation ?? null,
           searchIntent: candidate.searchIntent ?? canonical.intent,
@@ -584,6 +587,7 @@ export class BlogAutomationService {
         data: {
           topicKey,
           topic,
+          language: BlogLanguage.en,
           primaryKeyword: extra.primaryKeyword as string | undefined,
           secondaryKeywords: (extra.secondaryKeywords as string[] | undefined) ?? [],
           searchIntent: extra.searchIntent as string | undefined,
@@ -725,6 +729,10 @@ export class BlogAutomationService {
         data: {
           topicKey,
           topic,
+          // The automated queue is English-only; Telugu generation is not
+          // enabled. Explicit rather than relying on the schema default so the
+          // language of automated posts is visible at the write site.
+          language: BlogLanguage.en,
           title: draft.title,
           slug: draft.slug,
           excerpt: draft.excerpt,
@@ -777,6 +785,7 @@ export class BlogAutomationService {
       data: {
         topicKey,
         topic,
+        language: BlogLanguage.en,
         postId: post.id,
         primaryKeyword: draft.primaryKeyword,
         secondaryKeywords: draft.secondaryKeywords,
@@ -788,7 +797,12 @@ export class BlogAutomationService {
         validationResult: validation.summary,
         similarityResult: similaritySummary,
         status: publishStatus,
-        publishedUrl: publishStatus === PublishStatus.PUBLISHED ? `/blog/${post.slug}` : null,
+        publishedUrl:
+          publishStatus === PublishStatus.PUBLISHED
+            ? post.language === BlogLanguage.te
+              ? `/te/blog/${post.slug}`
+              : `/blog/${post.slug}`
+            : null,
         durationMs: Date.now() - started,
       },
     });
