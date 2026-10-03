@@ -58,21 +58,21 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
             aria-live="polite"
             className={`pointer-events-auto flex items-start gap-2.5 p-3.5 rounded-xl border shadow-xl backdrop-blur-md transition-all duration-300 animate-slide-up ${
               t.type === 'error'
-                ? 'bg-white border-red-200 text-red-900 shadow-red-500/5'
+                ? 'bg-white border-palnadu-error/30 text-palnadu-error'
                 : t.type === 'success'
-                ? 'bg-white border-emerald-200 text-emerald-900 shadow-emerald-500/5'
-                : 'bg-white border-blue-200 text-blue-900 shadow-blue-500/5'
+                ? 'bg-white border-palnadu-teal/30 text-palnadu-dark'
+                : 'bg-white border-palnadu-blue/30 text-palnadu-dark'
             }`}
           >
             <div className="mt-0.5 shrink-0">
-              {t.type === 'error' && <AlertCircle className="h-4 w-4 text-red-600" />}
-              {t.type === 'success' && <CheckCircle2 className="h-4 w-4 text-emerald-600" />}
-              {t.type === 'info' && <Info className="h-4 w-4 text-blue-600" />}
+              {t.type === 'error' && <AlertCircle className="h-4 w-4 text-palnadu-error" />}
+              {t.type === 'success' && <CheckCircle2 className="h-4 w-4 text-palnadu-teal" />}
+              {t.type === 'info' && <Info className="h-4 w-4 text-palnadu-blue" />}
             </div>
             <p className="flex-1 text-xs font-medium leading-relaxed min-w-0 break-words">{t.message}</p>
             <button
               onClick={() => removeToast(t.id)}
-              className="shrink-0 rounded-md p-0.5 text-gray-400 hover:text-gray-700 transition-colors cursor-pointer"
+              className="shrink-0 rounded-md p-0.5 text-palnadu-secondary hover:text-palnadu-dark transition-colors cursor-pointer"
               aria-label="Dismiss notification"
             >
               <X className="h-3.5 w-3.5" />

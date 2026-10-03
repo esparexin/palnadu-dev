@@ -83,7 +83,7 @@ export default function DashboardPage() {
                 <p className="text-xs font-semibold text-palnadu-secondary uppercase tracking-wider">{card.title}</p>
                 <Icon className={`h-4 w-4 ${card.color}`} />
               </div>
-              <p className="mt-2 text-2xl font-black text-palnadu-dark">
+              <p className="mt-2 text-2xl font-extrabold text-palnadu-dark">
                 {loading ? '—' : card.value}
               </p>
             </div>

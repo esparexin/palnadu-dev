@@ -368,8 +368,8 @@ export default function ProjectsPage() {
 
       {/* Project Modal (Create / Edit) */}
       {modalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4 animate-fade-in">
-          <div className="w-full max-w-lg rounded-xl border border-palnadu-border bg-white p-6 shadow-xl space-y-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 animate-fade-in overflow-y-auto">
+          <div className="w-full max-w-lg rounded-xl border border-palnadu-border bg-white p-6 shadow-xl space-y-4 my-8 max-h-[85vh] overflow-y-auto">
             <div className="flex items-center justify-between border-b border-palnadu-border/60 pb-3">
               <div>
                 <h2 className="text-base font-bold text-palnadu-dark">
