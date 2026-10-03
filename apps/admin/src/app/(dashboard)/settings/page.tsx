@@ -54,13 +54,14 @@ export default function SettingsPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [removingType, setRemovingType] = useState<string | null>(null);
-  const [deleteTarget, setDeleteTarget] = useState<{ type: 'header' | 'footer' | 'favicon'; label: string } | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<{ type: 'header' | 'footer' | 'favicon' | 'ogImage'; label: string } | null>(null);
 
   // Staged files for Apply / Discard flow
   const [stagedFiles, setStagedFiles] = useState<{
     header?: File;
     footer?: File;
     favicon?: File;
+    ogImage?: File;
   }>({});
 
   // Local object URLs for instant live preview
@@ -68,6 +69,7 @@ export default function SettingsPage() {
     header?: string;
     footer?: string;
     favicon?: string;
+    ogImage?: string;
   }>({});
 
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -77,6 +79,7 @@ export default function SettingsPage() {
   const headerInputRef = useRef<HTMLInputElement>(null);
   const footerInputRef = useRef<HTMLInputElement>(null);
   const faviconInputRef = useRef<HTMLInputElement>(null);
+  const ogImageInputRef = useRef<HTMLInputElement>(null);
 
   const hasUnsavedChanges = Object.keys(stagedFiles).length > 0;
 
@@ -100,7 +103,7 @@ export default function SettingsPage() {
 
   // Stage a file for upload
   const handleStageFile = (
-    type: 'header' | 'footer' | 'favicon',
+    type: 'header' | 'footer' | 'favicon' | 'ogImage',
     e: React.ChangeEvent<HTMLInputElement>,
   ) => {
     const file = e.target.files?.[0];
@@ -121,16 +124,20 @@ export default function SettingsPage() {
       return;
     }
 
-    // Format validation
+    // Format validation (mirrors backend allowlist in settings.service.ts)
     const allowed =
       type === 'favicon'
         ? ['image/png', 'image/x-icon', 'image/vnd.microsoft.icon', 'image/svg+xml', 'image/webp']
+        : type === 'ogImage'
+        ? ['image/png', 'image/jpeg', 'image/webp']
         : ['image/png', 'image/svg+xml', 'image/webp', 'image/jpeg'];
 
     if (!allowed.includes(file.type) && !file.name.endsWith('.ico') && !file.name.endsWith('.svg')) {
       setErrorMessage(
         type === 'favicon'
           ? 'Unsupported favicon format. Please upload a square PNG, ICO, or SVG.'
+          : type === 'ogImage'
+          ? 'Unsupported OG image format. Please upload PNG, JPEG, or WebP (no SVG).'
           : 'Unsupported format. Please upload a transparent PNG or clean SVG logo.',
       );
       e.target.value = '';
@@ -153,6 +160,7 @@ export default function SettingsPage() {
     if (headerInputRef.current) headerInputRef.current.value = '';
     if (footerInputRef.current) footerInputRef.current.value = '';
     if (faviconInputRef.current) faviconInputRef.current.value = '';
+    if (ogImageInputRef.current) ogImageInputRef.current.value = '';
   };
 
   // Apply & Save all staged changes to Cloudinary + DB
@@ -174,6 +182,9 @@ export default function SettingsPage() {
       }
       if (stagedFiles.favicon) {
         uploadPromises.push(api.settings.branding.uploadAsset('favicon', stagedFiles.favicon));
+      }
+      if (stagedFiles.ogImage) {
+        uploadPromises.push(api.settings.branding.uploadAsset('ogImage', stagedFiles.ogImage));
       }
 
       await Promise.all(uploadPromises);
@@ -222,7 +233,7 @@ export default function SettingsPage() {
       <div>
         <h1 className="text-2xl font-extrabold tracking-tight text-palnadu-dark">Brand & Logo Settings</h1>
         <p className="text-xs text-palnadu-secondary mt-0.5">
-          Dedicated asset fields for Header Logo, Footer Logo, and Favicon with live preview and instant application.
+          Dedicated asset fields for Header Logo, Footer Logo, Favicon, and OG Image with live preview and instant application.
         </p>
       </div>
 
@@ -263,9 +274,16 @@ export default function SettingsPage() {
         accept="image/png,image/x-icon,image/vnd.microsoft.icon,image/svg+xml,image/webp"
         className="hidden"
       />
+      <input
+        type="file"
+        ref={ogImageInputRef}
+        onChange={(e) => handleStageFile('ogImage', e)}
+        accept="image/png,image/jpeg,image/webp"
+        className="hidden"
+      />
 
       {/* ── SEPARATE UPLOAD FIELDS GRID ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-4 gap-5">
         
         {/* ── CARD 1: HEADER LOGO ── */}
         <div className="rounded-xl border border-palnadu-border bg-white p-5 shadow-2xs flex flex-col justify-between space-y-4">
@@ -316,7 +334,7 @@ export default function SettingsPage() {
             <button
               onClick={() => headerInputRef.current?.click()}
               disabled={saving}
-              className="flex-1 inline-flex items-center justify-center gap-1.5 h-8 rounded-md font-semibold text-xs bg-palnadu-blue text-white hover:bg-[#12487e] transition-colors cursor-pointer disabled:opacity-50"
+              className="flex-1 inline-flex items-center justify-center gap-1.5 h-8 rounded-md font-semibold text-xs bg-palnadu-blue text-white hover:bg-palnadu-dark-hover transition-colors cursor-pointer disabled:opacity-50"
             >
               <UploadCloud className="h-3.5 w-3.5" />
               <span>{branding.headerLogo?.url ? 'Replace' : 'Upload'}</span>
@@ -384,7 +402,7 @@ export default function SettingsPage() {
             <button
               onClick={() => footerInputRef.current?.click()}
               disabled={saving}
-              className="flex-1 inline-flex items-center justify-center gap-1.5 h-8 rounded-md font-semibold text-xs bg-palnadu-blue text-white hover:bg-[#12487e] transition-colors cursor-pointer disabled:opacity-50"
+              className="flex-1 inline-flex items-center justify-center gap-1.5 h-8 rounded-md font-semibold text-xs bg-palnadu-blue text-white hover:bg-palnadu-dark-hover transition-colors cursor-pointer disabled:opacity-50"
             >
               <UploadCloud className="h-3.5 w-3.5" />
               <span>{branding.footerLogo?.url ? 'Replace' : 'Upload'}</span>
@@ -461,7 +479,7 @@ export default function SettingsPage() {
             <button
               onClick={() => faviconInputRef.current?.click()}
               disabled={saving}
-              className="flex-1 inline-flex items-center justify-center gap-1.5 h-8 rounded-md font-semibold text-xs bg-palnadu-blue text-white hover:bg-[#12487e] transition-colors cursor-pointer disabled:opacity-50"
+              className="flex-1 inline-flex items-center justify-center gap-1.5 h-8 rounded-md font-semibold text-xs bg-palnadu-blue text-white hover:bg-palnadu-dark-hover transition-colors cursor-pointer disabled:opacity-50"
             >
               <UploadCloud className="h-3.5 w-3.5" />
               <span>{branding.favicon?.url ? 'Replace' : 'Upload'}</span>
@@ -471,8 +489,76 @@ export default function SettingsPage() {
               <button
                 onClick={() => setDeleteTarget({ type: 'favicon', label: 'Favicon' })}
                 disabled={saving || removingType === 'favicon'}
-                className="h-8 px-2.5 rounded-md font-semibold text-xs border border-red-200 text-red-600 bg-white hover:bg-red-50 transition-colors cursor-pointer disabled:opacity-50"
+                className="h-8 px-2.5 rounded-md font-semibold text-xs border border-palnadu-error/30 text-palnadu-error bg-white hover:bg-palnadu-error/5 transition-colors cursor-pointer disabled:opacity-50"
                 title="Remove custom favicon"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* ── CARD 4: OG IMAGE ── */}
+        <div className="rounded-xl border border-palnadu-border bg-white p-5 shadow-sm flex flex-col justify-between space-y-4">
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="h-7 w-7 rounded-md bg-palnadu-light-blue text-palnadu-blue flex items-center justify-center">
+                  <LayoutTemplate className="h-4 w-4" />
+                </div>
+                <h2 className="text-sm font-bold text-palnadu-dark">OG Image</h2>
+              </div>
+              <span
+                className={`text-xs font-mono font-semibold px-2 py-0.5 rounded-full ${
+                  stagedFiles.ogImage
+                    ? 'bg-palnadu-warning/10 text-palnadu-warning border border-palnadu-warning/30'
+                    : branding.ogImage?.url
+                    ? 'bg-palnadu-teal/10 text-palnadu-teal border border-palnadu-teal/30'
+                    : 'bg-palnadu-light-blue text-palnadu-blue border border-palnadu-blue/20'
+                }`}
+              >
+                {stagedFiles.ogImage ? 'Staged (Unsaved)' : branding.ogImage?.url ? 'Custom Active' : 'Default'}
+              </span>
+            </div>
+
+            <p className="text-xs text-palnadu-secondary leading-relaxed">
+              Social share image for Open Graph / Twitter cards (no SVG).
+            </p>
+
+            <div className="p-3.5 rounded-lg border border-palnadu-border bg-palnadu-off-white/50 flex flex-col justify-center items-center h-20 overflow-hidden">
+              {previewUrls.ogImage || branding.ogImage?.url ? (
+                <img
+                  src={previewUrls.ogImage || branding.ogImage?.url || ''}
+                  alt="OG Image"
+                  className="h-full w-full object-cover rounded-md"
+                />
+              ) : (
+                <span className="text-xs text-palnadu-secondary">1200 × 630 recommended</span>
+              )}
+            </div>
+
+            <div className="text-xs text-palnadu-secondary space-y-0.5 font-mono pt-1">
+              <p>• Format: PNG, JPEG, WebP</p>
+              <p>• Size: 1200 × 630 px (max 2 MB)</p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 pt-2 border-t border-palnadu-border/60">
+            <button
+              onClick={() => ogImageInputRef.current?.click()}
+              disabled={saving}
+              className="flex-1 inline-flex items-center justify-center gap-1.5 h-9 rounded-md font-semibold text-xs bg-palnadu-blue text-white hover:bg-palnadu-dark-hover transition-colors cursor-pointer disabled:opacity-50"
+            >
+              <UploadCloud className="h-3.5 w-3.5" />
+              <span>{branding.ogImage?.url ? 'Replace' : 'Upload'}</span>
+            </button>
+
+            {branding.ogImage?.url && (
+              <button
+                onClick={() => setDeleteTarget({ type: 'ogImage', label: 'OG Image' })}
+                disabled={saving || removingType === 'ogImage'}
+                className="h-9 px-2.5 rounded-md font-semibold text-xs border border-palnadu-error/30 text-palnadu-error bg-white hover:bg-palnadu-error/5 transition-colors cursor-pointer disabled:opacity-50"
+                title="Remove custom OG image"
               >
                 <Trash2 className="h-3.5 w-3.5" />
               </button>
@@ -507,7 +593,7 @@ export default function SettingsPage() {
               <button
                 onClick={handleApplyChanges}
                 disabled={saving}
-                className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-md font-semibold text-xs bg-palnadu-teal text-white hover:bg-[#157c5c] shadow-md transition-colors cursor-pointer disabled:opacity-50"
+                className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-md font-semibold text-xs bg-palnadu-teal text-white hover:bg-palnadu-teal-dark shadow-md transition-colors cursor-pointer disabled:opacity-50"
               >
                 <Check className="h-3.5 w-3.5" />
                 <span>{saving ? 'Applying...' : 'Apply Changes'}</span>

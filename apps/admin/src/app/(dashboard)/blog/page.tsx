@@ -169,7 +169,7 @@ export default function BlogAdminPage() {
       seoTitle: post.seoTitle || '',
       seoDescription: post.seoDescription || '',
       ogImage: post.ogImage || '',
-      status: post.status === 'PUBLISHED' ? 'PUBLISHED' : 'DRAFT',
+      status: post.status === 'PUBLISHED' ? 'PUBLISHED' : post.status === 'ARCHIVED' ? 'ARCHIVED' : 'DRAFT',
     });
     setActiveTab('content');
     setModalOpen(true);
