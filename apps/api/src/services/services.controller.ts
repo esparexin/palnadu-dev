@@ -9,7 +9,9 @@ import {
   Query,
   UseGuards,
   NotFoundException,
+  BadRequestException,
 } from '@nestjs/common';
+import { createServiceSchema } from '@palnadu/validation';
 import { ServicesService } from './services.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
@@ -67,16 +69,30 @@ export class ServicesController {
   @Post('admin/services')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('SUPER_ADMIN', 'ADMIN')
-  async create(@Body() body: any) {
-    const service = await this.servicesService.create(body);
+  async create(@Body() body: unknown) {
+    const parseResult = createServiceSchema.safeParse(body);
+    if (!parseResult.success) {
+      const errorMsg = parseResult.error.issues
+        .map((i: any) => `${i.path.join('.')}: ${i.message}`)
+        .join(', ');
+      throw new BadRequestException(errorMsg);
+    }
+    const service = await this.servicesService.create(parseResult.data as any);
     return { success: true, data: service };
   }
 
   @Patch('admin/services/:id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('SUPER_ADMIN', 'ADMIN')
-  async update(@Param('id') id: string, @Body() body: any) {
-    const service = await this.servicesService.update(id, body);
+  async update(@Param('id') id: string, @Body() body: unknown) {
+    const parseResult = createServiceSchema.partial().safeParse(body);
+    if (!parseResult.success) {
+      const errorMsg = parseResult.error.issues
+        .map((i: any) => `${i.path.join('.')}: ${i.message}`)
+        .join(', ');
+      throw new BadRequestException(errorMsg);
+    }
+    const service = await this.servicesService.update(id, parseResult.data as any);
     return { success: true, data: service };
   }
 

@@ -10,7 +10,9 @@ import {
   UseGuards,
   Request,
   NotFoundException,
+  BadRequestException,
 } from '@nestjs/common';
+import { createBlogPostSchema, createBlogCategorySchema } from '@palnadu/validation';
 import { BlogService, parseLanguage } from './blog.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
@@ -96,23 +98,31 @@ export class BlogController {
   @Post('admin/blog')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('SUPER_ADMIN', 'ADMIN', 'EDITOR')
-  async create(@Body() body: any, @Request() req: any) {
+  async create(@Body() body: unknown, @Request() req: any) {
+    const parseResult = createBlogPostSchema.safeParse(body);
+    if (!parseResult.success) {
+      const errorMsg = parseResult.error.issues
+        .map((i: any) => `${i.path.join('.')}: ${i.message}`)
+        .join(', ');
+      throw new BadRequestException(errorMsg);
+    }
+    const valid = parseResult.data;
     const post = await this.blogService.create({
-      title: body.title,
-      slug: body.slug,
-      language: body.language !== undefined ? parseLanguage(body.language) : undefined,
-      translationGroupId: body.translationGroupId || undefined,
-      excerpt: body.excerpt || undefined,
-      content: body.content,
-      coverImage: body.coverImage || undefined,
-      seoTitle: body.seoTitle || undefined,
-      seoDescription: body.seoDescription || undefined,
-      canonicalUrl: body.canonicalUrl || undefined,
-      ogImage: body.ogImage || undefined,
-      status: body.status || PublishStatus.DRAFT,
-      publishDate: body.status === PublishStatus.PUBLISHED ? (body.publishDate || new Date()) : undefined,
+      title: valid.title,
+      slug: valid.slug,
+      language: (body as any).language !== undefined ? parseLanguage((body as any).language) : undefined,
+      translationGroupId: (body as any).translationGroupId || undefined,
+      excerpt: valid.excerpt || undefined,
+      content: valid.content,
+      coverImage: valid.coverImage || undefined,
+      seoTitle: valid.seoTitle || undefined,
+      seoDescription: valid.seoDescription || undefined,
+      canonicalUrl: valid.canonicalUrl || undefined,
+      ogImage: valid.ogImage || undefined,
+      status: valid.status || PublishStatus.DRAFT,
+      publishDate: valid.status === PublishStatus.PUBLISHED ? (valid.publishDate || new Date()) : undefined,
       author: { connect: { id: req.user.sub } },
-      ...(body.categoryId && { category: { connect: { id: body.categoryId } } }),
+      ...(valid.categoryId && { category: { connect: { id: valid.categoryId } } }),
     });
     return { success: true, data: post };
   }
@@ -122,7 +132,7 @@ export class BlogController {
   @Roles('SUPER_ADMIN', 'ADMIN', 'EDITOR')
   async linkTranslations(@Body() body: { postIds: string[]; translationGroupId?: string }) {
     if (!Array.isArray(body?.postIds)) {
-      throw new NotFoundException('postIds must be an array of post ids');
+      throw new BadRequestException('postIds must be an array of post ids');
     }
     const result = await this.blogService.linkTranslations(body.postIds, body.translationGroupId);
     return { success: true, data: result };
@@ -131,8 +141,15 @@ export class BlogController {
   @Patch('admin/blog/:id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('SUPER_ADMIN', 'ADMIN', 'EDITOR')
-  async update(@Param('id') id: string, @Body() body: any) {
-    const { categoryId, ...rest } = body;
+  async update(@Param('id') id: string, @Body() body: unknown) {
+    const parseResult = createBlogPostSchema.partial().safeParse(body);
+    if (!parseResult.success) {
+      const errorMsg = parseResult.error.issues
+        .map((i: any) => `${i.path.join('.')}: ${i.message}`)
+        .join(', ');
+      throw new BadRequestException(errorMsg);
+    }
+    const { categoryId, ...rest } = parseResult.data as any;
     const updateData: any = { ...rest };
 
     // Auto-populate publishDate if transitioning from DRAFT to PUBLISHED
@@ -163,8 +180,15 @@ export class BlogController {
   @Post('admin/blog/categories')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('SUPER_ADMIN', 'ADMIN', 'EDITOR')
-  async createCategory(@Body() body: { name: string; slug: string; description?: string }) {
-    const category = await this.blogService.createCategory(body);
+  async createCategory(@Body() body: unknown) {
+    const parseResult = createBlogCategorySchema.safeParse(body);
+    if (!parseResult.success) {
+      const errorMsg = parseResult.error.issues
+        .map((i: any) => `${i.path.join('.')}: ${i.message}`)
+        .join(', ');
+      throw new BadRequestException(errorMsg);
+    }
+    const category = await this.blogService.createCategory(parseResult.data as any);
     return { success: true, data: category };
   }
 }

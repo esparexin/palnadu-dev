@@ -14,6 +14,7 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { updateMediaSchema } from '@palnadu/validation';
 import { MediaService } from './media.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
@@ -74,11 +75,15 @@ export class MediaController {
   }
 
   @Patch(':id')
-  async update(
-    @Param('id') id: string,
-    @Body() body: { alt?: string; metadata?: Record<string, unknown> },
-  ) {
-    const media = await this.mediaService.update(id, body);
+  async update(@Param('id') id: string, @Body() body: unknown) {
+    const parseResult = updateMediaSchema.safeParse(body);
+    if (!parseResult.success) {
+      const errorMsg = parseResult.error.issues
+        .map((i: any) => `${i.path.join('.')}: ${i.message}`)
+        .join(', ');
+      throw new BadRequestException(errorMsg);
+    }
+    const media = await this.mediaService.update(id, parseResult.data as any);
     return { success: true, data: media };
   }
 

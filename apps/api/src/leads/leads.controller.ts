@@ -14,7 +14,7 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
-import { createLeadSchema } from '@palnadu/validation';
+import { createLeadSchema, updateLeadSchema } from '@palnadu/validation';
 import { LeadsService } from './leads.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
@@ -93,9 +93,31 @@ export class LeadsController {
   @Roles('SUPER_ADMIN', 'ADMIN', 'PROJECT_MANAGER')
   async updateLead(
     @Param('id') id: string,
-    @Body() body: { status?: string; assignedToId?: string; notes?: string },
+    @Body() body: { status?: string; assignedToId?: string; assignedTo?: string; notes?: string },
   ) {
-    const lead = await this.leadsService.update(id, body as any);
+    // Normalize legacy `assignedToId` to schema field `assignedTo`
+    const normalized = {
+      status: body.status,
+      assignedTo: body.assignedTo ?? body.assignedToId,
+      notes: body.notes,
+    };
+    const parseResult = updateLeadSchema.safeParse(normalized);
+    if (!parseResult.success) {
+      const errorMsg = parseResult.error.issues
+        .map((i: any) => `${i.path.join('.')}: ${i.message}`)
+        .join(', ');
+      throw new BadRequestException(errorMsg);
+    }
+    const { status, assignedTo, notes } = parseResult.data;
+    const lead = await this.leadsService.update(id, {
+      ...(status ? { status: status as LeadStatus } : {}),
+      ...(assignedTo !== undefined
+        ? assignedTo === null
+          ? { assignedTo: { disconnect: true } }
+          : { assignedTo: { connect: { id: assignedTo } } }
+        : {}),
+      ...(notes !== undefined ? { notes } : {}),
+    });
     return { success: true, data: lead };
   }
 
