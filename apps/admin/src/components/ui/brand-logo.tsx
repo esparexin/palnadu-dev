@@ -23,7 +23,7 @@ export function BrandLogo({
 
   const sizeClasses = {
     sm: { icon: 'h-7 w-7 text-xs', text: 'text-base', imgHeight: 32 },
-    md: { icon: 'h-8 w-8 text-sm', text: 'text-lg', imgHeight: 46 },
+    md: { icon: 'h-8 w-8 text-sm', text: 'text-xl', imgHeight: 46 },
     lg: { icon: 'h-10 w-10 text-base', text: 'text-2xl', imgHeight: 56 },
   }[size];
 
@@ -45,7 +45,7 @@ export function BrandLogo({
         />
       </div>
       {subtitle && (
-        <span className="text-[10px] font-mono text-palnadu-secondary uppercase tracking-widest">
+        <span className="text-xs font-mono text-palnadu-secondary uppercase tracking-widest">
           {subtitle}
         </span>
       )}
