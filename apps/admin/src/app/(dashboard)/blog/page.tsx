@@ -109,6 +109,22 @@ export default function BlogAdminPage() {
     }
   };
 
+  const fetchCounts = () => {
+    // Non-blocking background fetch for status KPI counts
+    api.automation
+      .status()
+      .then((autoRes: any) => {
+        if (autoRes?.data?.statistics) {
+          setPublishedCount(autoRes.data.statistics.publishedPosts || 0);
+          setDraftCount(autoRes.data.statistics.draftPosts || 0);
+          setArchivedCount(autoRes.data.statistics.archivedPosts || 0);
+        }
+      })
+      .catch(() => {
+        // Non-blocking: background metrics failure must not interrupt table operations
+      });
+  };
+
   const fetchPosts = () => {
     setLoading(true);
     const params: Record<string, string> = {
@@ -122,22 +138,18 @@ export default function BlogAdminPage() {
     Promise.all([
       api.blog.list(params),
       api.blog.categories(),
-      api.automation.status().catch(() => null),
     ])
-      .then(([postsRes, catRes, autoRes]: [any, any, any]) => {
+      .then(([postsRes, catRes]: [any, any]) => {
         setPosts(postsRes.data || []);
         if (postsRes.meta) {
           setTotalPosts(postsRes.meta.total || 0);
           setTotalPages(postsRes.meta.totalPages || 1);
         }
         setCategories(catRes.data || []);
-        if (autoRes?.data?.statistics) {
-          setPublishedCount(autoRes.data.statistics.publishedPosts || 0);
-          setDraftCount(autoRes.data.statistics.draftPosts || 0);
-          setArchivedCount(autoRes.data.statistics.archivedPosts || 0);
-        }
       })
-      .catch(() => {})
+      .catch((err) => {
+        toast.error(err instanceof Error ? err.message : 'Failed to load articles');
+      })
       .finally(() => setLoading(false));
   };
 
@@ -149,6 +161,11 @@ export default function BlogAdminPage() {
   useEffect(() => {
     fetchPosts();
   }, [currentPage, pageSize, search, statusFilter, categoryFilter]);
+
+  // Initial non-blocking load of KPI counter statistics
+  useEffect(() => {
+    fetchCounts();
+  }, []);
 
   const openCreateModal = () => {
     setEditingPost(null);
@@ -223,6 +240,7 @@ export default function BlogAdminPage() {
 
       setModalOpen(false);
       fetchPosts();
+      fetchCounts();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Operation failed');
     } finally {
@@ -238,6 +256,7 @@ export default function BlogAdminPage() {
       toast.success('Article deleted successfully');
       setDeleteTarget(null);
       fetchPosts();
+      fetchCounts();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to delete article');
     } finally {
@@ -253,6 +272,7 @@ export default function BlogAdminPage() {
       });
       toast.success(`"${post.title.slice(0, 30)}..." published and live!`);
       fetchPosts();
+      fetchCounts();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to publish article');
     }

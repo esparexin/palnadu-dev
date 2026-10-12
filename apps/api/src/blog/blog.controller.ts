@@ -18,6 +18,7 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { PublishStatus, BlogLanguage } from '@prisma/client';
+import { toTopicKey } from '../automation/topic-identity';
 
 @Controller()
 export class BlogController {
@@ -108,6 +109,8 @@ export class BlogController {
     }
     const valid = parseResult.data;
     const post = await this.blogService.create({
+      topicKey: toTopicKey(valid.title),
+      topic: valid.title,
       title: valid.title,
       slug: valid.slug,
       language: (body as any).language !== undefined ? parseLanguage((body as any).language) : undefined,
@@ -152,8 +155,9 @@ export class BlogController {
     const { categoryId, ...rest } = parseResult.data as any;
     const updateData: any = { ...rest };
 
+    const typedBody = body as any;
     // Auto-populate publishDate if transitioning from DRAFT to PUBLISHED
-    if (body.status === PublishStatus.PUBLISHED && !body.publishDate) {
+    if (typedBody?.status === PublishStatus.PUBLISHED && !typedBody?.publishDate) {
       const existing = await this.blogService.findOneAdmin(id);
       if (!existing?.publishDate) {
         updateData.publishDate = new Date();
