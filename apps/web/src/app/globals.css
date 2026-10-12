@@ -122,17 +122,13 @@ html.lenis, html.lenis-smooth {
   pointer-events: auto;
 }
 
-/* ── Form Inputs ── */
+/* ── Form Inputs ──
+   NOTE: focus rings are handled by Tailwind `focus-visible:ring-2`
+   primitives (see ui/input, ui/textarea). Do not add box-shadow here. */
 input, textarea, select {
   background-color: var(--color-white);
   border: 1px solid var(--color-border);
   color: var(--color-body-text);
-}
-
-input:focus, textarea:focus, select:focus {
-  border-color: var(--color-primary-blue);
-  outline: none;
-  box-shadow: 0 0 0 2px rgba(24, 95, 165, 0.2);
 }
 
 /* Custom scrollbars */

@@ -2,6 +2,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
 
 interface FetchOptions extends RequestInit {
   params?: Record<string, string>;
+  timeoutMs?: number;
 }
 
 function getToken(): string | null {
@@ -10,13 +11,19 @@ function getToken(): string | null {
 }
 
 export async function adminApi<T>(endpoint: string, options: FetchOptions = {}): Promise<T> {
-  const { params, ...fetchOptions } = options;
+  const { params, timeoutMs = 15000, ...fetchOptions } = options;
   const token = getToken();
 
   let url = `${API_URL}${endpoint}`;
   if (params) {
     const searchParams = new URLSearchParams(params);
     url += `?${searchParams.toString()}`;
+  }
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+  if (fetchOptions.signal) {
+    fetchOptions.signal.addEventListener('abort', () => controller.abort());
   }
 
   let response: Response;
@@ -28,11 +35,17 @@ export async function adminApi<T>(endpoint: string, options: FetchOptions = {}):
         ...fetchOptions.headers,
       },
       ...fetchOptions,
+      signal: controller.signal,
     });
-  } catch (networkErr) {
+  } catch (networkErr: any) {
+    if (controller.signal.aborted && networkErr?.name === 'AbortError') {
+      throw new Error(`Request to ${endpoint} timed out after ${Math.round(timeoutMs / 1000)}s.`);
+    }
     throw new Error(
       'Unable to connect to the backend server. Please check your internet connection or verify the API is running.',
     );
+  } finally {
+    clearTimeout(timeoutId);
   }
 
   if (!response.ok) {

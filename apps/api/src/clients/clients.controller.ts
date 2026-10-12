@@ -1,4 +1,5 @@
-import { Controller, Get, Post, Patch, Delete, Body, Param, Query, UseGuards, NotFoundException } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Body, Param, Query, UseGuards, NotFoundException, BadRequestException } from '@nestjs/common';
+import { createClientSchema } from '@palnadu/validation';
 import { ClientsService } from './clients.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
@@ -11,8 +12,15 @@ export class ClientsController {
   constructor(private clientsService: ClientsService) {}
 
   @Post()
-  async create(@Body() body: any) {
-    const client = await this.clientsService.create(body);
+  async create(@Body() body: unknown) {
+    const parseResult = createClientSchema.safeParse(body);
+    if (!parseResult.success) {
+      const errorMsg = parseResult.error.issues
+        .map((i: any) => `${i.path.join('.')}: ${i.message}`)
+        .join(', ');
+      throw new BadRequestException(errorMsg);
+    }
+    const client = await this.clientsService.create(parseResult.data as any);
     return { success: true, data: client };
   }
 
@@ -30,8 +38,15 @@ export class ClientsController {
   }
 
   @Patch(':id')
-  async update(@Param('id') id: string, @Body() body: any) {
-    const client = await this.clientsService.update(id, body);
+  async update(@Param('id') id: string, @Body() body: unknown) {
+    const parseResult = createClientSchema.partial().safeParse(body);
+    if (!parseResult.success) {
+      const errorMsg = parseResult.error.issues
+        .map((i: any) => `${i.path.join('.')}: ${i.message}`)
+        .join(', ');
+      throw new BadRequestException(errorMsg);
+    }
+    const client = await this.clientsService.update(id, parseResult.data as any);
     return { success: true, data: client };
   }
 

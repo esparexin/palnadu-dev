@@ -45,7 +45,7 @@ export function BrandLogo({
         />
       </div>
       {subtitle && (
-        <span className="text-[10px] font-mono text-palnadu-secondary uppercase tracking-widest">
+        <span className="text-xs font-mono text-palnadu-secondary uppercase tracking-widest">
           {subtitle}
         </span>
       )}

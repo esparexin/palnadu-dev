@@ -9,7 +9,9 @@ import {
   Query,
   UseGuards,
   NotFoundException,
+  BadRequestException,
 } from '@nestjs/common';
+import { createCaseStudySchema } from '@palnadu/validation';
 import { CaseStudiesService } from './case-studies.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
@@ -67,16 +69,30 @@ export class CaseStudiesController {
   @Post('admin/case-studies')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('SUPER_ADMIN', 'ADMIN', 'EDITOR')
-  async create(@Body() body: any) {
-    const study = await this.caseStudiesService.create(body);
+  async create(@Body() body: unknown) {
+    const parseResult = createCaseStudySchema.safeParse(body);
+    if (!parseResult.success) {
+      const errorMsg = parseResult.error.issues
+        .map((i: any) => `${i.path.join('.')}: ${i.message}`)
+        .join(', ');
+      throw new BadRequestException(errorMsg);
+    }
+    const study = await this.caseStudiesService.create(parseResult.data as any);
     return { success: true, data: study };
   }
 
   @Patch('admin/case-studies/:id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('SUPER_ADMIN', 'ADMIN', 'EDITOR')
-  async update(@Param('id') id: string, @Body() body: any) {
-    const study = await this.caseStudiesService.update(id, body);
+  async update(@Param('id') id: string, @Body() body: unknown) {
+    const parseResult = createCaseStudySchema.partial().safeParse(body);
+    if (!parseResult.success) {
+      const errorMsg = parseResult.error.issues
+        .map((i: any) => `${i.path.join('.')}: ${i.message}`)
+        .join(', ');
+      throw new BadRequestException(errorMsg);
+    }
+    const study = await this.caseStudiesService.update(id, parseResult.data as any);
     return { success: true, data: study };
   }
 

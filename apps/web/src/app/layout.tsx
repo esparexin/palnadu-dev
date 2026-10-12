@@ -18,6 +18,7 @@ const fontMono = JetBrains_Mono({
   subsets: ['latin'],
   variable: '--font-mono',
   display: 'swap',
+  weight: ['400', '500', '700'],
 });
 
 export const viewport: Viewport = {

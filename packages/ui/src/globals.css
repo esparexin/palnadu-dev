@@ -8,8 +8,10 @@
 :root {
   /* ── Primary Colors ── */
   --color-dark: #042C53;
+  --color-dark-hover: #12487E;
   --color-primary-blue: #185FA5;
   --color-accent-teal: #1D9E75;
+  --color-teal-dark: #157C5C;
 
   /* ── Backgrounds ── */
   --color-light-blue: #E6F1FB;
@@ -57,7 +59,7 @@
   transition: background-color 0.2s ease, transform 0.1s ease;
 }
 .btn-primary:hover {
-  background-color: #12487e;
+  background-color: var(--color-dark-hover);
 }
 
 .btn-secondary {
@@ -66,7 +68,7 @@
   transition: background-color 0.2s ease, transform 0.1s ease;
 }
 .btn-secondary:hover {
-  background-color: #157c5c;
+  background-color: var(--color-teal-dark);
 }
 
 .btn-ghost-palnadu {

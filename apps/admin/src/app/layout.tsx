@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { Plus_Jakarta_Sans } from 'next/font/google';
+import { Plus_Jakarta_Sans, JetBrains_Mono } from 'next/font/google';
 import { ToastProvider } from '@/components/ui/toast';
 import './globals.css';
 
@@ -8,6 +8,13 @@ const fontSans = Plus_Jakarta_Sans({
   variable: '--font-sans',
   display: 'swap',
   weight: ['400', '500', '600', '700', '800'],
+});
+
+const fontMono = JetBrains_Mono({
+  subsets: ['latin'],
+  variable: '--font-mono',
+  display: 'swap',
+  weight: ['400', '500', '700'],
 });
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
@@ -46,7 +53,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const faviconUrl = await getActiveFavicon();
 
   return (
-    <html lang="en" className={fontSans.variable} suppressHydrationWarning>
+    <html lang="en" className={`${fontSans.variable} ${fontMono.variable}`} suppressHydrationWarning>
       <head>
         <link rel="icon" href={faviconUrl} sizes="any" />
         <link rel="apple-touch-icon" href={faviconUrl} />

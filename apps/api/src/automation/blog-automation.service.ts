@@ -1114,21 +1114,35 @@ export class BlogAutomationService {
   }
 
   async getStatus() {
-    const [totalPosts, draftPosts, publishedPosts, archivedPosts, failedTopics, claimedTopics] =
-      await Promise.all([
-        this.prisma.blogPost.count(),
-        this.prisma.blogPost.count({ where: { status: 'DRAFT' } }),
-        this.prisma.blogPost.count({ where: { status: 'PUBLISHED' } }),
-        this.prisma.blogPost.count({ where: { status: 'ARCHIVED' } }),
-        this.prisma.blogTopic.count({ where: { status: TopicStatus.FAILED } }),
-        this.prisma.blogTopic.count({ where: { status: TopicStatus.CLAIMED } }),
-      ]);
+    const [
+      totalPosts,
+      draftPosts,
+      publishedPosts,
+      archivedPosts,
+      failedTopics,
+      claimedTopics,
+      pendingTopics,
+      completedTopics,
+      queueRows,
+    ] = await Promise.all([
+      this.prisma.blogPost.count(),
+      this.prisma.blogPost.count({ where: { status: 'DRAFT' } }),
+      this.prisma.blogPost.count({ where: { status: 'PUBLISHED' } }),
+      this.prisma.blogPost.count({ where: { status: 'ARCHIVED' } }),
+      this.prisma.blogTopic.count({ where: { status: TopicStatus.FAILED } }),
+      this.prisma.blogTopic.count({ where: { status: TopicStatus.CLAIMED } }),
+      this.prisma.blogTopic.count({ where: { status: TopicStatus.PENDING } }),
+      this.prisma.blogTopic.count({ where: { status: TopicStatus.COMPLETED } }),
+      this.prisma.blogTopic.findMany({
+        orderBy: { createdAt: 'asc' },
+        take: 50,
+      }),
+    ]);
 
     const autoPublishSetting = await this.prisma.siteSetting.findUnique({
       where: { key: 'auto_publish_blogs' },
     });
 
-    const queue = await this.getPendingQueueItems();
     const coverage = await this.discoveryService.coverageReport();
 
     return {
@@ -1141,8 +1155,8 @@ export class BlogAutomationService {
         draftPosts,
         publishedPosts,
         archivedPosts,
-        queuePending: queue.filter((q) => q.status === 'PENDING').length,
-        queueCompleted: queue.filter((q) => q.status === 'COMPLETED').length,
+        queuePending: pendingTopics,
+        queueCompleted: completedTopics,
         queueInFlight: claimedTopics,
         queueFailed: failedTopics,
       },
@@ -1152,7 +1166,7 @@ export class BlogAutomationService {
         keywordsCovered: coverage.keywordsCovered.length,
         intentsCovered: coverage.intentsCovered,
       },
-      upcomingQueue: queue.slice(0, 50),
+      upcomingQueue: queueRows.slice(0, 50),
     };
   }
 }

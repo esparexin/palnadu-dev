@@ -69,13 +69,14 @@ export default function LoginPage() {
           className="space-y-4 rounded-xl border border-palnadu-border bg-white p-6 shadow-sm"
         >
           <div className="space-y-1.5">
-            <label htmlFor="email" className="text-sm font-semibold text-palnadu-dark">
+            <label htmlFor="email" className="text-xs font-semibold text-palnadu-dark">
               Email
             </label>
             <input
               id="email"
               type="email"
-              className="flex h-10 w-full rounded-md border border-palnadu-border bg-white px-3 py-2 text-sm text-palnadu-body placeholder:text-palnadu-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-palnadu-blue"
+              aria-invalid={Boolean(errors.email)}
+              className="flex h-9 w-full rounded-md border border-palnadu-border bg-white px-3 py-1.5 text-xs text-palnadu-body placeholder:text-palnadu-secondary/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-palnadu-blue"
               placeholder="admin@palnadu.dev"
               {...register('email')}
             />
@@ -85,13 +86,14 @@ export default function LoginPage() {
           </div>
 
           <div className="space-y-1.5">
-            <label htmlFor="password" className="text-sm font-semibold text-palnadu-dark">
+            <label htmlFor="password" className="text-xs font-semibold text-palnadu-dark">
               Password
             </label>
             <input
               id="password"
               type="password"
-              className="flex h-10 w-full rounded-md border border-palnadu-border bg-white px-3 py-2 text-sm text-palnadu-body placeholder:text-palnadu-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-palnadu-blue"
+              aria-invalid={Boolean(errors.password)}
+              className="flex h-9 w-full rounded-md border border-palnadu-border bg-white px-3 py-1.5 text-xs text-palnadu-body placeholder:text-palnadu-secondary/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-palnadu-blue"
               placeholder="••••••••"
               {...register('password')}
             />
@@ -101,7 +103,7 @@ export default function LoginPage() {
           </div>
 
           {error && (
-            <div className="rounded-md border border-palnadu-error/30 bg-red-50 p-3 text-xs text-palnadu-error font-medium">
+            <div role="alert" className="rounded-md border border-palnadu-error/30 bg-palnadu-error/5 p-3 text-xs text-palnadu-error font-medium">
               {error}
             </div>
           )}
@@ -109,7 +111,7 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="inline-flex h-10 w-full items-center justify-center rounded-md bg-palnadu-blue px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[#12487e] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-palnadu-blue disabled:opacity-50"
+            className="inline-flex h-10 w-full items-center justify-center rounded-md bg-palnadu-blue px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-palnadu-dark-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-palnadu-blue disabled:opacity-50"
           >
             {isSubmitting ? (
               <>

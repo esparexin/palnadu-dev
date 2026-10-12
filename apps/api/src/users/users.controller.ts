@@ -7,12 +7,13 @@ import {
   Param,
   UseGuards,
   NotFoundException,
+  BadRequestException,
 } from '@nestjs/common';
+import { createUserSchema } from '@palnadu/validation';
 import { UsersService } from './users.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
-import { UserRole } from '@prisma/client';
 
 @Controller('admin/users')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -34,31 +35,35 @@ export class UsersController {
   }
 
   @Post()
-  async create(
-    @Body()
-    body: {
-      email: string;
-      password: string;
-      name: string;
-      role: UserRole;
-    },
-  ) {
-    const user = await this.usersService.create(body);
+  async create(@Body() body: unknown) {
+    const parseResult = createUserSchema.safeParse(body);
+    if (!parseResult.success) {
+      const errorMsg = parseResult.error.issues
+        .map((i: any) => `${i.path.join('.')}: ${i.message}`)
+        .join(', ');
+      throw new BadRequestException(errorMsg);
+    }
+    const user = await this.usersService.create(parseResult.data as any);
     return { success: true, data: user };
   }
 
   @Patch(':id')
-  async update(
-    @Param('id') id: string,
-    @Body()
-    body: {
-      name?: string;
-      role?: UserRole;
-      isActive?: boolean;
-      password?: string;
-    },
-  ) {
-    const user = await this.usersService.update(id, body);
+  async update(@Param('id') id: string, @Body() body: unknown) {
+    const { z, userRoleValues } = await import('@palnadu/validation');
+    const patchSchema = z.object({
+      name: z.string().trim().min(2).max(100).optional(),
+      role: z.enum(userRoleValues).optional(),
+      isActive: z.boolean().optional(),
+      password: z.string().min(8).max(128).optional(),
+    });
+    const parseResult = patchSchema.safeParse(body);
+    if (!parseResult.success) {
+      const errorMsg = parseResult.error.issues
+        .map((i: any) => `${i.path.join('.')}: ${i.message}`)
+        .join(', ');
+      throw new BadRequestException(errorMsg);
+    }
+    const user = await this.usersService.update(id, parseResult.data as any);
     return { success: true, data: user };
   }
 }

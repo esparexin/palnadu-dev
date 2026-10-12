@@ -317,7 +317,7 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
                         {...register('name')}
                       />
                       {errors.name && (
-                        <p className="text-[11px] text-palnadu-error font-medium">{errors.name.message}</p>
+                        <p className="text-xs text-palnadu-error font-medium">{errors.name.message}</p>
                       )}
                     </div>
 
@@ -340,7 +340,7 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
                         {...register('email')}
                       />
                       {errors.email && (
-                        <p className="text-[11px] text-palnadu-error font-medium">{errors.email.message}</p>
+                        <p className="text-xs text-palnadu-error font-medium">{errors.email.message}</p>
                       )}
                     </div>
                   </div>
@@ -365,7 +365,7 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
                         {...register('phone')}
                       />
                       {errors.phone && (
-                        <p className="text-[11px] text-palnadu-error font-medium">{errors.phone.message}</p>
+                        <p className="text-xs text-palnadu-error font-medium">{errors.phone.message}</p>
                       )}
                     </div>
 
@@ -440,7 +440,7 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
                       {...register('problemDescription')}
                     />
                     {errors.problemDescription && (
-                      <p className="text-[11px] text-palnadu-error font-medium">{errors.problemDescription.message}</p>
+                      <p className="text-xs text-palnadu-error font-medium">{errors.problemDescription.message}</p>
                     )}
                   </div>
 
@@ -471,7 +471,7 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
                             />
                             <Label
                               htmlFor={id}
-                              className="text-[10px] font-medium text-palnadu-dark cursor-pointer select-none leading-none truncate"
+                              className="text-xs font-medium text-palnadu-dark cursor-pointer select-none leading-none truncate"
                             >
                               {option}
                             </Label>

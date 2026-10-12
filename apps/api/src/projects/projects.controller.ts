@@ -9,7 +9,9 @@ import {
   Query,
   UseGuards,
   NotFoundException,
+  BadRequestException,
 } from '@nestjs/common';
+import { createProjectSchema } from '@palnadu/validation';
 import { ProjectsService } from './projects.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
@@ -23,8 +25,15 @@ export class ProjectsController {
   constructor(private projectsService: ProjectsService) {}
 
   @Post()
-  async create(@Body() body: any) {
-    const project = await this.projectsService.create(body);
+  async create(@Body() body: unknown) {
+    const parseResult = createProjectSchema.safeParse(body);
+    if (!parseResult.success) {
+      const errorMsg = parseResult.error.issues
+        .map((i: any) => `${i.path.join('.')}: ${i.message}`)
+        .join(', ');
+      throw new BadRequestException(errorMsg);
+    }
+    const project = await this.projectsService.create(parseResult.data as any);
     return { success: true, data: project };
   }
 
@@ -52,8 +61,15 @@ export class ProjectsController {
   }
 
   @Patch(':id')
-  async update(@Param('id') id: string, @Body() body: any) {
-    const project = await this.projectsService.update(id, body);
+  async update(@Param('id') id: string, @Body() body: unknown) {
+    const parseResult = createProjectSchema.partial().safeParse(body);
+    if (!parseResult.success) {
+      const errorMsg = parseResult.error.issues
+        .map((i: any) => `${i.path.join('.')}: ${i.message}`)
+        .join(', ');
+      throw new BadRequestException(errorMsg);
+    }
+    const project = await this.projectsService.update(id, parseResult.data as any);
     return { success: true, data: project };
   }
 
