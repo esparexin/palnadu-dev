@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+﻿import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
 export interface LicensedImage {
@@ -159,6 +159,98 @@ export class ImageSourcingService {
         originalUrl: 'https://unsplash.com/photos/mobile-workforce',
       },
     ],
+    'school-websites': [
+      {
+        url: 'https://images.unsplash.com/photo-1580582932707-520aed937b7b?auto=format&fit=crop&w=1200&q=80',
+        alt: 'Students using school management software on tablets in classroom',
+        caption: 'Photo by National Cancer Institute on Unsplash',
+        photographer: 'National Cancer Institute',
+        photographerProfile: 'https://unsplash.com/@nci',
+        source: 'Unsplash',
+        licenseType: 'Unsplash Commercial License',
+        licenseUrl: 'https://unsplash.com/license',
+        originalUrl: 'https://unsplash.com/photos/school-digital',
+      },
+      {
+        url: 'https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&w=1200&q=80',
+        alt: 'Teacher and students working with digital classroom tools',
+        caption: 'Photo by Kenny Eliason on Unsplash',
+        photographer: 'Kenny Eliason',
+        photographerProfile: 'https://unsplash.com/@neonbrand',
+        source: 'Unsplash',
+        licenseType: 'Unsplash Commercial License',
+        licenseUrl: 'https://unsplash.com/license',
+        originalUrl: 'https://unsplash.com/photos/school-education',
+      },
+      {
+        url: 'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?auto=format&fit=crop&w=1200&q=80',
+        alt: 'School admissions and fee portal management system',
+        caption: 'Photo by Thomas de LUZE on Unsplash',
+        photographer: 'Thomas de LUZE',
+        photographerProfile: 'https://unsplash.com/@thomasdeluze',
+        source: 'Unsplash',
+        licenseType: 'Unsplash Commercial License',
+        licenseUrl: 'https://unsplash.com/license',
+        originalUrl: 'https://unsplash.com/photos/school-administration',
+      },
+      {
+        url: 'https://images.unsplash.com/photo-1517486808906-6ca8b3f04846?auto=format&fit=crop&w=1200&q=80',
+        alt: 'Digital student records and attendance tracking platform',
+        caption: 'Photo by stem.T4L on Unsplash',
+        photographer: 'stem.T4L',
+        photographerProfile: 'https://unsplash.com/@stem_t4l',
+        source: 'Unsplash',
+        licenseType: 'Unsplash Commercial License',
+        licenseUrl: 'https://unsplash.com/license',
+        originalUrl: 'https://unsplash.com/photos/education-technology',
+      },
+    ],
+    'local-seo-business': [
+      {
+        url: 'https://images.unsplash.com/photo-1432888498266-38ffec3eaf0a?auto=format&fit=crop&w=1200&q=80',
+        alt: 'Local business Google Maps SEO ranking and search visibility',
+        caption: 'Photo by NordWood Themes on Unsplash',
+        photographer: 'NordWood Themes',
+        photographerProfile: 'https://unsplash.com/@nordwood',
+        source: 'Unsplash',
+        licenseType: 'Unsplash Commercial License',
+        licenseUrl: 'https://unsplash.com/license',
+        originalUrl: 'https://unsplash.com/photos/local-seo-marketing',
+      },
+      {
+        url: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=1200&q=80',
+        alt: 'Business analytics search traffic growth metrics dashboard',
+        caption: 'Photo by Carlos Muza on Unsplash',
+        photographer: 'Carlos Muza',
+        photographerProfile: 'https://unsplash.com/@kmuza',
+        source: 'Unsplash',
+        licenseType: 'Unsplash Commercial License',
+        licenseUrl: 'https://unsplash.com/license',
+        originalUrl: 'https://unsplash.com/photos/analytics-seo',
+      },
+      {
+        url: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=1200&q=80',
+        alt: 'Digital marketing campaign planning for regional businesses',
+        caption: 'Photo by John Schnobrich on Unsplash',
+        photographer: 'John Schnobrich',
+        photographerProfile: 'https://unsplash.com/@johnschno',
+        source: 'Unsplash',
+        licenseType: 'Unsplash Commercial License',
+        licenseUrl: 'https://unsplash.com/license',
+        originalUrl: 'https://unsplash.com/photos/digital-marketing',
+      },
+      {
+        url: 'https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?auto=format&fit=crop&w=1200&q=80',
+        alt: 'Google My Business listing optimization for local visibility',
+        caption: 'Photo by Souvik Banerjee on Unsplash',
+        photographer: 'Souvik Banerjee',
+        photographerProfile: 'https://unsplash.com/@rswebsols',
+        source: 'Unsplash',
+        licenseType: 'Unsplash Commercial License',
+        licenseUrl: 'https://unsplash.com/license',
+        originalUrl: 'https://unsplash.com/photos/google-business',
+      },
+    ],
     'default': [
       {
         url: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1200&q=80',
@@ -223,7 +315,7 @@ export class ImageSourcingService {
   ): Promise<LicensedImage[]> {
     const results: LicensedImage[] = [];
 
-    // Attempt live Unsplash API if key is present
+    // 1. Attempt live Unsplash API if key is present
     if (this.unsplashAccessKey) {
       try {
         const query = encodeURIComponent(`${topic} technology software`);

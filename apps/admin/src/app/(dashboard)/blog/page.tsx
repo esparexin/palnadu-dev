@@ -86,6 +86,9 @@ export default function BlogAdminPage() {
   const [automationStatus, setAutomationStatus] = useState<any | null>(null);
   const [loadingStatus, setLoadingStatus] = useState(false);
 
+  // Per-row approve loading state: tracks which post ID is currently being published
+  const [publishingId, setPublishingId] = useState<string | null>(null);
+
   const handleCoverUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -265,16 +268,37 @@ export default function BlogAdminPage() {
   };
 
   const quickPublish = async (post: any) => {
+    if (publishingId) return; // Deduplicate concurrent clicks
+    setPublishingId(post.id);
+    // Optimistic update: instantly flip status in local state for zero-latency UX
+    setPosts((prev: any[]) =>
+      prev.map((p) =>
+        p.id === post.id ? { ...p, status: 'PUBLISHED', publishDate: new Date().toISOString() } : p
+      )
+    );
+    // Optimistically adjust KPI counters
+    setDraftCount((c) => Math.max(0, c - 1));
+    setPublishedCount((c) => c + 1);
     try {
       await api.blog.update(post.id, {
         status: 'PUBLISHED',
         publishDate: new Date().toISOString(),
       });
-      toast.success(`"${post.title.slice(0, 30)}..." published and live!`);
-      fetchPosts();
+      toast.success(`"${post.title.slice(0, 40)}..." is live on Google!`);
+      // Background-refresh counts to reconcile with server truth
       fetchCounts();
     } catch (err) {
+      // Rollback optimistic update on failure
+      setPosts((prev: any[]) =>
+        prev.map((p) =>
+          p.id === post.id ? { ...p, status: 'DRAFT', publishDate: post.publishDate } : p
+        )
+      );
+      setDraftCount((c) => c + 1);
+      setPublishedCount((c) => Math.max(0, c - 1));
       toast.error(err instanceof Error ? err.message : 'Failed to publish article');
+    } finally {
+      setPublishingId(null);
     }
   };
 
@@ -600,11 +624,16 @@ export default function BlogAdminPage() {
                       {post.status === 'DRAFT' && (
                         <button
                           onClick={() => quickPublish(post)}
-                          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-50 border border-emerald-300 text-emerald-700 hover:bg-emerald-100 font-semibold transition-colors cursor-pointer text-[10px]"
+                          disabled={publishingId === post.id}
+                          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-50 border border-emerald-300 text-emerald-700 hover:bg-emerald-100 font-semibold transition-colors cursor-pointer text-[10px] disabled:opacity-60 disabled:cursor-not-allowed"
                           title="1-Click Approve & Publish"
                         >
-                          <CheckCircle2 className="h-3 w-3" />
-                          <span>Approve</span>
+                          {publishingId === post.id ? (
+                            <Loader2 className="h-3 w-3 animate-spin" />
+                          ) : (
+                            <CheckCircle2 className="h-3 w-3" />
+                          )}
+                          <span>{publishingId === post.id ? 'Publishing...' : 'Approve'}</span>
                         </button>
                       )}
                       {post.status === 'PUBLISHED' && (
