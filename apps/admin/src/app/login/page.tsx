@@ -7,6 +7,9 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { loginSchema, type LoginInput } from '@palnadu/validation';
 import { api } from '@/lib/api';
 import { BrandLogo } from '@/components/ui/brand-logo';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Loader2 } from 'lucide-react';
 
 export default function LoginPage() {
@@ -68,14 +71,11 @@ export default function LoginPage() {
           className="space-y-4 rounded-xl border border-palnadu-border bg-white p-6 shadow-sm"
         >
           <div className="space-y-1.5">
-            <label htmlFor="email" className="text-xs font-semibold text-palnadu-dark">
-              Email
-            </label>
-            <input
+            <Label htmlFor="email">Email</Label>
+            <Input
               id="email"
               type="email"
               aria-invalid={Boolean(errors.email)}
-              className="flex h-9 w-full rounded-md border border-palnadu-border bg-white px-3 py-1.5 text-xs text-palnadu-body placeholder:text-palnadu-secondary/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-palnadu-blue"
               placeholder="admin@palnadu.dev"
               {...register('email')}
             />
@@ -85,14 +85,11 @@ export default function LoginPage() {
           </div>
 
           <div className="space-y-1.5">
-            <label htmlFor="password" className="text-xs font-semibold text-palnadu-dark">
-              Password
-            </label>
-            <input
+            <Label htmlFor="password">Password</Label>
+            <Input
               id="password"
               type="password"
               aria-invalid={Boolean(errors.password)}
-              className="flex h-9 w-full rounded-md border border-palnadu-border bg-white px-3 py-1.5 text-xs text-palnadu-body placeholder:text-palnadu-secondary/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-palnadu-blue"
               placeholder="••••••••"
               {...register('password')}
             />
@@ -107,20 +104,21 @@ export default function LoginPage() {
             </div>
           )}
 
-          <button
+          <Button
             type="submit"
+            size="sm"
             disabled={isSubmitting}
-            className="inline-flex h-10 w-full items-center justify-center rounded-md bg-palnadu-blue px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-palnadu-dark-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-palnadu-blue disabled:opacity-50"
+            className="w-full text-xs font-semibold"
           >
             {isSubmitting ? (
               <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />
                 Signing in...
               </>
             ) : (
               'Sign in'
             )}
-          </button>
+          </Button>
         </form>
 
         <p className="text-center text-xs text-palnadu-secondary">
