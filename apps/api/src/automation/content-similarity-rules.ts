@@ -136,7 +136,8 @@ export function scoreAgainstCorpus(
   corpus: ExistingArticle[],
   thresholds: SimilarityThresholds = DEFAULT_THRESHOLDS,
 ): SimilarityResult {
-  const candidateKey = canonicalizeTopic(candidate.topic).topicKey;
+  const candidateCanonical = canonicalizeTopic(candidate.topic);
+  const candidateKey = candidateCanonical.topicKey;
   const candidateTopicWords = significantWords(candidate.topic);
   const candidateKeywordWords = new Set(
     [candidate.primaryKeyword, ...(candidate.secondaryKeywords ?? [])]
@@ -190,8 +191,17 @@ export function scoreAgainstCorpus(
     if (sameLang === false) continue;
 
     // 2. Topic text overlap (symmetric, order-insensitive).
+    // If both topics specify distinct, non-matching locations, they represent distinct
+    // regional landing topics rather than text duplicates.
     const otherTopic = post.topic ?? post.title;
-    const topicSim = topicTokenOverlap(candidate.topic, otherTopic);
+    const otherCanonical = canonicalizeTopic(otherTopic);
+    const distinctLocations = !!(
+      candidateCanonical.location &&
+      otherCanonical.location &&
+      candidateCanonical.location !== otherCanonical.location
+    );
+
+    const topicSim = distinctLocations ? 0 : topicTokenOverlap(candidate.topic, otherTopic);
     if (topicSim >= thresholds.topicOverlap) reasons.push(`topic overlap ${topicSim.toFixed(2)}`);
 
     // 3. Keyword overlap.
@@ -208,7 +218,7 @@ export function scoreAgainstCorpus(
       !!candidate.searchIntent &&
       !!post.searchIntent &&
       candidate.searchIntent === post.searchIntent;
-    if (sameIntent && topicSim >= 0.4) {
+    if (!distinctLocations && sameIntent && topicSim >= 0.4) {
       reasons.push(`same intent (${candidate.searchIntent}) with topic overlap ${topicSim.toFixed(2)}`);
     }
 
@@ -222,7 +232,7 @@ export function scoreAgainstCorpus(
     }
 
     // 6. Title/slug near-duplicate (same words, cosmetic reorder).
-    const titleSim = Math.max(
+    const titleSim = distinctLocations ? 0 : Math.max(
       jaccard(candidateTopicWords, significantWords(post.title)),
       jaccard(candidateTopicWords, significantWords(post.slug.replace(/-/g, ' '))),
     );
