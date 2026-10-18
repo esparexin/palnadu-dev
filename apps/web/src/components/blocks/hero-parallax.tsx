@@ -128,10 +128,10 @@ export const HeroParallax = ({
 export const Header = () => {
   return (
     <div className="max-w-7xl relative mx-auto pt-6 pb-6 sm:pt-10 sm:pb-10 px-4 w-full left-0 top-0 z-20">
-      <h1 className="text-3xl sm:text-5xl md:text-6xl font-extrabold tracking-tight text-slate-900 leading-tight max-w-4xl">
+      <h1 className="text-3xl sm:text-5xl md:text-6xl font-extrabold tracking-tight text-palnadu-dark leading-tight max-w-4xl">
         Software Engineering and Web Development Services
       </h1>
-      <p className="max-w-2xl text-base sm:text-lg md:text-xl mt-4 sm:mt-5 text-slate-600 leading-relaxed font-normal">
+      <p className="max-w-2xl text-base sm:text-lg md:text-xl mt-4 sm:mt-5 text-palnadu-body leading-relaxed font-normal">
         We build high-performance web applications, mobile apps, and custom
         software for businesses across Palnadu, Guntur, and coastal Andhra
         Pradesh. Every platform is designed around real operational workflows.
@@ -156,7 +156,7 @@ export const ProductCard = ({
         y: -12,
       }}
       key={product.title}
-      className="group/product h-60 w-72 sm:h-80 sm:w-96 md:h-96 md:w-[28rem] relative shrink-0 rounded-2xl overflow-hidden shadow-lg border border-palnadu-border/60 bg-slate-900"
+      className="group/product h-60 w-72 sm:h-80 sm:w-96 md:h-96 md:w-[28rem] relative shrink-0 rounded-2xl overflow-hidden shadow-lg border border-palnadu-border/60 bg-palnadu-dark"
     >
       <Link
         href={product.link}

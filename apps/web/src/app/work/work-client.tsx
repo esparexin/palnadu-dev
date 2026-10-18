@@ -85,7 +85,7 @@ const engineeringStandards = [
 
 export function WorkClient() {
   return (
-    <div className="w-full bg-white text-slate-900">
+    <div className="w-full bg-white text-palnadu-dark">
       {/* ── 1. CONTAINER SCROLL ANIMATION HERO ── */}
       <section className="relative w-full overflow-hidden bg-white pt-6 pb-12 sm:pt-12 sm:pb-20">
         <ContainerScroll
@@ -94,17 +94,17 @@ export function WorkClient() {
               <p className="text-xs sm:text-sm font-semibold uppercase tracking-wider text-palnadu-blue">
                 Engineering Showcase
               </p>
-              <h1 className="text-3xl sm:text-5xl md:text-6xl font-extrabold text-slate-900 tracking-tight leading-tight max-w-4xl mx-auto">
+              <h1 className="text-3xl sm:text-5xl md:text-6xl font-extrabold text-palnadu-dark tracking-tight leading-tight max-w-4xl mx-auto">
                 Software Solutions Built for <br />
                 <span className="text-palnadu-blue">Real-World Operations</span>
               </h1>
-              <p className="max-w-2xl mx-auto text-base sm:text-lg text-slate-600 leading-relaxed font-normal">
+              <p className="max-w-2xl mx-auto text-base sm:text-lg text-palnadu-body leading-relaxed font-normal">
                 Explore enterprise web applications, operations portals, and mobile platforms engineered by Palnadu.dev for businesses in Andhra Pradesh.
               </p>
             </div>
           }
         >
-          <div className="relative w-full h-full rounded-2xl overflow-hidden bg-slate-950">
+          <div className="relative w-full h-full rounded-2xl overflow-hidden bg-palnadu-dark">
             <Image
               src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=2400&q=80"
               alt="Palnadu.dev Software Operations Dashboard"
@@ -114,7 +114,7 @@ export function WorkClient() {
               priority
             />
             {/* Subtle bottom gradient to blend dashboard cleanly */}
-            <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-t from-palnadu-dark/80 via-transparent to-transparent" />
             <div className="absolute bottom-4 left-4 right-4 sm:bottom-6 sm:left-6 sm:right-6 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-white">
               <div>
                 <p className="text-xs uppercase tracking-wider text-emerald-400 font-semibold">Live Operational Platform</p>
@@ -129,16 +129,16 @@ export function WorkClient() {
       </section>
 
       {/* ── 2. FEATURED CASE STUDIES SECTION ── */}
-      <section className="py-16 sm:py-24 bg-slate-50 border-t border-slate-200" id="case-studies">
+      <section className="py-16 sm:py-24 bg-palnadu-off-white/40 border-t border-palnadu-border" id="case-studies">
         <div className="container max-w-6xl mx-auto px-4 sm:px-6">
           <div className="max-w-3xl mb-12 sm:mb-16 space-y-3">
             <p className="text-xs font-semibold uppercase tracking-wider text-palnadu-blue">
               Real-World Case Studies
             </p>
-            <h2 className="text-2xl sm:text-4xl font-bold tracking-tight text-slate-900 leading-tight">
+            <h2 className="text-2xl sm:text-4xl font-bold tracking-tight text-palnadu-dark leading-tight">
               Featured Client Implementations
             </h2>
-            <p className="text-base sm:text-lg text-slate-600 leading-relaxed font-normal">
+            <p className="text-base sm:text-lg text-palnadu-body leading-relaxed font-normal">
               Practical technology engineered to eliminate manual paperwork, data entry errors, and communication breakdowns across regional enterprises.
             </p>
           </div>
@@ -147,10 +147,10 @@ export function WorkClient() {
             {caseStudies.map((study, idx) => (
               <article
                 key={idx}
-                className="flex flex-col justify-between bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 shadow-sm hover:border-palnadu-blue hover:shadow-md transition-all space-y-6"
+                className="flex flex-col justify-between bg-white rounded-2xl border border-palnadu-border p-6 sm:p-8 shadow-sm hover:border-palnadu-blue hover:shadow-md transition-all space-y-6"
               >
                 <div className="space-y-4">
-                  <div className="relative h-48 sm:h-56 w-full rounded-xl overflow-hidden border border-slate-100 bg-slate-100">
+                  <div className="relative h-48 sm:h-56 w-full rounded-xl overflow-hidden border border-palnadu-border/60 bg-palnadu-off-white">
                     <Image
                       src={study.image}
                       alt={study.title}
@@ -158,7 +158,7 @@ export function WorkClient() {
                       sizes="(max-width: 768px) 100vw, 600px"
                       className="object-cover transition-transform duration-500 hover:scale-105"
                     />
-                    <div className="absolute top-3 left-3 bg-white/95 backdrop-blur-md px-3 py-1 rounded-full text-xs font-semibold text-slate-800 shadow-sm">
+                    <div className="absolute top-3 left-3 bg-white/95 backdrop-blur-md px-3 py-1 rounded-full text-xs font-semibold text-palnadu-dark shadow-sm">
                       {study.location}
                     </div>
                   </div>
@@ -167,24 +167,24 @@ export function WorkClient() {
                     <span className="text-xs font-semibold text-palnadu-blue uppercase tracking-wider">
                       {study.category}
                     </span>
-                    <h3 className="text-xl font-bold text-slate-900 leading-snug mt-1">
+                    <h3 className="text-xl font-bold text-palnadu-dark leading-snug mt-1">
                       {study.title}
                     </h3>
                   </div>
 
-                  <div className="space-y-2 text-sm text-slate-600 leading-relaxed">
+                  <div className="space-y-2 text-sm text-palnadu-body leading-relaxed">
                     <div>
-                      <strong className="text-slate-900 font-semibold">The Problem: </strong>
+                      <strong className="text-palnadu-dark font-semibold">The Problem: </strong>
                       <span>{study.problem}</span>
                     </div>
                     <div>
-                      <strong className="text-slate-900 font-semibold">The Solution: </strong>
+                      <strong className="text-palnadu-dark font-semibold">The Solution: </strong>
                       <span>{study.solution}</span>
                     </div>
                   </div>
                 </div>
 
-                <div className="pt-4 border-t border-slate-100 space-y-3">
+                <div className="pt-4 border-t border-palnadu-border/60 space-y-3">
                   <div className="text-xs bg-emerald-50 text-emerald-900 border border-emerald-200/60 p-3 rounded-lg leading-relaxed">
                     <strong className="font-semibold text-emerald-950">Verified Outcome: </strong>
                     <span>{study.outcome}</span>
@@ -194,7 +194,7 @@ export function WorkClient() {
                     {study.techStack.map((tech) => (
                       <span
                         key={tech}
-                        className="text-xs text-slate-600 bg-slate-100 px-2.5 py-1 rounded-md"
+                        className="text-xs text-palnadu-body bg-palnadu-off-white px-2.5 py-1 rounded-md"
                       >
                         {tech}
                       </span>
@@ -208,16 +208,16 @@ export function WorkClient() {
       </section>
 
       {/* ── 3. ENGINEERING STANDARDS ── */}
-      <section className="py-16 sm:py-24 bg-white border-t border-slate-200">
+      <section className="py-16 sm:py-24 bg-white border-t border-palnadu-border">
         <div className="container max-w-5xl mx-auto px-4 sm:px-6">
           <div className="max-w-3xl mb-12 space-y-3">
             <p className="text-xs font-semibold uppercase tracking-wider text-palnadu-blue">
               Our Development Approach
             </p>
-            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-slate-900 leading-tight">
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-palnadu-dark leading-tight">
               Why Companies Trust Palnadu.dev
             </h2>
-            <p className="text-base sm:text-lg text-slate-600 leading-relaxed font-normal">
+            <p className="text-base sm:text-lg text-palnadu-body leading-relaxed font-normal">
               We approach every engagement with straightforward engineering principles designed to protect your capital and deliver dependable software.
             </p>
           </div>
@@ -226,12 +226,12 @@ export function WorkClient() {
             {engineeringStandards.map((std, idx) => (
               <div
                 key={idx}
-                className="bg-slate-50/60 rounded-xl p-6 border border-slate-200 space-y-2.5"
+                className="bg-palnadu-off-white/60 rounded-xl p-6 border border-palnadu-border space-y-2.5"
               >
-                <h3 className="text-base sm:text-lg font-bold text-slate-900 leading-snug">
+                <h3 className="text-base sm:text-lg font-bold text-palnadu-dark leading-snug">
                   {std.title}
                 </h3>
-                <p className="text-sm text-slate-600 leading-relaxed font-normal">
+                <p className="text-sm text-palnadu-body leading-relaxed font-normal">
                   {std.description}
                 </p>
               </div>
@@ -241,12 +241,12 @@ export function WorkClient() {
       </section>
 
       {/* ── 4. BOTTOM CONSULTATION CARD ── */}
-      <section className="py-16 sm:py-20 bg-slate-900 text-white border-t border-slate-800">
+      <section className="py-16 sm:py-20 bg-palnadu-dark text-white border-t border-palnadu-dark-hover">
         <div className="container max-w-3xl mx-auto px-4 text-center space-y-5">
           <h2 className="text-2xl sm:text-4xl font-bold tracking-tight text-white leading-tight">
             Have a project or manual process to solve?
           </h2>
-          <p className="text-sm sm:text-base text-slate-300 max-w-xl mx-auto leading-relaxed font-normal">
+          <p className="text-sm sm:text-base text-palnadu-light-blue/80 max-w-xl mx-auto leading-relaxed font-normal">
             Talk directly with senior developers who write your software. We evaluate technical feasibility, estimate realistic costs, and engineer what works.
           </p>
           <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
@@ -259,7 +259,7 @@ export function WorkClient() {
             <Button
               asChild
               variant="outline"
-              className="border-slate-700 bg-transparent text-white hover:bg-slate-800 font-semibold px-6 h-11 text-sm rounded-lg"
+              className="border-white/20 bg-transparent text-white hover:bg-white/10 font-semibold px-6 h-11 text-sm rounded-lg"
             >
               <Link href="/services">Explore All Services</Link>
             </Button>

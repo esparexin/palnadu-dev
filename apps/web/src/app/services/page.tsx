@@ -202,19 +202,19 @@ export default function ServicesPage() {
         <HeroParallax products={products} />
 
         {/* Core Capabilities Section */}
-        <section className="py-16 sm:py-24 bg-white border-t border-slate-200" id="capabilities-list">
+        <section className="py-16 sm:py-24 bg-white border-t border-palnadu-border" id="capabilities-list">
           <div className="container max-w-4xl mx-auto px-4 sm:px-6">
             <div className="mb-10 sm:mb-14">
-              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-slate-900 leading-tight">
+              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-palnadu-dark leading-tight">
                 Software Engineering and Web Development Capabilities
               </h2>
-              <p className="mt-3 text-base sm:text-lg text-slate-600 leading-relaxed max-w-2xl">
+              <p className="mt-3 text-base sm:text-lg text-palnadu-body leading-relaxed max-w-2xl">
                 Every project at Palnadu.dev is built by software engineers working directly with business owners. We focus on dependable architecture, clear timelines, and software that genuinely supports your business operations.
               </p>
             </div>
 
             {/* Clean Editorial Services List */}
-            <div className="divide-y divide-slate-200 border-y border-slate-200">
+            <div className="divide-y divide-palnadu-border/60 border-y border-palnadu-border">
               {services.map((service) => {
                 const detail = actualServiceDetails[service.slug] || {
                   summary: service.shortDescription,
@@ -224,20 +224,20 @@ export default function ServicesPage() {
                 return (
                   <article
                     key={service.slug}
-                    className="py-6 sm:py-8 first:pt-6 last:pb-6 transition-colors hover:bg-slate-50/60 rounded-xl px-3 -mx-3"
+                    className="py-6 sm:py-8 first:pt-6 last:pb-6 transition-colors hover:bg-palnadu-off-white/60 rounded-xl px-3 -mx-3"
                   >
                     <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
                       <div className="max-w-2xl space-y-2">
-                        <h3 className="text-lg sm:text-xl font-bold text-slate-900 leading-snug">
+                        <h3 className="text-lg sm:text-xl font-bold text-palnadu-dark leading-snug">
                           <Link
                             href={`/services/${service.slug}`}
-                            className="text-slate-900 hover:text-palnadu-blue transition-colors"
+                            className="text-palnadu-dark hover:text-palnadu-blue transition-colors"
                           >
                             {service.title}
                           </Link>
                         </h3>
 
-                        <p className="text-sm sm:text-base text-slate-600 leading-relaxed">
+                        <p className="text-sm sm:text-base text-palnadu-body leading-relaxed">
                           {detail.summary}
                         </p>
 
@@ -247,7 +247,7 @@ export default function ServicesPage() {
                             {detail.deliverables.map((item) => (
                               <span
                                 key={item}
-                                className="text-xs text-slate-600 bg-slate-100 rounded-md px-2.5 py-1"
+                                className="text-xs text-palnadu-body bg-palnadu-off-white rounded-md px-2.5 py-1"
                               >
                                 {item}
                               </span>

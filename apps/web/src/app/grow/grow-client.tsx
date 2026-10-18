@@ -36,7 +36,7 @@ const growthStages = [
     description:
       "Help your business get discovered by the people searching for what you offer across search engines, Google Maps, and local directories.",
     metrics: "Top 3 Regional Search Ranking",
-    color: "from-blue-600/20 to-cyan-500/10",
+    color: "from-palnadu-blue/20 to-palnadu-teal/10",
     badgeColor: "bg-blue-50 text-blue-700 border-blue-200",
     icon: Search,
     previewContent: {
