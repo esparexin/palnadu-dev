@@ -3,7 +3,6 @@ import Image from 'next/image';
 import {
   siteConfig,
   imagePresets,
-  isCloudinaryUrl,
   getBreadcrumbSchema,
   blogPostPath,
   type BlogLocale,
@@ -49,6 +48,25 @@ function renderInline(text: string): React.ReactNode {
     }
     return part;
   });
+}
+
+function isOptimizableImageUrl(url?: string | null): boolean {
+  if (!url) return false;
+  if (url.startsWith('/')) return true;
+  try {
+    const parsed = new URL(url, 'https://palnadu.dev');
+    const host = parsed.hostname;
+    return (
+      host === 'res.cloudinary.com' ||
+      host === 'cdn.21st.dev' ||
+      host === 'images.unsplash.com' ||
+      host === 'ui.aceternity.com' ||
+      host === 'palnadu.dev' ||
+      host.endsWith('.palnadu.dev')
+    );
+  } catch {
+    return false;
+  }
 }
 
 type ArticleViewProps = {
@@ -187,7 +205,7 @@ export function ArticleView({ post, locale }: ArticleViewProps) {
                 priority
                 sizes="(max-width: 1024px) 100vw, 800px"
                 className="object-cover"
-                unoptimized={!isCloudinaryUrl(post.coverImage) && !post.coverImage.startsWith('/')}
+                unoptimized={!isOptimizableImageUrl(post.coverImage)}
               />
             </div>
           ) : (
@@ -216,13 +234,6 @@ export function ArticleView({ post, locale }: ArticleViewProps) {
               if (imageMatch) {
                 const [, alt, url, rawCaption] = imageMatch;
                 const caption = rawCaption ? rawCaption.replace(/\*/g, '').trim() : '';
-                const isOptimizable =
-                  isCloudinaryUrl(url) ||
-                  url.startsWith('/') ||
-                  url.includes('images.unsplash.com') ||
-                  url.includes('cdn.21st.dev') ||
-                  url.includes('palnadu.dev') ||
-                  url.includes('ui.aceternity.com');
                 return (
                   <figure key={idx} className="my-8 rounded-xl overflow-hidden border border-palnadu-border shadow-sm bg-palnadu-off-white">
                     <div className="relative aspect-[16/9] max-h-[500px] w-full">
@@ -232,7 +243,7 @@ export function ArticleView({ post, locale }: ArticleViewProps) {
                         fill
                         sizes="(max-width: 1024px) 100vw, 800px"
                         className="object-cover"
-                        unoptimized={!isOptimizable}
+                        unoptimized={!isOptimizableImageUrl(url)}
                       />
                     </div>
                     {caption && (
