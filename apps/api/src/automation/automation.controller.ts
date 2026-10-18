@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Patch, Body, Query, UseGuards, BadRequestException } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Body, Query, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
@@ -7,6 +7,17 @@ import { BlogAutomationService } from './blog-automation.service';
 import { FreeKeywordResearchService } from './free-keyword-research.service';
 import { TopicDiscoveryService } from './topic-discovery.service';
 import { PrismaService } from '../prisma.service';
+import { ZodValidationPipe } from '../common/pipes/zod-validation.pipe';
+import {
+  automationGenerateSchema,
+  automationSettingsSchema,
+  automationDiscoverSchema,
+  automationBilingualSchema,
+  type AutomationGenerateInput,
+  type AutomationSettingsInput,
+  type AutomationDiscoverInput,
+  type AutomationBilingualInput,
+} from '@palnadu/validation';
 
 @Controller('admin/automation')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -69,7 +80,10 @@ export class AutomationController {
 
   /** Pull new search opportunities into the queue through the dedup gate. */
   @Post('discover')
-  async discover(@Body() body: { limit?: number } = {}) {
+  async discover(
+    @Body(new ZodValidationPipe(automationDiscoverSchema))
+    body: AutomationDiscoverInput = { limit: 40 },
+  ) {
     const result = await this.automationService.discoverAndEnqueue(body.limit ?? 40);
     return {
       success: true,
@@ -93,23 +107,12 @@ export class AutomationController {
 
   @Post('generate')
   async triggerGenerate(
-    @Body()
-    body: {
-      topic?: string;
-      categorySlug?: string;
-      targetLocation?: string;
-      forcePublish?: boolean;
-      batchCount?: number;
-      language?: string;
-    },
+    @Body(new ZodValidationPipe(automationGenerateSchema))
+    body: AutomationGenerateInput,
   ) {
-    // Manual generation only: the scheduled bilingual allocator is not enabled,
-    // so language arrives explicitly per call and defaults to English.
     const language =
-      body.language === 'te' ? BlogLanguage.te : body.language === 'en' || !body.language ? BlogLanguage.en : null;
-    if (!language) {
-      throw new BadRequestException(`Invalid language '${body.language}'. Expected 'en' or 'te'.`);
-    }
+      body.language === 'te' ? BlogLanguage.te : BlogLanguage.en;
+
     if (body.batchCount && body.batchCount > 1) {
       const { results, rejected } = await this.automationService.generateBatch(
         body.batchCount,
@@ -165,14 +168,10 @@ export class AutomationController {
    */
   @Patch('bilingual')
   @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
-  async updateBilingual(@Body() body: { enabled?: boolean; te?: number; en?: number } = {}) {
-    if (
-      body.enabled === undefined &&
-      body.te === undefined &&
-      body.en === undefined
-    ) {
-      throw new BadRequestException('Provide at least one of: enabled, te, en.');
-    }
+  async updateBilingual(
+    @Body(new ZodValidationPipe(automationBilingualSchema))
+    body: AutomationBilingualInput,
+  ) {
     const data = await this.automationService.setBilingualConfig(body);
     return {
       success: true,
@@ -185,13 +184,16 @@ export class AutomationController {
 
   @Patch('settings')
   @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
-  async updateSettings(@Body() body: { autoPublish: boolean }) {
+  async updateSettings(
+    @Body(new ZodValidationPipe(automationSettingsSchema))
+    body: AutomationSettingsInput,
+  ) {
     await this.prisma.siteSetting.upsert({
       where: { key: 'auto_publish_blogs' },
-      update: { value: Boolean(body.autoPublish) },
+      update: { value: body.autoPublish },
       create: {
         key: 'auto_publish_blogs',
-        value: Boolean(body.autoPublish),
+        value: body.autoPublish,
         description: 'Whether automated blogs publish immediately or save as DRAFT for review',
       },
     });
