@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import {
   siteConfig,
   imagePresets,
@@ -47,6 +48,25 @@ function renderInline(text: string): React.ReactNode {
     }
     return part;
   });
+}
+
+function isOptimizableImageUrl(url?: string | null): boolean {
+  if (!url) return false;
+  if (url.startsWith('/')) return true;
+  try {
+    const parsed = new URL(url, 'https://palnadu.dev');
+    const host = parsed.hostname;
+    return (
+      host === 'res.cloudinary.com' ||
+      host === 'cdn.21st.dev' ||
+      host === 'images.unsplash.com' ||
+      host === 'ui.aceternity.com' ||
+      host === 'palnadu.dev' ||
+      host.endsWith('.palnadu.dev')
+    );
+  } catch {
+    return false;
+  }
 }
 
 type ArticleViewProps = {
@@ -177,11 +197,15 @@ export function ArticleView({ post, locale }: ArticleViewProps) {
 
           {/* Cover Image with Fallback */}
           {post.coverImage ? (
-            <div className="my-8 rounded-xl overflow-hidden border border-palnadu-border shadow-sm bg-palnadu-off-white">
-              <img
+            <div className="relative aspect-[16/9] max-h-[480px] my-8 rounded-xl overflow-hidden border border-palnadu-border shadow-sm bg-palnadu-off-white">
+              <Image
                 src={imagePresets.blogHero(post.coverImage)}
                 alt={post.title}
-                className="w-full h-auto max-h-[480px] object-cover"
+                fill
+                priority
+                sizes="(max-width: 1024px) 100vw, 800px"
+                className="object-cover"
+                unoptimized={!isOptimizableImageUrl(post.coverImage)}
               />
             </div>
           ) : (
@@ -212,11 +236,16 @@ export function ArticleView({ post, locale }: ArticleViewProps) {
                 const caption = rawCaption ? rawCaption.replace(/\*/g, '').trim() : '';
                 return (
                   <figure key={idx} className="my-8 rounded-xl overflow-hidden border border-palnadu-border shadow-sm bg-palnadu-off-white">
-                    <img
-                      src={url}
-                      alt={alt || post.title}
-                      className="w-full h-auto max-h-[500px] object-cover"
-                    />
+                    <div className="relative aspect-[16/9] max-h-[500px] w-full">
+                      <Image
+                        src={url}
+                        alt={alt || post.title}
+                        fill
+                        sizes="(max-width: 1024px) 100vw, 800px"
+                        className="object-cover"
+                        unoptimized={!isOptimizableImageUrl(url)}
+                      />
+                    </div>
                     {caption && (
                       <figcaption className="px-4 py-2.5 text-center text-xs text-palnadu-secondary bg-palnadu-off-white/80 border-t border-palnadu-border/60">
                         Caption: {caption}

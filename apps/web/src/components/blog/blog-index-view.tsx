@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import { CtaSection } from '@/components/sections/cta-section';
 import { imagePresets, siteConfig, getBreadcrumbSchema, getOrganizationRef } from '@palnadu/config';
 import { Calendar, ArrowRight, Tag, Clock, Search, Archive, ChevronLeft, ChevronRight } from 'lucide-react';
@@ -261,10 +262,12 @@ export function BlogIndexView({
                           {/* Cover Photo with Fallback */}
                           {post.coverImage ? (
                             <div className="rounded-lg overflow-hidden h-44 border border-palnadu-border/60 bg-palnadu-off-white relative">
-                              <img
+                              <Image
                                 src={imagePresets.blogCard(post.coverImage)}
                                 alt={post.title}
-                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                fill
+                                sizes="(max-width: 768px) 100vw, 400px"
+                                className="object-cover group-hover:scale-105 transition-transform duration-500"
                               />
                               {isPostArchived && (
                                 <span className="absolute top-2.5 right-2.5 px-2 py-0.5 rounded bg-black/75 backdrop-blur-sm text-white text-xs font-mono font-bold uppercase tracking-wider">
