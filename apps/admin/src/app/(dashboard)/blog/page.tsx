@@ -440,10 +440,13 @@ export default function BlogAdminPage() {
 
       {/* KPI Overview (Clickable Quick Filters) */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <button
+        <div
+          role="button"
+          tabIndex={0}
           onClick={() => setStatusFilter('')}
+          onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && setStatusFilter('')}
           className={cn(
-            'rounded-lg border bg-white p-3.5 text-left transition-all cursor-pointer shadow-sm',
+            'rounded-lg border bg-white p-3.5 text-left transition-all cursor-pointer shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-palnadu-blue',
             statusFilter === ''
               ? 'border-palnadu-blue ring-1 ring-palnadu-blue bg-palnadu-light-blue/20'
               : 'border-palnadu-border hover:border-palnadu-blue/50'
@@ -451,11 +454,14 @@ export default function BlogAdminPage() {
         >
           <p className="text-xs font-semibold text-palnadu-secondary uppercase tracking-wider">Total Articles</p>
           <p className="text-xl font-bold text-palnadu-dark mt-1">{loading && totalPosts === 0 ? '—' : totalPosts}</p>
-        </button>
-        <button
+        </div>
+        <div
+          role="button"
+          tabIndex={0}
           onClick={() => setStatusFilter('PUBLISHED')}
+          onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && setStatusFilter('PUBLISHED')}
           className={cn(
-            'rounded-lg border bg-white p-3.5 text-left transition-all cursor-pointer shadow-sm',
+            'rounded-lg border bg-white p-3.5 text-left transition-all cursor-pointer shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-palnadu-teal',
             statusFilter === 'PUBLISHED'
               ? 'border-palnadu-teal ring-1 ring-palnadu-teal bg-palnadu-teal/10'
               : 'border-palnadu-border hover:border-palnadu-blue/50'
@@ -463,11 +469,14 @@ export default function BlogAdminPage() {
         >
           <p className="text-xs font-semibold text-palnadu-teal uppercase tracking-wider">Published on Google</p>
           <p className="text-xl font-bold text-palnadu-teal mt-1">{loading && publishedCount === 0 ? '—' : publishedCount}</p>
-        </button>
-        <button
+        </div>
+        <div
+          role="button"
+          tabIndex={0}
           onClick={() => setStatusFilter('DRAFT')}
+          onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && setStatusFilter('DRAFT')}
           className={cn(
-            'rounded-lg border bg-white p-3.5 text-left transition-all cursor-pointer shadow-sm',
+            'rounded-lg border bg-white p-3.5 text-left transition-all cursor-pointer shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-palnadu-warning',
             statusFilter === 'DRAFT'
               ? 'border-palnadu-warning ring-1 ring-palnadu-warning bg-palnadu-warning/10'
               : 'border-palnadu-border hover:border-palnadu-blue/50'
@@ -475,11 +484,14 @@ export default function BlogAdminPage() {
         >
           <p className="text-xs font-semibold text-palnadu-warning uppercase tracking-wider">Drafts Pending Review</p>
           <p className="text-xl font-bold text-palnadu-warning mt-1">{loading && draftCount === 0 ? '—' : draftCount}</p>
-        </button>
-        <button
+        </div>
+        <div
+          role="button"
+          tabIndex={0}
           onClick={() => setStatusFilter('ARCHIVED')}
+          onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && setStatusFilter('ARCHIVED')}
           className={cn(
-            'rounded-lg border bg-white p-3.5 text-left transition-all cursor-pointer shadow-sm',
+            'rounded-lg border bg-white p-3.5 text-left transition-all cursor-pointer shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-palnadu-secondary',
             statusFilter === 'ARCHIVED'
               ? 'border-palnadu-secondary ring-1 ring-palnadu-secondary bg-palnadu-off-white'
               : 'border-palnadu-border hover:border-palnadu-blue/50'
@@ -487,7 +499,7 @@ export default function BlogAdminPage() {
         >
           <p className="text-xs font-semibold text-palnadu-secondary uppercase tracking-wider">Archived Articles</p>
           <p className="text-xl font-bold text-palnadu-dark mt-1">{loading && archivedCount === 0 ? '—' : archivedCount}</p>
-        </button>
+        </div>
       </div>
 
       {/* Review Alert Banner when Drafts Exist */}
@@ -844,31 +856,33 @@ export default function BlogAdminPage() {
 
             {/* Navigation Tabs */}
             <div className="flex border-b border-palnadu-border px-5 gap-4 text-xs font-semibold">
-              <button
+              <Button
                 type="button"
+                variant="ghost"
                 onClick={() => setActiveTab('content')}
                 className={cn(
-                  'py-2.5 border-b-2 transition-colors cursor-pointer',
+                  'h-auto py-2.5 px-0 rounded-none border-b-2 font-semibold text-xs shadow-none hover:bg-transparent',
                   activeTab === 'content'
-                    ? 'border-palnadu-blue text-palnadu-blue'
+                    ? 'border-palnadu-blue text-palnadu-blue hover:text-palnadu-blue'
                     : 'border-transparent text-palnadu-secondary hover:text-palnadu-dark'
                 )}
               >
                 1. Article Content
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
+                variant="ghost"
                 onClick={() => setActiveTab('seo')}
                 className={cn(
-                  'py-2.5 border-b-2 transition-colors cursor-pointer flex items-center gap-1',
+                  'h-auto py-2.5 px-0 rounded-none border-b-2 font-semibold text-xs shadow-none hover:bg-transparent flex items-center gap-1',
                   activeTab === 'seo'
-                    ? 'border-palnadu-blue text-palnadu-blue'
+                    ? 'border-palnadu-blue text-palnadu-blue hover:text-palnadu-blue'
                     : 'border-transparent text-palnadu-secondary hover:text-palnadu-dark'
                 )}
               >
                 <Globe className="h-3.5 w-3.5" />
                 <span>2. Google SEO & Social Preview</span>
-              </button>
+              </Button>
             </div>
 
             <form onSubmit={handleSubmit} className="p-5 space-y-4">

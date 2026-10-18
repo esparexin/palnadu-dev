@@ -7,18 +7,20 @@ import type { Lead } from '@palnadu/types';
 import { Mail, Phone, MessageSquare, ArrowRight, Search, Trash2 } from 'lucide-react';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { useToast } from '@/components/ui/toast';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 
 const statusColors: Record<string, string> = {
-  NEW: 'bg-blue-100 text-blue-800 border-blue-200',
-  CONTACTED: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-  DISCOVERY: 'bg-purple-100 text-purple-800 border-purple-200',
-  PROPOSAL: 'bg-indigo-100 text-indigo-800 border-indigo-200',
-  NEGOTIATION: 'bg-orange-100 text-orange-800 border-orange-200',
-  WON: 'bg-emerald-100 text-emerald-800 border-emerald-200',
-  LOST: 'bg-red-100 text-red-800 border-red-200',
-  NOT_QUALIFIED: 'bg-gray-100 text-gray-800 border-gray-200',
-  ON_HOLD: 'bg-gray-100 text-gray-600 border-gray-200',
+  NEW: 'bg-palnadu-blue/10 text-palnadu-blue border-palnadu-blue/20',
+  CONTACTED: 'bg-palnadu-warning/10 text-palnadu-warning border-palnadu-warning/20',
+  DISCOVERY: 'bg-palnadu-light-blue text-palnadu-blue border-palnadu-blue/20',
+  PROPOSAL: 'bg-palnadu-teal/10 text-palnadu-teal border-palnadu-teal/20',
+  NEGOTIATION: 'bg-palnadu-warning/10 text-palnadu-warning border-palnadu-warning/20',
+  WON: 'bg-palnadu-teal/15 text-palnadu-teal border-palnadu-teal/30',
+  LOST: 'bg-palnadu-error/10 text-palnadu-error border-palnadu-error/20',
+  NOT_QUALIFIED: 'bg-palnadu-off-white text-palnadu-secondary border-palnadu-border',
+  ON_HOLD: 'bg-palnadu-off-white text-palnadu-secondary border-palnadu-border',
 };
 
 export default function LeadsPage() {
@@ -74,21 +76,21 @@ export default function LeadsPage() {
 
       {/* Summary KPI Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <div className="rounded-lg border border-palnadu-border bg-white p-3.5 shadow-2xs">
-          <p className="text-[11px] font-semibold text-palnadu-secondary uppercase tracking-wider">Total Leads</p>
+        <div className="rounded-lg border border-palnadu-border bg-white p-3.5 shadow-sm">
+          <p className="text-xs font-semibold text-palnadu-secondary uppercase tracking-wider">Total Leads</p>
           <p className="text-xl font-bold text-palnadu-dark mt-1">{loading ? '—' : totalLeads}</p>
         </div>
-        <div className="rounded-lg border border-palnadu-border bg-white p-3.5 shadow-2xs">
-          <p className="text-[11px] font-semibold text-blue-700 uppercase tracking-wider">New / Unread</p>
-          <p className="text-xl font-bold text-blue-700 mt-1">{loading ? '—' : newLeadsCount}</p>
+        <div className="rounded-lg border border-palnadu-border bg-white p-3.5 shadow-sm">
+          <p className="text-xs font-semibold text-palnadu-blue uppercase tracking-wider">New / Unread</p>
+          <p className="text-xl font-bold text-palnadu-blue mt-1">{loading ? '—' : newLeadsCount}</p>
         </div>
-        <div className="rounded-lg border border-palnadu-border bg-white p-3.5 shadow-2xs">
-          <p className="text-[11px] font-semibold text-purple-700 uppercase tracking-wider">In Pipeline</p>
-          <p className="text-xl font-bold text-purple-700 mt-1">{loading ? '—' : inPipelineCount}</p>
+        <div className="rounded-lg border border-palnadu-border bg-white p-3.5 shadow-sm">
+          <p className="text-xs font-semibold text-palnadu-teal uppercase tracking-wider">In Pipeline</p>
+          <p className="text-xl font-bold text-palnadu-teal mt-1">{loading ? '—' : inPipelineCount}</p>
         </div>
-        <div className="rounded-lg border border-palnadu-border bg-white p-3.5 shadow-2xs">
-          <p className="text-[11px] font-semibold text-emerald-700 uppercase tracking-wider">Won / Converted</p>
-          <p className="text-xl font-bold text-emerald-700 mt-1">{loading ? '—' : wonCount}</p>
+        <div className="rounded-lg border border-palnadu-border bg-white p-3.5 shadow-sm">
+          <p className="text-xs font-semibold text-palnadu-teal uppercase tracking-wider">Won / Converted</p>
+          <p className="text-xl font-bold text-palnadu-teal mt-1">{loading ? '—' : wonCount}</p>
         </div>
       </div>
 
@@ -96,12 +98,12 @@ export default function LeadsPage() {
       <div className="flex flex-col gap-3 sm:flex-row items-center justify-between">
         <div className="relative w-full sm:max-w-xs">
           <Search className="absolute left-3 top-2.5 h-4 w-4 text-palnadu-secondary" />
-          <input
+          <Input
             type="text"
             placeholder="Search by name, email, company..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="flex h-9 w-full rounded-md border border-palnadu-border bg-white pl-9 pr-3 py-1.5 text-xs text-palnadu-dark placeholder:text-palnadu-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-palnadu-blue"
+            className="pl-9 text-xs"
           />
         </div>
 
@@ -119,21 +121,23 @@ export default function LeadsPage() {
             ))}
           </select>
           {(search || statusFilter) && (
-            <button
+            <Button
+              variant="link"
+              size="sm"
               onClick={() => {
                 setSearch('');
                 setStatusFilter('');
               }}
-              className="text-xs text-palnadu-secondary hover:text-palnadu-dark font-medium px-2 py-1 underline"
+              className="text-xs text-palnadu-secondary hover:text-palnadu-dark px-2 h-auto"
             >
               Reset
-            </button>
+            </Button>
           )}
         </div>
       </div>
 
       {/* Detailed Leads Table */}
-      <div className="rounded-lg border border-palnadu-border bg-white shadow-2xs overflow-hidden">
+      <div className="rounded-lg border border-palnadu-border bg-white shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-xs">
             <thead>
@@ -174,11 +178,11 @@ export default function LeadsPage() {
                           <span>{lead.name}</span>
                         </Link>
                         {lead.company ? (
-                          <span className="inline-block mt-0.5 text-[10px] text-palnadu-secondary font-medium">
+                          <span className="inline-block mt-0.5 text-xs text-palnadu-secondary font-medium">
                             {lead.company}
                           </span>
                         ) : (
-                          <span className="text-[10px] text-palnadu-secondary/60 italic">Individual</span>
+                          <span className="text-xs text-palnadu-secondary/60 italic">Individual</span>
                         )}
                       </td>
 
@@ -186,14 +190,14 @@ export default function LeadsPage() {
                       <td className="px-4 py-3 space-y-1">
                         <a
                           href={`mailto:${lead.email}`}
-                          className="text-palnadu-body hover:text-palnadu-blue flex items-center gap-1 font-mono text-[11px]"
+                          className="text-palnadu-body hover:text-palnadu-blue flex items-center gap-1 font-mono text-xs"
                           title="Click to email"
                         >
                           <Mail className="h-3 w-3 text-palnadu-secondary shrink-0" />
                           <span className="truncate max-w-[150px]">{lead.email}</span>
                         </a>
                         {lead.phone && (
-                          <div className="flex items-center gap-2 text-[11px]">
+                          <div className="flex items-center gap-2 text-xs">
                             <a
                               href={`tel:${lead.phone}`}
                               className="text-palnadu-body hover:text-palnadu-blue flex items-center gap-1 font-mono"
@@ -207,7 +211,7 @@ export default function LeadsPage() {
                                 href={`https://wa.me/${rawPhone}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="text-emerald-600 hover:text-emerald-700 flex items-center gap-0.5 font-medium text-[10px]"
+                                className="text-palnadu-teal hover:text-palnadu-teal-dark flex items-center gap-0.5 font-medium text-xs"
                                 title="Chat on WhatsApp"
                               >
                                 <MessageSquare className="h-2.5 w-2.5" />
@@ -223,7 +227,7 @@ export default function LeadsPage() {
                         <div className="font-semibold text-palnadu-dark">
                           {lead.requiredHelp ? lead.requiredHelp.replace(/_/g, ' ') : 'General'}
                         </div>
-                        <span className="text-[10px] text-palnadu-secondary">
+                        <span className="text-xs text-palnadu-secondary">
                           Stage: {lead.projectStage ? lead.projectStage.replace(/_/g, ' ') : 'Just an idea'}
                         </span>
                       </td>
@@ -231,11 +235,11 @@ export default function LeadsPage() {
                       {/* Budget */}
                       <td className="px-4 py-3">
                         {lead.budget ? (
-                          <span className="inline-block px-2 py-0.5 rounded-md bg-palnadu-off-white border border-palnadu-border text-[10px] font-semibold text-palnadu-dark">
+                          <span className="inline-block px-2 py-0.5 rounded-md bg-palnadu-off-white border border-palnadu-border text-xs font-semibold text-palnadu-dark">
                             {lead.budget}
                           </span>
                         ) : (
-                          <span className="text-palnadu-secondary/60 italic text-[11px]">Not specified</span>
+                          <span className="text-palnadu-secondary/60 italic text-xs">Not specified</span>
                         )}
                       </td>
 
@@ -243,8 +247,8 @@ export default function LeadsPage() {
                       <td className="px-4 py-3">
                         <span
                           className={cn(
-                            'inline-flex rounded-md border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider',
-                            statusColors[lead.status] || 'bg-gray-100 text-gray-800 border-gray-200',
+                            'inline-flex rounded-md border px-2 py-0.5 text-xs font-bold uppercase tracking-wider',
+                            statusColors[lead.status] || 'bg-palnadu-off-white text-palnadu-secondary border-palnadu-border',
                           )}
                         >
                           {lead.status.replace(/_/g, ' ')}
@@ -254,7 +258,7 @@ export default function LeadsPage() {
                       {/* Date */}
                       <td className="px-4 py-3 text-palnadu-secondary">
                         <div>{new Date(lead.createdAt).toLocaleDateString()}</div>
-                        <div className="text-[10px] text-palnadu-secondary/70">
+                        <div className="text-xs text-palnadu-secondary/70">
                           {new Date(lead.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                         </div>
                       </td>
@@ -268,13 +272,15 @@ export default function LeadsPage() {
                           <span>Review</span>
                           <ArrowRight className="h-3 w-3" />
                         </Link>
-                        <button
+                        <Button
+                          variant="ghost"
+                          size="icon"
                           onClick={() => setDeleteTarget({ id: lead.id, name: lead.name })}
-                          className="inline-flex items-center p-1 rounded-md text-palnadu-secondary hover:text-palnadu-error hover:bg-red-50 transition-colors cursor-pointer"
+                          className="h-7 w-7 text-palnadu-error hover:bg-palnadu-error/10 hover:text-palnadu-error"
                           title="Delete Lead"
                         >
                           <Trash2 className="h-3.5 w-3.5" />
-                        </button>
+                        </Button>
                       </td>
                     </tr>
                   );

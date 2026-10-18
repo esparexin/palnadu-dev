@@ -35,15 +35,15 @@ const defaultStats: DashboardStats = {
 };
 
 const statusColors: Record<string, string> = {
-  NEW: 'bg-blue-100 text-blue-800',
-  CONTACTED: 'bg-yellow-100 text-yellow-800',
-  DISCOVERY: 'bg-purple-100 text-purple-800',
-  PROPOSAL: 'bg-indigo-100 text-indigo-800',
-  NEGOTIATION: 'bg-orange-100 text-orange-800',
-  WON: 'bg-green-100 text-green-800',
-  LOST: 'bg-red-100 text-red-800',
-  NOT_QUALIFIED: 'bg-gray-100 text-gray-800',
-  ON_HOLD: 'bg-gray-100 text-gray-600',
+  NEW: 'bg-palnadu-blue/10 text-palnadu-blue border border-palnadu-blue/20',
+  CONTACTED: 'bg-palnadu-warning/10 text-palnadu-warning border border-palnadu-warning/20',
+  DISCOVERY: 'bg-palnadu-light-blue text-palnadu-blue border border-palnadu-blue/20',
+  PROPOSAL: 'bg-palnadu-teal/10 text-palnadu-teal border border-palnadu-teal/20',
+  NEGOTIATION: 'bg-palnadu-warning/10 text-palnadu-warning border border-palnadu-warning/20',
+  WON: 'bg-palnadu-teal/15 text-palnadu-teal border border-palnadu-teal/30',
+  LOST: 'bg-palnadu-error/10 text-palnadu-error border border-palnadu-error/20',
+  NOT_QUALIFIED: 'bg-palnadu-off-white text-palnadu-secondary border border-palnadu-border',
+  ON_HOLD: 'bg-palnadu-off-white text-palnadu-secondary border border-palnadu-border',
 };
 
 export default function DashboardPage() {
@@ -61,8 +61,8 @@ export default function DashboardPage() {
   const cards = [
     { title: 'Total Leads', value: stats.totalLeads, icon: UserPlus, color: 'text-palnadu-blue' },
     { title: 'New Leads', value: stats.newLeads, icon: UserPlus, color: 'text-palnadu-teal' },
-    { title: 'Active Projects', value: stats.activeProjects, icon: FolderKanban, color: 'text-purple-600' },
-    { title: 'Clients', value: stats.totalClients, icon: Users, color: 'text-orange-600' },
+    { title: 'Active Projects', value: stats.activeProjects, icon: FolderKanban, color: 'text-palnadu-teal' },
+    { title: 'Clients', value: stats.totalClients, icon: Users, color: 'text-palnadu-warning' },
     { title: 'Published Articles', value: stats.publishedArticles, icon: FileText, color: 'text-palnadu-blue' },
   ];
 
@@ -78,7 +78,7 @@ export default function DashboardPage() {
         {cards.map((card) => {
           const Icon = card.icon;
           return (
-            <div key={card.title} className="rounded-lg border border-palnadu-border bg-white p-5 shadow-2xs">
+            <div key={card.title} className="rounded-lg border border-palnadu-border bg-white p-5 shadow-sm">
               <div className="flex items-center justify-between">
                 <p className="text-xs font-semibold text-palnadu-secondary uppercase tracking-wider">{card.title}</p>
                 <Icon className={`h-4 w-4 ${card.color}`} />
@@ -92,7 +92,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Live Recent Inquiries / Leads */}
-      <div className="rounded-lg border border-palnadu-border bg-white shadow-2xs overflow-hidden">
+      <div className="rounded-lg border border-palnadu-border bg-white shadow-sm overflow-hidden">
         <div className="flex items-center justify-between p-4 border-b border-palnadu-border bg-palnadu-off-white/40">
           <div>
             <h2 className="text-sm font-bold text-palnadu-dark">Recent Inquiries</h2>
@@ -138,20 +138,20 @@ export default function DashboardPage() {
                     <td className="px-4 py-3 font-bold text-palnadu-dark">
                       {lead.name}
                       {lead.company && (
-                        <span className="block text-[11px] font-normal text-palnadu-secondary">
+                        <span className="block text-xs font-normal text-palnadu-secondary">
                           {lead.company}
                         </span>
                       )}
                     </td>
-                    <td className="px-4 py-3 text-palnadu-body font-mono text-[11px]">{lead.email}</td>
+                    <td className="px-4 py-3 text-palnadu-body font-mono text-xs">{lead.email}</td>
                     <td className="px-4 py-3 text-palnadu-body">
                       {lead.requiredHelp.replace(/_/g, ' ')}
                     </td>
                     <td className="px-4 py-3">
                       <span
                         className={cn(
-                          'rounded-md px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider',
-                          statusColors[lead.status] || 'bg-gray-100 text-gray-800'
+                          'rounded-md px-2 py-0.5 text-xs font-bold uppercase tracking-wider',
+                          statusColors[lead.status] || 'bg-palnadu-off-white text-palnadu-secondary border border-palnadu-border'
                         )}
                       >
                         {lead.status}

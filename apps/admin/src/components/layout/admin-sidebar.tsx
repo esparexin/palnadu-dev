@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { BrandLogo } from '@/components/ui/brand-logo';
+import { Button } from '@/components/ui/button';
 import { api } from '@/lib/api';
 import { cn } from '@/lib/utils';
 
@@ -74,7 +75,7 @@ export function AdminSidebar() {
       <div className="flex h-16 items-center border-b border-palnadu-border px-6">
         <Link href="/dashboard" className="flex items-center gap-2">
           <BrandLogo customLogoUrl={customLogoUrl} size="md" />
-          <span className="ml-1 px-1.5 py-0.5 rounded text-[10px] font-mono font-bold bg-palnadu-light-blue text-palnadu-blue">ADMIN</span>
+          <span className="ml-1 px-1.5 py-0.5 rounded text-xs font-mono font-bold bg-palnadu-light-blue text-palnadu-blue">ADMIN</span>
         </Link>
       </div>
 
@@ -93,7 +94,7 @@ export function AdminSidebar() {
                 className={cn(
                   'flex items-center gap-3 rounded-md px-3 py-2 text-xs font-semibold transition-colors',
                   isActive
-                    ? 'bg-palnadu-blue text-white shadow-2xs'
+                    ? 'bg-palnadu-blue text-white shadow-sm'
                     : 'text-palnadu-body hover:bg-palnadu-light-blue hover:text-palnadu-blue',
                 )}
               >
@@ -109,19 +110,20 @@ export function AdminSidebar() {
         <div className="px-2 py-1 flex items-center justify-between">
           <div className="truncate">
             <p className="text-xs font-bold text-palnadu-dark truncate">{userName}</p>
-            <p className="text-[10px] font-mono text-palnadu-secondary uppercase tracking-wider">
+            <p className="text-xs font-mono text-palnadu-secondary uppercase tracking-wider">
               {userRole.replace(/_/g, ' ')}
             </p>
           </div>
         </div>
 
-        <button
+        <Button
+          variant="ghost"
           onClick={handleLogout}
-          className="flex w-full items-center gap-3 rounded-md px-3 py-1.5 text-xs font-semibold text-palnadu-body hover:bg-red-50 hover:text-palnadu-error transition-colors cursor-pointer"
+          className="flex w-full justify-start items-center gap-3 px-3 py-1.5 text-xs font-semibold text-palnadu-body hover:bg-palnadu-error/10 hover:text-palnadu-error transition-colors h-auto"
         >
           <LogOut className="h-4 w-4 shrink-0" />
           <span>Sign out</span>
-        </button>
+        </Button>
       </div>
     </div>
   );
@@ -130,13 +132,15 @@ export function AdminSidebar() {
     <>
       {/* Mobile Top Navigation Bar with Logo */}
       <header className="fixed top-0 inset-x-0 h-14 z-30 bg-white border-b border-palnadu-border flex items-center justify-between px-4 lg:hidden">
-        <button
-          className="rounded-md border border-palnadu-border bg-white p-1.5 text-palnadu-dark hover:text-palnadu-blue hover:bg-palnadu-light-blue transition-colors cursor-pointer"
+        <Button
+          variant="outline"
+          size="icon"
+          className="h-9 w-9 text-palnadu-dark hover:text-palnadu-blue hover:bg-palnadu-light-blue"
           onClick={() => setMobileOpen(!mobileOpen)}
           aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
         >
           {mobileOpen ? <X className="h-5 w-5 text-palnadu-blue" /> : <Menu className="h-5 w-5 text-palnadu-dark" />}
-        </button>
+        </Button>
 
         <Link href="/dashboard" className="flex items-center">
           <BrandLogo size="sm" />
@@ -148,7 +152,7 @@ export function AdminSidebar() {
       {/* Mobile overlay */}
       {mobileOpen && (
         <div
-          className="fixed inset-0 z-40 bg-black/40 backdrop-blur-xs lg:hidden"
+          className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm lg:hidden"
           onClick={() => setMobileOpen(false)}
         />
       )}

@@ -6,6 +6,10 @@ import type { Client } from '@palnadu/types';
 import { Plus, Search, Edit2, Trash2, X, Building } from 'lucide-react';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { useToast } from '@/components/ui/toast';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 
 interface ClientFormData {
   name: string;
@@ -119,31 +123,32 @@ export default function ClientsPage() {
             Manage your company client accounts, contacts, and historical project associations.
           </p>
         </div>
-        <button
+        <Button
           onClick={openCreateModal}
-          className="inline-flex items-center justify-center gap-1.5 rounded-md bg-palnadu-blue px-4 py-2 text-xs font-semibold text-white shadow-xs hover:bg-[#12487e] transition-colors cursor-pointer"
+          size="sm"
+          className="gap-1.5 font-semibold text-xs h-9"
         >
           <Plus className="h-4 w-4" />
           <span>Add Client</span>
-        </button>
+        </Button>
       </div>
 
       {/* Filter Bar */}
       <div className="flex items-center gap-3">
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-palnadu-secondary" />
-          <input
+          <Input
             type="text"
             placeholder="Search by client name, company, or email..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-9 pr-3 py-1.5 text-xs rounded-md border border-palnadu-border bg-white text-palnadu-dark placeholder:text-palnadu-secondary/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-palnadu-blue"
+            className="pl-9 text-xs"
           />
         </div>
       </div>
 
       {/* Clients Table */}
-      <div className="rounded-lg border border-palnadu-border bg-white shadow-2xs overflow-hidden">
+      <div className="rounded-lg border border-palnadu-border bg-white shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-xs">
             <thead>
@@ -167,7 +172,7 @@ export default function ClientsPage() {
                 <tr>
                   <td colSpan={6} className="px-4 py-12 text-center text-palnadu-secondary">
                     <p className="font-medium text-palnadu-dark">No clients found</p>
-                    <p className="text-[11px] mt-1">Add a new client above or convert an inquiry from the Leads page.</p>
+                    <p className="text-xs mt-1">Add a new client above or convert an inquiry from the Leads page.</p>
                   </td>
                 </tr>
               ) : (
@@ -196,21 +201,25 @@ export default function ClientsPage() {
                     <td className="px-4 py-3 text-palnadu-secondary">
                       {new Date(client.createdAt).toLocaleDateString()}
                     </td>
-                    <td className="px-4 py-3 text-right space-x-1.5">
-                      <button
+                    <td className="px-4 py-3 text-right space-x-1">
+                      <Button
+                        variant="ghost"
+                        size="icon"
                         onClick={() => openEditModal(client)}
-                        className="inline-flex items-center p-1.5 rounded-md hover:bg-palnadu-light-blue text-palnadu-blue transition-colors cursor-pointer"
+                        className="h-7 w-7 text-palnadu-blue hover:bg-palnadu-light-blue hover:text-palnadu-blue"
                         title="Edit Client"
                       >
                         <Edit2 className="h-3.5 w-3.5" />
-                      </button>
-                      <button
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
                         onClick={() => setDeleteTarget({ id: client.id, name: client.name })}
-                        className="inline-flex items-center p-1.5 rounded-md hover:bg-red-50 text-palnadu-error transition-colors cursor-pointer"
+                        className="h-7 w-7 text-palnadu-error hover:bg-palnadu-error/10 hover:text-palnadu-error"
                         title="Delete Client"
                       >
                         <Trash2 className="h-3.5 w-3.5" />
-                      </button>
+                      </Button>
                     </td>
                   </tr>
                 ))
@@ -224,97 +233,101 @@ export default function ClientsPage() {
       {modalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-fade-in overflow-y-auto">
           <div className="w-full max-w-md rounded-xl border border-palnadu-border bg-white shadow-xl overflow-hidden my-8 max-h-[85vh] overflow-y-auto">
-            <div className="flex items-center justify-between border-b border-palnadu-border px-5 py-3.5">
+            <div className="flex items-center justify-between border-b border-palnadu-border px-5 py-3.5 bg-palnadu-off-white/40">
               <h2 className="text-sm font-bold text-palnadu-dark">
                 {editingClient ? 'Edit Client Details' : 'Add New Client'}
               </h2>
-              <button
+              <Button
+                variant="ghost"
+                size="icon"
                 onClick={() => setModalOpen(false)}
-                className="rounded-md p-1 text-palnadu-secondary hover:text-palnadu-dark transition-colors cursor-pointer"
+                className="h-7 w-7 text-palnadu-secondary hover:text-palnadu-dark"
+                aria-label="Close dialog"
               >
                 <X className="h-4 w-4" />
-              </button>
+              </Button>
             </div>
 
-            <form onSubmit={handleSubmit} className="p-5 space-y-3.5">
-              <div className="space-y-1">
-                <label className="text-xs font-semibold text-palnadu-dark">
+            <form onSubmit={handleSubmit} className="p-5 space-y-3.5 text-xs">
+              <div className="space-y-1.5">
+                <Label htmlFor="client-name" className="text-xs font-semibold text-palnadu-dark block">
                   Client Name <span className="text-palnadu-error">*</span>
-                </label>
-                <input
+                </Label>
+                <Input
+                  id="client-name"
                   type="text"
                   required
                   placeholder="e.g. Rajesh Kumar"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full h-8 rounded-md border border-palnadu-border bg-white px-3 text-xs text-palnadu-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-palnadu-blue"
                 />
               </div>
 
-              <div className="space-y-1">
-                <label className="text-xs font-semibold text-palnadu-dark">
+              <div className="space-y-1.5">
+                <Label htmlFor="client-email" className="text-xs font-semibold text-palnadu-dark block">
                   Email Address <span className="text-palnadu-error">*</span>
-                </label>
-                <input
+                </Label>
+                <Input
+                  id="client-email"
                   type="email"
                   required
                   placeholder="e.g. rajesh@example.com"
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className="w-full h-8 rounded-md border border-palnadu-border bg-white px-3 text-xs text-palnadu-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-palnadu-blue"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1">
-                  <label className="text-xs font-semibold text-palnadu-dark">Company Name</label>
-                  <input
+                <div className="space-y-1.5">
+                  <Label htmlFor="client-company" className="text-xs font-semibold text-palnadu-dark block">Company Name</Label>
+                  <Input
+                    id="client-company"
                     type="text"
                     placeholder="e.g. Acme Corp"
                     value={formData.company}
                     onChange={(e) => setFormData({ ...formData, company: e.target.value })}
-                    className="w-full h-8 rounded-md border border-palnadu-border bg-white px-3 text-xs text-palnadu-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-palnadu-blue"
                   />
                 </div>
 
-                <div className="space-y-1">
-                  <label className="text-xs font-semibold text-palnadu-dark">Phone / WhatsApp</label>
-                  <input
+                <div className="space-y-1.5">
+                  <Label htmlFor="client-phone" className="text-xs font-semibold text-palnadu-dark block">Phone / WhatsApp</Label>
+                  <Input
+                    id="client-phone"
                     type="tel"
                     placeholder="+91 98765 43210"
                     value={formData.phone}
                     onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                    className="w-full h-8 rounded-md border border-palnadu-border bg-white px-3 text-xs text-palnadu-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-palnadu-blue"
                   />
                 </div>
               </div>
 
-              <div className="space-y-1">
-                <label className="text-xs font-semibold text-palnadu-dark">Internal Notes</label>
-                <textarea
+              <div className="space-y-1.5">
+                <Label htmlFor="client-notes" className="text-xs font-semibold text-palnadu-dark block">Internal Notes</Label>
+                <Textarea
+                  id="client-notes"
                   rows={3}
                   placeholder="Client requirements, payment terms, or engagement history..."
                   value={formData.notes}
                   onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                  className="w-full rounded-md border border-palnadu-border bg-white p-2 text-xs text-palnadu-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-palnadu-blue"
                 />
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-2 border-t border-palnadu-border/60">
-                <button
+              <div className="flex items-center justify-end gap-2 pt-3 border-t border-palnadu-border/60">
+                <Button
                   type="button"
+                  variant="outline"
+                  size="sm"
                   onClick={() => setModalOpen(false)}
-                  className="rounded-md border border-palnadu-border bg-white px-3.5 py-1.5 text-xs font-semibold text-palnadu-dark hover:bg-palnadu-off-white transition-colors cursor-pointer"
                 >
                   Cancel
-                </button>
-                <button
+                </Button>
+                <Button
                   type="submit"
+                  size="sm"
                   disabled={submitting}
-                  className="rounded-md bg-palnadu-blue px-4 py-1.5 text-xs font-semibold text-white shadow-xs hover:bg-[#12487e] transition-colors disabled:opacity-50 cursor-pointer"
                 >
                   {submitting ? 'Saving...' : editingClient ? 'Save Changes' : 'Create Client'}
-                </button>
+                </Button>
               </div>
             </form>
           </div>

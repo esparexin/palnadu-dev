@@ -6,6 +6,10 @@ import type { CaseStudy } from '@palnadu/types';
 import { Plus, Edit2, Trash2, X, Briefcase, ExternalLink } from 'lucide-react';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { useToast } from '@/components/ui/toast';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { siteConfig, slugify } from '@palnadu/config';
 import { cn } from '@/lib/utils';
 
@@ -28,7 +32,6 @@ const initialFormData: CaseStudyFormData = {
   result: '',
   status: 'DRAFT',
 };
-
 
 export default function CaseStudiesPage() {
   const { toast } = useToast();
@@ -141,13 +144,14 @@ export default function CaseStudiesPage() {
           <h1 className="text-2xl font-extrabold tracking-tight text-palnadu-dark">Case Studies</h1>
           <p className="text-xs text-palnadu-secondary mt-0.5">Manage portfolio projects and verified case studies.</p>
         </div>
-        <button
+        <Button
           onClick={openCreateModal}
-          className="inline-flex items-center justify-center gap-1.5 rounded-md bg-palnadu-blue px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-palnadu-dark-hover transition-colors cursor-pointer"
+          size="sm"
+          className="gap-1.5 font-semibold text-xs h-9"
         >
           <Plus className="h-4 w-4" />
           <span>Add Case Study</span>
-        </button>
+        </Button>
       </div>
 
       <div className="rounded-lg border border-palnadu-border bg-white shadow-sm overflow-hidden">
@@ -201,7 +205,7 @@ export default function CaseStudiesPage() {
                     <td className="px-4 py-3 text-palnadu-secondary">
                       {new Date(study.updatedAt).toLocaleDateString()}
                     </td>
-                    <td className="px-4 py-3 text-right space-x-1.5">
+                    <td className="px-4 py-3 text-right space-x-1">
                       <a
                         href={`${siteConfig.url}/work/${study.slug}`}
                         target="_blank"
@@ -211,20 +215,24 @@ export default function CaseStudiesPage() {
                       >
                         <ExternalLink className="h-3.5 w-3.5" />
                       </a>
-                      <button
+                      <Button
+                        variant="ghost"
+                        size="icon"
                         onClick={() => openEditModal(study)}
-                        className="inline-flex items-center p-1.5 rounded-md hover:bg-palnadu-light-blue text-palnadu-blue transition-colors cursor-pointer"
+                        className="h-7 w-7 text-palnadu-blue hover:bg-palnadu-light-blue hover:text-palnadu-blue"
                         title="Edit Case Study"
                       >
                         <Edit2 className="h-3.5 w-3.5" />
-                      </button>
-                      <button
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
                         onClick={() => setDeleteTarget({ id: study.id, title: study.title })}
-                        className="inline-flex items-center p-1.5 rounded-md hover:bg-palnadu-error/5 text-palnadu-error transition-colors cursor-pointer"
+                        className="h-7 w-7 text-palnadu-error hover:bg-palnadu-error/10 hover:text-palnadu-error"
                         title="Delete Case Study"
                       >
                         <Trash2 className="h-3.5 w-3.5" />
-                      </button>
+                      </Button>
                     </td>
                   </tr>
                 ))
@@ -241,21 +249,23 @@ export default function CaseStudiesPage() {
               <h2 className="text-sm font-bold text-palnadu-dark">
                 {editingStudy ? 'Edit Case Study' : 'Add New Case Study'}
               </h2>
-              <button
+              <Button
+                variant="ghost"
+                size="icon"
                 onClick={() => setModalOpen(false)}
+                className="h-7 w-7 text-palnadu-secondary hover:text-palnadu-dark"
                 aria-label="Close dialog"
-                className="rounded-md p-1 text-palnadu-secondary hover:text-palnadu-dark transition-colors cursor-pointer"
               >
                 <X className="h-4 w-4" />
-              </button>
+              </Button>
             </div>
 
             <form onSubmit={handleSubmit} className="p-5 space-y-3.5 text-xs max-h-[70vh] overflow-y-auto">
               <div className="space-y-1.5">
-                <label htmlFor="cs-title" className="text-xs font-semibold text-palnadu-dark block">
+                <Label htmlFor="cs-title" className="text-xs font-semibold text-palnadu-dark block">
                   Title <span className="text-palnadu-error">*</span>
-                </label>
-                <input
+                </Label>
+                <Input
                   id="cs-title"
                   type="text"
                   required
@@ -264,33 +274,29 @@ export default function CaseStudiesPage() {
                   placeholder="e.g. Logistics Platform Modernization"
                   value={formData.title}
                   onChange={(e) => handleTitleChange(e.target.value)}
-                  className="w-full h-9 rounded-md border border-palnadu-border bg-white px-3 text-xs text-palnadu-dark placeholder:text-palnadu-secondary/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 />
               </div>
 
               <div className="space-y-1.5">
-                <label htmlFor="cs-slug" className="text-xs font-semibold text-palnadu-dark block">
+                <Label htmlFor="cs-slug" className="text-xs font-semibold text-palnadu-dark block">
                   URL Slug <span className="text-palnadu-error">*</span>
-                </label>
-                <div className="flex items-center rounded-md border border-palnadu-border bg-palnadu-off-white/50 px-2 h-9">
-                  <span className="text-xs text-palnadu-secondary shrink-0 font-mono">/work/</span>
-                  <input
-                    id="cs-slug"
-                    type="text"
-                    required
-                    minLength={2}
-                    maxLength={200}
-                    pattern="[a-z0-9]+(-[a-z0-9]+)*"
-                    title="Lowercase letters, numbers, hyphens only"
-                    value={formData.slug}
-                    onChange={(e) => setFormData({ ...formData, slug: slugify(e.target.value) })}
-                    className="w-full bg-transparent px-1 text-xs font-mono text-palnadu-dark placeholder:text-palnadu-secondary/70 focus-visible:outline-none"
-                  />
-                </div>
+                </Label>
+                <Input
+                  id="cs-slug"
+                  type="text"
+                  required
+                  minLength={2}
+                  maxLength={200}
+                  pattern="[a-z0-9]+(-[a-z0-9]+)*"
+                  title="Lowercase letters, numbers, hyphens only"
+                  value={formData.slug}
+                  onChange={(e) => setFormData({ ...formData, slug: slugify(e.target.value) })}
+                  className="font-mono text-xs"
+                />
               </div>
 
               <div className="space-y-1.5">
-                <label htmlFor="cs-status" className="text-xs font-semibold text-palnadu-dark block">Publication Status</label>
+                <Label htmlFor="cs-status" className="text-xs font-semibold text-palnadu-dark block">Publication Status</Label>
                 <select
                   id="cs-status"
                   value={formData.status}
@@ -304,10 +310,10 @@ export default function CaseStudiesPage() {
               </div>
 
               <div className="space-y-1.5">
-                <label htmlFor="cs-problem" className="text-xs font-semibold text-palnadu-dark block">
+                <Label htmlFor="cs-problem" className="text-xs font-semibold text-palnadu-dark block">
                   Problem <span className="text-palnadu-error">*</span> <span className="font-normal text-palnadu-secondary">(min 20 chars)</span>
-                </label>
-                <textarea
+                </Label>
+                <Textarea
                   id="cs-problem"
                   rows={3}
                   required
@@ -315,15 +321,14 @@ export default function CaseStudiesPage() {
                   placeholder="What business problem did the client face?"
                   value={formData.problem}
                   onChange={(e) => setFormData({ ...formData, problem: e.target.value })}
-                  className="w-full rounded-md border border-palnadu-border bg-white p-2.5 min-h-[80px] text-xs text-palnadu-dark placeholder:text-palnadu-secondary/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 />
               </div>
 
               <div className="space-y-1.5">
-                <label htmlFor="cs-solution" className="text-xs font-semibold text-palnadu-dark block">
+                <Label htmlFor="cs-solution" className="text-xs font-semibold text-palnadu-dark block">
                   Solution <span className="text-palnadu-error">*</span> <span className="font-normal text-palnadu-secondary">(min 20 chars)</span>
-                </label>
-                <textarea
+                </Label>
+                <Textarea
                   id="cs-solution"
                   rows={3}
                   required
@@ -331,30 +336,28 @@ export default function CaseStudiesPage() {
                   placeholder="What did we build and how?"
                   value={formData.solution}
                   onChange={(e) => setFormData({ ...formData, solution: e.target.value })}
-                  className="w-full rounded-md border border-palnadu-border bg-white p-2.5 min-h-[80px] text-xs text-palnadu-dark placeholder:text-palnadu-secondary/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 />
               </div>
 
               <div className="space-y-1.5">
-                <label htmlFor="cs-technology" className="text-xs font-semibold text-palnadu-dark block">
+                <Label htmlFor="cs-technology" className="text-xs font-semibold text-palnadu-dark block">
                   Technology <span className="text-palnadu-error">*</span> <span className="font-normal text-palnadu-secondary">(comma-separated, min 1)</span>
-                </label>
-                <input
+                </Label>
+                <Input
                   id="cs-technology"
                   type="text"
                   required
                   placeholder="Next.js, TypeScript, PostgreSQL"
                   value={formData.technology}
                   onChange={(e) => setFormData({ ...formData, technology: e.target.value })}
-                  className="w-full h-9 rounded-md border border-palnadu-border bg-white px-3 text-xs text-palnadu-dark placeholder:text-palnadu-secondary/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 />
               </div>
 
               <div className="space-y-1.5">
-                <label htmlFor="cs-result" className="text-xs font-semibold text-palnadu-dark block">
+                <Label htmlFor="cs-result" className="text-xs font-semibold text-palnadu-dark block">
                   Result <span className="text-palnadu-error">*</span> <span className="font-normal text-palnadu-secondary">(min 20 chars)</span>
-                </label>
-                <textarea
+                </Label>
+                <Textarea
                   id="cs-result"
                   rows={3}
                   required
@@ -362,25 +365,25 @@ export default function CaseStudiesPage() {
                   placeholder="Measurable outcome for the client"
                   value={formData.result}
                   onChange={(e) => setFormData({ ...formData, result: e.target.value })}
-                  className="w-full rounded-md border border-palnadu-border bg-white p-2.5 min-h-[80px] text-xs text-palnadu-dark placeholder:text-palnadu-secondary/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 />
               </div>
 
               <div className="flex items-center justify-end gap-2 pt-3 border-t border-palnadu-border/60">
-                <button
+                <Button
                   type="button"
+                  variant="outline"
+                  size="sm"
                   onClick={() => setModalOpen(false)}
-                  className="rounded-md border border-palnadu-border bg-white px-3.5 py-1.5 text-xs font-semibold text-palnadu-dark hover:bg-palnadu-off-white transition-colors cursor-pointer"
                 >
                   Cancel
-                </button>
-                <button
+                </Button>
+                <Button
                   type="submit"
+                  size="sm"
                   disabled={submitting}
-                  className="rounded-md bg-palnadu-blue px-4 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-palnadu-dark-hover transition-colors disabled:opacity-50 cursor-pointer"
                 >
                   {submitting ? 'Saving...' : editingStudy ? 'Update Case Study' : 'Create Case Study'}
-                </button>
+                </Button>
               </div>
             </form>
           </div>

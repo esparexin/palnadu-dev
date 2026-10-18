@@ -6,14 +6,17 @@ import type { User, UserRole } from '@palnadu/types';
 import { Plus, X, UserCheck, UserX } from 'lucide-react';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { useToast } from '@/components/ui/toast';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
 
 const roleColors: Record<string, string> = {
-  SUPER_ADMIN: 'bg-red-100 text-red-800 border-red-200',
-  ADMIN: 'bg-purple-100 text-purple-800 border-purple-200',
-  EDITOR: 'bg-blue-100 text-blue-800 border-blue-200',
-  PROJECT_MANAGER: 'bg-emerald-100 text-emerald-800 border-emerald-200',
-  DEVELOPER: 'bg-teal-100 text-teal-800 border-teal-200',
+  SUPER_ADMIN: 'bg-palnadu-error/10 text-palnadu-error border-palnadu-error/20',
+  ADMIN: 'bg-palnadu-blue/10 text-palnadu-blue border-palnadu-blue/20',
+  EDITOR: 'bg-palnadu-light-blue text-palnadu-blue border-palnadu-blue/20',
+  PROJECT_MANAGER: 'bg-palnadu-teal/10 text-palnadu-teal border-palnadu-teal/20',
+  DEVELOPER: 'bg-palnadu-off-white text-palnadu-dark border-palnadu-border',
 };
 
 interface UserFormData {
@@ -114,17 +117,18 @@ export default function UsersPage() {
             Manage admin users, internal developers, and role-based access permissions.
           </p>
         </div>
-        <button
+        <Button
           onClick={() => setModalOpen(true)}
-          className="inline-flex items-center justify-center gap-1.5 rounded-md bg-palnadu-blue px-4 py-2 text-xs font-semibold text-white shadow-xs hover:bg-[#12487e] transition-colors cursor-pointer"
+          size="sm"
+          className="gap-1.5 font-semibold text-xs h-9"
         >
           <Plus className="h-4 w-4" />
           <span>Add User</span>
-        </button>
+        </Button>
       </div>
 
       {/* Users Table */}
-      <div className="rounded-lg border border-palnadu-border bg-white shadow-2xs overflow-hidden">
+      <div className="rounded-lg border border-palnadu-border bg-white shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-xs">
             <thead>
@@ -162,8 +166,8 @@ export default function UsersPage() {
                         value={user.role}
                         onChange={(e) => handleRoleChange(user.id, e.target.value)}
                         className={cn(
-                          'rounded-md border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider cursor-pointer focus-visible:outline-none',
-                          roleColors[user.role] || 'bg-gray-100 text-gray-800 border-gray-200'
+                          'rounded-md border px-2 py-0.5 text-xs font-bold uppercase tracking-wider cursor-pointer focus-visible:outline-none',
+                          roleColors[user.role] || 'bg-palnadu-off-white text-palnadu-dark border-palnadu-border'
                         )}
                       >
                         <option value="SUPER_ADMIN">Super Admin</option>
@@ -176,24 +180,26 @@ export default function UsersPage() {
                     <td className="px-4 py-3">
                       <span
                         className={cn(
-                          'inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider',
+                          'inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-xs font-bold uppercase tracking-wider',
                           user.isActive
-                            ? 'bg-emerald-100 text-emerald-800 border-emerald-200'
-                            : 'bg-gray-100 text-gray-600 border-gray-200'
+                            ? 'bg-palnadu-teal/10 text-palnadu-teal border-palnadu-teal/20'
+                            : 'bg-palnadu-off-white text-palnadu-secondary border-palnadu-border'
                         )}
                       >
-                        <span className={cn('h-1.5 w-1.5 rounded-full', user.isActive ? 'bg-emerald-500' : 'bg-gray-400')} />
+                        <span className={cn('h-1.5 w-1.5 rounded-full', user.isActive ? 'bg-palnadu-teal' : 'bg-palnadu-secondary')} />
                         <span>{user.isActive ? 'Active' : 'Deactivated'}</span>
                       </span>
                     </td>
                     <td className="px-4 py-3 text-right">
-                      <button
+                      <Button
+                        variant="outline"
+                        size="sm"
                         onClick={() => setStatusTarget(user)}
                         className={cn(
-                          'inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-semibold border transition-colors cursor-pointer',
+                          'h-7 px-2.5 text-xs font-semibold gap-1 transition-colors',
                           user.isActive
-                            ? 'border-palnadu-border text-palnadu-secondary hover:bg-red-50 hover:text-palnadu-error hover:border-red-200'
-                            : 'border-emerald-200 text-emerald-700 bg-emerald-50 hover:bg-emerald-100'
+                            ? 'border-palnadu-border text-palnadu-secondary hover:bg-palnadu-error/10 hover:text-palnadu-error hover:border-palnadu-error/30'
+                            : 'border-palnadu-teal/30 text-palnadu-teal bg-palnadu-teal/5 hover:bg-palnadu-teal/15'
                         )}
                       >
                         {user.isActive ? (
@@ -207,7 +213,7 @@ export default function UsersPage() {
                             <span>Activate</span>
                           </>
                         )}
-                      </button>
+                      </Button>
                     </td>
                   </tr>
                 ))
@@ -221,65 +227,69 @@ export default function UsersPage() {
       {modalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-fade-in overflow-y-auto">
           <div className="w-full max-w-md rounded-xl border border-palnadu-border bg-white shadow-xl overflow-hidden my-8 max-h-[85vh] overflow-y-auto">
-            <div className="flex items-center justify-between border-b border-palnadu-border px-5 py-3.5">
+            <div className="flex items-center justify-between border-b border-palnadu-border px-5 py-3.5 bg-palnadu-off-white/40">
               <h2 className="text-sm font-bold text-palnadu-dark">Add New Team Member</h2>
-              <button
+              <Button
+                variant="ghost"
+                size="icon"
                 onClick={() => setModalOpen(false)}
-                className="rounded-md p-1 text-palnadu-secondary hover:text-palnadu-dark transition-colors cursor-pointer"
+                className="h-7 w-7 text-palnadu-secondary hover:text-palnadu-dark"
+                aria-label="Close dialog"
               >
                 <X className="h-4 w-4" />
-              </button>
+              </Button>
             </div>
 
-            <form onSubmit={handleCreateUser} className="p-5 space-y-3.5">
-              <div className="space-y-1">
-                <label className="text-xs font-semibold text-palnadu-dark">
+            <form onSubmit={handleCreateUser} className="p-5 space-y-3.5 text-xs">
+              <div className="space-y-1.5">
+                <Label htmlFor="user-name" className="text-xs font-semibold text-palnadu-dark block">
                   Full Name <span className="text-palnadu-error">*</span>
-                </label>
-                <input
+                </Label>
+                <Input
+                  id="user-name"
                   type="text"
                   required
                   placeholder="e.g. Anand Varma"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full h-8 rounded-md border border-palnadu-border bg-white px-3 text-xs text-palnadu-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-palnadu-blue"
                 />
               </div>
 
-              <div className="space-y-1">
-                <label className="text-xs font-semibold text-palnadu-dark">
+              <div className="space-y-1.5">
+                <Label htmlFor="user-email" className="text-xs font-semibold text-palnadu-dark block">
                   Email Address <span className="text-palnadu-error">*</span>
-                </label>
-                <input
+                </Label>
+                <Input
+                  id="user-email"
                   type="email"
                   required
                   placeholder="e.g. anand@palnadu.dev"
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className="w-full h-8 rounded-md border border-palnadu-border bg-white px-3 text-xs text-palnadu-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-palnadu-blue"
                 />
               </div>
 
-              <div className="space-y-1">
-                <label className="text-xs font-semibold text-palnadu-dark">
+              <div className="space-y-1.5">
+                <Label htmlFor="user-pass" className="text-xs font-semibold text-palnadu-dark block">
                   Initial Password <span className="text-palnadu-error">*</span>
-                </label>
-                <input
+                </Label>
+                <Input
+                  id="user-pass"
                   type="password"
                   required
                   placeholder="Minimum 8 characters"
                   value={formData.password}
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  className="w-full h-8 rounded-md border border-palnadu-border bg-white px-3 text-xs text-palnadu-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-palnadu-blue"
                 />
               </div>
 
-              <div className="space-y-1">
-                <label className="text-xs font-semibold text-palnadu-dark">Access Role</label>
+              <div className="space-y-1.5">
+                <Label htmlFor="user-role" className="text-xs font-semibold text-palnadu-dark block">Access Role</Label>
                 <select
+                  id="user-role"
                   value={formData.role}
                   onChange={(e) => setFormData({ ...formData, role: e.target.value as UserRole })}
-                  className="w-full h-8 rounded-md border border-palnadu-border bg-white px-3 text-xs text-palnadu-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-palnadu-blue cursor-pointer"
+                  className="w-full h-9 rounded-md border border-palnadu-border bg-white px-3 text-xs text-palnadu-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring cursor-pointer"
                 >
                   <option value="DEVELOPER">Developer (Read & dev tasks)</option>
                   <option value="EDITOR">Editor (Blog & case studies)</option>
@@ -289,21 +299,22 @@ export default function UsersPage() {
                 </select>
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-2 border-t border-palnadu-border/60">
-                <button
+              <div className="flex items-center justify-end gap-2 pt-3 border-t border-palnadu-border/60">
+                <Button
                   type="button"
+                  variant="outline"
+                  size="sm"
                   onClick={() => setModalOpen(false)}
-                  className="rounded-md border border-palnadu-border bg-white px-3.5 py-1.5 text-xs font-semibold text-palnadu-dark hover:bg-palnadu-off-white transition-colors cursor-pointer"
                 >
                   Cancel
-                </button>
-                <button
+                </Button>
+                <Button
                   type="submit"
+                  size="sm"
                   disabled={submitting}
-                  className="rounded-md bg-palnadu-blue px-4 py-1.5 text-xs font-semibold text-white shadow-xs hover:bg-[#12487e] transition-colors disabled:opacity-50 cursor-pointer"
                 >
                   {submitting ? 'Adding...' : 'Create Account'}
-                </button>
+                </Button>
               </div>
             </form>
           </div>

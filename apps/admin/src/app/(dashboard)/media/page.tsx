@@ -5,6 +5,7 @@ import { api } from '@/lib/api';
 import { UploadCloud, Image as ImageIcon, ExternalLink, Trash2, Check, Copy } from 'lucide-react';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { useToast } from '@/components/ui/toast';
+import { Button } from '@/components/ui/button';
 
 interface MediaItem {
   id: string;
@@ -108,24 +109,24 @@ export default function MediaPage() {
           className="hidden"
         />
 
-        <button
+        <Button
           onClick={() => fileInputRef.current?.click()}
           disabled={uploading}
-          className="inline-flex items-center justify-center gap-2 h-9 rounded-md bg-palnadu-blue px-4 text-xs font-semibold text-white hover:bg-[#12487e] shadow-xs cursor-pointer transition-colors disabled:opacity-50 shrink-0"
+          className="gap-2 shrink-0"
         >
           <UploadCloud className="h-4 w-4" />
           <span>{uploading ? 'Uploading to Cloudinary...' : 'Upload Image'}</span>
-        </button>
+        </Button>
       </div>
 
       {errorNotice && (
-        <div className="p-3.5 rounded-lg bg-red-50 border border-palnadu-error/40 text-xs text-palnadu-error font-medium">
+        <div className="p-3.5 rounded-lg bg-palnadu-error/10 border border-palnadu-error/20 text-xs text-palnadu-error font-medium">
           {errorNotice}
         </div>
       )}
 
       {/* Cloudinary Info Banner if no media */}
-      <div className="rounded-lg border border-palnadu-border bg-white shadow-2xs overflow-hidden">
+      <div className="rounded-lg border border-palnadu-border bg-white shadow-sm overflow-hidden">
         {loading ? (
           <div className="p-10 text-center text-xs text-palnadu-secondary">Loading media assets...</div>
         ) : mediaItems.length === 0 ? (
@@ -177,7 +178,7 @@ export default function MediaPage() {
                     </td>
 
                     {/* Type */}
-                    <td className="px-4 py-2.5 text-palnadu-secondary font-mono text-[11px]">
+                    <td className="px-4 py-2.5 text-palnadu-secondary font-mono text-xs">
                       {item.mimeType}
                     </td>
 
@@ -193,15 +194,17 @@ export default function MediaPage() {
 
                     {/* Actions */}
                     <td className="px-4 py-2.5 text-right space-x-2">
-                      <button
+                      <Button
+                        variant="ghost"
+                        size="sm"
                         onClick={() => copyToClipboard(item.id, item.url)}
                         title="Copy CDN URL"
-                        className="inline-flex items-center gap-1 text-[11px] font-semibold text-palnadu-blue hover:underline cursor-pointer"
+                        className="h-7 px-2 text-xs font-semibold text-palnadu-blue hover:bg-palnadu-light-blue"
                       >
                         {copiedId === item.id ? (
                           <>
-                            <Check className="h-3 w-3 text-emerald-600" />
-                            <span className="text-emerald-600">Copied</span>
+                            <Check className="h-3 w-3 text-palnadu-teal" />
+                            <span className="text-palnadu-teal">Copied</span>
                           </>
                         ) : (
                           <>
@@ -209,25 +212,33 @@ export default function MediaPage() {
                             <span>Copy URL</span>
                           </>
                         )}
-                      </button>
+                      </Button>
 
-                      <a
-                        href={item.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        asChild
+                        className="h-7 w-7 text-palnadu-secondary hover:text-palnadu-dark"
                         title="Open in new tab"
-                        className="inline-flex items-center text-palnadu-secondary hover:text-palnadu-dark p-1"
                       >
-                        <ExternalLink className="h-3.5 w-3.5" />
-                      </a>
+                        <a
+                          href={item.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          <ExternalLink className="h-3.5 w-3.5" />
+                        </a>
+                      </Button>
 
-                      <button
+                      <Button
+                        variant="ghost"
+                        size="icon"
                         onClick={() => setDeleteTarget({ id: item.id, name: item.originalName || item.filename })}
                         title="Delete asset"
-                        className="inline-flex items-center text-red-500 hover:text-red-700 p-1 cursor-pointer"
+                        className="h-7 w-7 text-palnadu-error hover:bg-palnadu-error/10"
                       >
                         <Trash2 className="h-3.5 w-3.5" />
-                      </button>
+                      </Button>
                     </td>
                   </tr>
                 ))}
