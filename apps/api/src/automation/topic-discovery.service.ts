@@ -6,8 +6,8 @@ import {
   ReferenceSourceId,
   SourceStatus,
   REFERENCE_SOURCE_URLS,
+  REFERENCE_SOURCES,
 } from './seo-sources';
-import { REFERENCE_SOURCES } from './seo-sources';
 
 /**
  * Website intelligence + reference-source discovery.

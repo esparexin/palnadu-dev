@@ -51,6 +51,7 @@ export interface GeneratedBlogDraft {
   tags: string[];
   categorySlug: string;
   readingMinutes: number;
+  llmProvider?: string;
 }
 
 @Injectable()
@@ -247,18 +248,18 @@ Return strictly a valid JSON object matching this schema:
         searchIntent: str(llmDraft.searchIntent) || s.searchIntent,
         h2Headings: arr(llmDraft.h2Headings).length ? arr(llmDraft.h2Headings) : extractHeadings(cleanContent, 2),
         h3Headings: arr(llmDraft.h3Headings).length ? arr(llmDraft.h3Headings) : extractHeadings(cleanContent, 3),
-        internalLinks: objArr(llmDraft.internalLinks, ['anchor', 'url']).length
-          ? objArr(llmDraft.internalLinks, ['anchor', 'url'])
+        internalLinks: objArr<{ anchor: string; url: string }>(llmDraft.internalLinks, ['anchor', 'url']).length
+          ? objArr<{ anchor: string; url: string }>(llmDraft.internalLinks, ['anchor', 'url'])
           : s.internalLinks,
-        externalReferences: objArr(llmDraft.externalReferences, ['title', 'url']),
-        imageSuggestions: objArr(llmDraft.imageSuggestions, ['alt', 'caption']),
-        faq: objArr(llmDraft.faq, ['q', 'a']),
+        externalReferences: objArr<{ title: string; url: string }>(llmDraft.externalReferences, ['title', 'url']),
+        imageSuggestions: objArr<{ alt: string; caption: string }>(llmDraft.imageSuggestions, ['alt', 'caption']),
+        faq: objArr<{ q: string; a: string }>(llmDraft.faq, ['q', 'a']),
         tags: arr(llmDraft.tags).length ? arr(llmDraft.tags) : s.tags,
         categorySlug,
         readingMinutes: Math.max(1, Math.ceil(words / 220)),
         // Provenance for the audit trail: which provider actually wrote this.
         llmProvider: provider,
-      } as GeneratedBlogDraft & { llmProvider: string };
+      };
     }
 
     // High-quality structured fallback engine. English-only by construction:
@@ -533,6 +534,6 @@ Explore our [Web Application Development Services](/services/web-development), l
       tags: s.tags,
       readingMinutes: Math.ceil(content.split(/\s+/).length / 220),
       llmProvider: 'fallback:structured-template',
-    } as GeneratedBlogDraft & { llmProvider: string };
+    };
   }
 }
