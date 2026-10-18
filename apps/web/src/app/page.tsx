@@ -94,53 +94,6 @@ function JsonLd() {
   );
 }
 
-const palnaduHomeSections = [
-  {
-    id: "hero",
-    badge: "Problem-First Studio",
-    title: "Start With The Problem.",
-    subtitle: "We Build The Solution.",
-    description: "Palnadu.dev turns real-world challenges into practical, production-ready software. We validate ideas, eliminate manual business bottlenecks, and engineer what works.",
-    align: "left" as const,
-    actions: [
-      { label: "Discuss Your Idea", variant: "primary" as const, href: "/contact" },
-      { label: "Explore Services", variant: "secondary" as const, href: "/services" },
-    ],
-  },
-  {
-    id: "methodology",
-    badge: "Standards",
-    title: "Truth Before Code",
-    description: "Before writing software, we diagnose where work gets stuck. We look at API dependencies, scalability risks, and realistic costs upfront. If a simple existing tool solves your problem, we tell you directly.",
-    align: "center" as const,
-  },
-  {
-    id: "capabilities",
-    badge: "Capabilities",
-    title: "Practical Engineering",
-    subtitle: "Built Around Your Operations",
-    description: "Software tailored to your actual business operations — eliminating messy spreadsheets, manual paper logs, and rigid off-the-shelf software.",
-    align: "left" as const,
-    features: [
-      { title: "Web Applications", description: "Fast, reliable SaaS, internal management portals, and customer dashboards." },
-      { title: "Mobile Applications", description: "iOS and Android apps designed for everyday field and business workflows." },
-      { title: "Business Automation", description: "Connect orders, inventory, notifications, and repetitive manual tasks." },
-    ],
-  },
-  {
-    id: "cta",
-    badge: "Get Started",
-    title: "Ready To Build What Works?",
-    subtitle: "Direct Access To Engineers",
-    description: "Work directly with the software developers building your solution. Fixed price boundaries, honest engineering advice, and 100% code ownership.",
-    align: "center" as const,
-    actions: [
-      { label: "Tell Us What You Want To Build", variant: "primary" as const, href: "/contact" },
-      { label: "View All Services", variant: "secondary" as const, href: "/services" },
-    ],
-  },
-];
-
 export default function HomePage() {
   return (
     <>

@@ -47,7 +47,7 @@ export interface ContactSectionProps {
    * Callback function when the form is submitted.
    * @param data The form data.
    */
-  onSubmit?: (data: any) => void;
+  onSubmit?: (_data: any) => void;
   className?: string;
 }
 

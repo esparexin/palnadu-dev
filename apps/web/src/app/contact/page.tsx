@@ -1,8 +1,8 @@
 import type { Metadata } from 'next';
-import Link from 'next/link';
 import { siteConfig, getBreadcrumbSchema } from '@palnadu/config';
 import { ContactSection } from '@/components/ui/contact';
-import { ShieldCheck, Clock, Users, ArrowRight, MessageSquare, Phone, Mail } from 'lucide-react';
+import { ShieldCheck, Clock, Users, Phone, Mail } from 'lucide-react';
+
 
 export const metadata: Metadata = {
   title: 'Contact Our Software Engineers',

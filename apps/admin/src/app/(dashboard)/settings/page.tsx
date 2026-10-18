@@ -9,11 +9,7 @@ import {
   Trash2,
   CheckCircle2,
   AlertCircle,
-  Image as ImageIcon,
   Check,
-  X,
-  Info,
-  Globe,
   LayoutTemplate,
   Bookmark,
 } from 'lucide-react';
@@ -51,7 +47,7 @@ export default function SettingsPage() {
     updatedAt: '',
   });
 
-  const [loading, setLoading] = useState(true);
+  const [_loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [removingType, setRemovingType] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<{ type: 'header' | 'footer' | 'favicon' | 'ogImage'; label: string } | null>(null);

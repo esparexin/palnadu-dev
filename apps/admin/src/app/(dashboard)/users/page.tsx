@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
 import type { User, UserRole } from '@palnadu/types';
-import { Plus, X, UserCheck, UserX, Shield, Edit2 } from 'lucide-react';
+import { Plus, X, UserCheck, UserX } from 'lucide-react';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { useToast } from '@/components/ui/toast';
 import { cn } from '@/lib/utils';

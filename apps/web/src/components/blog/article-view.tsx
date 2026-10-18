@@ -3,7 +3,6 @@ import {
   siteConfig,
   imagePresets,
   getBreadcrumbSchema,
-  getOrganizationRef,
   blogPostPath,
   type BlogLocale,
 } from '@palnadu/config';

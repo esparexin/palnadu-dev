@@ -98,14 +98,6 @@ const SYNONYMS: Record<string, string> = {
   store: 'ecommerce', shop: 'ecommerce', online: 'ecommerce',
 };
 
-/**
- * Locations that disambiguate a topic. Order matters only for readability.
- */
-const LOCATION_HINTS = [
-  'guntur', 'palnadu', 'narasaraopet', 'chilakaluripet', 'vinukonda', 'sattenapalli',
-  'macherla', 'piduguralla', 'tenali', 'mangalagiri', 'bapatla', 'amaravati', 'vijayawada',
-  'rajahmundry', 'kakinada', 'andhra pradesh', 'india', 'coastal andhra', 'telangana',
-];
 
 /**
  * Service/entity head terms. Recognised so a topic key reads as

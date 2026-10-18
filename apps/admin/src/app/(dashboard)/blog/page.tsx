@@ -294,7 +294,7 @@ export default function BlogAdminPage() {
       if (res.success) {
         setDiscoveredKeywords(res.data || []);
       }
-    } catch (err) {
+    } catch {
       toast.error('Failed to discover keywords');
     } finally {
       setSearchingKeywords(false);
@@ -309,7 +309,7 @@ export default function BlogAdminPage() {
       if (res.success) {
         setAutomationStatus(res.data);
       }
-    } catch (err) {
+    } catch {
       toast.error('Failed to fetch automation queue status');
     } finally {
       setLoadingStatus(false);

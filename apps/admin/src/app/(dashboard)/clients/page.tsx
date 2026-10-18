@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
 import type { Client } from '@palnadu/types';
-import { Plus, Search, Edit2, Trash2, X, Building, Mail, Phone } from 'lucide-react';
+import { Plus, Search, Edit2, Trash2, X, Building } from 'lucide-react';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { useToast } from '@/components/ui/toast';
 

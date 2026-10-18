@@ -5,7 +5,8 @@ type Props = {
 };
 
 export default async function IndustryDetailPage({ params }: Props) {
-  const { slug } = await params;
+  await params;
   // Reserved future-ready route
   notFound();
 }
+

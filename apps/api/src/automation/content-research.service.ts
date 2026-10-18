@@ -2,9 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
   SeoStrategy,
-  SearchIntent,
   INTENT_GUIDANCE,
-  VALID_INTENTS,
   defaultStrategy,
   str,
   arr,
@@ -279,7 +277,7 @@ Return strictly a valid JSON object matching this schema:
   private async callLLM(
     systemPrompt: string,
     userPrompt: string,
-    strategy: SeoStrategy,
+    _strategy: SeoStrategy,
   ): Promise<{ draft: any; provider: string } | null> {
     // 1. Try Google Gemini if configured (with automatic model resilience fallback)
     if (this.geminiApiKey) {

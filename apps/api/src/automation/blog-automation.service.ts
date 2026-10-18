@@ -12,7 +12,6 @@ import { canonicalizeTopic, SearchIntent, toTopicKey } from './topic-identity';
 import {
   allocateQuota,
   readBilingualConfig,
-  BILINGUAL_QUOTA_DEFAULT,
   type BilingualQuota,
   type BilingualConfig,
 } from './bilingual-quota';
@@ -769,7 +768,7 @@ export class BlogAutomationService {
       language: BlogLanguage;
     },
     forcePublish = false,
-    workerId = 'manual',
+    _workerId = 'manual',
   ): Promise<GenerationResult> {
     const started = Date.now();
     const { topicKey, topic, categorySlug, language } = topicRow;

@@ -104,7 +104,7 @@ export function BlogIndexView({
   meta,
   search,
   category,
-  currentPage,
+  currentPage: _currentPage,
   isArchiveView,
 }: BlogIndexViewProps) {
   const basePath = articleBasePath(locale);

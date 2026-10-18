@@ -181,7 +181,6 @@ export class BlogService {
       );
     }
 
-    const languages = posts.map((p) => p.language as SupportedLanguage);
     const seen = new Set<SupportedLanguage>();
     for (const p of posts) {
       const lang = p.language as SupportedLanguage;
