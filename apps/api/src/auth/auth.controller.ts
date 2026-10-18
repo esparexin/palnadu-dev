@@ -1,23 +1,16 @@
-import { Controller, Post, Body, Get, UseGuards, Request, BadRequestException } from '@nestjs/common';
+import { Controller, Post, Body, Get, UseGuards, Request } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { JwtAuthGuard } from './jwt-auth.guard';
-import { loginSchema } from '@palnadu/validation';
+import { loginSchema, type LoginInput } from '@palnadu/validation';
+import { ZodValidationPipe } from '../common/pipes/zod-validation.pipe';
 
 @Controller('auth')
 export class AuthController {
   constructor(private authService: AuthService) {}
 
   @Post('login')
-  async login(@Body() body: unknown) {
-    const parseResult = loginSchema.safeParse(body);
-    if (!parseResult.success) {
-      const errorMsg = parseResult.error.issues
-        .map((i: any) => `${i.path.join('.')}: ${i.message}`)
-        .join(', ');
-      throw new BadRequestException(errorMsg);
-    }
-
-    const { email, password } = parseResult.data;
+  async login(@Body(new ZodValidationPipe(loginSchema)) body: LoginInput) {
+    const { email, password } = body;
     const result = await this.authService.login(email, password);
     return { success: true, data: result };
   }

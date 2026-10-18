@@ -140,6 +140,15 @@ export const createUserSchema = z.object({
 
 export type CreateUserInput = z.infer<typeof createUserSchema>;
 
+export const updateUserSchema = z.object({
+  name: z.string().trim().min(2).max(100).optional(),
+  role: z.enum(userRoleValues).optional(),
+  isActive: z.boolean().optional(),
+  password: z.string().min(8).max(128).optional(),
+});
+
+export type UpdateUserInput = z.infer<typeof updateUserSchema>;
+
 // ─── Service ──────────────────────────────────────────────────
 
 export const publishStatusValues = ['DRAFT', 'PUBLISHED', 'ARCHIVED'] as const;

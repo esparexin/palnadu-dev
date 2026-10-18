@@ -14,12 +14,13 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
-import { createLeadSchema, updateLeadSchema } from '@palnadu/validation';
+import { createLeadSchema, updateLeadSchema, type CreateLeadInput } from '@palnadu/validation';
 import { LeadsService } from './leads.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { LeadStatus } from '@prisma/client';
+import { ZodValidationPipe } from '../common/pipes/zod-validation.pipe';
 
 @Controller()
 export class LeadsController {
@@ -29,16 +30,7 @@ export class LeadsController {
   @Post('leads')
   @Throttle({ default: { ttl: 60000, limit: 5 } })
   @HttpCode(HttpStatus.CREATED)
-  async createLead(@Body() body: unknown) {
-    const parseResult = createLeadSchema.safeParse(body);
-    if (!parseResult.success) {
-      const errorMsg = parseResult.error.issues
-        .map((i: any) => `${i.path.join('.')}: ${i.message}`)
-        .join(', ');
-      throw new BadRequestException(errorMsg);
-    }
-
-    const validData = parseResult.data;
+  async createLead(@Body(new ZodValidationPipe(createLeadSchema)) validData: CreateLeadInput) {
     const lead = await this.leadsService.create({
       name: validData.name,
       email: validData.email,
