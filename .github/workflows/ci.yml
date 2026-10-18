@@ -1,4 +1,4 @@
-name: CI
+name: CI Quality Gates
 
 on:
   push:
@@ -7,9 +7,31 @@ on:
     branches: [main]
 
 jobs:
-  build-and-test:
+  pre-flight:
+    name: Structure, Secrets & Circular Dependency Gates
     runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Gate 1 - Monorepo Structure & Organization
+        run: node scripts/validate-structure.mjs
+
+      - name: Gate 7 - Circular Dependency Check
+        run: node scripts/check-circular.mjs
+
+      - name: Gate 12 - Secret Scanning & Credential Sanitization
+        run: node scripts/scan-secrets.mjs
+
+  build-and-verify:
+    name: Build, Contracts, Lint, Test & Smoke Gates
+    runs-on: ubuntu-latest
+    needs: pre-flight
     env:
       DATABASE_URL: "mongodb://localhost:27017/palnadu_ci"
       NEXT_PUBLIC_API_URL: "http://localhost:4000"
@@ -35,11 +57,17 @@ jobs:
       - name: Generate Prisma client
         run: pnpm db:generate
 
-      - name: Build packages and apps
-        run: pnpm db:generate && npx turbo build --concurrency=2
+      - name: Gate 10 - Production Build (All Packages & Apps)
+        run: pnpm build
 
-      - name: Lint
+      - name: Gate 9 - Contract & Shared Package Synchronization
+        run: node scripts/validate-contracts.mjs
+
+      - name: Gate 3 - Modern Linting & Static Code Analysis
         run: pnpm lint
 
-      - name: Run tests
+      - name: Gate 8 - Comprehensive Unit & Integration Test Suites
         run: pnpm test
+
+      - name: Gate 13 - Route Generation & Smoke Test Gate
+        run: node scripts/validate-routes.mjs
