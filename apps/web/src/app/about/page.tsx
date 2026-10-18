@@ -47,13 +47,13 @@ export default function AboutPage() {
       {/* Lamp Hero Showcase */}
       <LampContainer className="min-h-[65vh] sm:min-h-[75vh]">
         <div className="mx-auto max-w-2xl space-y-3.5 text-center">
-          <p className="text-xs font-semibold uppercase tracking-wider text-cyan-400">
+          <p className="text-xs font-semibold uppercase tracking-wider text-palnadu-teal">
             About Palnadu.dev
           </p>
-          <h1 className="bg-gradient-to-br from-white via-slate-100 to-slate-400 py-1 bg-clip-text text-2xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-transparent leading-tight">
+          <h1 className="bg-gradient-to-br from-white via-palnadu-off-white to-palnadu-secondary py-1 bg-clip-text text-2xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-transparent leading-tight">
             Software engineers, not commission salespeople.
           </h1>
-          <p className="mx-auto max-w-lg text-sm sm:text-base text-slate-300 leading-relaxed font-normal">
+          <p className="mx-auto max-w-lg text-sm sm:text-base text-palnadu-light-blue/80 leading-relaxed font-normal">
             Built by engineers from Palnadu with 8+ years of experience turning real-world problems into practical software.
           </p>
         </div>

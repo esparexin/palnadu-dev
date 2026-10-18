@@ -117,7 +117,7 @@ export default async function CaseStudyPage({ params }: Props) {
                 Verified Case Study
               </span>
               {study.client?.company && (
-                <span className="text-gray-300 flex items-center gap-1">
+                <span className="text-palnadu-light-blue/80 flex items-center gap-1">
                   <Building className="h-3.5 w-3.5" />
                   <span>{study.client.company}</span>
                 </span>
@@ -129,7 +129,7 @@ export default async function CaseStudyPage({ params }: Props) {
             </h1>
 
             {study.result && (
-              <p className="text-sm sm:text-base text-gray-300 leading-relaxed max-w-2xl">
+              <p className="text-sm sm:text-base text-palnadu-light-blue/80 leading-relaxed max-w-2xl">
                 {study.result}
               </p>
             )}
@@ -137,7 +137,7 @@ export default async function CaseStudyPage({ params }: Props) {
             {/* Tech Stack Chips */}
             {study.technology && study.technology.length > 0 && (
               <div className="pt-3 flex flex-wrap items-center gap-1.5">
-                <span className="text-xs font-mono text-gray-400 mr-1 flex items-center gap-1">
+                <span className="text-xs font-mono text-palnadu-light-blue/60 mr-1 flex items-center gap-1">
                   <Cpu className="h-3.5 w-3.5 text-palnadu-teal" />
                   <span>Tech Stack:</span>
                 </span>

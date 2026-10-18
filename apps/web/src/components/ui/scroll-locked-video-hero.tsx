@@ -254,7 +254,7 @@ export default function MetroHero({
           }}
         >
           <div className="max-w-4xl mx-auto space-y-3 sm:space-y-4">
-            <p className="text-xs sm:text-sm font-semibold uppercase tracking-widest text-cyan-300">
+            <p className="text-xs sm:text-sm font-semibold uppercase tracking-widest text-palnadu-teal">
               {scrollHint}
             </p>
             <h1

@@ -128,8 +128,8 @@ export default async function LocationDetailPage({ params }: Props) {
                 <ArrowLeft className="h-3 w-3" />
                 <span>All Locations</span>
               </Link>
-              <span className="text-gray-400">•</span>
-              <span className="inline-flex items-center gap-1 text-xs font-mono uppercase tracking-wider text-gray-300">
+              <span className="text-palnadu-light-blue/60">•</span>
+              <span className="inline-flex items-center gap-1 text-xs font-mono uppercase tracking-wider text-palnadu-light-blue/80">
                 <MapPin className="h-3 w-3 text-palnadu-teal" />
                 <span>{location.district}</span>
               </span>
