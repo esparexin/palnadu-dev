@@ -83,4 +83,82 @@ describe('ZodValidationPipe', () => {
       },
     );
   });
+
+  describe('Automation Schemas', () => {
+    it('validates automationGenerateSchema with defaults and bounds', async () => {
+      const { automationGenerateSchema } = await import('@palnadu/validation');
+      const pipe = new ZodValidationPipe(automationGenerateSchema);
+
+      const parsed = pipe.transform({});
+      assert.equal(parsed.forcePublish, false);
+      assert.equal(parsed.batchCount, 1);
+      assert.equal(parsed.language, 'en');
+
+      assert.throws(
+        () => pipe.transform({ batchCount: 0 }),
+        (err) => err.name === 'BadRequestException',
+      );
+      assert.throws(
+        () => pipe.transform({ batchCount: 100 }),
+        (err) => err.name === 'BadRequestException',
+      );
+      assert.throws(
+        () => pipe.transform({ language: 'fr' }),
+        (err) => err.name === 'BadRequestException',
+      );
+    });
+
+    it('validates automationSettingsSchema strictly', async () => {
+      const { automationSettingsSchema } = await import('@palnadu/validation');
+      const pipe = new ZodValidationPipe(automationSettingsSchema);
+
+      assert.deepEqual(pipe.transform({ autoPublish: true }), { autoPublish: true });
+      assert.deepEqual(pipe.transform({ autoPublish: false }), { autoPublish: false });
+
+      assert.throws(
+        () => pipe.transform({ autoPublish: 'true' }),
+        (err) => err.name === 'BadRequestException',
+      );
+    });
+
+    it('validates automationBilingualSchema refinement and quota constraints', async () => {
+      const { automationBilingualSchema } = await import('@palnadu/validation');
+      const pipe = new ZodValidationPipe(automationBilingualSchema);
+
+      assert.deepEqual(pipe.transform({ enabled: true, te: 3, en: 2 }), {
+        enabled: true,
+        te: 3,
+        en: 2,
+      });
+
+      // Refusal when completely empty
+      assert.throws(
+        () => pipe.transform({}),
+        (err) => err.name === 'BadRequestException',
+      );
+
+      // Refusal on negative quota
+      assert.throws(
+        () => pipe.transform({ te: -1 }),
+        (err) => err.name === 'BadRequestException',
+      );
+    });
+
+    it('validates automationDiscoverSchema bounds', async () => {
+      const { automationDiscoverSchema } = await import('@palnadu/validation');
+      const pipe = new ZodValidationPipe(automationDiscoverSchema);
+
+      assert.equal(pipe.transform({}).limit, 40);
+      assert.equal(pipe.transform({ limit: 25 }).limit, 25);
+
+      assert.throws(
+        () => pipe.transform({ limit: 0 }),
+        (err) => err.name === 'BadRequestException',
+      );
+      assert.throws(
+        () => pipe.transform({ limit: 200 }),
+        (err) => err.name === 'BadRequestException',
+      );
+    });
+  });
 });

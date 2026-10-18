@@ -248,6 +248,44 @@ export const createBlogCategorySchema = z.object({
 
 export type CreateBlogCategoryInput = z.infer<typeof createBlogCategorySchema>;
 
+// ─── Blog Automation & Topic Queue ────────────────────────────
+
+export const automationGenerateSchema = z.object({
+  topic: z.string().trim().min(3).max(300).optional(),
+  categorySlug: z.string().trim().min(2).max(100).optional(),
+  targetLocation: z.string().trim().max(200).optional(),
+  forcePublish: z.boolean().optional().default(false),
+  batchCount: z.number().int().min(1).max(50).optional().default(1),
+  language: z.enum(blogLanguageValues).optional().default('en'),
+});
+
+export type AutomationGenerateInput = z.infer<typeof automationGenerateSchema>;
+
+export const automationSettingsSchema = z.object({
+  autoPublish: z.boolean({ required_error: 'autoPublish boolean is required' }),
+});
+
+export type AutomationSettingsInput = z.infer<typeof automationSettingsSchema>;
+
+export const automationDiscoverSchema = z.object({
+  limit: z.number().int().min(1).max(100).optional().default(40),
+});
+
+export type AutomationDiscoverInput = z.infer<typeof automationDiscoverSchema>;
+
+export const automationBilingualSchema = z
+  .object({
+    enabled: z.boolean().optional(),
+    te: z.number().int().min(0).max(50).optional(),
+    en: z.number().int().min(0).max(50).optional(),
+  })
+  .refine(
+    (data) => data.enabled !== undefined || data.te !== undefined || data.en !== undefined,
+    { message: 'Provide at least one of: enabled, te, en.' },
+  );
+
+export type AutomationBilingualInput = z.infer<typeof automationBilingualSchema>;
+
 // ─── Client ───────────────────────────────────────────────────
 
 export const createClientSchema = z.object({
