@@ -31,7 +31,7 @@ function renderInline(text: string): React.ReactNode {
           <Link
             key={idx}
             href={match[2]}
-            className="text-palnadu-blue underline underline-offset-2 font-semibold hover:text-[#12487e] transition-colors"
+            className="text-palnadu-blue underline underline-offset-2 font-semibold hover:text-palnadu-dark-hover transition-colors"
           >
             {match[1]}
           </Link>
@@ -40,7 +40,7 @@ function renderInline(text: string): React.ReactNode {
     }
     if (part.startsWith('`') && part.endsWith('`')) {
       return (
-        <code key={idx} className="px-1.5 py-0.5 rounded bg-gray-100 text-xs font-mono text-palnadu-blue font-semibold">
+        <code key={idx} className="px-1.5 py-0.5 rounded bg-palnadu-off-white text-xs font-mono text-palnadu-blue font-semibold">
           {part.slice(1, -1)}
         </code>
       );
@@ -131,7 +131,7 @@ export function ArticleView({ post, locale }: ArticleViewProps) {
             {post.category?.name && (
               <Link
                 href={`${basePath}?category=${post.category.slug}`}
-                className="inline-flex items-center gap-1 text-[11px] font-semibold text-palnadu-teal hover:underline"
+                className="inline-flex items-center gap-1 text-xs font-semibold text-palnadu-teal hover:underline"
               >
                 <Tag className="h-3 w-3" />
                 <span>{post.category.name}</span>
@@ -177,7 +177,7 @@ export function ArticleView({ post, locale }: ArticleViewProps) {
 
           {/* Cover Image with Fallback */}
           {post.coverImage ? (
-            <div className="my-8 rounded-xl overflow-hidden border border-palnadu-border shadow-xs bg-palnadu-off-white">
+            <div className="my-8 rounded-xl overflow-hidden border border-palnadu-border shadow-sm bg-palnadu-off-white">
               <img
                 src={imagePresets.blogHero(post.coverImage)}
                 alt={post.title}
@@ -185,7 +185,7 @@ export function ArticleView({ post, locale }: ArticleViewProps) {
               />
             </div>
           ) : (
-            <div className="my-8 rounded-xl overflow-hidden border border-palnadu-border/60 bg-gradient-to-br from-palnadu-dark via-[#083b6f] to-palnadu-blue p-8 sm:p-12 text-white shadow-xs">
+            <div className="my-8 rounded-xl overflow-hidden border border-palnadu-border/60 bg-gradient-to-br from-palnadu-dark via-palnadu-dark-hover to-palnadu-blue p-8 sm:p-12 text-white shadow-sm">
               <span className="text-xs font-mono font-bold uppercase tracking-widest text-palnadu-teal block mb-2">
                 {post.category?.name || 'Engineering Insight'}
               </span>
@@ -196,7 +196,7 @@ export function ArticleView({ post, locale }: ArticleViewProps) {
           )}
 
           {/* Article Body Content */}
-          <div className="py-8 space-y-6 text-[15px] sm:text-base text-palnadu-body leading-relaxed">
+          <div className="py-8 space-y-6 text-sm sm:text-base text-palnadu-body leading-relaxed">
             {paragraphs.map((para: string, idx: number) => {
               const trimmed = para.trim();
 
@@ -211,14 +211,14 @@ export function ArticleView({ post, locale }: ArticleViewProps) {
                 const [, alt, url, rawCaption] = imageMatch;
                 const caption = rawCaption ? rawCaption.replace(/\*/g, '').trim() : '';
                 return (
-                  <figure key={idx} className="my-8 rounded-xl overflow-hidden border border-palnadu-border shadow-2xs bg-palnadu-off-white">
+                  <figure key={idx} className="my-8 rounded-xl overflow-hidden border border-palnadu-border shadow-sm bg-palnadu-off-white">
                     <img
                       src={url}
                       alt={alt || post.title}
                       className="w-full h-auto max-h-[500px] object-cover"
                     />
                     {caption && (
-                      <figcaption className="px-4 py-2.5 text-center text-xs text-palnadu-secondary bg-gray-50/80 border-t border-palnadu-border/60">
+                      <figcaption className="px-4 py-2.5 text-center text-xs text-palnadu-secondary bg-palnadu-off-white/80 border-t border-palnadu-border/60">
                         Caption: {caption}
                       </figcaption>
                     )}
@@ -239,7 +239,7 @@ export function ArticleView({ post, locale }: ArticleViewProps) {
                 const bodyRows = lines.slice(1).filter((l) => !l.includes('---')).map(parseRow);
 
                 return (
-                  <div key={idx} className="my-6 overflow-x-auto rounded-xl border border-palnadu-border shadow-2xs">
+                  <div key={idx} className="my-6 overflow-x-auto rounded-xl border border-palnadu-border shadow-sm">
                     <table className="w-full text-left text-xs sm:text-sm border-collapse">
                       <thead className="bg-palnadu-off-white text-palnadu-dark border-b border-palnadu-border font-bold">
                         <tr>
@@ -252,7 +252,7 @@ export function ArticleView({ post, locale }: ArticleViewProps) {
                       </thead>
                       <tbody className="divide-y divide-palnadu-border/60 bg-white">
                         {bodyRows.map((row, rIdx) => (
-                          <tr key={rIdx} className="hover:bg-gray-50/50">
+                          <tr key={rIdx} className="hover:bg-palnadu-light-blue/20">
                             {row.map((cell, cIdx) => (
                               <td key={cIdx} className="p-3 text-palnadu-body">
                                 {renderInline(cell)}
@@ -293,7 +293,7 @@ export function ArticleView({ post, locale }: ArticleViewProps) {
               if (trimmed.startsWith('```')) {
                 const codeContent = trimmed.replace(/^```[a-zA-Z]*\n?/, '').replace(/```$/, '');
                 return (
-                  <pre key={idx} className="my-6 p-4 rounded-xl bg-palnadu-dark text-gray-100 text-xs font-mono overflow-x-auto">
+                  <pre key={idx} className="my-6 p-4 rounded-xl bg-palnadu-dark text-palnadu-off-white text-xs font-mono overflow-x-auto">
                     <code>{codeContent}</code>
                   </pre>
                 );
@@ -305,7 +305,7 @@ export function ArticleView({ post, locale }: ArticleViewProps) {
                 return (
                   <ul key={idx} className="space-y-2 my-4 pl-2">
                     {items.map((item: string, i: number) => (
-                      <li key={i} className="flex items-start gap-2.5 text-[15px] text-palnadu-body">
+                      <li key={i} className="flex items-start gap-2.5 text-sm sm:text-base text-palnadu-body">
                         <span className="text-palnadu-blue font-bold shrink-0 mt-0.5">▪</span>
                         <span>{renderInline(item.replace(/^([-*]|\d+\.)\s+/, ''))}</span>
                       </li>
@@ -332,15 +332,15 @@ export function ArticleView({ post, locale }: ArticleViewProps) {
               <h4 className="font-bold text-sm text-palnadu-dark">Palnadu.dev Engineering Team</h4>
               <p className="text-xs text-palnadu-secondary leading-relaxed">
                 Problem-first software developers based in Palnadu, Andhra Pradesh. We engineer{' '}
-                <Link href="/services/web-development" className="text-palnadu-blue underline hover:text-[#12487e]">
+                <Link href="/services/web-development" className="text-palnadu-blue underline hover:text-palnadu-dark-hover">
                   web applications
                 </Link>
                 ,{' '}
-                <Link href="/services/mobile-app-development" className="text-palnadu-blue underline hover:text-[#12487e]">
+                <Link href="/services/mobile-app-development" className="text-palnadu-blue underline hover:text-palnadu-dark-hover">
                   mobile apps
                 </Link>
                 , and{' '}
-                <Link href="/services/business-automation" className="text-palnadu-blue underline hover:text-[#12487e]">
+                <Link href="/services/business-automation" className="text-palnadu-blue underline hover:text-palnadu-dark-hover">
                   business automation
                 </Link>{' '}
                 systems with 100% code ownership. Serving enterprises across{' '}
@@ -372,7 +372,7 @@ export function ArticleView({ post, locale }: ArticleViewProps) {
                     className="group rounded-lg border border-palnadu-border bg-white p-4 hover:border-palnadu-blue transition-colors flex flex-col justify-between"
                   >
                     <div className="space-y-1.5">
-                      <p className="text-[10px] font-mono uppercase text-palnadu-teal font-semibold">
+                      <p className="text-xs font-mono uppercase text-palnadu-teal font-semibold">
                         {rel.category?.name || 'Guide'}
                       </p>
                       <h4 className="text-sm font-bold text-palnadu-dark group-hover:text-palnadu-blue transition-colors line-clamp-2">

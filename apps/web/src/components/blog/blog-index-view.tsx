@@ -166,13 +166,13 @@ export function BlogIndexView({
                   name="search"
                   defaultValue={search || ''}
                   placeholder={copy.searchPlaceholder}
-                  className="w-full pl-10 pr-24 py-2 text-xs sm:text-sm rounded-lg border border-palnadu-border bg-white text-palnadu-dark placeholder:text-palnadu-secondary/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-palnadu-blue shadow-2xs"
+                  className="w-full pl-10 pr-24 py-2 text-xs sm:text-sm rounded-lg border border-palnadu-border bg-white text-palnadu-dark placeholder:text-palnadu-secondary/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-palnadu-blue shadow-sm"
                 />
                 {category && <input type="hidden" name="category" value={category} />}
                 {isArchiveView && <input type="hidden" name="view" value="archive" />}
                 <button
                   type="submit"
-                  className="absolute right-1.5 top-1/2 -translate-y-1/2 px-3 py-1 rounded-md bg-palnadu-blue text-white text-xs font-semibold hover:bg-[#12487e] transition-colors cursor-pointer"
+                  className="absolute right-1.5 top-1/2 -translate-y-1/2 px-3 py-1 rounded-md bg-palnadu-blue text-white text-xs font-semibold hover:bg-palnadu-dark-hover transition-colors cursor-pointer shadow-sm"
                 >
                   {copy.searchButton}
                 </button>
@@ -185,7 +185,7 @@ export function BlogIndexView({
                   className={cn(
                     'px-3 py-1 rounded-full text-xs font-semibold transition-colors',
                     !category && !isArchiveView
-                      ? 'bg-palnadu-blue text-white shadow-2xs'
+                      ? 'bg-palnadu-blue text-white shadow-sm'
                       : 'bg-palnadu-off-white/80 border border-palnadu-border text-palnadu-body hover:border-palnadu-blue hover:text-palnadu-blue'
                   )}
                 >
@@ -199,7 +199,7 @@ export function BlogIndexView({
                     className={cn(
                       'px-3 py-1 rounded-full text-xs font-semibold transition-colors',
                       category === cat.slug && !isArchiveView
-                        ? 'bg-palnadu-blue text-white shadow-2xs'
+                        ? 'bg-palnadu-blue text-white shadow-sm'
                         : 'bg-palnadu-off-white/80 border border-palnadu-border text-palnadu-body hover:border-palnadu-blue hover:text-palnadu-blue'
                     )}
                   >
@@ -213,7 +213,7 @@ export function BlogIndexView({
                   className={cn(
                     'px-3 py-1 rounded-full text-xs font-semibold transition-colors inline-flex items-center gap-1',
                     isArchiveView
-                      ? 'bg-palnadu-dark text-white shadow-2xs'
+                      ? 'bg-palnadu-dark text-white shadow-sm'
                       : 'bg-palnadu-off-white/80 border border-palnadu-border text-palnadu-body hover:border-palnadu-blue hover:text-palnadu-blue'
                   )}
                 >
@@ -226,7 +226,7 @@ export function BlogIndexView({
             {/* Articles Listing */}
             {posts.length === 0 ? (
               <div className="mx-auto mt-12 max-w-lg text-center">
-                <div className="rounded-xl border border-palnadu-border bg-palnadu-off-white p-8 shadow-2xs space-y-2">
+                <div className="rounded-xl border border-palnadu-border bg-palnadu-off-white p-8 shadow-sm space-y-2">
                   <h3 className="text-base font-bold text-palnadu-dark">{copy.emptyTitle}</h3>
                   <p className="text-xs text-palnadu-body leading-relaxed">
                     {search || category || isArchiveView ? copy.emptyFiltered : copy.emptyDefault}
@@ -255,7 +255,7 @@ export function BlogIndexView({
                       <Link
                         key={post.id}
                         href={blogPostPath({ slug: post.slug, language: post.language ?? locale })}
-                        className="flex flex-col justify-between rounded-xl border border-palnadu-border bg-white p-5 shadow-2xs hover:border-palnadu-blue hover:shadow-sm transition-all group cursor-pointer text-left relative"
+                        className="flex flex-col justify-between rounded-xl border border-palnadu-border bg-white p-5 shadow-sm hover:border-palnadu-blue hover:shadow-md transition-all group cursor-pointer text-left relative"
                       >
                         <div className="space-y-3">
                           {/* Cover Photo with Fallback */}
@@ -267,19 +267,19 @@ export function BlogIndexView({
                                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                               />
                               {isPostArchived && (
-                                <span className="absolute top-2.5 right-2.5 px-2 py-0.5 rounded bg-black/75 backdrop-blur-xs text-white text-[10px] font-mono font-bold uppercase tracking-wider">
+                                <span className="absolute top-2.5 right-2.5 px-2 py-0.5 rounded bg-black/75 backdrop-blur-sm text-white text-xs font-mono font-bold uppercase tracking-wider">
                                   {copy.archivedBadge}
                                 </span>
                               )}
                             </div>
                           ) : (
-                            <div className="rounded-lg overflow-hidden h-44 border border-palnadu-border/60 bg-gradient-to-br from-palnadu-dark via-[#083b6f] to-palnadu-blue p-5 flex flex-col justify-between text-white relative">
+                            <div className="rounded-lg overflow-hidden h-44 border border-palnadu-border/60 bg-gradient-to-br from-palnadu-dark via-palnadu-dark-hover to-palnadu-blue p-5 flex flex-col justify-between text-white relative">
                               <div className="flex items-center justify-between">
-                                <span className="text-[11px] font-mono font-bold uppercase tracking-widest text-palnadu-teal">
+                                <span className="text-xs font-mono font-bold uppercase tracking-widest text-palnadu-teal">
                                   {post.category?.name || 'Engineering'}
                                 </span>
                                 {isPostArchived ? (
-                                  <span className="px-2 py-0.5 rounded bg-white/20 text-white text-[10px] font-mono font-bold uppercase">
+                                  <span className="px-2 py-0.5 rounded bg-white/20 text-white text-xs font-mono font-bold uppercase">
                                     {copy.archivedBadge}
                                   </span>
                                 ) : (
@@ -287,14 +287,14 @@ export function BlogIndexView({
                                 )}
                               </div>
                               <div className="space-y-1">
-                                <p className="text-[11px] font-mono text-palnadu-light-blue/80">Palnadu.dev Publication</p>
+                                <p className="text-xs font-mono text-palnadu-light-blue/80">Palnadu.dev Publication</p>
                                 <p className="text-sm font-bold text-white line-clamp-2">{post.title}</p>
                               </div>
                             </div>
                           )}
 
                           {/* Meta Tags: Category + Reading Time */}
-                          <div className="flex items-center justify-between gap-2 text-[11px] text-palnadu-secondary">
+                          <div className="flex items-center justify-between gap-2 text-xs text-palnadu-secondary">
                             {post.category?.name ? (
                               <span className="inline-flex items-center gap-1 font-semibold text-palnadu-teal">
                                 <Tag className="h-3 w-3" />
@@ -325,7 +325,7 @@ export function BlogIndexView({
 
                         {/* Footer Date & Read Indicator */}
                         <div className="pt-3 mt-4 border-t border-palnadu-border/40 flex items-center justify-between text-xs">
-                          <div className="flex items-center gap-1 text-[11px] text-palnadu-secondary font-mono">
+                          <div className="flex items-center gap-1 text-xs text-palnadu-secondary font-mono">
                             <Calendar className="h-3 w-3 text-palnadu-secondary/80" />
                             <time dateTime={post.publishDate || post.createdAt}>
                               {new Date(post.publishDate || post.createdAt).toLocaleDateString(dateLocale, {
@@ -363,7 +363,7 @@ export function BlogIndexView({
                           <span>{copy.previous}</span>
                         </Link>
                       ) : (
-                        <span className="px-3 py-1.5 rounded-lg border border-palnadu-border/40 bg-gray-50 text-xs font-semibold text-gray-400 cursor-not-allowed flex items-center gap-1">
+                        <span className="px-3 py-1.5 rounded-lg border border-palnadu-border/40 bg-palnadu-off-white/50 text-xs font-semibold text-palnadu-secondary/50 cursor-not-allowed flex items-center gap-1">
                           <ChevronLeft className="h-3.5 w-3.5" />
                           <span>{copy.previous}</span>
                         </span>
@@ -376,7 +376,7 @@ export function BlogIndexView({
                           className={cn(
                             'h-8 w-8 rounded-lg text-xs font-mono font-bold flex items-center justify-center transition-colors',
                             p === meta.page
-                              ? 'bg-palnadu-blue text-white shadow-xs'
+                              ? 'bg-palnadu-blue text-white shadow-sm'
                               : 'border border-palnadu-border bg-white text-palnadu-body hover:bg-palnadu-light-blue hover:text-palnadu-blue'
                           )}
                         >
@@ -393,7 +393,7 @@ export function BlogIndexView({
                           <ChevronRight className="h-3.5 w-3.5" />
                         </Link>
                       ) : (
-                        <span className="px-3 py-1.5 rounded-lg border border-palnadu-border/40 bg-gray-50 text-xs font-semibold text-gray-400 cursor-not-allowed flex items-center gap-1">
+                        <span className="px-3 py-1.5 rounded-lg border border-palnadu-border/40 bg-palnadu-off-white/50 text-xs font-semibold text-palnadu-secondary/50 cursor-not-allowed flex items-center gap-1">
                           <span>{copy.next}</span>
                           <ChevronRight className="h-3.5 w-3.5" />
                         </span>
