@@ -1,3 +1,10 @@
+import type {
+  AutomationCoverage,
+  AutomationReferenceSource,
+  AutomationStatus,
+  BilingualStatus,
+} from '@palnadu/types';
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
 
 interface FetchOptions extends RequestInit {
@@ -175,22 +182,50 @@ export const api = {
     categories: () => adminApi('/api/blog/categories'),
   },
   automation: {
-    status: () => adminApi<{ success: boolean; data: any }>('/api/admin/automation/status'),
+    status: () => adminApi<{ success: boolean; data: AutomationStatus }>('/api/admin/automation/status'),
     generate: (data?: {
       topic?: string;
       categorySlug?: string;
       targetLocation?: string;
       forcePublish?: boolean;
       batchCount?: number;
+      language?: 'en' | 'te';
     }) =>
       adminApi<{ success: boolean; message: string; data: any }>('/api/admin/automation/generate', {
         method: 'POST',
         body: JSON.stringify(data || {}),
       }),
+    discover: (limit?: number) =>
+      adminApi<{
+        success: boolean;
+        message: string;
+        data: { discovered: number; enqueued: number; rejected: string[] };
+      }>('/api/admin/automation/discover', {
+        method: 'POST',
+        body: JSON.stringify({ limit: limit ?? 40 }),
+      }),
     keywords: (seed?: string, location?: string) =>
       adminApi<{ success: boolean; query: string; location: string; count: number; data: any[] }>(
         `/api/admin/automation/keywords?seed=${encodeURIComponent(seed || '')}&location=${encodeURIComponent(location || '')}`,
       ),
+    getBilingual: () =>
+      adminApi<{ success: boolean; data: BilingualStatus }>('/api/admin/automation/bilingual'),
+    updateBilingual: (data: { enabled?: boolean; te?: number; en?: number }) =>
+      adminApi<{ success: boolean; message: string; data: BilingualStatus }>(
+        '/api/admin/automation/bilingual',
+        {
+          method: 'PATCH',
+          body: JSON.stringify(data),
+        },
+      ),
+    sources: () =>
+      adminApi<{ success: boolean; data: AutomationReferenceSource[] }>('/api/admin/automation/sources'),
+    coverage: () =>
+      adminApi<{ success: boolean; data: AutomationCoverage }>('/api/admin/automation/coverage'),
+    auditLog: (limit?: number) =>
+      adminApi<{ success: boolean; data: any[] }>('/api/admin/automation/audit-log', {
+        params: limit ? { limit: String(limit) } : undefined,
+      }),
     updateSettings: (autoPublish: boolean) =>
       adminApi<{ success: boolean; message: string }>('/api/admin/automation/settings', {
         method: 'PATCH',
