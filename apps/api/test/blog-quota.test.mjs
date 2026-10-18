@@ -147,4 +147,40 @@ describe('allocateQuota', () => {
     const ids = selected.map((t) => t.topicKey + ':' + t.language);
     assert.equal(new Set(ids).size, ids.length);
   });
+
+  it('honours single-language allocations when one language quota is 0', () => {
+    const pending = [
+      topic('k-te-1', 'గుంటూరులో వెబ్‌సైట్ ఖర్చు', 'te', '2026-01-01'),
+      topic('k-en-1', 'Website cost in Guntur', 'en', '2026-01-01'),
+    ];
+    const teOnly = quota.allocateQuota(pending, { te: 2, en: 0 });
+    assert.equal(teOnly.length, 1);
+    assert.equal(teOnly[0].language, 'te');
+
+    const enOnly = quota.allocateQuota(pending, { te: 0, en: 2 });
+    assert.equal(enOnly.length, 1);
+    assert.equal(enOnly[0].language, 'en');
+  });
+
+  it('exports valid SSOT quota constants', () => {
+    assert.deepEqual(quota.BILINGUAL_QUOTA_DEFAULT, { te: 3, en: 2 });
+    assert.equal(quota.BILINGUAL_QUOTA_MAX_TOTAL, 10);
+  });
+
+  it('correctly handles ceiling edge cases and string values', () => {
+    const atCeiling = quota.readBilingualConfig((k) =>
+      ({ bilingual_generation_enabled: true, bilingual_quota_te: 6, bilingual_quota_en: 4 })[k],
+    );
+    assert.deepEqual(atCeiling.quota, { te: 6, en: 4 });
+
+    const overCeiling = quota.readBilingualConfig((k) =>
+      ({ bilingual_generation_enabled: true, bilingual_quota_te: 6, bilingual_quota_en: 5 })[k],
+    );
+    assert.deepEqual(overCeiling.quota, { te: 3, en: 2 });
+
+    const stringNumbers = quota.readBilingualConfig((k) =>
+      ({ bilingual_generation_enabled: true, bilingual_quota_te: '4', bilingual_quota_en: '1' })[k],
+    );
+    assert.deepEqual(stringNumbers.quota, { te: 4, en: 1 });
+  });
 });
