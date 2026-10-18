@@ -167,15 +167,22 @@ export class GoogleAutocompleteSource implements ReferenceSource {
    */
   private parseSuggestions(body: string): string[] {
     try {
-      // Firefox client returns a real JSON array.
       const trimmed = body.trim();
+      // Firefox client returns a real JSON array.
       if (trimmed.startsWith('[')) {
         const json = JSON.parse(trimmed);
         if (Array.isArray(json) && Array.isArray(json[1])) {
           return json[1].filter((x: unknown): x is string => typeof x === 'string');
         }
       }
-      // Otherwise fall back to the pipe-delimited form:
+
+      // Toolbar client returns XML: <CompleteSuggestion><suggestion data="..."/></CompleteSuggestion>
+      const xmlMatches = [...trimmed.matchAll(/<suggestion\s+data="([^"]+)"/g)];
+      if (xmlMatches.length > 0) {
+        return xmlMatches.map((m) => m[1]?.trim()).filter((x): x is string => !!x);
+      }
+
+      // Otherwise fall back to the pipe-delimited bracket form:
       // ["q",["a","b"],["d"],[],...]
       const start = trimmed.indexOf('[');
       if (start === -1) return [];
