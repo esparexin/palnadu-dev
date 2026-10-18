@@ -194,7 +194,7 @@ export class SettingsService implements OnModuleInit {
       const dangerousPatterns = [
         /<script/i,
         /javascript:/i,
-        /on\w+\s*=/i,
+        /\bon[a-zA-Z]{1,30}\s*=/i,
         /<iframe/i,
         /<embed/i,
         /<object/i,
