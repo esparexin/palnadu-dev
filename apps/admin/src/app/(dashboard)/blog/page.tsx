@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react';
 import { api } from '@/lib/api';
-import type { BlogPost } from '@palnadu/types';
+import type { BlogPost, AutomationStatus, BlogTopic, BilingualStatus } from '@palnadu/types';
 import {
   Plus,
   Search,
@@ -106,8 +106,12 @@ export default function BlogAdminPage() {
 
   // Automation queue modal state
   const [queueModalOpen, setQueueModalOpen] = useState(false);
-  const [automationStatus, setAutomationStatus] = useState<any | null>(null);
+  const [automationStatus, setAutomationStatus] = useState<AutomationStatus | null>(null);
+  const [bilingualStatus, setBilingualStatus] = useState<BilingualStatus | null>(null);
   const [loadingStatus, setLoadingStatus] = useState(false);
+  const [updatingSettings, setUpdatingSettings] = useState(false);
+  const [discoveringTopics, setDiscoveringTopics] = useState(false);
+  const [togglingBilingual, setTogglingBilingual] = useState(false);
 
   const handleCoverUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -342,14 +346,97 @@ export default function BlogAdminPage() {
     setLoadingStatus(true);
     setQueueModalOpen(true);
     try {
-      const res = await api.automation.status();
-      if (res.success) {
-        setAutomationStatus(res.data);
+      const [statusRes, bilingualRes] = await Promise.all([
+        api.automation.status(),
+        api.automation.getBilingual().catch(() => null),
+      ]);
+      if (statusRes.success) {
+        setAutomationStatus(statusRes.data);
+      }
+      if (bilingualRes?.success) {
+        setBilingualStatus(bilingualRes.data);
       }
     } catch {
       toast.error('Failed to fetch automation queue status');
     } finally {
       setLoadingStatus(false);
+    }
+  };
+
+  const toggleAutoPublish = async () => {
+    if (!automationStatus) return;
+    const newSetting = !automationStatus.autoPublishEnabled;
+    setUpdatingSettings(true);
+    try {
+      const res = await api.automation.updateSettings(newSetting);
+      if (res.success) {
+        toast.success(res.message);
+        setAutomationStatus((prev) => (prev ? { ...prev, autoPublishEnabled: newSetting } : null));
+      }
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to update auto-publish setting');
+    } finally {
+      setUpdatingSettings(false);
+    }
+  };
+
+  const toggleBilingual = async () => {
+    if (!bilingualStatus) return;
+    const newEnabled = !bilingualStatus.enabled;
+    setTogglingBilingual(true);
+    try {
+      const res = await api.automation.updateBilingual({ enabled: newEnabled });
+      if (res.success) {
+        toast.success(res.message);
+        setBilingualStatus(res.data);
+      }
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to update bilingual setting');
+    } finally {
+      setTogglingBilingual(false);
+    }
+  };
+
+  const handleDiscoverTopics = async () => {
+    setDiscoveringTopics(true);
+    toast.info('Discovering keyword search opportunities across reference sources...');
+    try {
+      const res = await api.automation.discover(40);
+      if (res.success) {
+        toast.success(res.message);
+        const updated = await api.automation.status();
+        if (updated.success) {
+          setAutomationStatus(updated.data);
+        }
+      }
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to discover topics');
+    } finally {
+      setDiscoveringTopics(false);
+    }
+  };
+
+  const generateFromTopic = async (topicItem: BlogTopic) => {
+    setGeneratingAi(true);
+    toast.info(`Generating draft for "${topicItem.topic.slice(0, 32)}..."`);
+    try {
+      const res = await api.automation.generate({
+        topic: topicItem.topic,
+        categorySlug: topicItem.categorySlug,
+        targetLocation: topicItem.targetLocation || undefined,
+        language: topicItem.language,
+      });
+      if (res.success) {
+        toast.success(`Draft generated: "${res.data.title.slice(0, 30)}..." Review below!`);
+        setQueueModalOpen(false);
+        setStatusFilter('DRAFT');
+        fetchPosts();
+        fetchCounts();
+      }
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to generate blog draft');
+    } finally {
+      setGeneratingAi(false);
     }
   };
 
@@ -1335,7 +1422,7 @@ export default function BlogAdminPage() {
       {/* Automation Queue Status Modal */}
       {queueModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-fade-in">
-          <div className="w-full max-w-2xl max-h-[85vh] rounded-xl border border-palnadu-border bg-white shadow-2xl flex flex-col overflow-hidden">
+          <div className="w-full max-w-3xl max-h-[85vh] rounded-xl border border-palnadu-border bg-white shadow-2xl flex flex-col overflow-hidden">
             <div className="flex items-center justify-between border-b border-palnadu-border px-5 py-3.5 bg-palnadu-off-white">
               <div className="flex items-center gap-2">
                 <div className="h-7 w-7 rounded-lg bg-palnadu-teal/10 text-palnadu-teal-dark flex items-center justify-center border border-palnadu-teal/30">
@@ -1364,71 +1451,186 @@ export default function BlogAdminPage() {
                 </div>
               ) : automationStatus ? (
                 <>
-                  <div className="grid grid-cols-3 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                     <div className="rounded-lg border border-palnadu-border bg-palnadu-off-white/40 p-3">
                       <p className="text-xs font-semibold text-palnadu-secondary uppercase tracking-wider">Cron Schedule</p>
                       <p className="text-xs font-bold text-palnadu-dark mt-1">Daily 05:00 AM IST</p>
+                      <p className="text-xs text-palnadu-secondary mt-1">Autonomous cycle</p>
                     </div>
+
                     <div className="rounded-lg border border-palnadu-border bg-palnadu-off-white/40 p-3">
                       <p className="text-xs font-semibold text-palnadu-secondary uppercase tracking-wider">Queue Progress</p>
-                      <p className="text-xs font-bold text-palnadu-dark mt-1">
-                        {automationStatus.statistics?.queueCompleted || 0} Done / {automationStatus.upcomingQueue?.length || 0} Total
-                      </p>
+                      {(() => {
+                        const queueCompleted = automationStatus.statistics?.queueCompleted ?? 0;
+                        const queuePending = automationStatus.statistics?.queuePending ?? 0;
+                        const queueInFlight = automationStatus.statistics?.queueInFlight ?? 0;
+                        const queueFailed = automationStatus.statistics?.queueFailed ?? 0;
+                        const totalQueue = queuePending + queueCompleted + queueInFlight + queueFailed;
+                        return (
+                          <>
+                            <p className="text-xs font-bold text-palnadu-dark mt-1">
+                              {queueCompleted} Done / {totalQueue} Total
+                            </p>
+                            <p className="text-xs text-palnadu-secondary mt-1">
+                              {queuePending} Pending • {queueInFlight} In-Flight
+                            </p>
+                          </>
+                        );
+                      })()}
                     </div>
-                    <div className="rounded-lg border border-palnadu-border bg-palnadu-off-white/40 p-3">
-                      <p className="text-xs font-semibold text-palnadu-secondary uppercase tracking-wider">Auto-Publish</p>
-                      <p className="text-xs font-bold mt-1 text-palnadu-warning">
-                        {automationStatus.autoPublishEnabled ? 'Automatic (Live)' : 'Draft Review (Safe)'}
-                      </p>
+
+                    <div className="rounded-lg border border-palnadu-border bg-palnadu-off-white/40 p-3 flex flex-col justify-between">
+                      <div>
+                        <p className="text-xs font-semibold text-palnadu-secondary uppercase tracking-wider">Auto-Publish Mode</p>
+                        <p
+                          className={cn(
+                            'text-xs font-bold mt-1',
+                            automationStatus.autoPublishEnabled ? 'text-palnadu-success' : 'text-palnadu-warning'
+                          )}
+                        >
+                          {automationStatus.autoPublishEnabled ? 'Automatic (Live)' : 'Draft Review (Safe)'}
+                        </p>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        disabled={updatingSettings}
+                        onClick={toggleAutoPublish}
+                        className="mt-2 h-7 text-xs w-full justify-center"
+                      >
+                        {updatingSettings ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : null}
+                        Switch to {automationStatus.autoPublishEnabled ? 'Draft' : 'Auto-Publish'}
+                      </Button>
+                    </div>
+
+                    <div className="rounded-lg border border-palnadu-border bg-palnadu-off-white/40 p-3 flex flex-col justify-between">
+                      <div>
+                        <p className="text-xs font-semibold text-palnadu-secondary uppercase tracking-wider">Bilingual Engine</p>
+                        <p
+                          className={cn(
+                            'text-xs font-bold mt-1',
+                            bilingualStatus?.enabled ? 'text-palnadu-teal-dark' : 'text-palnadu-secondary'
+                          )}
+                        >
+                          {bilingualStatus?.enabled ? 'Bilingual (Active)' : 'English Only'}
+                        </p>
+                        <p className="text-xs text-palnadu-secondary mt-1">
+                          {bilingualStatus?.quota?.te ?? 1} TE / {bilingualStatus?.quota?.en ?? 1} EN
+                        </p>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        disabled={togglingBilingual || !bilingualStatus}
+                        onClick={toggleBilingual}
+                        className="mt-2 h-7 text-xs w-full justify-center"
+                      >
+                        {togglingBilingual ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : null}
+                        {bilingualStatus?.enabled ? 'Disable Bilingual' : 'Enable Bilingual'}
+                      </Button>
                     </div>
                   </div>
 
-                  <div className="space-y-2 pt-2">
-                    <h4 className="text-xs font-bold text-palnadu-dark uppercase tracking-wider">Scheduled Topic Rotation Queue</h4>
-                    <div className="space-y-2">
-                      {automationStatus.upcomingQueue?.map((item: any, idx: number) => {
-                        const isCompleted = item.status === 'COMPLETED' || item.isGenerated;
-                        return (
-                          <div
-                            key={idx}
-                            className="rounded-lg border border-palnadu-border bg-white p-3 flex items-center justify-between gap-3 text-xs"
-                          >
-                            <div className="space-y-0.5">
-                              <div className="flex items-center gap-2">
-                                <span className="font-semibold text-palnadu-dark">{item.topic}</span>
-                                <span
-                                  className={cn(
-                                    'px-2 py-0.5 rounded text-xs font-mono font-bold uppercase border',
-                                    isCompleted
-                                      ? 'bg-palnadu-teal/10 text-palnadu-teal-dark border-palnadu-teal/30'
-                                      : 'bg-palnadu-warning/10 text-palnadu-warning border-palnadu-warning/30'
-                                  )}
-                                >
-                                  {isCompleted ? 'Published' : 'Pending'}
-                                </span>
-                              </div>
-                              <p className="text-xs text-palnadu-secondary">
-                                Category: <span className="font-mono">{item.categorySlug}</span> • Target: {item.targetLocation}
-                              </p>
-                            </div>
-
-                            {!isCompleted && (
-                              <Button
-                                size="sm"
-                                variant="secondary"
-                                onClick={() => {
-                                  setQueueModalOpen(false);
-                                  generateFromKeyword(item.topic);
-                                }}
-                                disabled={generatingAi}
-                              >
-                                Generate
-                              </Button>
-                            )}
-                          </div>
-                        );
-                      })}
+                  <div className="space-y-3 pt-2">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                      <div>
+                        <h4 className="text-xs font-bold text-palnadu-dark uppercase tracking-wider">Scheduled Topic Rotation Queue</h4>
+                        <p className="text-xs text-palnadu-secondary">
+                          Showing {automationStatus.upcomingQueue?.length || 0} queued topics in rotation preview
+                        </p>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        disabled={discoveringTopics}
+                        onClick={handleDiscoverTopics}
+                        className="h-8 text-xs gap-1.5 self-start sm:self-auto"
+                      >
+                        {discoveringTopics ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        ) : (
+                          <Sparkles className="h-3.5 w-3.5 text-palnadu-blue" />
+                        )}
+                        Discover New Topics
+                      </Button>
                     </div>
+
+                    {automationStatus.upcomingQueue && automationStatus.upcomingQueue.length > 0 ? (
+                      <div className="space-y-2">
+                        {automationStatus.upcomingQueue.map((item: BlogTopic, idx: number) => {
+                          const isCompleted = item.status === 'COMPLETED';
+                          const isClaimed = item.status === 'CLAIMED';
+                          const isFailed = item.status === 'FAILED';
+                          return (
+                            <div
+                              key={item.id || item.topicKey || idx}
+                              className="rounded-lg border border-palnadu-border bg-white p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs"
+                            >
+                              <div className="space-y-1">
+                                <div className="flex flex-wrap items-center gap-2">
+                                  <span className="font-semibold text-palnadu-dark">{item.topic}</span>
+                                  <span
+                                    className={cn(
+                                      'px-2 py-0.5 rounded text-xs font-mono font-bold uppercase border',
+                                      isCompleted
+                                        ? 'bg-palnadu-teal/10 text-palnadu-teal-dark border-palnadu-teal/30'
+                                        : isClaimed
+                                        ? 'bg-palnadu-blue/10 text-palnadu-blue border-palnadu-blue/30'
+                                        : isFailed
+                                        ? 'bg-palnadu-error/10 text-palnadu-error border-palnadu-error/30'
+                                        : 'bg-palnadu-warning/10 text-palnadu-warning border-palnadu-warning/30'
+                                    )}
+                                  >
+                                    {isCompleted ? 'Published' : isClaimed ? 'In-Flight' : isFailed ? 'Failed' : 'Pending'}
+                                  </span>
+                                  <span className="px-1.5 py-0.5 rounded text-xs font-mono font-bold uppercase border bg-palnadu-light-blue text-palnadu-blue border-palnadu-blue/20">
+                                    {item.language === 'te' ? 'Telugu' : 'English'}
+                                  </span>
+                                </div>
+                                <p className="text-xs text-palnadu-secondary">
+                                  Category: <span className="font-mono">{item.categorySlug}</span> • Target: {item.targetLocation || 'Global'}
+                                  {item.attempts > 0 ? ` • Attempts: ${item.attempts}` : ''}
+                                </p>
+                              </div>
+
+                              {!isCompleted && !isClaimed && (
+                                <Button
+                                  size="sm"
+                                  variant="secondary"
+                                  onClick={() => generateFromTopic(item)}
+                                  disabled={generatingAi}
+                                  className="h-8 text-xs shrink-0 self-end sm:self-auto"
+                                >
+                                  {generatingAi ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : null}
+                                  Generate
+                                </Button>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <div className="rounded-lg border border-dashed border-palnadu-border p-8 text-center space-y-2">
+                        <p className="text-xs font-semibold text-palnadu-dark">No topics currently in rotation queue</p>
+                        <p className="text-xs text-palnadu-secondary">
+                          Click &ldquo;Discover New Topics&rdquo; to automatically identify and queue search opportunities.
+                        </p>
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          disabled={discoveringTopics}
+                          onClick={handleDiscoverTopics}
+                          className="mt-2 h-8 text-xs gap-1.5"
+                        >
+                          {discoveringTopics ? (
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          ) : (
+                            <Sparkles className="h-3.5 w-3.5 text-palnadu-blue" />
+                          )}
+                          Discover New Topics
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 </>
               ) : null}
