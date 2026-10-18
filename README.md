@@ -2,15 +2,15 @@
 
 > Start with the problem. We build the solution.
 
-Premium technology company website — monorepo with public site, admin dashboard, and API.
+Premium technology company website — monorepo with public marketing site, administrative dashboard, and NestJS REST API.
 
 ## Structure
 
 ```
-apps/web     — Public Next.js website
-apps/admin   — Admin Next.js dashboard
-apps/api     — NestJS REST API
-packages/    — Shared packages (ui, types, validation, config, eslint-config)
+apps/web     — Public Next.js 15 website (Tailwind CSS, Plus Jakarta Sans, Lucide)
+apps/admin   — Admin Next.js 15 dashboard (Secured CRUD operations)
+apps/api     — NestJS REST API (Prisma ORM, MongoDB Atlas, Autonomous Blogging Engine)
+packages/    — Shared packages (@palnadu/config, @palnadu/types, @palnadu/validation, @palnadu/ui, @palnadu/eslint-config)
 ```
 
 ## Getting Started
@@ -20,7 +20,7 @@ packages/    — Shared packages (ui, types, validation, config, eslint-config)
 Make the script executable (if not already) and run:
 
 ```bash
-# Automatically checks envs, starts PostgreSQL/Redis in Docker, syncs DB & seed, and starts all apps
+# Automatically checks envs, validates database connection, and starts all dev servers
 ./run.sh
 
 # Or via pnpm
@@ -41,12 +41,12 @@ pnpm build:all
 
 ```bash
 ./run.sh test    # Run automated tests across the workspace
-./run.sh db      # Start database & run Prisma migrations/seeds only
-./run.sh stop    # Stop Docker database containers
+./run.sh db      # Sync Prisma schema and apply seeds
+./run.sh stop    # Stop Docker containers
 ```
 
 ## Tech Stack
 
-- **Frontend:** Next.js, TypeScript, Tailwind CSS, shadcn/ui, React Three Fiber
-- **Backend:** NestJS, Prisma, PostgreSQL
-- **Monorepo:** pnpm + Turborepo
+- **Frontend:** Next.js 15 (App Router), React 19, TypeScript, Tailwind CSS
+- **Backend:** NestJS 10, Prisma ORM, MongoDB (Atlas / local container)
+- **Monorepo:** pnpm workspaces + Turborepo

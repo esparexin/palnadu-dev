@@ -1,31 +1,17 @@
 services:
-  postgres:
-    image: postgres:16-alpine
-    container_name: palnadu-postgres
+  mongodb:
+    image: mongo:7.0-jammy
+    container_name: palnadu-mongodb
     restart: unless-stopped
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: password
-      POSTGRES_DB: palnadu_dev
     ports:
-      - '5432:5432'
+      - '27017:27017'
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - mongodb_data:/data/db
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U postgres -d palnadu_dev']
+      test: ['CMD', 'mongosh', '--eval', 'db.adminCommand("ping")']
       interval: 5s
       timeout: 5s
       retries: 5
 
-  redis:
-    image: redis:7-alpine
-    container_name: palnadu-redis
-    restart: unless-stopped
-    ports:
-      - '6379:6379'
-    volumes:
-      - redis_data:/data
-
 volumes:
-  postgres_data:
-  redis_data:
+  mongodb_data:
