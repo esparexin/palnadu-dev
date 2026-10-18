@@ -80,7 +80,7 @@ export default function LocationsPage() {
                 <Link
                   key={loc.slug}
                   href={`/locations/${loc.slug}`}
-                  className="group rounded-xl border border-palnadu-border bg-white p-6 shadow-2xs hover:border-palnadu-blue hover:shadow-md transition-all flex flex-col justify-between"
+                  className="group rounded-xl border border-palnadu-border bg-white p-6 shadow-sm hover:border-palnadu-blue hover:shadow-md transition-all flex flex-col justify-between"
                 >
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
@@ -136,7 +136,7 @@ export default function LocationsPage() {
                 {nearbyTowns.map((town) => (
                   <span
                     key={town}
-                    className="text-xs px-3 py-1 rounded-full bg-white border border-palnadu-border text-palnadu-dark font-medium shadow-2xs"
+                    className="text-xs px-3 py-1 rounded-full bg-white border border-palnadu-border text-palnadu-dark font-medium shadow-sm"
                   >
                     {town}
                   </span>

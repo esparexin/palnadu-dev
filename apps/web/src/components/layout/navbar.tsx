@@ -100,7 +100,7 @@ export function Navbar({ initialLogoUrl }: NavbarProps = {}) {
             <Button
               asChild
               size="sm"
-              className="bg-palnadu-blue text-white hover:bg-[#12487e] shadow-sm font-medium"
+              className="bg-palnadu-blue text-white hover:bg-palnadu-dark-hover shadow-sm font-medium"
             >
               <Link href="/contact" className="flex items-center gap-1.5">
                 <span>Discuss your idea</span>
@@ -162,7 +162,7 @@ export function Navbar({ initialLogoUrl }: NavbarProps = {}) {
                 </div>
               ))}
               <div className="pt-2">
-                <Button asChild className="w-full bg-palnadu-blue text-white hover:bg-[#12487e] h-11 touch-manipulation">
+                <Button asChild className="w-full bg-palnadu-blue text-white hover:bg-palnadu-dark-hover h-11 touch-manipulation">
                   <Link
                     href="/contact"
                     prefetch={true}

@@ -411,7 +411,7 @@ export function GrowExperienceClient() {
                           className={cn(
                             "px-4 py-2 rounded-full text-xs sm:text-sm font-semibold transition-all cursor-pointer touch-manipulation",
                             isActive
-                              ? "bg-palnadu-blue text-white shadow-xs"
+                              ? "bg-palnadu-blue text-white shadow-sm"
                               : "bg-white text-palnadu-body border border-palnadu-border hover:text-palnadu-dark hover:border-palnadu-blue/40"
                           )}
                         >
@@ -431,7 +431,7 @@ export function GrowExperienceClient() {
                       onClick={() => setActiveStage(idx)}
                       className={`py-2 px-1 text-center rounded-lg text-xs font-bold transition-all touch-manipulation cursor-pointer ${
                         activeStage === idx
-                          ? "bg-white text-palnadu-blue shadow-xs"
+                          ? "bg-white text-palnadu-blue shadow-sm"
                           : "text-palnadu-body hover:text-palnadu-dark"
                       }`}
                     >
@@ -624,7 +624,7 @@ export function GrowExperienceClient() {
                         key={idx}
                         whileHover={{ y: -4 }}
                         transition={{ duration: 0.2 }}
-                        className="rounded-2xl border border-palnadu-border bg-white p-4 sm:p-5 shadow-xs hover:shadow-md transition-all flex flex-col justify-between group"
+                        className="rounded-2xl border border-palnadu-border bg-white p-4 sm:p-5 shadow-sm hover:shadow-md transition-all flex flex-col justify-between group"
                       >
                         <div className="space-y-2.5">
                           <div className="flex items-center gap-3">
@@ -776,7 +776,7 @@ export function GrowExperienceClient() {
                         Direct consultation with our engineers to evaluate your specific digital needs.
                       </p>
                     </div>
-                    <Button asChild size="sm" className="bg-palnadu-blue text-white text-xs w-full sm:w-auto h-10 font-semibold shadow-xs">
+                    <Button asChild size="sm" className="bg-palnadu-blue text-white text-xs w-full sm:w-auto h-10 font-semibold shadow-sm">
                       <Link href="/contact" className="justify-center">Schedule Discovery</Link>
                     </Button>
                   </div>
@@ -810,7 +810,7 @@ export function GrowExperienceClient() {
                     <motion.div
                       key={idx}
                       whileHover={{ scale: 1.02 }}
-                      className="rounded-xl sm:rounded-2xl bg-white p-4 border border-palnadu-border shadow-xs flex sm:flex-col items-start gap-3 sm:gap-2 group hover:border-palnadu-blue/40 transition-colors"
+                      className="rounded-xl sm:rounded-2xl bg-white p-4 border border-palnadu-border shadow-sm flex sm:flex-col items-start gap-3 sm:gap-2 group hover:border-palnadu-blue/40 transition-colors"
                     >
                       <span className="font-mono text-xs font-bold text-palnadu-blue">
                         {m.step}
@@ -1043,7 +1043,7 @@ export function GrowExperienceClient() {
             <Button
               asChild
               size="lg"
-              className="bg-palnadu-teal hover:bg-[#157c5c] text-white font-bold px-8 h-12 text-base shadow-lg rounded-full"
+              className="bg-palnadu-teal hover:bg-palnadu-teal-dark text-white font-bold px-8 h-12 text-base shadow-lg rounded-full"
             >
               <Link href="/contact" className="flex items-center gap-2">
                 <span>Contact Us</span>
@@ -1074,7 +1074,7 @@ export function GrowExperienceClient() {
           >
             <Link
               href="/contact"
-              className="inline-flex items-center gap-2 px-5 py-3 rounded-full bg-palnadu-blue text-white font-bold text-sm shadow-xl hover:bg-[#12487e] hover:shadow-2xl hover:scale-105 active:scale-95 transition-all border border-white/20"
+              className="inline-flex items-center gap-2 px-5 py-3 rounded-full bg-palnadu-blue text-white font-bold text-sm shadow-xl hover:bg-palnadu-dark-hover hover:shadow-2xl hover:scale-105 active:scale-95 transition-all border border-white/20"
             >
               <span>Contact Us</span>
               <ArrowRight className="h-4 w-4" />

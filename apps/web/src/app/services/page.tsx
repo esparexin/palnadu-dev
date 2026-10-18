@@ -259,7 +259,7 @@ export default function ServicesPage() {
                       <div className="pt-1 sm:pt-0 shrink-0">
                         <Link
                           href={`/services/${service.slug}`}
-                          className="text-sm font-semibold text-palnadu-blue hover:text-[#12487e] transition-colors"
+                          className="text-sm font-semibold text-palnadu-blue hover:text-palnadu-dark-hover transition-colors"
                         >
                           View service details
                         </Link>

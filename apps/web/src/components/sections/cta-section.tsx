@@ -20,7 +20,7 @@ export function CtaSection() {
         <div className="flex flex-col sm:flex-row items-center justify-center gap-2.5 pt-2">
           <Button
             asChild
-            className="w-full sm:w-auto bg-palnadu-teal text-white hover:bg-[#157c5c] font-semibold px-6 h-11 sm:h-10 rounded-md text-sm shadow-xs"
+            className="w-full sm:w-auto bg-palnadu-teal text-white hover:bg-palnadu-teal-dark font-semibold px-6 h-11 sm:h-10 rounded-md text-sm shadow-sm"
           >
             <Link href="/contact">
               Tell us what you want to build

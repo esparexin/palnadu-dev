@@ -196,7 +196,7 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
         {showNav && (
           <nav className="w-full max-w-6xl flex items-center justify-between p-3.5 bg-white/90 backdrop-blur-md rounded-xl border border-palnadu-border shadow-md mb-4">
             <span className="font-extrabold text-lg text-palnadu-dark">Palnadu<span className="text-palnadu-blue">.dev</span></span>
-            <Button asChild size="sm" className="bg-palnadu-blue text-white hover:bg-[#12487e]">
+            <Button asChild size="sm" className="bg-palnadu-blue text-white hover:bg-palnadu-dark-hover">
               <a href="#contact-card">Get in touch</a>
             </Button>
           </nav>
@@ -490,7 +490,7 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
                   <Button
                     type="submit"
                     disabled={isSubmitting}
-                    className="w-full bg-palnadu-blue hover:bg-[#12487e] text-white font-semibold text-sm h-11 sm:h-10 rounded-md transition-colors shadow-xs mt-1 disabled:opacity-50 cursor-pointer"
+                    className="w-full bg-palnadu-blue hover:bg-palnadu-dark-hover text-white font-semibold text-sm h-11 sm:h-10 rounded-md transition-colors shadow-sm mt-1 disabled:opacity-50 cursor-pointer"
                   >
                     {isSubmitting ? 'Sending...' : 'Send Message →'}
                   </Button>
