@@ -400,8 +400,10 @@ Return strictly a valid JSON object matching this schema:
       .toLowerCase()
       .trim()
       .replace(/[^\w\s-]/g, '')
-      .replace(/[\s_-]+/g, '-')
-      .replace(/^-+|-+$/g, '');
+      .replace(/[\s_]+/g, '-')
+      .replace(/-+/g, '-')
+      .replace(/^-/, '')
+      .replace(/-$/, '');
 
     const content = `# ${topicTitle}
 

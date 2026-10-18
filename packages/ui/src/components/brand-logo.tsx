@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { imagePresets } from '@palnadu/config';
+import { imagePresets, isCloudinaryUrl } from '@palnadu/config';
 import { cn } from '../lib/utils';
 
 export interface BrandLogoProps {
@@ -30,7 +30,7 @@ export function BrandLogo({
   // 1. Determine active logo (custom configured or official first-party asset)
   const fallbackLogo = isWhite ? '/palnadu-logo-white.png' : '/palnadu-logo-horizontal.png';
   const effectiveLogoUrl = customLogoUrl || fallbackLogo;
-  const optimizedLogo = effectiveLogoUrl.includes('res.cloudinary.com')
+  const optimizedLogo = isCloudinaryUrl(effectiveLogoUrl)
     ? imagePresets.logo(effectiveLogoUrl)
     : effectiveLogoUrl;
 

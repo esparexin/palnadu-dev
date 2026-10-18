@@ -6,6 +6,9 @@ on:
   pull_request:
     branches: [main]
 
+permissions:
+  contents: read
+
 jobs:
   pre-flight:
     name: Structure, Secrets & Circular Dependency Gates
