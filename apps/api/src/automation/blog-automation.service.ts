@@ -357,7 +357,8 @@ export class BlogAutomationService {
     } catch (err: any) {
       // Lost a race against a concurrent enqueue; the unique index did its job.
       if (err?.code === 'P2002') {
-        return { enqueued: false, topicKey, reason: 'duplicate topicKey (unique index)' };
+        const target = err?.meta?.target ? ` (${Array.isArray(err.meta.target) ? err.meta.target.join(', ') : err.meta.target})` : '';
+        return { enqueued: false, topicKey, reason: `duplicate topicKey (unique index${target})` };
       }
       throw err;
     }

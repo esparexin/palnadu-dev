@@ -341,7 +341,7 @@ model BlogTopic {
   claimedAt   DateTime?
   claimedBy   String?
 
-  postId      String?  @unique @db.ObjectId
+  postId      String?  @db.ObjectId
   post        BlogPost? @relation(fields: [postId], references: [id])
 
   createdAt   DateTime  @default(now())
