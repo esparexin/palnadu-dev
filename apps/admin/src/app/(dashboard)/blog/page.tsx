@@ -3,10 +3,10 @@
 import { useEffect, useState, useRef } from 'react';
 import { api } from '@/lib/api';
 import type { BlogPost } from '@palnadu/types';
-import { Plus, Search, Edit2, Trash2, X, Globe, Eye, FileText, CheckCircle2, Sparkles, ExternalLink, UploadCloud, Loader2, Compass, Copy, Check, ListChecks, ArrowRight, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Archive } from 'lucide-react';
+import { Plus, Search, Edit2, Trash2, X, Globe, Eye, FileText, CheckCircle2, Sparkles, ExternalLink, UploadCloud, Loader2, Compass, Copy, Check, ListChecks, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Archive } from 'lucide-react';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { useToast } from '@/components/ui/toast';
-import { siteConfig } from '@palnadu/config';
+import { siteConfig, slugify } from '@palnadu/config';
 import { cn } from '@/lib/utils';
 
 interface BlogFormData {
@@ -35,19 +35,9 @@ const initialFormData: BlogFormData = {
   status: 'DRAFT',
 };
 
-// Helper: auto-generate URL-friendly slug
-function slugify(text: string): string {
-  return text
-    .toLowerCase()
-    .trim()
-    .replace(/[^\w\s-]/g, '')
-    .replace(/[\s_-]+/g, '-')
-    .replace(/^-+|-+$/g, '');
-}
-
 export default function BlogAdminPage() {
   const { toast } = useToast();
-  const [posts, setPosts] = useState<any[]>([]);
+  const [posts, setPosts] = useState<BlogPost[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -55,9 +45,10 @@ export default function BlogAdminPage() {
   const [categoryFilter, setCategoryFilter] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'content' | 'seo'>('content');
-  const [editingPost, setEditingPost] = useState<any | null>(null);
+  const [editingPost, setEditingPost] = useState<BlogPost | null>(null);
   const [formData, setFormData] = useState<BlogFormData>(initialFormData);
   const [submitting, setSubmitting] = useState(false);
+
   const [uploadingCover, setUploadingCover] = useState(false);
   const [generatingAi, setGeneratingAi] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; title: string } | null>(null);

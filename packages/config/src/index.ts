@@ -579,3 +579,18 @@ export const adminNavItems: NavItem[] = [
   { title: 'Users', href: '/admin/users' },
   { title: 'Settings', href: '/admin/settings' },
 ];
+
+// ─── String Utilities ─────────────────────────────────────────
+
+/**
+ * Normalizes text into a clean URL-friendly slug.
+ */
+export function slugify(text: string): string {
+  return text
+    .toLowerCase()
+    .trim()
+    .replace(/[^\w\s-]/g, '')
+    .replace(/[\s_-]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
