@@ -14,8 +14,8 @@
  * Two different titles, one topicKey, therefore never two posts.
  */
 
-export type { SearchIntent } from './seo-strategy';
 import type { SearchIntent } from './seo-strategy';
+export type { SearchIntent };
 import {
   detectLanguage,
   foldTokenToConcept,

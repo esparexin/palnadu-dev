@@ -129,9 +129,7 @@ export class AutomationController {
 
     // No explicit topic: take the next pending item from the durable queue.
     const queue = await this.automationService.getPendingQueueItems();
-    const pending = queue.find((i: any) => !i.isGenerated && i.status === 'PENDING') as
-      | { topic: string; categorySlug: string; targetLocation: string | null }
-      | undefined;
+    const pending = queue.find((i) => !i.isGenerated && i.status === 'PENDING');
     const topic = body.topic || pending?.topic || 'How Digital Transformation and Modern Web Apps Accelerate Growth for Regional Enterprises';
     const categorySlug = body.categorySlug || pending?.categorySlug || 'website-development';
     const targetLocation = body.targetLocation || pending?.targetLocation || undefined;

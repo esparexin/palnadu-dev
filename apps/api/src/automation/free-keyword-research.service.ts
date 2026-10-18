@@ -11,41 +11,6 @@ export interface KeywordSuggestion {
 export class FreeKeywordResearchService {
   private readonly logger = new Logger(FreeKeywordResearchService.name);
 
-  // Common high-intent modifiers used by regional Indian searchers
-  private readonly intentModifiers = [
-    'billing software',
-    'school software',
-    'hospital software',
-    'pharmacy software',
-    'pos software',
-    'cost',
-    'price',
-    'near me',
-    'for shop',
-    'for business',
-    'for school',
-    'for retail',
-    'best',
-    'affordable',
-    'low cost',
-  ];
-
-  // Core regional locations across Palnadu & Guntur Revenue Divisions
-  private readonly defaultLocations = [
-    'Palnadu',
-    'Guntur',
-    'Narasaraopet',
-    'Chilakaluripet',
-    'Vinukonda',
-    'Sattenapalli',
-    'Macherla',
-    'Gurazala',
-    'Piduguralla',
-    'Tenali',
-    'Mangalagiri',
-    'Andhra Pradesh',
-  ];
-
   /**
    * Fetches real-time suggestions from Google's public India search engine
    */

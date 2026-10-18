@@ -156,12 +156,15 @@ export function arr(v: unknown): string[] {
     : [];
 }
 
-export function objArr(v: unknown, keys: string[]): Record<string, string>[] {
+export function objArr<T extends Record<string, string> = Record<string, string>>(
+  v: unknown,
+  keys: string[],
+): T[] {
   if (!Array.isArray(v)) return [];
   return v
     .filter((x): x is Record<string, unknown> => !!x && typeof x === 'object')
-    .map((x) => Object.fromEntries(keys.map((k) => [k, str(x[k])])) as Record<string, string>)
-    .filter((x) => keys.every((k) => x[k].length > 0));
+    .map((x) => Object.fromEntries(keys.map((k) => [k, str(x[k])])) as T)
+    .filter((x) => keys.every((k) => ((x as Record<string, string>)[k] ?? '').length > 0));
 }
 
 /** Slugify defensively: the LLM sometimes returns spaces, underscores or mixed case. */

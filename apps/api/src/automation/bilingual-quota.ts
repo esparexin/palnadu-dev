@@ -16,21 +16,14 @@
  */
 import { canonicalizeTopic } from './topic-identity';
 import type { BlogLanguage } from '@prisma/client';
+import type { BilingualQuota, BilingualConfig } from '@palnadu/types';
 
-export interface BilingualQuota {
-  te: number;
-  en: number;
-}
+export type { BilingualQuota, BilingualConfig };
 
 export const BILINGUAL_QUOTA_DEFAULT: BilingualQuota = { te: 3, en: 2 };
 
 /** Hard ceiling so a misconfigured quota cannot drain the queue in one run. */
 export const BILINGUAL_QUOTA_MAX_TOTAL = 10;
-
-export interface BilingualConfig {
-  enabled: boolean;
-  quota: BilingualQuota;
-}
 
 /** Minimal shape the allocator needs from a queued topic row. */
 export interface QuotableTopic {

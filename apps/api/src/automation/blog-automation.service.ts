@@ -3,7 +3,7 @@ import { Cron } from '@nestjs/schedule';
 import { PrismaService } from '../prisma.service';
 import { ContentResearchService } from './content-research.service';
 import { defaultStrategy, SeoStrategy } from './seo-strategy';
-import { ImageSourcingService } from './image-sourcing.service';
+import { ImageSourcingService, type LicensedImage } from './image-sourcing.service';
 import { ContentSimilarityService } from './content-similarity.service';
 import { SeoValidationService } from './seo-validation.service';
 import { TopicDiscoveryService } from './topic-discovery.service';
@@ -199,17 +199,6 @@ export class BlogAutomationService {
     'Palnadu District',
     'Andhra Pradesh',
   ];
-
-  /**
-   * Normalizes a topic string into its stable identity key.
-   *
-   * Identity is defined in topic-identity.ts and deliberately excludes
-   * LLM-authored title/slug text. `toTopicKey` is a thin alias so call sites
-   * read clearly.
-   */
-  private toTopicKey(topic: string): string {
-    return toTopicKey(topic);
-  }
 
   /**
    * Returns the queue of topics, reading the durable BlogTopic table.
@@ -837,7 +826,7 @@ export class BlogAutomationService {
       await logFailure(`generation_failed: ${err instanceof Error ? err.message : String(err)}`);
       throw err;
     }
-    const llmProvider = (draft as any).llmProvider ?? 'unknown';
+    const llmProvider = draft.llmProvider ?? 'unknown';
 
     // 5. Images and inline enrichment.
     const images = await this.imageService.sourceImagesForArticle(topic, categorySlug, 4);
@@ -1062,7 +1051,7 @@ export class BlogAutomationService {
   }
 
   /** Injects attributed inline images and strips decorative asterisks. */
-  private enrichContent(rawContent: string, images: any[]): string {
+  private enrichContent(rawContent: string, images: LicensedImage[]): string {
     let content = rawContent;
 
     if (images.length > 1) {
@@ -1214,7 +1203,7 @@ export class BlogAutomationService {
         keywordsCovered: coverage.keywordsCovered.length,
         intentsCovered: coverage.intentsCovered,
       },
-      upcomingQueue: queueRows.slice(0, 50),
+      upcomingQueue: queueRows,
     };
   }
 }
