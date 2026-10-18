@@ -1,9 +1,12 @@
-import { Controller, Get, Post, Patch, Delete, Body, Param, Query, UseGuards, NotFoundException, BadRequestException } from '@nestjs/common';
-import { createClientSchema } from '@palnadu/validation';
+import { Controller, Get, Post, Patch, Delete, Body, Param, Query, UseGuards, NotFoundException } from '@nestjs/common';
+import { createClientSchema, type CreateClientInput } from '@palnadu/validation';
 import { ClientsService } from './clients.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
+import { ZodValidationPipe } from '../common/pipes/zod-validation.pipe';
+
+const updateClientSchema = createClientSchema.partial();
 
 @Controller('admin/clients')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -12,15 +15,8 @@ export class ClientsController {
   constructor(private clientsService: ClientsService) {}
 
   @Post()
-  async create(@Body() body: unknown) {
-    const parseResult = createClientSchema.safeParse(body);
-    if (!parseResult.success) {
-      const errorMsg = parseResult.error.issues
-        .map((i: any) => `${i.path.join('.')}: ${i.message}`)
-        .join(', ');
-      throw new BadRequestException(errorMsg);
-    }
-    const client = await this.clientsService.create(parseResult.data as any);
+  async create(@Body(new ZodValidationPipe(createClientSchema)) body: CreateClientInput) {
+    const client = await this.clientsService.create(body as any);
     return { success: true, data: client };
   }
 
@@ -38,15 +34,11 @@ export class ClientsController {
   }
 
   @Patch(':id')
-  async update(@Param('id') id: string, @Body() body: unknown) {
-    const parseResult = createClientSchema.partial().safeParse(body);
-    if (!parseResult.success) {
-      const errorMsg = parseResult.error.issues
-        .map((i: any) => `${i.path.join('.')}: ${i.message}`)
-        .join(', ');
-      throw new BadRequestException(errorMsg);
-    }
-    const client = await this.clientsService.update(id, parseResult.data as any);
+  async update(
+    @Param('id') id: string,
+    @Body(new ZodValidationPipe(updateClientSchema)) body: Partial<CreateClientInput>,
+  ) {
+    const client = await this.clientsService.update(id, body as any);
     return { success: true, data: client };
   }
 

@@ -6,7 +6,7 @@ import type { Service } from '@palnadu/types';
 import { Plus, Edit2, Trash2, X, Briefcase, ExternalLink } from 'lucide-react';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { useToast } from '@/components/ui/toast';
-import { siteConfig } from '@palnadu/config';
+import { siteConfig, slugify } from '@palnadu/config';
 import { cn } from '@/lib/utils';
 
 interface ServiceFormData {
@@ -27,14 +27,6 @@ const initialFormData: ServiceFormData = {
   order: 0,
 };
 
-function slugify(text: string): string {
-  return text
-    .toLowerCase()
-    .trim()
-    .replace(/[^\w\s-]/g, '')
-    .replace(/[\s_-]+/g, '-')
-    .replace(/^-+|-+$/g, '');
-}
 
 export default function ServicesAdminPage() {
   const { toast } = useToast();

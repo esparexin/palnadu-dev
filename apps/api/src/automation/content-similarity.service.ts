@@ -74,7 +74,8 @@ export class ContentSimilarityService {
     knownTopicKeys: Set<string>,
     language?: string | null,
   ): Promise<boolean> {
-    const key = canonicalizeTopic(topic).topicKey;
+    const candidateCanonical = canonicalizeTopic(topic);
+    const key = candidateCanonical.topicKey;
     if (knownTopicKeys.has(key)) return true;
 
     const existing = await this.loadExisting();
@@ -88,6 +89,18 @@ export class ContentSimilarityService {
       // Cross-language text overlap is script noise; only same-language (or
       // unknown-language) text counts.
       if (language && post.language && post.language !== language) return false;
+
+      // If both topics specify distinct, non-matching geographical locations,
+      // they represent distinct regional landing topics and are not duplicates.
+      const postCanonical = canonicalizeTopic(post.topic ?? post.title);
+      if (
+        candidateCanonical.location &&
+        postCanonical.location &&
+        candidateCanonical.location !== postCanonical.location
+      ) {
+        return false;
+      }
+
       return topicTokenOverlap(topic, post.topic ?? post.title) >= DEFAULT_THRESHOLDS.topicOverlap;
     });
   }

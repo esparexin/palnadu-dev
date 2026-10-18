@@ -3,15 +3,44 @@
 import { useEffect, useState, useRef } from 'react';
 import { api } from '@/lib/api';
 import type { BlogPost } from '@palnadu/types';
-import { Plus, Search, Edit2, Trash2, X, Globe, Eye, FileText, CheckCircle2, Sparkles, ExternalLink, UploadCloud, Loader2, Compass, Copy, Check, ListChecks, ArrowRight, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Archive } from 'lucide-react';
+import {
+  Plus,
+  Search,
+  Edit2,
+  Trash2,
+  X,
+  Globe,
+  Eye,
+  FileText,
+  CheckCircle2,
+  Sparkles,
+  ExternalLink,
+  UploadCloud,
+  Loader2,
+  Compass,
+  Copy,
+  Check,
+  ListChecks,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
+  Archive,
+} from 'lucide-react';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { useToast } from '@/components/ui/toast';
-import { siteConfig } from '@palnadu/config';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { siteConfig, slugify } from '@palnadu/config';
 import { cn } from '@/lib/utils';
 
 interface BlogFormData {
   title: string;
   slug: string;
+  language: 'en' | 'te';
+  translationGroupId?: string;
   categoryId?: string;
   excerpt: string;
   content: string;
@@ -25,6 +54,8 @@ interface BlogFormData {
 const initialFormData: BlogFormData = {
   title: '',
   slug: '',
+  language: 'en',
+  translationGroupId: undefined,
   categoryId: undefined,
   excerpt: '',
   content: '',
@@ -35,29 +66,21 @@ const initialFormData: BlogFormData = {
   status: 'DRAFT',
 };
 
-// Helper: auto-generate URL-friendly slug
-function slugify(text: string): string {
-  return text
-    .toLowerCase()
-    .trim()
-    .replace(/[^\w\s-]/g, '')
-    .replace(/[\s_-]+/g, '-')
-    .replace(/^-+|-+$/g, '');
-}
-
 export default function BlogAdminPage() {
   const { toast } = useToast();
-  const [posts, setPosts] = useState<any[]>([]);
+  const [posts, setPosts] = useState<BlogPost[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('');
+  const [languageFilter, setLanguageFilter] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'content' | 'seo'>('content');
-  const [editingPost, setEditingPost] = useState<any | null>(null);
+  const [editingPost, setEditingPost] = useState<BlogPost | null>(null);
   const [formData, setFormData] = useState<BlogFormData>(initialFormData);
   const [submitting, setSubmitting] = useState(false);
+
   const [uploadingCover, setUploadingCover] = useState(false);
   const [generatingAi, setGeneratingAi] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; title: string } | null>(null);
@@ -137,6 +160,7 @@ export default function BlogAdminPage() {
     if (search) params.search = search;
     if (statusFilter) params.status = statusFilter;
     if (categoryFilter) params.category = categoryFilter;
+    if (languageFilter) params.language = languageFilter;
 
     Promise.all([
       api.blog.list(params),
@@ -159,11 +183,11 @@ export default function BlogAdminPage() {
   // Reset to page 1 whenever filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [search, statusFilter, categoryFilter, pageSize]);
+  }, [search, statusFilter, categoryFilter, languageFilter, pageSize]);
 
   useEffect(() => {
     fetchPosts();
-  }, [currentPage, pageSize, search, statusFilter, categoryFilter]);
+  }, [currentPage, pageSize, search, statusFilter, categoryFilter, languageFilter]);
 
   // Initial non-blocking load of KPI counter statistics
   useEffect(() => {
@@ -182,6 +206,8 @@ export default function BlogAdminPage() {
     setFormData({
       title: post.title,
       slug: post.slug,
+      language: post.language === 'te' ? 'te' : 'en',
+      translationGroupId: post.translationGroupId || undefined,
       categoryId: post.categoryId || post.category?.id || undefined,
       excerpt: post.excerpt || '',
       content: post.content,
@@ -218,6 +244,8 @@ export default function BlogAdminPage() {
       const payload = {
         title: formData.title,
         slug: formData.slug,
+        language: formData.language,
+        translationGroupId: formData.translationGroupId || undefined,
         categoryId: formData.categoryId || undefined,
         excerpt: formData.excerpt || undefined,
         content: formData.content,
@@ -327,7 +355,7 @@ export default function BlogAdminPage() {
       if (res.success) {
         setDiscoveredKeywords(res.data || []);
       }
-    } catch (err) {
+    } catch {
       toast.error('Failed to discover keywords');
     } finally {
       setSearchingKeywords(false);
@@ -342,7 +370,7 @@ export default function BlogAdminPage() {
       if (res.success) {
         setAutomationStatus(res.data);
       }
-    } catch (err) {
+    } catch {
       toast.error('Failed to fetch automation queue status');
     } finally {
       setLoadingStatus(false);
@@ -382,47 +410,55 @@ export default function BlogAdminPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-extrabold tracking-tight text-palnadu-dark">Blog & Articles</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-palnadu-dark">Blog & Articles</h1>
           <p className="text-xs text-palnadu-secondary mt-0.5">
             Publish technical guides, engineering case breakdowns, and manage SEO search metadata.
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <button
+          <Button
+            variant="outline"
+            size="sm"
             onClick={() => {
               setKeywordModalOpen(true);
               if (discoveredKeywords.length === 0) fetchKeywords();
             }}
-            className="inline-flex items-center justify-center gap-1.5 rounded-md border border-palnadu-border bg-white px-3 py-2 text-xs font-semibold text-palnadu-dark shadow-2xs hover:bg-palnadu-off-white transition-colors cursor-pointer"
             title="Discover real Google search terms for Andhra Pradesh & Palnadu"
           >
-            <Compass className="h-3.5 w-3.5 text-palnadu-blue" />
+            <Compass className="h-4 w-4 mr-1.5 text-palnadu-blue" />
             <span>SEO Keywords</span>
-          </button>
-          <button
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
             onClick={fetchAutomationStatus}
-            className="inline-flex items-center justify-center gap-1.5 rounded-md border border-palnadu-border bg-white px-3 py-2 text-xs font-semibold text-palnadu-dark shadow-2xs hover:bg-palnadu-off-white transition-colors cursor-pointer"
             title="View scheduled blog queue & rotation status"
           >
-            <ListChecks className="h-3.5 w-3.5 text-emerald-600" />
+            <ListChecks className="h-4 w-4 mr-1.5 text-palnadu-teal" />
             <span>Queue Status</span>
-          </button>
-          <button
+          </Button>
+          <Button
+            variant="secondary"
+            size="sm"
             onClick={triggerAiGenerate}
             disabled={generatingAi}
-            className="inline-flex items-center justify-center gap-1.5 rounded-md bg-purple-600 px-3.5 py-2 text-xs font-semibold text-white shadow-xs hover:bg-purple-700 transition-colors cursor-pointer disabled:opacity-50"
             title="Generate next scheduled AI blog draft from queue"
           >
-            <Sparkles className="h-3.5 w-3.5" />
+            {generatingAi ? (
+              <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
+            ) : (
+              <Sparkles className="h-4 w-4 mr-1.5" />
+            )}
             <span>{generatingAi ? 'Generating Draft...' : 'Generate AI Blog Draft'}</span>
-          </button>
-          <button
+          </Button>
+          <Button
+            variant="default"
+            size="sm"
             onClick={openCreateModal}
-            className="inline-flex items-center justify-center gap-1.5 rounded-md bg-palnadu-blue px-4 py-2 text-xs font-semibold text-white shadow-xs hover:bg-[#12487e] transition-colors cursor-pointer"
           >
-            <Plus className="h-4 w-4" />
+            <Plus className="h-4 w-4 mr-1.5" />
             <span>New Article</span>
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -431,60 +467,70 @@ export default function BlogAdminPage() {
         <button
           onClick={() => setStatusFilter('')}
           className={cn(
-            "rounded-lg border bg-white p-3.5 shadow-2xs text-left transition-all cursor-pointer",
-            statusFilter === '' ? "border-palnadu-blue ring-1 ring-palnadu-blue" : "border-palnadu-border hover:border-gray-300"
+            'rounded-lg border bg-white p-3.5 text-left transition-all cursor-pointer shadow-sm',
+            statusFilter === ''
+              ? 'border-palnadu-blue ring-1 ring-palnadu-blue bg-palnadu-light-blue/20'
+              : 'border-palnadu-border hover:border-palnadu-blue/50'
           )}
         >
-          <p className="text-[11px] font-semibold text-palnadu-secondary uppercase tracking-wider">Total Articles</p>
+          <p className="text-xs font-semibold text-palnadu-secondary uppercase tracking-wider">Total Articles</p>
           <p className="text-xl font-bold text-palnadu-dark mt-1">{loading && totalPosts === 0 ? '—' : totalPosts}</p>
         </button>
         <button
           onClick={() => setStatusFilter('PUBLISHED')}
           className={cn(
-            "rounded-lg border bg-white p-3.5 shadow-2xs text-left transition-all cursor-pointer",
-            statusFilter === 'PUBLISHED' ? "border-emerald-500 ring-1 ring-emerald-500 bg-emerald-50/20" : "border-palnadu-border hover:border-gray-300"
+            'rounded-lg border bg-white p-3.5 text-left transition-all cursor-pointer shadow-sm',
+            statusFilter === 'PUBLISHED'
+              ? 'border-palnadu-teal ring-1 ring-palnadu-teal bg-palnadu-teal/10'
+              : 'border-palnadu-border hover:border-palnadu-blue/50'
           )}
         >
-          <p className="text-[11px] font-semibold text-emerald-700 uppercase tracking-wider">Published on Google</p>
-          <p className="text-xl font-bold text-emerald-700 mt-1">{loading && publishedCount === 0 ? '—' : publishedCount}</p>
+          <p className="text-xs font-semibold text-palnadu-teal uppercase tracking-wider">Published on Google</p>
+          <p className="text-xl font-bold text-palnadu-teal mt-1">{loading && publishedCount === 0 ? '—' : publishedCount}</p>
         </button>
         <button
           onClick={() => setStatusFilter('DRAFT')}
           className={cn(
-            "rounded-lg border bg-white p-3.5 shadow-2xs text-left transition-all cursor-pointer",
-            statusFilter === 'DRAFT' ? "border-amber-500 ring-1 ring-amber-500 bg-amber-50/30" : "border-palnadu-border hover:border-gray-300"
+            'rounded-lg border bg-white p-3.5 text-left transition-all cursor-pointer shadow-sm',
+            statusFilter === 'DRAFT'
+              ? 'border-palnadu-warning ring-1 ring-palnadu-warning bg-palnadu-warning/10'
+              : 'border-palnadu-border hover:border-palnadu-blue/50'
           )}
         >
-          <p className="text-[11px] font-semibold text-amber-700 uppercase tracking-wider">Drafts Pending Review</p>
-          <p className="text-xl font-bold text-amber-700 mt-1">{loading && draftCount === 0 ? '—' : draftCount}</p>
+          <p className="text-xs font-semibold text-palnadu-warning uppercase tracking-wider">Drafts Pending Review</p>
+          <p className="text-xl font-bold text-palnadu-warning mt-1">{loading && draftCount === 0 ? '—' : draftCount}</p>
         </button>
         <button
           onClick={() => setStatusFilter('ARCHIVED')}
           className={cn(
-            "rounded-lg border bg-white p-3.5 shadow-2xs text-left transition-all cursor-pointer",
-            statusFilter === 'ARCHIVED' ? "border-purple-500 ring-1 ring-purple-500 bg-purple-50/20" : "border-palnadu-border hover:border-gray-300"
+            'rounded-lg border bg-white p-3.5 text-left transition-all cursor-pointer shadow-sm',
+            statusFilter === 'ARCHIVED'
+              ? 'border-palnadu-secondary ring-1 ring-palnadu-secondary bg-palnadu-off-white'
+              : 'border-palnadu-border hover:border-palnadu-blue/50'
           )}
         >
-          <p className="text-[11px] font-semibold text-purple-700 uppercase tracking-wider">Archived Articles</p>
-          <p className="text-xl font-bold text-purple-700 mt-1">{loading && archivedCount === 0 ? '—' : archivedCount}</p>
+          <p className="text-xs font-semibold text-palnadu-secondary uppercase tracking-wider">Archived Articles</p>
+          <p className="text-xl font-bold text-palnadu-dark mt-1">{loading && archivedCount === 0 ? '—' : archivedCount}</p>
         </button>
       </div>
 
       {/* Review Alert Banner when Drafts Exist */}
       {draftCount > 0 && statusFilter !== 'DRAFT' && (
-        <div className="p-3.5 rounded-xl border border-amber-200 bg-amber-50/70 flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-fade-in">
+        <div className="p-3.5 rounded-xl border border-palnadu-warning/40 bg-palnadu-warning/10 flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-fade-in">
           <div className="flex items-center gap-2.5">
-            <span className="h-2 w-2 rounded-full bg-amber-500 animate-pulse shrink-0" />
-            <p className="text-xs font-semibold text-amber-950">
+            <span className="h-2 w-2 rounded-full bg-palnadu-warning animate-pulse shrink-0" />
+            <p className="text-xs font-semibold text-palnadu-dark">
               {draftCount} automated blog article(s) waiting in draft mode for your review.
             </p>
           </div>
-          <button
+          <Button
+            size="sm"
+            variant="default"
             onClick={() => setStatusFilter('DRAFT')}
-            className="self-start sm:self-auto px-3 py-1 text-xs font-bold rounded-md bg-amber-600 text-white hover:bg-amber-700 transition-colors shadow-2xs cursor-pointer shrink-0"
+            className="self-start sm:self-auto shrink-0"
           >
             Review Drafts →
-          </button>
+          </Button>
         </div>
       )}
 
@@ -492,20 +538,30 @@ export default function BlogAdminPage() {
       <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-palnadu-secondary" />
-          <input
+          <Input
             type="text"
             placeholder="Search articles by title or keyword..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-9 pr-3 py-1.5 text-xs rounded-md border border-palnadu-border bg-white text-palnadu-dark placeholder:text-palnadu-secondary/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-palnadu-blue"
+            className="pl-9 pr-3"
           />
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
+          <select
+            value={languageFilter}
+            onChange={(e) => setLanguageFilter(e.target.value)}
+            className="flex h-9 rounded-md border border-palnadu-border bg-white px-3 py-1.5 text-xs text-palnadu-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-palnadu-blue cursor-pointer"
+          >
+            <option value="">All Languages</option>
+            <option value="en">English (EN)</option>
+            <option value="te">Telugu (TE)</option>
+          </select>
+
           <select
             value={categoryFilter}
             onChange={(e) => setCategoryFilter(e.target.value)}
-            className="h-8 rounded-md border border-palnadu-border bg-white px-2.5 text-xs text-palnadu-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-palnadu-blue cursor-pointer"
+            className="flex h-9 rounded-md border border-palnadu-border bg-white px-3 py-1.5 text-xs text-palnadu-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-palnadu-blue cursor-pointer"
           >
             <option value="">All Categories</option>
             {categories.map((c) => (
@@ -518,7 +574,7 @@ export default function BlogAdminPage() {
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="h-8 rounded-md border border-palnadu-border bg-white px-2.5 text-xs text-palnadu-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-palnadu-blue cursor-pointer"
+            className="flex h-9 rounded-md border border-palnadu-border bg-white px-3 py-1.5 text-xs text-palnadu-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-palnadu-blue cursor-pointer"
           >
             <option value="">All Statuses</option>
             <option value="PUBLISHED">Published</option>
@@ -529,13 +585,14 @@ export default function BlogAdminPage() {
       </div>
 
       {/* Articles Table with Internal Body Scrolling & Pagination */}
-      <div className="rounded-xl border border-palnadu-border bg-white shadow-2xs overflow-hidden flex flex-col">
+      <div className="rounded-xl border border-palnadu-border bg-white shadow-sm overflow-hidden flex flex-col">
         {/* Scrollable Table Body Container with Sticky Header */}
         <div className="overflow-x-auto overflow-y-auto max-h-[580px] sm:max-h-[640px]">
           <table className="w-full text-xs border-collapse">
-            <thead className="sticky top-0 z-10 bg-palnadu-off-white border-b border-palnadu-border text-palnadu-secondary text-left font-semibold shadow-xs">
+            <thead className="sticky top-0 z-10 bg-palnadu-off-white border-b border-palnadu-border text-palnadu-secondary text-left font-semibold shadow-sm">
               <tr>
                 <th className="px-4 py-3 bg-palnadu-off-white">Article Title & Slug</th>
+                <th className="px-4 py-3 bg-palnadu-off-white">Lang</th>
                 <th className="px-4 py-3 bg-palnadu-off-white">Category</th>
                 <th className="px-4 py-3 bg-palnadu-off-white">SEO Health</th>
                 <th className="px-4 py-3 bg-palnadu-off-white">Status</th>
@@ -546,16 +603,16 @@ export default function BlogAdminPage() {
             <tbody className="divide-y divide-palnadu-border/60 bg-white">
               {loading ? (
                 <tr>
-                  <td colSpan={6} className="px-4 py-12 text-center text-palnadu-secondary">
+                  <td colSpan={7} className="px-4 py-12 text-center text-palnadu-secondary">
                     <Loader2 className="h-5 w-5 animate-spin mx-auto text-palnadu-blue mb-2" />
                     <span>Loading articles...</span>
                   </td>
                 </tr>
               ) : posts.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-4 py-12 text-center text-palnadu-secondary">
+                  <td colSpan={7} className="px-4 py-12 text-center text-palnadu-secondary">
                     <p className="font-semibold text-palnadu-dark">No articles found</p>
-                    <p className="text-[11px] mt-1">Try adjusting your search query or status filter.</p>
+                    <p className="text-xs mt-1">Try adjusting your search query, language, or status filter.</p>
                   </td>
                 </tr>
               ) : (
@@ -570,14 +627,38 @@ export default function BlogAdminPage() {
                         <FileText className="h-3.5 w-3.5 text-palnadu-blue shrink-0" />
                         <span>{post.title}</span>
                       </div>
-                      <div className="font-mono text-[11px] text-palnadu-secondary mt-0.5">
+                      <div className="font-mono text-xs text-palnadu-secondary mt-0.5">
                         /blog/{post.slug}
+                      </div>
+                    </td>
+
+                    {/* Language & Translation Linkage Badge */}
+                    <td className="px-4 py-3 whitespace-nowrap">
+                      <div className="flex items-center gap-1">
+                        <span
+                          className={cn(
+                            'inline-flex items-center px-1.5 py-0.5 rounded text-xs font-semibold border',
+                            post.language === 'te'
+                              ? 'bg-palnadu-light-blue text-palnadu-blue border-palnadu-blue/30'
+                              : 'bg-palnadu-off-white text-palnadu-dark border-palnadu-border'
+                          )}
+                        >
+                          {post.language === 'te' ? 'TE' : 'EN'}
+                        </span>
+                        {post.translationGroupId && (
+                          <span
+                            className="text-palnadu-blue text-xs"
+                            title={`Translation Group ID: ${post.translationGroupId}`}
+                          >
+                            🔗
+                          </span>
+                        )}
                       </div>
                     </td>
 
                     {/* Category */}
                     <td className="px-4 py-3 whitespace-nowrap">
-                      <span className="inline-block px-2 py-0.5 rounded-md bg-palnadu-off-white border border-palnadu-border text-[10px] font-semibold text-palnadu-dark">
+                      <span className="inline-block px-2 py-0.5 rounded-md bg-palnadu-off-white border border-palnadu-border text-xs font-semibold text-palnadu-dark">
                         {post.category?.name || 'Unassigned'}
                       </span>
                     </td>
@@ -586,12 +667,12 @@ export default function BlogAdminPage() {
                     <td className="px-4 py-3 whitespace-nowrap">
                       <div className="flex items-center gap-1.5">
                         {post.seoTitle && post.seoDescription ? (
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-50 border border-emerald-200 text-emerald-800 font-semibold text-[10px]">
-                            <Sparkles className="h-3 w-3 text-emerald-600" />
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-palnadu-teal/10 border border-palnadu-teal/30 text-palnadu-teal-dark font-semibold text-xs">
+                            <Sparkles className="h-3 w-3 text-palnadu-teal" />
                             <span>SEO Ready</span>
                           </span>
                         ) : (
-                          <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-yellow-50 border border-yellow-200 text-yellow-800 text-[10px]">
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-palnadu-warning/10 border border-palnadu-warning/30 text-palnadu-warning font-semibold text-xs">
                             Basic Meta
                           </span>
                         )}
@@ -602,12 +683,12 @@ export default function BlogAdminPage() {
                     <td className="px-4 py-3 whitespace-nowrap">
                       <span
                         className={cn(
-                          'inline-flex rounded-md border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider',
+                          'inline-flex rounded-md border px-2 py-0.5 text-xs font-bold uppercase tracking-wider',
                           post.status === 'PUBLISHED'
-                            ? 'bg-emerald-100 text-emerald-800 border-emerald-200'
+                            ? 'bg-palnadu-teal/10 text-palnadu-teal-dark border-palnadu-teal/30'
                             : post.status === 'ARCHIVED'
-                            ? 'bg-purple-100 text-purple-800 border-purple-200'
-                            : 'bg-amber-100 text-amber-800 border-amber-200'
+                            ? 'bg-palnadu-off-white text-palnadu-secondary border-palnadu-border'
+                            : 'bg-palnadu-warning/10 text-palnadu-warning border-palnadu-warning/30'
                         )}
                       >
                         {post.status}
@@ -620,47 +701,42 @@ export default function BlogAdminPage() {
                     </td>
 
                     {/* Actions */}
-                    <td className="px-4 py-3 text-right whitespace-nowrap space-x-1.5">
+                    <td className="px-4 py-3 text-right whitespace-nowrap space-x-1">
                       {post.status === 'DRAFT' && (
-                        <button
+                        <Button
+                          size="sm"
+                          variant="secondary"
                           onClick={() => quickPublish(post)}
-                          disabled={publishingId === post.id}
-                          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-50 border border-emerald-300 text-emerald-700 hover:bg-emerald-100 font-semibold transition-colors cursor-pointer text-[10px] disabled:opacity-60 disabled:cursor-not-allowed"
-                          title="1-Click Approve & Publish"
-                        >
-                          {publishingId === post.id ? (
-                            <Loader2 className="h-3 w-3 animate-spin" />
-                          ) : (
-                            <CheckCircle2 className="h-3 w-3" />
-                          )}
-                          <span>{publishingId === post.id ? 'Publishing...' : 'Approve'}</span>
-                        </button>
                       )}
                       {post.status === 'PUBLISHED' && (
                         <a
-                          href={`${siteConfig.url}/blog/${post.slug}`}
+                          href={post.language === 'te' ? `${siteConfig.url}/te/blog/${post.slug}` : `${siteConfig.url}/blog/${post.slug}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-flex items-center p-1.5 rounded-md text-palnadu-secondary hover:text-palnadu-blue hover:bg-palnadu-light-blue transition-colors"
+                          className="inline-flex items-center justify-center h-7 w-7 rounded-md text-palnadu-secondary hover:text-palnadu-blue hover:bg-palnadu-light-blue transition-colors align-middle"
                           title="View Live on Site"
                         >
                           <ExternalLink className="h-3.5 w-3.5" />
                         </a>
                       )}
-                      <button
+                      <Button
+                        size="sm"
+                        variant="ghost"
                         onClick={() => openEditModal(post)}
-                        className="inline-flex items-center p-1.5 rounded-md hover:bg-palnadu-light-blue text-palnadu-blue transition-colors cursor-pointer"
+                        className="h-7 w-7 p-0 text-palnadu-blue"
                         title="Edit Article"
                       >
                         <Edit2 className="h-3.5 w-3.5" />
-                      </button>
-                      <button
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
                         onClick={() => setDeleteTarget({ id: post.id, title: post.title })}
-                        className="inline-flex items-center p-1.5 rounded-md hover:bg-red-50 text-palnadu-error transition-colors cursor-pointer"
+                        className="h-7 w-7 p-0 text-palnadu-error hover:text-palnadu-error hover:bg-palnadu-error/10"
                         title="Delete Article"
                       >
                         <Trash2 className="h-3.5 w-3.5" />
-                      </button>
+                      </Button>
                     </td>
                   </tr>
                 ))
@@ -694,22 +770,26 @@ export default function BlogAdminPage() {
           </div>
 
           <div className="flex items-center gap-1">
-            <button
+            <Button
+              size="sm"
+              variant="outline"
               onClick={() => setCurrentPage(1)}
               disabled={currentPage <= 1 || loading}
-              className="p-1.5 rounded-md border border-palnadu-border hover:bg-gray-50 text-palnadu-dark disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+              className="h-7 w-7 p-0"
               title="First page"
             >
               <ChevronsLeft className="h-3.5 w-3.5" />
-            </button>
-            <button
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
               onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
               disabled={currentPage <= 1 || loading}
-              className="p-1.5 rounded-md border border-palnadu-border hover:bg-gray-50 text-palnadu-dark disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+              className="h-7 w-7 p-0"
               title="Previous page"
             >
               <ChevronLeft className="h-3.5 w-3.5" />
-            </button>
+            </Button>
 
             {/* Page number indicators */}
             <div className="flex items-center gap-1 px-1">
@@ -721,45 +801,46 @@ export default function BlogAdminPage() {
                   return (
                     <div key={p} className="flex items-center gap-1">
                       {showEllipsis && <span className="px-1 text-palnadu-secondary">…</span>}
-                      <button
+                      <Button
+                        size="sm"
+                        variant={currentPage === p ? 'default' : 'outline'}
                         onClick={() => setCurrentPage(p)}
-                        className={cn(
-                          'h-7 min-w-[28px] px-2 rounded-md border text-xs font-semibold transition-colors cursor-pointer',
-                          currentPage === p
-                            ? 'bg-palnadu-blue border-palnadu-blue text-white'
-                            : 'border-palnadu-border bg-white text-palnadu-dark hover:bg-gray-50'
-                        )}
+                        className="h-7 min-w-[28px] px-2 text-xs font-semibold"
                       >
                         {p}
-                      </button>
+                      </Button>
                     </div>
                   );
                 })}
             </div>
 
-            <button
+            <Button
+              size="sm"
+              variant="outline"
               onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
               disabled={currentPage >= totalPages || loading}
-              className="p-1.5 rounded-md border border-palnadu-border hover:bg-gray-50 text-palnadu-dark disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+              className="h-7 w-7 p-0"
               title="Next page"
             >
               <ChevronRight className="h-3.5 w-3.5" />
-            </button>
-            <button
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
               onClick={() => setCurrentPage(totalPages)}
               disabled={currentPage >= totalPages || loading}
-              className="p-1.5 rounded-md border border-palnadu-border hover:bg-gray-50 text-palnadu-dark disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+              className="h-7 w-7 p-0"
               title="Last page"
             >
               <ChevronsRight className="h-3.5 w-3.5" />
-            </button>
+            </Button>
           </div>
         </div>
       </div>
 
       {/* Create / Edit Article Modal */}
       {modalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs animate-fade-in overflow-y-auto">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-fade-in overflow-y-auto">
           <div className="w-full max-w-2xl rounded-xl border border-palnadu-border bg-white shadow-xl overflow-hidden my-8">
             {/* Modal Header */}
             <div className="flex items-center justify-between border-b border-palnadu-border px-5 py-3.5 bg-palnadu-off-white/40">
@@ -769,12 +850,14 @@ export default function BlogAdminPage() {
                 </h2>
                 <p className="text-xs text-palnadu-secondary">Configure article content, Cloudinary media, and Google SEO parameters.</p>
               </div>
-              <button
+              <Button
+                size="sm"
+                variant="ghost"
                 onClick={() => setModalOpen(false)}
-                className="rounded-md p-1 text-palnadu-secondary hover:text-palnadu-dark transition-colors cursor-pointer"
+                className="h-8 w-8 p-0 text-palnadu-secondary hover:text-palnadu-dark"
               >
                 <X className="h-4 w-4" />
-              </button>
+              </Button>
             </div>
 
             {/* Navigation Tabs */}
@@ -811,42 +894,50 @@ export default function BlogAdminPage() {
               {activeTab === 'content' && (
                 <div className="space-y-3.5">
                   <div className="space-y-1">
-                    <label className="text-xs font-semibold text-palnadu-dark">
+                    <Label>
                       Article Title <span className="text-palnadu-error">*</span>
-                    </label>
-                    <input
+                    </Label>
+                    <Input
                       type="text"
                       required
                       placeholder="e.g. 5 Practical Steps to Validate a SaaS MVP in 2026"
                       value={formData.title}
                       onChange={(e) => handleTitleChange(e.target.value)}
-                      className="w-full h-8 rounded-md border border-palnadu-border bg-white px-3 text-xs text-palnadu-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-palnadu-blue"
                     />
                   </div>
 
-                  <div className="grid grid-cols-3 gap-3">
-                    <div className="col-span-1 space-y-1">
-                      <label className="text-xs font-semibold text-palnadu-dark">
+                  <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+                    <div className="sm:col-span-1 space-y-1">
+                      <Label>
                         URL Slug <span className="text-palnadu-error">*</span>
-                      </label>
-                      <div className="flex items-center rounded-md border border-palnadu-border bg-palnadu-off-white/50 px-2 h-8">
-                        <span className="text-[11px] text-palnadu-secondary shrink-0 font-mono">/blog/</span>
-                        <input
-                          type="text"
-                          required
-                          value={formData.slug}
-                          onChange={(e) => setFormData({ ...formData, slug: slugify(e.target.value) })}
-                          className="w-full bg-transparent px-1 text-xs font-mono text-palnadu-dark focus-visible:outline-none"
-                        />
-                      </div>
+                      </Label>
+                      <Input
+                        type="text"
+                        required
+                        value={formData.slug}
+                        onChange={(e) => setFormData({ ...formData, slug: slugify(e.target.value) })}
+                        className="font-mono text-xs"
+                      />
                     </div>
 
-                    <div className="col-span-1 space-y-1">
-                      <label className="text-xs font-semibold text-palnadu-dark">Category</label>
+                    <div className="sm:col-span-1 space-y-1">
+                      <Label>Language</Label>
+                      <select
+                        value={formData.language}
+                        onChange={(e) => setFormData({ ...formData, language: e.target.value as 'en' | 'te' })}
+                        className="flex h-9 w-full rounded-md border border-palnadu-border bg-white px-3 py-1.5 text-xs text-palnadu-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-palnadu-blue cursor-pointer"
+                      >
+                        <option value="en">English (en)</option>
+                        <option value="te">Telugu (te)</option>
+                      </select>
+                    </div>
+
+                    <div className="sm:col-span-1 space-y-1">
+                      <Label>Category</Label>
                       <select
                         value={formData.categoryId || ''}
                         onChange={(e) => setFormData({ ...formData, categoryId: e.target.value || undefined })}
-                        className="w-full h-8 rounded-md border border-palnadu-border bg-white px-3 text-xs text-palnadu-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-palnadu-blue cursor-pointer"
+                        className="flex h-9 w-full rounded-md border border-palnadu-border bg-white px-3 py-1.5 text-xs text-palnadu-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-palnadu-blue cursor-pointer"
                       >
                         <option value="">Select Category...</option>
                         {categories.map((c) => (
@@ -857,23 +948,34 @@ export default function BlogAdminPage() {
                       </select>
                     </div>
 
-                    <div className="col-span-1 space-y-1">
-                      <label className="text-xs font-semibold text-palnadu-dark">Publication Status</label>
+                    <div className="sm:col-span-1 space-y-1">
+                      <Label>Publication Status</Label>
                       <select
                         value={formData.status}
                         onChange={(e) => setFormData({ ...formData, status: e.target.value as 'DRAFT' | 'PUBLISHED' | 'ARCHIVED' })}
-                        className="w-full h-8 rounded-md border border-palnadu-border bg-white px-3 text-xs text-palnadu-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-palnadu-blue cursor-pointer"
+                        className="flex h-9 w-full rounded-md border border-palnadu-border bg-white px-3 py-1.5 text-xs text-palnadu-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-palnadu-blue cursor-pointer"
                       >
                         <option value="DRAFT">Draft (Internal Only)</option>
-                        <option value="PUBLISHED">Published (Live on Google & Site)</option>
-                        <option value="ARCHIVED">Archived (Delisted from Active Feed)</option>
+                        <option value="PUBLISHED">Published (Live)</option>
+                        <option value="ARCHIVED">Archived (Delisted)</option>
                       </select>
                     </div>
                   </div>
 
+                  <div className="space-y-1">
+                    <Label>Translation Group ID (Optional)</Label>
+                    <Input
+                      type="text"
+                      placeholder="e.g. saas-mvp-validation (pairs English & Telugu versions)"
+                      value={formData.translationGroupId || ''}
+                      onChange={(e) => setFormData({ ...formData, translationGroupId: e.target.value || undefined })}
+                      className="font-mono text-xs"
+                    />
+                  </div>
+
                   {/* Cover Image with 1-Click Cloudinary Upload */}
                   <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-palnadu-dark">Cover Photo (Cloudinary CDN)</label>
+                    <Label>Cover Photo (Cloudinary CDN)</Label>
                     {formData.coverImage ? (
                       <div className="relative rounded-lg border border-palnadu-border p-2 bg-palnadu-off-white/40 flex items-center justify-between gap-3">
                         <div className="flex items-center gap-2.5 overflow-hidden">
@@ -884,13 +986,15 @@ export default function BlogAdminPage() {
                           />
                           <span className="text-xs font-mono text-palnadu-secondary truncate">{formData.coverImage}</span>
                         </div>
-                        <button
+                        <Button
                           type="button"
+                          variant="ghost"
+                          size="sm"
                           onClick={() => setFormData({ ...formData, coverImage: '', ogImage: '' })}
-                          className="text-xs font-semibold text-palnadu-error hover:underline shrink-0 cursor-pointer"
+                          className="text-xs text-palnadu-error hover:text-palnadu-error hover:bg-palnadu-error/10 shrink-0"
                         >
                           Remove
-                        </button>
+                        </Button>
                       </div>
                     ) : (
                       <div className="flex items-center gap-2">
@@ -902,11 +1006,11 @@ export default function BlogAdminPage() {
                           className="hidden"
                           id="blog-cover-upload"
                         />
-                        <label
+                        <Label
                           htmlFor="blog-cover-upload"
                           className={cn(
-                            "inline-flex items-center justify-center gap-1.5 h-8 px-3 rounded-md border border-palnadu-border bg-white text-xs font-semibold text-palnadu-dark hover:bg-palnadu-light-blue hover:text-palnadu-blue hover:border-palnadu-blue transition-colors cursor-pointer shadow-xs shrink-0",
-                            uploadingCover && "opacity-50 pointer-events-none"
+                            'inline-flex items-center justify-center gap-1.5 h-9 px-3 rounded-md border border-palnadu-border bg-white text-xs font-semibold text-palnadu-dark hover:bg-palnadu-light-blue hover:text-palnadu-blue hover:border-palnadu-blue transition-colors cursor-pointer shadow-sm shrink-0',
+                            uploadingCover && 'opacity-50 pointer-events-none'
                           )}
                         >
                           {uploadingCover ? (
@@ -920,41 +1024,40 @@ export default function BlogAdminPage() {
                               <span>Upload Photo</span>
                             </>
                           )}
-                        </label>
-                        <span className="text-[11px] text-palnadu-secondary shrink-0">or URL:</span>
-                        <input
+                        </Label>
+                        <span className="text-xs text-palnadu-secondary shrink-0">or URL:</span>
+                        <Input
                           type="url"
                           placeholder="https://res.cloudinary.com/..."
                           value={formData.coverImage}
                           onChange={(e) => setFormData({ ...formData, coverImage: e.target.value })}
-                          className="flex-1 h-8 rounded-md border border-palnadu-border bg-white px-3 text-xs text-palnadu-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-palnadu-blue"
+                          className="flex-1"
                         />
                       </div>
                     )}
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-xs font-semibold text-palnadu-dark">Short Excerpt (Summary)</label>
-                    <textarea
+                    <Label>Short Excerpt (Summary)</Label>
+                    <Textarea
                       rows={2}
                       placeholder="A 2-sentence summary shown on the blog index cards..."
                       value={formData.excerpt}
                       onChange={(e) => setFormData({ ...formData, excerpt: e.target.value })}
-                      className="w-full rounded-md border border-palnadu-border bg-white p-2.5 text-xs text-palnadu-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-palnadu-blue"
                     />
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-xs font-semibold text-palnadu-dark">
+                    <Label>
                       Article Content <span className="text-palnadu-error">*</span>
-                    </label>
-                    <textarea
+                    </Label>
+                    <Textarea
                       rows={7}
                       required
                       placeholder="Write your article body here using Markdown (# Headers, - Bullet points, **bold**)..."
                       value={formData.content}
                       onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-                      className="w-full rounded-md border border-palnadu-border bg-white p-2.5 text-xs font-mono text-palnadu-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-palnadu-blue"
+                      className="font-mono text-xs"
                     />
                   </div>
                 </div>
@@ -967,47 +1070,53 @@ export default function BlogAdminPage() {
                     {/* SEO Title */}
                     <div className="space-y-1">
                       <div className="flex items-center justify-between">
-                        <label className="text-xs font-semibold text-palnadu-dark">
-                          Google Search Title Tag
-                        </label>
-                        <span className={cn(
-                          'text-[11px] font-mono font-semibold',
-                          formData.seoTitle.length > 60 ? 'text-palnadu-error' : formData.seoTitle.length >= 45 ? 'text-emerald-700' : 'text-palnadu-secondary'
-                        )}>
+                        <Label>Google Search Title Tag</Label>
+                        <span
+                          className={cn(
+                            'text-xs font-mono font-semibold',
+                            formData.seoTitle.length > 60
+                              ? 'text-palnadu-error'
+                              : formData.seoTitle.length >= 45
+                              ? 'text-palnadu-teal'
+                              : 'text-palnadu-secondary'
+                          )}
+                        >
                           {formData.seoTitle.length} / 60 chars
                         </span>
                       </div>
-                      <input
+                      <Input
                         type="text"
                         placeholder="e.g. 5 Practical Steps to Validate a SaaS MVP | Palnadu.dev"
                         value={formData.seoTitle}
                         onChange={(e) => setFormData({ ...formData, seoTitle: e.target.value })}
-                        className="w-full h-8 rounded-md border border-palnadu-border bg-white px-3 text-xs text-palnadu-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-palnadu-blue"
                       />
-                      <p className="text-[10px] text-palnadu-secondary">Recommended: 50–60 characters. Place your main keyword first.</p>
+                      <p className="text-xs text-palnadu-secondary">Recommended: 50–60 characters. Place your main keyword first.</p>
                     </div>
 
                     {/* SEO Meta Description */}
                     <div className="space-y-1">
                       <div className="flex items-center justify-between">
-                        <label className="text-xs font-semibold text-palnadu-dark">
-                          Google Meta Description Snippet
-                        </label>
-                        <span className={cn(
-                          'text-[11px] font-mono font-semibold',
-                          formData.seoDescription.length > 160 ? 'text-palnadu-error' : formData.seoDescription.length >= 130 ? 'text-emerald-700' : 'text-palnadu-secondary'
-                        )}>
+                        <Label>Google Meta Description Snippet</Label>
+                        <span
+                          className={cn(
+                            'text-xs font-mono font-semibold',
+                            formData.seoDescription.length > 160
+                              ? 'text-palnadu-error'
+                              : formData.seoDescription.length >= 130
+                              ? 'text-palnadu-teal'
+                              : 'text-palnadu-secondary'
+                          )}
+                        >
                           {formData.seoDescription.length} / 160 chars
                         </span>
                       </div>
-                      <textarea
+                      <Textarea
                         rows={3}
                         placeholder="e.g. Learn how software engineers validate startup ideas, avoid costly technical traps, and launch an MVP with paying customers in 3 to 6 weeks."
                         value={formData.seoDescription}
                         onChange={(e) => setFormData({ ...formData, seoDescription: e.target.value })}
-                        className="w-full rounded-md border border-palnadu-border bg-white p-2.5 text-xs text-palnadu-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-palnadu-blue"
                       />
-                      <p className="text-[10px] text-palnadu-secondary">Recommended: 140–160 characters. Provide a compelling click hook for searchers.</p>
+                      <p className="text-xs text-palnadu-secondary">Recommended: 140–160 characters. Provide a compelling click hook for searchers.</p>
                     </div>
                   </div>
 
@@ -1017,18 +1126,18 @@ export default function BlogAdminPage() {
                       <Eye className="h-3.5 w-3.5 text-palnadu-blue" />
                       <span>Live Google Search Snippet Preview</span>
                     </p>
-                    <div className="rounded-lg border border-palnadu-border bg-white p-4 shadow-xs space-y-1">
-                      <div className="text-[11px] text-[#202124] flex items-center gap-1 font-sans">
+                    <div className="rounded-lg border border-palnadu-border bg-white p-4 shadow-sm space-y-1">
+                      <div className="text-xs text-palnadu-dark flex items-center gap-1 font-sans">
                         <span>{siteConfig.url}</span>
-                        <span className="text-gray-400">›</span>
-                        <span>blog</span>
-                        <span className="text-gray-400">›</span>
-                        <span className="text-gray-600 truncate">{formData.slug || 'your-article-slug'}</span>
+                        <span className="text-palnadu-secondary">›</span>
+                        <span>{formData.language === 'te' ? 'te/blog' : 'blog'}</span>
+                        <span className="text-palnadu-secondary">›</span>
+                        <span className="text-palnadu-secondary truncate">{formData.slug || 'your-article-slug'}</span>
                       </div>
-                      <div className="text-base font-medium text-[#1a0dab] hover:underline cursor-pointer line-clamp-1 leading-snug">
+                      <div className="text-base font-medium text-palnadu-blue hover:underline cursor-pointer line-clamp-1 leading-snug">
                         {formData.seoTitle || formData.title || 'Your Article Title Appears Here | Palnadu.dev'}
                       </div>
-                      <div className="text-xs text-[#4d5156] line-clamp-2 leading-relaxed">
+                      <div className="text-xs text-palnadu-body line-clamp-2 leading-relaxed">
                         {formData.seoDescription || formData.excerpt || 'Your meta description will appear here on Google search results. Write a descriptive, keyword-rich summary.'}
                       </div>
                     </div>
@@ -1038,40 +1147,43 @@ export default function BlogAdminPage() {
 
               {/* Action Buttons */}
               <div className="flex items-center justify-between pt-3 border-t border-palnadu-border/60">
-                <span className="text-[11px] text-palnadu-secondary">
+                <span className="text-xs text-palnadu-secondary">
                   {formData.status === 'PUBLISHED' ? (
-                    <span className="text-emerald-700 font-semibold flex items-center gap-1">
-                      <CheckCircle2 className="h-3 w-3" /> Will be live and indexed by Google
+                    <span className="text-palnadu-teal font-semibold flex items-center gap-1">
+                      <CheckCircle2 className="h-3.5 w-3.5" /> Will be live and indexed by Google
                     </span>
                   ) : formData.status === 'ARCHIVED' ? (
-                    <span className="text-purple-700 font-semibold flex items-center gap-1">
-                      <Archive className="h-3 w-3" /> Will be preserved in Historical Archive
+                    <span className="text-palnadu-secondary font-semibold flex items-center gap-1">
+                      <Archive className="h-3.5 w-3.5" /> Will be preserved in Historical Archive
                     </span>
                   ) : (
                     'Will be saved privately as Draft'
                   )}
                 </span>
                 <div className="flex items-center gap-2">
-                  <button
+                  <Button
                     type="button"
+                    variant="outline"
+                    size="sm"
                     onClick={() => setModalOpen(false)}
-                    className="rounded-md border border-palnadu-border bg-white px-3.5 py-1.5 text-xs font-semibold text-palnadu-dark hover:bg-palnadu-off-white transition-colors cursor-pointer"
                   >
                     Cancel
-                  </button>
-                  <button
+                  </Button>
+                  <Button
                     type="submit"
+                    variant="default"
+                    size="sm"
                     disabled={submitting}
-                    className="rounded-md bg-palnadu-blue px-4 py-1.5 text-xs font-semibold text-white shadow-xs hover:bg-[#12487e] transition-colors disabled:opacity-50 cursor-pointer"
                   >
                     {submitting ? 'Saving...' : editingPost ? 'Update Article' : formData.status === 'PUBLISHED' ? 'Publish Article →' : 'Save as Draft'}
-                  </button>
+                  </Button>
                 </div>
               </div>
             </form>
           </div>
         </div>
       )}
+
       {/* Delete Article Web Dialog */}
       <ConfirmDialog
         open={Boolean(deleteTarget)}
@@ -1085,7 +1197,7 @@ export default function BlogAdminPage() {
 
       {/* SEO Keyword Discovery Modal */}
       {keywordModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs animate-fade-in">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-fade-in">
           <div className="w-full max-w-2xl max-h-[85vh] rounded-xl border border-palnadu-border bg-white shadow-2xl flex flex-col overflow-hidden">
             <div className="flex items-center justify-between border-b border-palnadu-border px-5 py-3.5 bg-palnadu-off-white">
               <div className="flex items-center gap-2">
@@ -1094,36 +1206,37 @@ export default function BlogAdminPage() {
                 </div>
                 <div>
                   <h3 className="text-sm font-bold text-palnadu-dark">Google Live SEO Keyword Discovery</h3>
-                  <p className="text-[11px] text-palnadu-secondary">Real-time autocomplete queries from Google India for regional intent</p>
+                  <p className="text-xs text-palnadu-secondary">Real-time autocomplete queries from Google India for regional intent</p>
                 </div>
               </div>
-              <button
+              <Button
+                size="sm"
+                variant="ghost"
                 onClick={() => setKeywordModalOpen(false)}
-                className="text-palnadu-secondary hover:text-palnadu-dark p-1 rounded-md hover:bg-gray-100 transition-colors cursor-pointer"
+                className="h-8 w-8 p-0 text-palnadu-secondary hover:text-palnadu-dark"
               >
                 <X className="h-4 w-4" />
-              </button>
+              </Button>
             </div>
 
-            <div className="p-5 border-b border-palnadu-border/60 bg-gray-50/50 space-y-3">
+            <div className="p-5 border-b border-palnadu-border/60 bg-palnadu-off-white/30 space-y-3">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="space-y-1">
-                  <label className="text-xs font-semibold text-palnadu-dark">Seed Keyword / Topic</label>
-                  <input
+                  <Label>Seed Keyword / Topic</Label>
+                  <Input
                     type="text"
                     value={keywordSeed}
                     onChange={(e) => setKeywordSeed(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && fetchKeywords()}
                     placeholder="e.g. billing software, school website, web design"
-                    className="w-full h-8 rounded-md border border-palnadu-border bg-white px-3 text-xs text-palnadu-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-palnadu-blue"
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-xs font-semibold text-palnadu-dark">Target Regional Location</label>
+                  <Label>Target Regional Location</Label>
                   <select
                     value={keywordLocation}
                     onChange={(e) => setKeywordLocation(e.target.value)}
-                    className="w-full h-8 rounded-md border border-palnadu-border bg-white px-2.5 text-xs text-palnadu-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-palnadu-blue cursor-pointer"
+                    className="flex h-9 w-full rounded-md border border-palnadu-border bg-white px-3 py-1.5 text-xs text-palnadu-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-palnadu-blue cursor-pointer"
                   >
                     <option value="Guntur & Palnadu">Guntur & Palnadu</option>
                     <option value="Palnadu">Palnadu</option>
@@ -1139,17 +1252,18 @@ export default function BlogAdminPage() {
               </div>
 
               <div className="flex items-center justify-between pt-1">
-                <p className="text-[11px] text-palnadu-secondary">
+                <p className="text-xs text-palnadu-secondary">
                   Found <span className="font-semibold text-palnadu-dark">{discoveredKeywords.length}</span> live search variations
                 </p>
-                <button
+                <Button
+                  size="sm"
+                  variant="default"
                   onClick={fetchKeywords}
                   disabled={searchingKeywords || !keywordSeed.trim()}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-palnadu-blue text-white text-xs font-semibold hover:bg-[#12487e] transition-colors cursor-pointer disabled:opacity-50"
                 >
-                  {searchingKeywords ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Search className="h-3.5 w-3.5" />}
+                  {searchingKeywords ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <Search className="h-3.5 w-3.5 mr-1.5" />}
                   <span>{searchingKeywords ? 'Discovering...' : 'Discover Keywords'}</span>
-                </button>
+                </Button>
               </div>
             </div>
 
@@ -1168,12 +1282,10 @@ export default function BlogAdminPage() {
                   {discoveredKeywords.map((kw, idx) => {
                     const intentColor =
                       kw.intent === 'transactional'
-                        ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                        ? 'bg-palnadu-teal/10 text-palnadu-teal-dark border-palnadu-teal/30'
                         : kw.intent === 'local'
-                        ? 'bg-blue-50 text-blue-700 border-blue-200'
-                        : kw.intent === 'commercial'
-                        ? 'bg-purple-50 text-purple-700 border-purple-200'
-                        : 'bg-gray-100 text-gray-700 border-gray-200';
+                        ? 'bg-palnadu-light-blue text-palnadu-blue border-palnadu-blue/30'
+                        : 'bg-palnadu-off-white text-palnadu-dark border-palnadu-border';
 
                     return (
                       <div
@@ -1183,11 +1295,11 @@ export default function BlogAdminPage() {
                         <div className="space-y-1">
                           <div className="flex items-center gap-2">
                             <span className="text-xs font-bold text-palnadu-dark">{kw.keyword}</span>
-                            <span className={cn('px-2 py-0.5 rounded text-[10px] font-mono font-semibold border uppercase', intentColor)}>
+                            <span className={cn('px-2 py-0.5 rounded text-xs font-mono font-semibold border uppercase', intentColor)}>
                               {kw.intent}
                             </span>
                           </div>
-                          <div className="flex items-center gap-3 text-[10px] text-palnadu-secondary">
+                          <div className="flex items-center gap-3 text-xs text-palnadu-secondary">
                             <span>Score: {kw.relevanceScore}/100</span>
                             <span>•</span>
                             <span>{kw.source}</span>
@@ -1195,21 +1307,24 @@ export default function BlogAdminPage() {
                         </div>
 
                         <div className="flex items-center gap-2 shrink-0">
-                          <button
+                          <Button
+                            size="sm"
+                            variant="outline"
                             onClick={() => copyKeyword(kw.keyword)}
-                            className="p-1.5 rounded-md border border-palnadu-border text-palnadu-secondary hover:text-palnadu-dark hover:bg-gray-50 transition-colors cursor-pointer"
+                            className="h-8 w-8 p-0"
                             title="Copy keyword"
                           >
-                            {copiedKw === kw.keyword ? <Check className="h-3.5 w-3.5 text-emerald-600" /> : <Copy className="h-3.5 w-3.5" />}
-                          </button>
-                          <button
+                            {copiedKw === kw.keyword ? <Check className="h-3.5 w-3.5 text-palnadu-teal" /> : <Copy className="h-3.5 w-3.5" />}
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="secondary"
                             onClick={() => generateFromKeyword(kw.keyword)}
                             disabled={generatingAi}
-                            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-purple-50 border border-purple-200 text-purple-700 text-xs font-semibold hover:bg-purple-100 transition-colors cursor-pointer disabled:opacity-50"
                           >
-                            <Sparkles className="h-3 w-3 text-purple-600" />
+                            <Sparkles className="h-3.5 w-3.5 mr-1" />
                             <span>Draft Post</span>
-                          </button>
+                          </Button>
                         </div>
                       </div>
                     );
@@ -1223,24 +1338,26 @@ export default function BlogAdminPage() {
 
       {/* Automation Queue Status Modal */}
       {queueModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs animate-fade-in">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-fade-in">
           <div className="w-full max-w-2xl max-h-[85vh] rounded-xl border border-palnadu-border bg-white shadow-2xl flex flex-col overflow-hidden">
             <div className="flex items-center justify-between border-b border-palnadu-border px-5 py-3.5 bg-palnadu-off-white">
               <div className="flex items-center gap-2">
-                <div className="h-7 w-7 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center border border-emerald-200">
+                <div className="h-7 w-7 rounded-lg bg-palnadu-teal/10 text-palnadu-teal-dark flex items-center justify-center border border-palnadu-teal/30">
                   <ListChecks className="h-4 w-4" />
                 </div>
                 <div>
                   <h3 className="text-sm font-bold text-palnadu-dark">Blog Automation Engine & Queue</h3>
-                  <p className="text-[11px] text-palnadu-secondary">Autonomous cron schedule, topic rotation, and publish status</p>
+                  <p className="text-xs text-palnadu-secondary">Autonomous cron schedule, topic rotation, and publish status</p>
                 </div>
               </div>
-              <button
+              <Button
+                size="sm"
+                variant="ghost"
                 onClick={() => setQueueModalOpen(false)}
-                className="text-palnadu-secondary hover:text-palnadu-dark p-1 rounded-md hover:bg-gray-100 transition-colors cursor-pointer"
+                className="h-8 w-8 p-0 text-palnadu-secondary hover:text-palnadu-dark"
               >
                 <X className="h-4 w-4" />
-              </button>
+              </Button>
             </div>
 
             <div className="p-5 space-y-4 overflow-y-auto">
@@ -1252,19 +1369,19 @@ export default function BlogAdminPage() {
               ) : automationStatus ? (
                 <>
                   <div className="grid grid-cols-3 gap-3">
-                    <div className="rounded-lg border border-palnadu-border bg-gray-50/50 p-3">
-                      <p className="text-[10px] font-semibold text-palnadu-secondary uppercase tracking-wider">Cron Schedule</p>
+                    <div className="rounded-lg border border-palnadu-border bg-palnadu-off-white/40 p-3">
+                      <p className="text-xs font-semibold text-palnadu-secondary uppercase tracking-wider">Cron Schedule</p>
                       <p className="text-xs font-bold text-palnadu-dark mt-1">Daily 05:00 AM IST</p>
                     </div>
-                    <div className="rounded-lg border border-palnadu-border bg-gray-50/50 p-3">
-                      <p className="text-[10px] font-semibold text-palnadu-secondary uppercase tracking-wider">Queue Progress</p>
+                    <div className="rounded-lg border border-palnadu-border bg-palnadu-off-white/40 p-3">
+                      <p className="text-xs font-semibold text-palnadu-secondary uppercase tracking-wider">Queue Progress</p>
                       <p className="text-xs font-bold text-palnadu-dark mt-1">
                         {automationStatus.statistics?.queueCompleted || 0} Done / {automationStatus.upcomingQueue?.length || 0} Total
                       </p>
                     </div>
-                    <div className="rounded-lg border border-palnadu-border bg-gray-50/50 p-3">
-                      <p className="text-[10px] font-semibold text-palnadu-secondary uppercase tracking-wider">Auto-Publish</p>
-                      <p className="text-xs font-bold mt-1 text-amber-700">
+                    <div className="rounded-lg border border-palnadu-border bg-palnadu-off-white/40 p-3">
+                      <p className="text-xs font-semibold text-palnadu-secondary uppercase tracking-wider">Auto-Publish</p>
+                      <p className="text-xs font-bold mt-1 text-palnadu-warning">
                         {automationStatus.autoPublishEnabled ? 'Automatic (Live)' : 'Draft Review (Safe)'}
                       </p>
                     </div>
@@ -1285,29 +1402,32 @@ export default function BlogAdminPage() {
                                 <span className="font-semibold text-palnadu-dark">{item.topic}</span>
                                 <span
                                   className={cn(
-                                    'px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase',
-                                    isCompleted ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-amber-50 text-amber-700 border border-amber-200'
+                                    'px-2 py-0.5 rounded text-xs font-mono font-bold uppercase border',
+                                    isCompleted
+                                      ? 'bg-palnadu-teal/10 text-palnadu-teal-dark border-palnadu-teal/30'
+                                      : 'bg-palnadu-warning/10 text-palnadu-warning border-palnadu-warning/30'
                                   )}
                                 >
                                   {isCompleted ? 'Published' : 'Pending'}
                                 </span>
                               </div>
-                              <p className="text-[11px] text-palnadu-secondary">
+                              <p className="text-xs text-palnadu-secondary">
                                 Category: <span className="font-mono">{item.categorySlug}</span> • Target: {item.targetLocation}
                               </p>
                             </div>
 
                             {!isCompleted && (
-                              <button
+                              <Button
+                                size="sm"
+                                variant="secondary"
                                 onClick={() => {
                                   setQueueModalOpen(false);
                                   generateFromKeyword(item.topic);
                                 }}
                                 disabled={generatingAi}
-                                className="px-2.5 py-1 rounded-md bg-purple-600 text-white text-xs font-semibold hover:bg-purple-700 transition-colors shrink-0 cursor-pointer disabled:opacity-50"
                               >
                                 Generate
-                              </button>
+                              </Button>
                             )}
                           </div>
                         );

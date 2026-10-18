@@ -14,14 +14,12 @@ import {
   TrendingUp,
   Users,
   MessageSquare,
-  CheckCircle2,
-  ShieldCheck,
   Compass,
   Zap,
-  ChevronDown,
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
+
 import MetroHero from "@/components/ui/scroll-locked-video-hero";
 import { Button } from "@/components/ui/button";
 import { StackingDeck, StackingSection } from "@/components/ui/stacking-card";

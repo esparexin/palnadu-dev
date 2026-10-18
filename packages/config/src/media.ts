@@ -35,6 +35,20 @@ export interface ImageTransformOptions {
 }
 
 /**
+ * Validates whether a URL is hosted on the Cloudinary CDN.
+ * Safely parses the hostname rather than checking raw substring containment.
+ */
+export function isCloudinaryUrl(url?: string | null): boolean {
+  if (!url) return false;
+  try {
+    const parsed = new URL(url, 'https://palnadu.dev');
+    return parsed.hostname === 'res.cloudinary.com';
+  } catch {
+    return false;
+  }
+}
+
+/**
  * Returns an optimized Cloudinary delivery URL with on-the-fly transformations.
  * If the URL is not from Cloudinary, returns the original URL safely.
  *
@@ -54,7 +68,7 @@ export function getOptimizedImageUrl(
   }
 
   // Only transform Cloudinary URLs
-  if (!url.includes('res.cloudinary.com') || !url.includes('/upload/')) {
+  if (!isCloudinaryUrl(url) || !url.includes('/upload/')) {
     return url;
   }
 

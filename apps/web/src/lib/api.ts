@@ -27,7 +27,7 @@ export async function apiClient<T>(
       ...fetchOptions,
       ...(next ? { next } : {}),
     });
-  } catch (networkErr) {
+  } catch {
     throw new Error(
       'Unable to connect to Palnadu.dev services. Please check your internet connection and try again.',
     );

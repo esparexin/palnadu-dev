@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
-import { siteConfig, getOrganizationSchema, getBreadcrumbSchema } from '@palnadu/config';
+import { siteConfig, getBreadcrumbSchema } from '@palnadu/config';
 import { LampContainer } from '@/components/ui/lamp';
+
 import { CtaSection } from '@/components/sections/cta-section';
 
 export const metadata: Metadata = {

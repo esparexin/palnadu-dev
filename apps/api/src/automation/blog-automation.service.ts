@@ -12,7 +12,6 @@ import { canonicalizeTopic, SearchIntent, toTopicKey } from './topic-identity';
 import {
   allocateQuota,
   readBilingualConfig,
-  BILINGUAL_QUOTA_DEFAULT,
   type BilingualQuota,
   type BilingualConfig,
 } from './bilingual-quota';
@@ -281,7 +280,9 @@ export class BlogAutomationService {
 
     for (const s of this.dynamicServices) {
       for (const loc of this.dynamicLocations) {
-        const topic = `How ${s.service} Modernizes Growing Businesses in ${loc}`;
+        // Grammatical concord: plural service subjects take "Modernize", singular take "Modernizes"
+        const verb = s.service.endsWith('s') ? 'Modernize' : 'Modernizes';
+        const topic = `How ${s.service} ${verb} Growing Businesses in ${loc}`;
         const topicKey = toTopicKey(topic);
         // Matrix seeds are English; scope the check to the English identity.
         if (generatedKeys.has(`${topicKey}::${BlogLanguage.en}`) || seen.has(topicKey)) continue;
@@ -357,7 +358,8 @@ export class BlogAutomationService {
     } catch (err: any) {
       // Lost a race against a concurrent enqueue; the unique index did its job.
       if (err?.code === 'P2002') {
-        return { enqueued: false, topicKey, reason: 'duplicate topicKey (unique index)' };
+        const target = err?.meta?.target ? ` (${Array.isArray(err.meta.target) ? err.meta.target.join(', ') : err.meta.target})` : '';
+        return { enqueued: false, topicKey, reason: `duplicate topicKey (unique index${target})` };
       }
       throw err;
     }
@@ -504,6 +506,45 @@ export class BlogAutomationService {
   }
 
   /**
+   * Replenishes the queue from curated and matrix seeds if pending topics run low,
+   * ensuring unattended runs never starve. Bounded so it never wastes CPU.
+   */
+  async replenishQueueIfLow(minPending = 10, maxToEnqueue = 15): Promise<number> {
+    const pendingCount = await this.prisma.blogTopic.count({
+      where: { status: TopicStatus.PENDING, attempts: { lt: this.maxAttempts } },
+    });
+    if (pendingCount >= minPending) return 0;
+
+    const needed = minPending - pendingCount;
+    const limit = Math.min(needed + 5, maxToEnqueue);
+
+    const generatedKeys = new Set(
+      (await this.prisma.blogPost.findMany({ select: { topicKey: true, language: true } })).map(
+        (p) => `${p.topicKey}::${p.language}`,
+      ),
+    );
+
+    const seeds: QueueCandidate[] = [
+      ...this.topicQueue.map(
+        (t): QueueCandidate => ({ ...t, source: 'curated-rotation' }),
+      ),
+      ...this.matrixCandidates(generatedKeys),
+    ];
+
+    let enqueued = 0;
+    for (const seed of seeds) {
+      if (enqueued >= limit) break;
+      const res = await this.enqueueTopic(seed);
+      if (res.enqueued) enqueued += 1;
+    }
+
+    if (enqueued > 0) {
+      this.logger.log(`Replenished queue with ${enqueued} seed topics (had ${pendingCount} pending)`);
+    }
+    return enqueued;
+  }
+
+  /**
    * Daily cron at 05:00 IST. Discovers new opportunities, tops up the queue, then
    * generates a batch.
    */
@@ -512,11 +553,18 @@ export class BlogAutomationService {
     const workerId = `cron:${process.pid}`;
     this.logger.log('Starting automated daily blog generation batch (5 articles)...');
     try {
-      // Keep the queue stocked from live search signals first.
+      // 1. Keep the queue stocked from live search signals first.
       try {
         await this.discoverAndEnqueue();
       } catch (err) {
         this.logger.warn(`discovery step failed (non-fatal): ${String(err)}`);
+      }
+
+      // 2. If the queue is running low, top up from the matrix and seed queue.
+      try {
+        await this.replenishQueueIfLow(10);
+      } catch (err) {
+        this.logger.warn(`queue replenishment failed (non-fatal): ${String(err)}`);
       }
 
       const bilingual = await this.readBilingualSwitch();
@@ -722,7 +770,7 @@ export class BlogAutomationService {
       language: BlogLanguage;
     },
     forcePublish = false,
-    workerId = 'manual',
+    _workerId = 'manual',
   ): Promise<GenerationResult> {
     const started = Date.now();
     const { topicKey, topic, categorySlug, language } = topicRow;

@@ -16,7 +16,13 @@
     "db:generate": "pnpm --filter @palnadu/api db:generate",
     "db:push": "pnpm --filter @palnadu/api db:push",
     "db:migrate": "pnpm --filter @palnadu/api db:migrate",
-    "db:seed": "pnpm --filter @palnadu/api db:seed"
+    "db:seed": "pnpm --filter @palnadu/api db:seed",
+    "gate:structure": "node scripts/validate-structure.mjs",
+    "gate:contracts": "node scripts/validate-contracts.mjs",
+    "gate:circular": "node scripts/check-circular.mjs",
+    "gate:secrets": "node scripts/scan-secrets.mjs",
+    "gate:routes": "node scripts/validate-routes.mjs",
+    "gate:all": "pnpm gate:structure && pnpm gate:circular && pnpm gate:contracts && pnpm gate:secrets && pnpm lint && pnpm test && pnpm build && pnpm gate:routes"
   },
   "engines": {
     "node": ">=20",

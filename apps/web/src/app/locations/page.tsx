@@ -1,9 +1,8 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { coreLocations, siteConfig, getBreadcrumbSchema, getOrganizationRef } from '@palnadu/config';
-import { SectionHeading } from '@/components/layout/section-heading';
 import { CtaSection } from '@/components/sections/cta-section';
-import { MapPin, ArrowRight, Building2, Globe } from 'lucide-react';
+import { MapPin, ArrowRight, Globe } from 'lucide-react';
 
 export const metadata: Metadata = {
   title: 'Locations We Serve in Palnadu, Guntur & Andhra Pradesh',

@@ -12,13 +12,19 @@ import {
   NotFoundException,
   BadRequestException,
 } from '@nestjs/common';
-import { createBlogPostSchema, createBlogCategorySchema } from '@palnadu/validation';
+import {
+  createBlogPostSchema,
+  createBlogCategorySchema,
+  type CreateBlogPostInput,
+  type CreateBlogCategoryInput,
+} from '@palnadu/validation';
 import { BlogService, parseLanguage } from './blog.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { PublishStatus, BlogLanguage } from '@prisma/client';
 import { toTopicKey } from '../automation/topic-identity';
+import { ZodValidationPipe } from '../common/pipes/zod-validation.pipe';
 
 @Controller()
 export class BlogController {
@@ -99,22 +105,17 @@ export class BlogController {
   @Post('admin/blog')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('SUPER_ADMIN', 'ADMIN', 'EDITOR')
-  async create(@Body() body: unknown, @Request() req: any) {
-    const parseResult = createBlogPostSchema.safeParse(body);
-    if (!parseResult.success) {
-      const errorMsg = parseResult.error.issues
-        .map((i: any) => `${i.path.join('.')}: ${i.message}`)
-        .join(', ');
-      throw new BadRequestException(errorMsg);
-    }
-    const valid = parseResult.data;
+  async create(
+    @Body(new ZodValidationPipe(createBlogPostSchema)) valid: CreateBlogPostInput,
+    @Request() req: any,
+  ) {
     const post = await this.blogService.create({
       topicKey: toTopicKey(valid.title),
       topic: valid.title,
       title: valid.title,
       slug: valid.slug,
-      language: (body as any).language !== undefined ? parseLanguage((body as any).language) : undefined,
-      translationGroupId: (body as any).translationGroupId || undefined,
+      language: (valid.language as BlogLanguage) || BlogLanguage.en,
+      translationGroupId: valid.translationGroupId || undefined,
       excerpt: valid.excerpt || undefined,
       content: valid.content,
       coverImage: valid.coverImage || undefined,
@@ -122,8 +123,13 @@ export class BlogController {
       seoDescription: valid.seoDescription || undefined,
       canonicalUrl: valid.canonicalUrl || undefined,
       ogImage: valid.ogImage || undefined,
-      status: valid.status || PublishStatus.DRAFT,
-      publishDate: valid.status === PublishStatus.PUBLISHED ? (valid.publishDate || new Date()) : undefined,
+      status: (valid.status as PublishStatus) || PublishStatus.DRAFT,
+      publishDate:
+        valid.status === PublishStatus.PUBLISHED
+          ? valid.publishDate
+            ? new Date(valid.publishDate)
+            : new Date()
+          : undefined,
       author: { connect: { id: req.user.sub } },
       ...(valid.categoryId && { category: { connect: { id: valid.categoryId } } }),
     });
@@ -144,20 +150,24 @@ export class BlogController {
   @Patch('admin/blog/:id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('SUPER_ADMIN', 'ADMIN', 'EDITOR')
-  async update(@Param('id') id: string, @Body() body: unknown) {
-    const parseResult = createBlogPostSchema.partial().safeParse(body);
-    if (!parseResult.success) {
-      const errorMsg = parseResult.error.issues
-        .map((i: any) => `${i.path.join('.')}: ${i.message}`)
-        .join(', ');
-      throw new BadRequestException(errorMsg);
-    }
-    const { categoryId, ...rest } = parseResult.data as any;
+  async update(
+    @Param('id') id: string,
+    @Body(new ZodValidationPipe(createBlogPostSchema.partial())) valid: Partial<CreateBlogPostInput>,
+  ) {
+    const { categoryId, publishDate, language, status, ...rest } = valid;
     const updateData: any = { ...rest };
 
-    const typedBody = body as any;
-    // Auto-populate publishDate if transitioning from DRAFT to PUBLISHED
-    if (typedBody?.status === PublishStatus.PUBLISHED && !typedBody?.publishDate) {
+    if (language) {
+      updateData.language = language as BlogLanguage;
+    }
+
+    if (status) {
+      updateData.status = status as PublishStatus;
+    }
+
+    if (publishDate) {
+      updateData.publishDate = new Date(publishDate);
+    } else if (status === PublishStatus.PUBLISHED) {
       const existing = await this.blogService.findOneAdmin(id);
       if (!existing?.publishDate) {
         updateData.publishDate = new Date();
@@ -184,15 +194,10 @@ export class BlogController {
   @Post('admin/blog/categories')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('SUPER_ADMIN', 'ADMIN', 'EDITOR')
-  async createCategory(@Body() body: unknown) {
-    const parseResult = createBlogCategorySchema.safeParse(body);
-    if (!parseResult.success) {
-      const errorMsg = parseResult.error.issues
-        .map((i: any) => `${i.path.join('.')}: ${i.message}`)
-        .join(', ');
-      throw new BadRequestException(errorMsg);
-    }
-    const category = await this.blogService.createCategory(parseResult.data as any);
+  async createCategory(
+    @Body(new ZodValidationPipe(createBlogCategorySchema)) valid: CreateBlogCategoryInput,
+  ) {
+    const category = await this.blogService.createCategory(valid as any);
     return { success: true, data: category };
   }
 }
