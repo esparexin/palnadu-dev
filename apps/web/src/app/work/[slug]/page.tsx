@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import { siteConfig, getBreadcrumbSchema, getOrganizationRef } from '@palnadu/config';
 import { api } from '@/lib/api';
 import { CtaSection } from '@/components/sections/cta-section';
@@ -212,8 +213,14 @@ export default async function CaseStudyPage({ params }: Props) {
                 </h3>
                 <div className="grid gap-4 sm:grid-cols-2">
                   {study.images.map((img: string, i: number) => (
-                    <div key={i} className="rounded-xl overflow-hidden border border-palnadu-border shadow-sm bg-palnadu-off-white">
-                      <img src={img} alt={`${study.title} preview ${i + 1}`} className="w-full h-auto object-cover" />
+                    <div key={i} className="relative aspect-video rounded-xl overflow-hidden border border-palnadu-border shadow-sm bg-palnadu-off-white">
+                      <Image
+                        src={img}
+                        alt={`${study.title} preview ${i + 1}`}
+                        fill
+                        sizes="(max-width: 768px) 100vw, 500px"
+                        className="object-cover"
+                      />
                     </div>
                   ))}
                 </div>
