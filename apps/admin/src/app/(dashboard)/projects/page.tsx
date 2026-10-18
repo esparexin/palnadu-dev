@@ -6,14 +6,18 @@ import type { Client } from '@palnadu/types';
 import { FolderKanban, Plus, Calendar, DollarSign, Building, X, Search, Edit2, Trash2 } from 'lucide-react';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { useToast } from '@/components/ui/toast';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 
 const statusColors: Record<string, string> = {
-  PLANNING: 'bg-blue-100 text-blue-800 border-blue-200',
-  ACTIVE: 'bg-emerald-100 text-emerald-800 border-emerald-200',
-  ON_HOLD: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-  COMPLETED: 'bg-gray-100 text-gray-800 border-gray-200',
-  CANCELLED: 'bg-red-100 text-red-800 border-red-200',
+  PLANNING: 'bg-palnadu-blue/10 text-palnadu-blue border-palnadu-blue/20',
+  ACTIVE: 'bg-palnadu-teal/10 text-palnadu-teal border-palnadu-teal/20',
+  ON_HOLD: 'bg-palnadu-warning/10 text-palnadu-warning border-palnadu-warning/20',
+  COMPLETED: 'bg-palnadu-secondary/10 text-palnadu-secondary border-palnadu-border',
+  CANCELLED: 'bg-palnadu-error/10 text-palnadu-error border-palnadu-error/20',
 };
 
 interface ProjectFormData {
@@ -169,45 +173,45 @@ export default function ProjectsPage() {
             Internal tracking of client contracts, development milestones, budgets, and active deliverables.
           </p>
         </div>
-        <button
+        <Button
           onClick={openCreateModal}
-          className="inline-flex items-center justify-center gap-1.5 h-9 rounded-md bg-palnadu-blue px-4 text-xs font-semibold text-white hover:bg-[#12487e] shadow-xs cursor-pointer transition-colors shrink-0"
+          className="gap-1.5 shrink-0"
         >
           <Plus className="h-4 w-4" />
           <span>New Project</span>
-        </button>
+        </Button>
       </div>
 
       {/* KPI Overview */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <div className="rounded-lg border border-palnadu-border bg-white p-3.5 shadow-2xs">
-          <p className="text-[11px] font-semibold text-palnadu-secondary uppercase tracking-wider">Total Engagements</p>
+        <div className="rounded-lg border border-palnadu-border bg-white p-3.5 shadow-sm">
+          <p className="text-xs font-semibold text-palnadu-secondary uppercase tracking-wider">Total Engagements</p>
           <p className="text-xl font-bold text-palnadu-dark mt-1">{loading ? '—' : projects.length}</p>
         </div>
-        <div className="rounded-lg border border-palnadu-border bg-white p-3.5 shadow-2xs">
-          <p className="text-[11px] font-semibold text-emerald-700 uppercase tracking-wider">Active In Dev</p>
-          <p className="text-xl font-bold text-emerald-700 mt-1">{loading ? '—' : activeCount}</p>
+        <div className="rounded-lg border border-palnadu-border bg-white p-3.5 shadow-sm">
+          <p className="text-xs font-semibold text-palnadu-teal uppercase tracking-wider">Active In Dev</p>
+          <p className="text-xl font-bold text-palnadu-teal mt-1">{loading ? '—' : activeCount}</p>
         </div>
-        <div className="rounded-lg border border-palnadu-border bg-white p-3.5 shadow-2xs">
-          <p className="text-[11px] font-semibold text-blue-700 uppercase tracking-wider">Planning / Sprints</p>
-          <p className="text-xl font-bold text-blue-700 mt-1">{loading ? '—' : planningCount}</p>
+        <div className="rounded-lg border border-palnadu-border bg-white p-3.5 shadow-sm">
+          <p className="text-xs font-semibold text-palnadu-blue uppercase tracking-wider">Planning / Sprints</p>
+          <p className="text-xl font-bold text-palnadu-blue mt-1">{loading ? '—' : planningCount}</p>
         </div>
-        <div className="rounded-lg border border-palnadu-border bg-white p-3.5 shadow-2xs">
-          <p className="text-[11px] font-semibold text-gray-700 uppercase tracking-wider">Delivered & Closed</p>
-          <p className="text-xl font-bold text-gray-700 mt-1">{loading ? '—' : completedCount}</p>
+        <div className="rounded-lg border border-palnadu-border bg-white p-3.5 shadow-sm">
+          <p className="text-xs font-semibold text-palnadu-secondary uppercase tracking-wider">Delivered & Closed</p>
+          <p className="text-xl font-bold text-palnadu-secondary mt-1">{loading ? '—' : completedCount}</p>
         </div>
       </div>
 
       {/* Filter and Search Bar */}
       <div className="flex flex-col gap-3 sm:flex-row items-center justify-between">
         <div className="relative w-full sm:max-w-xs">
-          <Search className="absolute left-3 top-2.5 h-4 w-4 text-palnadu-secondary" />
-          <input
+          <Search className="absolute left-3 top-2.5 h-4 w-4 text-palnadu-secondary pointer-events-none" />
+          <Input
             type="text"
             placeholder="Search projects or clients..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-9 pr-3 py-1.5 text-xs rounded-md border border-palnadu-border bg-white text-palnadu-dark placeholder:text-palnadu-secondary/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-palnadu-blue"
+            className="pl-9"
           />
         </div>
 
@@ -215,7 +219,7 @@ export default function ProjectsPage() {
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="h-8 rounded-md border border-palnadu-border bg-white px-2.5 text-xs text-palnadu-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-palnadu-blue"
+            className="h-9 rounded-md border border-palnadu-border bg-white px-2.5 text-xs text-palnadu-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-palnadu-blue cursor-pointer"
           >
             <option value="">All Statuses</option>
             <option value="ACTIVE">Active in Dev</option>
@@ -228,7 +232,7 @@ export default function ProjectsPage() {
       </div>
 
       {/* Projects Table */}
-      <div className="rounded-lg border border-palnadu-border bg-white shadow-2xs overflow-hidden">
+      <div className="rounded-lg border border-palnadu-border bg-white shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-xs">
             <thead>
@@ -253,7 +257,7 @@ export default function ProjectsPage() {
                 <tr>
                   <td colSpan={7} className="px-4 py-12 text-center text-palnadu-secondary">
                     <p className="font-semibold text-palnadu-dark">No projects found</p>
-                    <p className="text-[11px] text-palnadu-secondary mt-1">
+                    <p className="text-xs text-palnadu-secondary mt-1">
                       {search || statusFilter ? 'Try adjusting your search criteria.' : 'Create your first project engagement.'}
                     </p>
                   </td>
@@ -271,7 +275,7 @@ export default function ProjectsPage() {
                         <span>{project.name}</span>
                       </div>
                       {project.description && (
-                        <p className="text-[11px] text-palnadu-secondary line-clamp-1 mt-0.5">
+                        <p className="text-xs text-palnadu-secondary line-clamp-1 mt-0.5">
                           {project.description}
                         </p>
                       )}
@@ -284,7 +288,7 @@ export default function ProjectsPage() {
                         <span>{project.client?.name || 'Unassigned'}</span>
                       </div>
                       {project.client?.company && (
-                        <p className="text-[10px] text-palnadu-secondary">{project.client.company}</p>
+                        <p className="text-xs text-palnadu-secondary">{project.client.company}</p>
                       )}
                     </td>
 
@@ -295,13 +299,13 @@ export default function ProjectsPage() {
                           project.technology.map((tech: string) => (
                             <span
                               key={tech}
-                              className="px-2 py-0.5 rounded-md bg-palnadu-off-white border border-palnadu-border text-[10px] font-mono text-palnadu-body"
+                              className="px-2 py-0.5 rounded-md bg-palnadu-off-white border border-palnadu-border text-xs font-mono text-palnadu-body"
                             >
                               {tech}
                             </span>
                           ))
                         ) : (
-                          <span className="text-[11px] text-palnadu-secondary/60 italic">—</span>
+                          <span className="text-xs text-palnadu-secondary/60 italic">—</span>
                         )}
                       </div>
                     </td>
@@ -310,11 +314,11 @@ export default function ProjectsPage() {
                     <td className="px-4 py-3 font-semibold text-palnadu-dark">
                       {project.budget ? (
                         <span className="inline-flex items-center gap-0.5">
-                          <DollarSign className="h-3 w-3 text-emerald-600" />
+                          <DollarSign className="h-3 w-3 text-palnadu-teal" />
                           <span>{project.budget}</span>
                         </span>
                       ) : (
-                        <span className="text-[11px] text-palnadu-secondary/60 italic">—</span>
+                        <span className="text-xs text-palnadu-secondary/60 italic">—</span>
                       )}
                     </td>
 
@@ -322,8 +326,8 @@ export default function ProjectsPage() {
                     <td className="px-4 py-3">
                       <span
                         className={cn(
-                          'inline-flex rounded-md border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider',
-                          statusColors[project.status] || 'bg-gray-100 text-gray-800 border-gray-200',
+                          'inline-flex rounded-md border px-2 py-0.5 text-xs font-bold uppercase tracking-wider',
+                          statusColors[project.status] || 'bg-palnadu-secondary/10 text-palnadu-secondary border-palnadu-border',
                         )}
                       >
                         {project.status.replace(/_/g, ' ')}
@@ -331,32 +335,36 @@ export default function ProjectsPage() {
                     </td>
 
                     {/* Timeline */}
-                    <td className="px-4 py-3 text-palnadu-secondary text-[11px]">
+                    <td className="px-4 py-3 text-palnadu-secondary text-xs">
                       <div className="flex items-center gap-1">
                         <Calendar className="h-3 w-3 text-palnadu-secondary/70" />
                         <span>Start: {project.startDate ? new Date(project.startDate).toLocaleDateString() : '—'}</span>
                       </div>
-                      <div className="text-[10px] text-palnadu-secondary/70 pl-4">
+                      <div className="text-xs text-palnadu-secondary/70 pl-4">
                         Due: {project.expectedCompletion ? new Date(project.expectedCompletion).toLocaleDateString() : '—'}
                       </div>
                     </td>
 
                     {/* Actions */}
                     <td className="px-4 py-3 text-right space-x-1.5">
-                      <button
+                      <Button
+                        variant="ghost"
+                        size="icon"
                         onClick={() => openEditModal(project)}
-                        className="inline-flex items-center p-1.5 rounded-md hover:bg-palnadu-light-blue text-palnadu-blue transition-colors cursor-pointer"
+                        className="h-7 w-7 text-palnadu-blue hover:bg-palnadu-light-blue"
                         title="Edit Project"
                       >
                         <Edit2 className="h-3.5 w-3.5" />
-                      </button>
-                      <button
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
                         onClick={() => setDeleteTarget({ id: project.id, name: project.name })}
-                        className="inline-flex items-center p-1.5 rounded-md hover:bg-red-50 text-palnadu-error transition-colors cursor-pointer"
+                        className="h-7 w-7 text-palnadu-error hover:bg-palnadu-error/10"
                         title="Delete Project"
                       >
                         <Trash2 className="h-3.5 w-3.5" />
-                      </button>
+                      </Button>
                     </td>
                   </tr>
                 ))
@@ -379,33 +387,34 @@ export default function ProjectsPage() {
                   {editingProject ? 'Update project scope, deliverables, or status.' : 'Register a new client engagement or software deliverable.'}
                 </p>
               </div>
-              <button
+              <Button
+                variant="ghost"
+                size="icon"
                 onClick={() => setModalOpen(false)}
-                className="p-1 rounded-md text-palnadu-secondary hover:text-palnadu-dark hover:bg-palnadu-off-white cursor-pointer"
+                className="h-7 w-7 text-palnadu-secondary hover:text-palnadu-dark"
               >
                 <X className="h-4 w-4" />
-              </button>
+              </Button>
             </div>
 
             <form onSubmit={handleSaveProject} className="space-y-3.5 text-xs">
               {/* Project Name */}
               <div className="space-y-1">
-                <label className="font-semibold text-palnadu-dark block">Project Name *</label>
-                <input
+                <Label>Project Name *</Label>
+                <Input
                   type="text"
                   placeholder="e.g. Agritech Logistics Portal"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   required
-                  className="w-full h-9 rounded-md border border-palnadu-border bg-white px-3 text-xs text-palnadu-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-palnadu-blue"
                 />
               </div>
 
               {/* Client Selection */}
               <div className="space-y-1">
-                <label className="font-semibold text-palnadu-dark block">Associated Client *</label>
+                <Label>Associated Client *</Label>
                 {clients.length === 0 ? (
-                  <div className="p-2.5 rounded-md bg-yellow-50 border border-yellow-200 text-[11px] text-yellow-800">
+                  <div className="p-2.5 rounded-md bg-palnadu-warning/10 border border-palnadu-warning/20 text-xs text-palnadu-warning">
                     No clients exist yet. Please create a Client first in <a href="/clients" className="underline font-bold">Clients</a>.
                   </div>
                 ) : (
@@ -427,7 +436,7 @@ export default function ProjectsPage() {
               {/* Status & Budget */}
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1">
-                  <label className="font-semibold text-palnadu-dark block">Status</label>
+                  <Label>Status</Label>
                   <select
                     value={formData.status}
                     onChange={(e) => setFormData({ ...formData, status: e.target.value })}
@@ -442,13 +451,12 @@ export default function ProjectsPage() {
                 </div>
 
                 <div className="space-y-1">
-                  <label className="font-semibold text-palnadu-dark block">Budget / Value</label>
-                  <input
+                  <Label>Budget / Value</Label>
+                  <Input
                     type="text"
                     placeholder="e.g. ₹2,50,000 / $3,000"
                     value={formData.budget}
                     onChange={(e) => setFormData({ ...formData, budget: e.target.value })}
-                    className="w-full h-9 rounded-md border border-palnadu-border bg-white px-3 text-xs text-palnadu-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-palnadu-blue"
                   />
                 </div>
               </div>
@@ -456,66 +464,61 @@ export default function ProjectsPage() {
               {/* Dates */}
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1">
-                  <label className="font-semibold text-palnadu-dark block">Start Date</label>
-                  <input
+                  <Label>Start Date</Label>
+                  <Input
                     type="date"
                     value={formData.startDate}
                     onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
-                    className="w-full h-9 rounded-md border border-palnadu-border bg-white px-3 text-xs text-palnadu-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-palnadu-blue"
                   />
                 </div>
 
                 <div className="space-y-1">
-                  <label className="font-semibold text-palnadu-dark block">Target Delivery</label>
-                  <input
+                  <Label>Target Delivery</Label>
+                  <Input
                     type="date"
                     value={formData.expectedCompletion}
                     onChange={(e) => setFormData({ ...formData, expectedCompletion: e.target.value })}
-                    className="w-full h-9 rounded-md border border-palnadu-border bg-white px-3 text-xs text-palnadu-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-palnadu-blue"
                   />
                 </div>
               </div>
 
               {/* Technology */}
               <div className="space-y-1">
-                <label className="font-semibold text-palnadu-dark block">Technologies (comma separated)</label>
-                <input
+                <Label>Technologies (comma separated)</Label>
+                <Input
                   type="text"
                   placeholder="e.g. Next.js, TypeScript, Tailwind, MongoDB"
                   value={formData.technology}
                   onChange={(e) => setFormData({ ...formData, technology: e.target.value })}
-                  className="w-full h-9 rounded-md border border-palnadu-border bg-white px-3 text-xs text-palnadu-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-palnadu-blue"
                 />
               </div>
 
               {/* Description */}
               <div className="space-y-1">
-                <label className="font-semibold text-palnadu-dark block">Scope Description</label>
-                <textarea
+                <Label>Scope Description</Label>
+                <Textarea
                   rows={2}
                   placeholder="Briefly state key deliverables or scope boundaries..."
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  className="w-full rounded-md border border-palnadu-border bg-white p-2.5 text-xs text-palnadu-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-palnadu-blue"
                 />
               </div>
 
               {/* Actions */}
               <div className="flex items-center justify-end gap-2 pt-3 border-t border-palnadu-border/60">
-                <button
+                <Button
                   type="button"
+                  variant="outline"
                   onClick={() => setModalOpen(false)}
-                  className="px-4 py-2 rounded-md border border-palnadu-border text-palnadu-secondary hover:bg-palnadu-off-white font-semibold transition-colors cursor-pointer"
                 >
                   Cancel
-                </button>
-                <button
+                </Button>
+                <Button
                   type="submit"
                   disabled={submitting || clients.length === 0}
-                  className="px-4 py-2 rounded-md bg-palnadu-blue hover:bg-[#12487e] text-white font-semibold shadow-xs transition-colors disabled:opacity-50 cursor-pointer"
                 >
                   {submitting ? 'Saving...' : editingProject ? 'Save Changes' : 'Create Project'}
-                </button>
+                </Button>
               </div>
             </form>
           </div>

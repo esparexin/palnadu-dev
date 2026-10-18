@@ -20,17 +20,19 @@ import {
 import { cn } from '@/lib/utils';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { useToast } from '@/components/ui/toast';
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
 
 const statusColors: Record<string, string> = {
-  NEW: 'bg-blue-100 text-blue-800 border-blue-200',
-  CONTACTED: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-  DISCOVERY: 'bg-purple-100 text-purple-800 border-purple-200',
-  PROPOSAL: 'bg-indigo-100 text-indigo-800 border-indigo-200',
-  NEGOTIATION: 'bg-orange-100 text-orange-800 border-orange-200',
-  WON: 'bg-emerald-100 text-emerald-800 border-emerald-200',
-  LOST: 'bg-red-100 text-red-800 border-red-200',
-  NOT_QUALIFIED: 'bg-gray-100 text-gray-800 border-gray-200',
-  ON_HOLD: 'bg-gray-100 text-gray-600 border-gray-200',
+  NEW: 'bg-palnadu-blue/10 text-palnadu-blue border-palnadu-blue/20',
+  CONTACTED: 'bg-palnadu-warning/10 text-palnadu-warning border-palnadu-warning/20',
+  DISCOVERY: 'bg-palnadu-light-blue text-palnadu-blue border-palnadu-blue/20',
+  PROPOSAL: 'bg-palnadu-teal/10 text-palnadu-teal border-palnadu-teal/20',
+  NEGOTIATION: 'bg-palnadu-warning/10 text-palnadu-warning border-palnadu-warning/20',
+  WON: 'bg-palnadu-teal/15 text-palnadu-teal border-palnadu-teal/30',
+  LOST: 'bg-palnadu-error/10 text-palnadu-error border-palnadu-error/20',
+  NOT_QUALIFIED: 'bg-palnadu-off-white text-palnadu-secondary border-palnadu-border',
+  ON_HOLD: 'bg-palnadu-off-white text-palnadu-secondary border-palnadu-border',
 };
 
 const allStatuses = Object.keys(statusColors);
@@ -133,16 +135,18 @@ export default function LeadDetailPage() {
   return (
     <div className="space-y-6">
       {/* Back navigation */}
-      <button
+      <Button
+        variant="ghost"
+        size="sm"
         onClick={() => router.push('/leads')}
-        className="flex items-center gap-1.5 text-xs font-semibold text-palnadu-secondary hover:text-palnadu-blue transition-colors cursor-pointer"
+        className="flex items-center gap-1.5 text-xs font-semibold text-palnadu-secondary hover:text-palnadu-blue transition-colors p-0 h-auto"
       >
         <ArrowLeft className="h-3.5 w-3.5" />
         <span>Back to all leads</span>
-      </button>
+      </Button>
 
       {/* Header Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 rounded-xl border border-palnadu-border bg-white shadow-2xs">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 rounded-xl border border-palnadu-border bg-white shadow-sm">
         <div className="space-y-1">
           <div className="flex items-center gap-2 flex-wrap">
             <h1 className="text-2xl font-extrabold text-palnadu-dark">{lead.name}</h1>
@@ -165,52 +169,55 @@ export default function LeadDetailPage() {
 
         {/* Quick Action Toolbar */}
         <div className="flex flex-wrap items-center gap-2">
-          <a
-            href={`mailto:${lead.email}?subject=${encodeURIComponent(`Re: Your Project Inquiry - Palnadu.dev`)}`}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-palnadu-blue text-white text-xs font-semibold hover:bg-[#12487e] shadow-xs"
-          >
-            <Mail className="h-3.5 w-3.5" />
-            <span>Reply via Email</span>
-          </a>
+          <Button asChild size="sm" className="gap-1.5 font-semibold text-xs h-8">
+            <a
+              href={`mailto:${lead.email}?subject=${encodeURIComponent(`Re: Your Project Inquiry - Palnadu.dev`)}`}
+            >
+              <Mail className="h-3.5 w-3.5" />
+              <span>Reply via Email</span>
+            </a>
+          </Button>
 
           {rawPhone && (
-            <a
-              href={`https://wa.me/${rawPhone}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-emerald-600 text-white text-xs font-semibold hover:bg-emerald-700 shadow-xs"
-            >
-              <MessageSquare className="h-3.5 w-3.5" />
-              <span>WhatsApp</span>
-            </a>
+            <Button asChild variant="secondary" size="sm" className="gap-1.5 font-semibold text-xs h-8">
+              <a
+                href={`https://wa.me/${rawPhone}`}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <MessageSquare className="h-3.5 w-3.5" />
+                <span>WhatsApp</span>
+              </a>
+            </Button>
           )}
 
           {lead.phone && (
-            <a
-              href={`tel:${lead.phone}`}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-palnadu-border bg-white text-palnadu-dark text-xs font-semibold hover:bg-palnadu-light-blue shadow-2xs"
-            >
-              <Phone className="h-3.5 w-3.5" />
-              <span>Call</span>
-            </a>
+            <Button asChild variant="outline" size="sm" className="gap-1.5 font-semibold text-xs h-8">
+              <a href={`tel:${lead.phone}`}>
+                <Phone className="h-3.5 w-3.5" />
+                <span>Call</span>
+              </a>
+            </Button>
           )}
 
           {!convertedSuccess && lead.status !== 'WON' && (
-            <button
+            <Button
+              variant="outline"
+              size="sm"
               onClick={convertToClient}
               disabled={converting}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-purple-300 bg-purple-50 text-purple-800 text-xs font-semibold hover:bg-purple-100 disabled:opacity-50 cursor-pointer"
+              className="gap-1.5 font-semibold text-xs h-8 border-palnadu-blue/30 text-palnadu-blue hover:bg-palnadu-light-blue"
             >
               <UserCheck className="h-3.5 w-3.5" />
               <span>{converting ? 'Converting...' : 'Convert to Client'}</span>
-            </button>
+            </Button>
           )}
         </div>
       </div>
 
       {convertedSuccess && (
-        <div className="p-3.5 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-medium flex items-center gap-2">
-          <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
+        <div className="p-3.5 rounded-lg bg-palnadu-teal/10 border border-palnadu-teal/20 text-palnadu-teal text-xs font-medium flex items-center gap-2">
+          <CheckCircle2 className="h-4 w-4 text-palnadu-teal shrink-0" />
           <span>Lead successfully converted into an active Client record in the database!</span>
         </div>
       )}
@@ -220,8 +227,8 @@ export default function LeadDetailPage() {
         {/* Left Column (2 Cols) */}
         <div className="lg:col-span-2 space-y-6">
           {/* Problem / Project Description */}
-          <div className="rounded-xl border border-palnadu-border bg-white p-5 sm:p-6 shadow-2xs">
-            <h2 className="text-sm font-bold text-palnadu-dark uppercase tracking-wider font-mono text-xs mb-3">
+          <div className="rounded-xl border border-palnadu-border bg-white p-5 sm:p-6 shadow-sm">
+            <h2 className="font-bold text-palnadu-dark uppercase tracking-wider font-mono text-xs mb-3">
               Problem Description & Scope
             </h2>
             <p className="text-sm text-palnadu-body whitespace-pre-wrap leading-relaxed">
@@ -231,8 +238,8 @@ export default function LeadDetailPage() {
 
           {/* Requested Services / Additional Info */}
           {lead.additionalInfo && (
-            <div className="rounded-xl border border-palnadu-border bg-white p-5 sm:p-6 shadow-2xs">
-              <h2 className="text-sm font-bold text-palnadu-dark uppercase tracking-wider font-mono text-xs mb-3">
+            <div className="rounded-xl border border-palnadu-border bg-white p-5 sm:p-6 shadow-sm">
+              <h2 className="font-bold text-palnadu-dark uppercase tracking-wider font-mono text-xs mb-3">
                 Selected Project Types & Tags
               </h2>
               <div className="flex flex-wrap gap-2">
@@ -250,8 +257,8 @@ export default function LeadDetailPage() {
 
           {/* Current Situation (if provided) */}
           {lead.currentSituation && (
-            <div className="rounded-xl border border-palnadu-border bg-white p-5 sm:p-6 shadow-2xs">
-              <h2 className="text-sm font-bold text-palnadu-dark uppercase tracking-wider font-mono text-xs mb-3">
+            <div className="rounded-xl border border-palnadu-border bg-white p-5 sm:p-6 shadow-sm">
+              <h2 className="font-bold text-palnadu-dark uppercase tracking-wider font-mono text-xs mb-3">
                 Current Business Situation
               </h2>
               <p className="text-sm text-palnadu-body whitespace-pre-wrap leading-relaxed">
@@ -261,34 +268,34 @@ export default function LeadDetailPage() {
           )}
 
           {/* Internal Notes */}
-          <div className="rounded-xl border border-palnadu-border bg-white p-5 sm:p-6 shadow-2xs">
-            <h2 className="text-sm font-bold text-palnadu-dark uppercase tracking-wider font-mono text-xs mb-1">
+          <div className="rounded-xl border border-palnadu-border bg-white p-5 sm:p-6 shadow-sm">
+            <h2 className="font-bold text-palnadu-dark uppercase tracking-wider font-mono text-xs mb-1">
               Internal Engineering Notes
             </h2>
             <p className="text-xs text-palnadu-secondary mb-3">
               Private audit notes visible only to the internal team.
             </p>
-            <textarea
+            <Textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               rows={4}
-              className="flex w-full rounded-md border border-palnadu-border bg-white p-3 text-xs text-palnadu-body focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-palnadu-blue"
               placeholder="Record discovery call notes, technical evaluation, or budget details..."
             />
-            <button
+            <Button
+              size="sm"
               onClick={saveNotes}
               disabled={saving}
-              className="mt-3 inline-flex h-9 items-center rounded-md bg-palnadu-blue px-4 text-xs font-semibold text-white hover:bg-[#12487e] disabled:opacity-50 cursor-pointer shadow-xs"
+              className="mt-3 h-9"
             >
               {saving ? 'Saving...' : 'Save Notes'}
-            </button>
+            </Button>
           </div>
         </div>
 
         {/* Right Sidebar (1 Col) */}
         <div className="space-y-6">
           {/* Key Parameters Dossier */}
-          <div className="rounded-xl border border-palnadu-border bg-white p-5 shadow-2xs">
+          <div className="rounded-xl border border-palnadu-border bg-white p-5 shadow-sm">
             <h3 className="text-xs font-bold uppercase tracking-wider font-mono text-palnadu-dark mb-4">
               Lead Parameters
             </h3>
@@ -330,7 +337,7 @@ export default function LeadDetailPage() {
                 <div>
                   <dt className="text-palnadu-secondary font-medium">Budget Estimate</dt>
                   <dd className="mt-0.5 font-semibold text-palnadu-dark flex items-center gap-1">
-                    <DollarSign className="h-3.5 w-3.5 text-emerald-600" />
+                    <DollarSign className="h-3.5 w-3.5 text-palnadu-teal" />
                     <span>{lead.budget}</span>
                   </dd>
                 </div>
@@ -347,44 +354,43 @@ export default function LeadDetailPage() {
           </div>
 
           {/* Status Switcher Card */}
-          <div className="rounded-xl border border-palnadu-border bg-white p-5 shadow-2xs">
+          <div className="rounded-xl border border-palnadu-border bg-white p-5 shadow-sm">
             <h3 className="text-xs font-bold uppercase tracking-wider font-mono text-palnadu-dark mb-3">
               Update Pipeline Status
             </h3>
             <div className="flex flex-wrap gap-1.5">
               {allStatuses.map((status) => (
-                <button
+                <Button
                   key={status}
+                  size="sm"
+                  variant={lead.status === status ? 'default' : 'outline'}
                   onClick={() => updateStatus(status)}
                   disabled={saving}
-                  className={cn(
-                    'rounded-md border px-2.5 py-1 text-[11px] font-semibold transition-all cursor-pointer',
-                    lead.status === status
-                      ? 'bg-palnadu-blue text-white border-palnadu-blue shadow-xs'
-                      : 'bg-white text-palnadu-body border-palnadu-border hover:bg-palnadu-light-blue hover:text-palnadu-blue',
-                  )}
+                  className="h-7 px-2.5 text-xs font-semibold"
                 >
                   {status.replace(/_/g, ' ')}
-                </button>
+                </Button>
               ))}
             </div>
           </div>
 
           {/* Delete Card */}
-          <div className="rounded-xl border border-red-200 bg-red-50/50 p-4 shadow-2xs">
+          <div className="rounded-xl border border-palnadu-error/20 bg-palnadu-error/5 p-4 shadow-sm">
             <h3 className="text-xs font-bold uppercase tracking-wider font-mono text-palnadu-error mb-1">
               Delete Lead
             </h3>
-            <p className="text-[11px] text-palnadu-secondary mb-3">
+            <p className="text-xs text-palnadu-secondary mb-3">
               Permanently purge spam or duplicate inquiries from the database.
             </p>
-            <button
+            <Button
+              variant="destructive"
+              size="sm"
               onClick={() => setConfirmDeleteOpen(true)}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-white border border-red-200 text-palnadu-error text-xs font-semibold hover:bg-red-50 transition-colors cursor-pointer"
+              className="gap-1.5 text-xs h-8"
             >
               <Trash2 className="h-3.5 w-3.5" />
               <span>Delete Inquiry</span>
-            </button>
+            </Button>
           </div>
         </div>
       </div>
