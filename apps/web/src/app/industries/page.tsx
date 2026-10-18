@@ -169,11 +169,11 @@ export default function IndustriesPage() {
                 return (
                   <div
                     key={sector.slug}
-                    className="rounded-xl border border-palnadu-border bg-white p-6 sm:p-7 shadow-2xs hover:border-palnadu-blue hover:shadow-sm transition-all flex flex-col justify-between space-y-5"
+                    className="rounded-xl border border-palnadu-border bg-white p-6 sm:p-7 shadow-sm hover:border-palnadu-blue hover:shadow-sm transition-all flex flex-col justify-between space-y-5"
                   >
                     <div className="space-y-4">
                       <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 rounded-lg bg-palnadu-light-blue text-palnadu-blue flex items-center justify-center shrink-0 shadow-2xs">
+                        <div className="h-10 w-10 rounded-lg bg-palnadu-light-blue text-palnadu-blue flex items-center justify-center shrink-0 shadow-sm">
                           <Icon className="h-5 w-5" />
                         </div>
                         <div>

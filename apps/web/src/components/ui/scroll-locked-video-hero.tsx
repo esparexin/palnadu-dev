@@ -305,7 +305,7 @@ export default function MetroHero({
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 pt-2">
               <Link
                 href="/contact"
-                className="inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-full bg-palnadu-blue hover:bg-[#12487e] text-white font-bold text-sm shadow-xl hover:scale-105 active:scale-95 transition-all w-full sm:w-auto"
+                className="inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-full bg-palnadu-blue hover:bg-palnadu-dark-hover text-white font-bold text-sm shadow-xl hover:scale-105 active:scale-95 transition-all w-full sm:w-auto"
               >
                 <span>Contact Us</span>
                 <ArrowRight className="h-4 w-4" />

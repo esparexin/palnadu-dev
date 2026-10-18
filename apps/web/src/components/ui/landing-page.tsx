@@ -200,7 +200,7 @@ export function ScrollGlobe() {
             <div className="grid grid-cols-2 gap-2.5 w-full max-w-sm sm:max-w-none sm:flex sm:flex-row sm:items-center sm:gap-3 lg:gap-4 pt-2 sm:pt-2.5">
               <Link
                 href="/contact"
-                className="w-full sm:w-auto lg:min-w-[210px] px-3 py-3 sm:px-7 sm:py-3.5 lg:px-8 lg:py-4 rounded-md font-semibold text-xs sm:text-sm lg:text-base text-center inline-flex items-center justify-center bg-palnadu-blue text-white hover:bg-[#12487e] shadow-xs transition-colors"
+                className="w-full sm:w-auto lg:min-w-[210px] px-3 py-3 sm:px-7 sm:py-3.5 lg:px-8 lg:py-4 rounded-md font-semibold text-xs sm:text-sm lg:text-base text-center inline-flex items-center justify-center bg-palnadu-blue text-white hover:bg-palnadu-dark-hover shadow-sm transition-colors"
               >
                 <span>Any Idea</span>
                 <ArrowRight className="ml-1.5 lg:ml-2 h-3.5 w-3.5 sm:h-4 sm:w-4 lg:h-4.5 lg:w-4.5 shrink-0" />
@@ -264,7 +264,7 @@ export function ScrollGlobe() {
 
             {/* 4 Structured Engineering Commitments in Balanced 2x2 Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-              <div className="p-4 sm:p-5 rounded-xl border border-palnadu-border bg-white shadow-2xs space-y-2 text-left">
+              <div className="p-4 sm:p-5 rounded-xl border border-palnadu-border bg-white shadow-sm space-y-2 text-left">
                 <div className="h-8 w-8 rounded-md bg-palnadu-light-blue text-palnadu-blue flex items-center justify-center font-bold text-xs">
                   01
                 </div>
@@ -274,7 +274,7 @@ export function ScrollGlobe() {
                 </p>
               </div>
 
-              <div className="p-4 sm:p-5 rounded-xl border border-palnadu-border bg-white shadow-2xs space-y-2 text-left">
+              <div className="p-4 sm:p-5 rounded-xl border border-palnadu-border bg-white shadow-sm space-y-2 text-left">
                 <div className="h-8 w-8 rounded-md bg-palnadu-light-blue text-palnadu-teal flex items-center justify-center font-bold text-xs">
                   02
                 </div>
@@ -284,7 +284,7 @@ export function ScrollGlobe() {
                 </p>
               </div>
 
-              <div className="p-4 sm:p-5 rounded-xl border border-palnadu-border bg-white shadow-2xs space-y-2 text-left">
+              <div className="p-4 sm:p-5 rounded-xl border border-palnadu-border bg-white shadow-sm space-y-2 text-left">
                 <div className="h-8 w-8 rounded-md bg-palnadu-light-blue text-palnadu-blue flex items-center justify-center font-bold text-xs">
                   03
                 </div>
@@ -294,7 +294,7 @@ export function ScrollGlobe() {
                 </p>
               </div>
 
-              <div className="p-4 sm:p-5 rounded-xl border border-palnadu-border bg-white shadow-2xs space-y-2 text-left">
+              <div className="p-4 sm:p-5 rounded-xl border border-palnadu-border bg-white shadow-sm space-y-2 text-left">
                 <div className="h-8 w-8 rounded-md bg-palnadu-light-blue text-palnadu-dark flex items-center justify-center font-bold text-xs">
                   04
                 </div>
@@ -337,7 +337,7 @@ export function ScrollGlobe() {
                 { step: "03", phase: "Build", title: "Disciplined Sprints", desc: "Clean TypeScript code delivered with weekly staging progress access." },
                 { step: "04", phase: "Deliver", title: "Handoff & Support", desc: "100% code and infrastructure ownership with post-launch support." },
               ].map((p) => (
-                <div key={p.step} className="p-4 sm:p-5 rounded-xl border border-palnadu-border bg-white shadow-2xs space-y-1.5 text-left">
+                <div key={p.step} className="p-4 sm:p-5 rounded-xl border border-palnadu-border bg-white shadow-sm space-y-1.5 text-left">
                   <div className="flex items-center gap-1.5 text-xs font-mono">
                     <span className="font-bold text-palnadu-blue">{p.step}</span>
                     <span className="text-palnadu-secondary uppercase font-semibold">/ {p.phase}</span>
@@ -375,7 +375,7 @@ export function ScrollGlobe() {
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-1">
             <Link
               href="/contact"
-              className="w-full sm:w-auto px-7 py-3 rounded-md font-semibold text-sm bg-palnadu-teal text-white hover:bg-[#157c5c] shadow-xs transition-colors"
+              className="w-full sm:w-auto px-7 py-3 rounded-md font-semibold text-sm bg-palnadu-teal text-white hover:bg-palnadu-teal-dark shadow-sm transition-colors"
             >
               Tell Us What You Want To Build →
             </Link>

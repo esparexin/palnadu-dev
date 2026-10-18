@@ -58,7 +58,7 @@ export default function NotFound() {
 
         {/* Main Home CTA */}
         <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
-          <Button asChild className="w-full sm:w-auto bg-palnadu-blue text-white hover:bg-[#12487e] shadow-xs font-semibold text-xs sm:text-sm h-10 px-5">
+          <Button asChild className="w-full sm:w-auto bg-palnadu-blue text-white hover:bg-palnadu-dark-hover shadow-sm font-semibold text-xs sm:text-sm h-10 px-5">
             <Link href="/" className="flex items-center justify-center gap-2">
               <Home className="h-4 w-4" />
               <span>Back to Homepage</span>
@@ -84,7 +84,7 @@ export default function NotFound() {
                 <Link
                   key={item.href}
                   href={item.href}
-                  className="group p-3.5 rounded-lg border border-palnadu-border bg-palnadu-off-white/50 hover:bg-white hover:border-palnadu-blue hover:shadow-xs transition-all flex items-start gap-3"
+                  className="group p-3.5 rounded-lg border border-palnadu-border bg-palnadu-off-white/50 hover:bg-white hover:border-palnadu-blue hover:shadow-sm transition-all flex items-start gap-3"
                 >
                   <div className="h-8 w-8 rounded-md bg-white border border-palnadu-border text-palnadu-blue group-hover:bg-palnadu-light-blue transition-colors flex items-center justify-center shrink-0">
                     <Icon className="h-4 w-4" />

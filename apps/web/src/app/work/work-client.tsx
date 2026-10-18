@@ -147,7 +147,7 @@ export function WorkClient() {
             {caseStudies.map((study, idx) => (
               <article
                 key={idx}
-                className="flex flex-col justify-between bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 shadow-xs hover:border-palnadu-blue hover:shadow-md transition-all space-y-6"
+                className="flex flex-col justify-between bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 shadow-sm hover:border-palnadu-blue hover:shadow-md transition-all space-y-6"
               >
                 <div className="space-y-4">
                   <div className="relative h-48 sm:h-56 w-full rounded-xl overflow-hidden border border-slate-100 bg-slate-100">
@@ -158,7 +158,7 @@ export function WorkClient() {
                       sizes="(max-width: 768px) 100vw, 600px"
                       className="object-cover transition-transform duration-500 hover:scale-105"
                     />
-                    <div className="absolute top-3 left-3 bg-white/95 backdrop-blur-md px-3 py-1 rounded-full text-xs font-semibold text-slate-800 shadow-xs">
+                    <div className="absolute top-3 left-3 bg-white/95 backdrop-blur-md px-3 py-1 rounded-full text-xs font-semibold text-slate-800 shadow-sm">
                       {study.location}
                     </div>
                   </div>
@@ -252,7 +252,7 @@ export function WorkClient() {
           <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
             <Button
               asChild
-              className="bg-palnadu-blue hover:bg-[#12487e] text-white font-semibold px-7 h-11 text-sm rounded-lg shadow-sm"
+              className="bg-palnadu-blue hover:bg-palnadu-dark-hover text-white font-semibold px-7 h-11 text-sm rounded-lg shadow-sm"
             >
               <Link href="/contact">Schedule an Engineering Consultation</Link>
             </Button>

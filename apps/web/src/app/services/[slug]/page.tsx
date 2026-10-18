@@ -549,7 +549,7 @@ export default async function ServicePage({ params }: Props) {
                     </h2>
                     <div className="space-y-3.5">
                       {content.faq.map((item, idx) => (
-                        <div key={idx} className="p-4 rounded-xl border border-palnadu-border bg-white shadow-2xs space-y-1.5">
+                        <div key={idx} className="p-4 rounded-xl border border-palnadu-border bg-white shadow-sm space-y-1.5">
                           <h3 className="text-sm font-bold text-palnadu-dark flex items-start gap-2">
                             <HelpCircle className="h-4 w-4 text-palnadu-blue shrink-0 mt-0.5" />
                             <span>{item.q}</span>
@@ -572,21 +572,21 @@ export default async function ServicePage({ params }: Props) {
               </h2>
               <p className="text-xs sm:text-sm text-palnadu-body max-w-md mx-auto leading-relaxed">
                 Talk directly with senior developers who understand real-world workflows in{' '}
-                <Link href="/locations/palnadu" className="text-palnadu-blue underline hover:text-[#12487e]">
+                <Link href="/locations/palnadu" className="text-palnadu-blue underline hover:text-palnadu-dark-hover">
                   Palnadu
                 </Link>
                 ,{' '}
-                <Link href="/locations/guntur" className="text-palnadu-blue underline hover:text-[#12487e]">
+                <Link href="/locations/guntur" className="text-palnadu-blue underline hover:text-palnadu-dark-hover">
                   Guntur
                 </Link>
                 , and{' '}
-                <Link href="/locations/narasaraopet" className="text-palnadu-blue underline hover:text-[#12487e]">
+                <Link href="/locations/narasaraopet" className="text-palnadu-blue underline hover:text-palnadu-dark-hover">
                   Narasaraopet
                 </Link>
                 . We explain costs, limitations, and the cleanest architectural path forward.
               </p>
               <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
-                <Button asChild className="bg-palnadu-blue text-white hover:bg-[#12487e] font-semibold text-sm h-11 px-7 shadow-xs">
+                <Button asChild className="bg-palnadu-blue text-white hover:bg-palnadu-dark-hover font-semibold text-sm h-11 px-7 shadow-sm">
                   <Link href="/contact">
                     Discuss Your Requirements →
                   </Link>

@@ -171,7 +171,7 @@ export default async function CaseStudyPage({ params }: Props) {
             </div>
 
             {/* The Solution */}
-            <div className="p-6 sm:p-8 rounded-xl border border-palnadu-border bg-white shadow-2xs space-y-3">
+            <div className="p-6 sm:p-8 rounded-xl border border-palnadu-border bg-white shadow-sm space-y-3">
               <h2 className="text-xs font-mono uppercase tracking-widest text-palnadu-blue font-bold">
                 02. The Custom Software Solution
               </h2>
@@ -212,7 +212,7 @@ export default async function CaseStudyPage({ params }: Props) {
                 </h3>
                 <div className="grid gap-4 sm:grid-cols-2">
                   {study.images.map((img: string, i: number) => (
-                    <div key={i} className="rounded-xl overflow-hidden border border-palnadu-border shadow-xs bg-palnadu-off-white">
+                    <div key={i} className="rounded-xl overflow-hidden border border-palnadu-border shadow-sm bg-palnadu-off-white">
                       <img src={img} alt={`${study.title} preview ${i + 1}`} className="w-full h-auto object-cover" />
                     </div>
                   ))}
@@ -231,7 +231,7 @@ export default async function CaseStudyPage({ params }: Props) {
                 </p>
               </div>
 
-              <Button asChild className="bg-palnadu-blue text-white hover:bg-[#12487e] shrink-0 text-xs sm:text-sm h-10 px-5">
+              <Button asChild className="bg-palnadu-blue text-white hover:bg-palnadu-dark-hover shrink-0 text-xs sm:text-sm h-10 px-5">
                 <Link href="/contact" className="flex items-center gap-1.5">
                   <span>Discuss Your Project</span>
                   <ArrowRight className="h-4 w-4" />

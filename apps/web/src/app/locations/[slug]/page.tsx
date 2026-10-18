@@ -145,7 +145,7 @@ export default async function LocationDetailPage({ params }: Props) {
             </p>
 
             <div className="pt-4 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-              <Button asChild className="bg-palnadu-teal hover:bg-[#157c5c] text-white font-semibold text-xs sm:text-sm h-11 px-6 shadow-xs">
+              <Button asChild className="bg-palnadu-teal hover:bg-palnadu-teal-dark text-white font-semibold text-xs sm:text-sm h-11 px-6 shadow-sm">
                 <Link href="/contact" className="flex items-center justify-center gap-2">
                   <span>Discuss Your Project in {location.name}</span>
                   <ArrowRight className="h-4 w-4" />
@@ -207,7 +207,7 @@ export default async function LocationDetailPage({ params }: Props) {
                   {location.surroundingMandals.map((mandal) => (
                     <span
                       key={mandal}
-                      className="inline-flex items-center px-2.5 py-1 rounded-md bg-white border border-palnadu-border text-xs font-medium text-palnadu-dark shadow-2xs"
+                      className="inline-flex items-center px-2.5 py-1 rounded-md bg-white border border-palnadu-border text-xs font-medium text-palnadu-dark shadow-sm"
                     >
                       {mandal}
                     </span>
@@ -267,7 +267,7 @@ export default async function LocationDetailPage({ params }: Props) {
                 return (
                   <div
                     key={idx}
-                    className="p-5 rounded-xl border border-palnadu-border bg-white shadow-2xs hover:border-palnadu-blue transition-all space-y-2 flex flex-col justify-between"
+                    className="p-5 rounded-xl border border-palnadu-border bg-white shadow-sm hover:border-palnadu-blue transition-all space-y-2 flex flex-col justify-between"
                   >
                     <div className="space-y-2">
                       <div className="flex items-center gap-2 text-palnadu-teal">

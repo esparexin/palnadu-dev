@@ -69,7 +69,7 @@ export default function ContactPage() {
           </div>
 
           <div className="grid gap-4 sm:grid-cols-3">
-            <div className="p-5 rounded-xl border border-palnadu-border bg-white shadow-2xs space-y-2">
+            <div className="p-5 rounded-xl border border-palnadu-border bg-white shadow-sm space-y-2">
               <div className="h-9 w-9 rounded-lg bg-palnadu-light-blue text-palnadu-blue flex items-center justify-center">
                 <Clock className="h-4 w-4" />
               </div>
@@ -79,7 +79,7 @@ export default function ContactPage() {
               </p>
             </div>
 
-            <div className="p-5 rounded-xl border border-palnadu-border bg-white shadow-2xs space-y-2">
+            <div className="p-5 rounded-xl border border-palnadu-border bg-white shadow-sm space-y-2">
               <div className="h-9 w-9 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center">
                 <ShieldCheck className="h-4 w-4" />
               </div>
@@ -89,7 +89,7 @@ export default function ContactPage() {
               </p>
             </div>
 
-            <div className="p-5 rounded-xl border border-palnadu-border bg-white shadow-2xs space-y-2">
+            <div className="p-5 rounded-xl border border-palnadu-border bg-white shadow-sm space-y-2">
               <div className="h-9 w-9 rounded-lg bg-purple-50 text-purple-700 flex items-center justify-center">
                 <Users className="h-4 w-4" />
               </div>
@@ -112,7 +112,7 @@ export default function ContactPage() {
             <div className="flex items-center gap-3 w-full sm:w-auto">
               <a
                 href={`tel:${siteConfig.contact.phone}`}
-                className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-md bg-palnadu-blue text-white text-xs font-semibold hover:bg-[#12487e] transition-colors"
+                className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-md bg-palnadu-blue text-white text-xs font-semibold hover:bg-palnadu-dark-hover transition-colors"
               >
                 <Phone className="h-3.5 w-3.5" />
                 <span>{siteConfig.contact.phone}</span>
