@@ -173,6 +173,15 @@ export interface CaseStudy {
   updatedAt: string;
 }
 
+export type BlogLanguage = 'en' | 'te';
+
+export interface BlogPostTranslation {
+  id: string;
+  slug: string;
+  language: BlogLanguage;
+  title: string;
+}
+
 export interface BlogPost {
   id: string;
   title: string;
@@ -190,9 +199,14 @@ export interface BlogPost {
   ogImage?: string;
   publishDate?: string;
   status: PublishStatus;
+  language: BlogLanguage;
+  topicKey?: string;
+  translationGroupId?: string;
+  translations?: BlogPostTranslation[];
   createdAt: string;
   updatedAt: string;
 }
+
 
 export interface BlogCategory {
   id: string;

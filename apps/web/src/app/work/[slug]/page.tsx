@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { siteConfig, getBreadcrumbSchema, getOrganizationRef } from '@palnadu/config';
 import { api } from '@/lib/api';
 import { CtaSection } from '@/components/sections/cta-section';
-import { ArrowLeft, ArrowRight, CheckCircle2, Cpu, BarChart3, Building } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Cpu, BarChart3, Building } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 type Props = {

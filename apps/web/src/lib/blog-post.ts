@@ -6,6 +6,7 @@ import {
   buildHreflangAlternates,
   type BlogLocale,
 } from '@palnadu/config';
+import type { BlogPost } from '@palnadu/types';
 import { api } from '@/lib/api';
 
 /**
@@ -17,10 +18,10 @@ import { api } from '@/lib/api';
  */
 
 /** Fetch one post in one language. 404s when the slug is not in that locale. */
-export async function getLocalizedPost(slug: string, locale: BlogLocale): Promise<any> {
-  let post: any = null;
+export async function getLocalizedPost(slug: string, locale: BlogLocale): Promise<BlogPost> {
+  let post: BlogPost | null = null;
   try {
-    const res: any = await api.blog.getBySlug(slug, locale);
+    const res = await api.blog.getBySlug(slug, locale) as { success: boolean; data: BlogPost };
     post = res?.data;
   } catch {
     notFound();
@@ -43,15 +44,15 @@ export function articleCanonical(post: { slug: string; language?: string }): str
 }
 
 /** Translations as the API returns them, normalized for the SEO helpers. */
-export function articleTranslations(post: any): { slug: string; language: BlogLocale }[] {
+export function articleTranslations(post: BlogPost): { slug: string; language: BlogLocale }[] {
   const list = Array.isArray(post?.translations) ? post.translations : [];
   return list
-    .filter((t: any) => typeof t?.slug === 'string' && (t.language === 'en' || t.language === 'te'))
-    .map((t: any) => ({ slug: t.slug, language: t.language as BlogLocale }));
+    .filter((t) => typeof t?.slug === 'string' && (t.language === 'en' || t.language === 'te'))
+    .map((t) => ({ slug: t.slug, language: t.language as BlogLocale }));
 }
 
 /** Full <head> metadata for an article page: self canonical + hreflang. */
-export function buildArticleMetadata(post: any, locale: BlogLocale): Metadata {
+export function buildArticleMetadata(post: BlogPost, locale: BlogLocale): Metadata {
   const canonical = articleCanonical({ ...post, language: locale });
   const alternates = buildHreflangAlternates(
     siteConfig.url,

@@ -140,6 +140,15 @@ export const createUserSchema = z.object({
 
 export type CreateUserInput = z.infer<typeof createUserSchema>;
 
+export const updateUserSchema = z.object({
+  name: z.string().trim().min(2).max(100).optional(),
+  role: z.enum(userRoleValues).optional(),
+  isActive: z.boolean().optional(),
+  password: z.string().min(8).max(128).optional(),
+});
+
+export type UpdateUserInput = z.infer<typeof updateUserSchema>;
+
 // ─── Service ──────────────────────────────────────────────────
 
 export const publishStatusValues = ['DRAFT', 'PUBLISHED', 'ARCHIVED'] as const;
@@ -199,6 +208,9 @@ export type CreateCaseStudyInput = z.infer<typeof createCaseStudySchema>;
 
 // ─── Blog ─────────────────────────────────────────────────────
 
+export const blogLanguageValues = ['en', 'te'] as const;
+export type BlogLanguageValue = (typeof blogLanguageValues)[number];
+
 export const createBlogPostSchema = z.object({
   title: z.string().trim().min(2).max(300),
   slug: z
@@ -207,6 +219,8 @@ export const createBlogPostSchema = z.object({
     .min(2)
     .max(300)
     .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
+  language: z.enum(blogLanguageValues).default('en'),
+  translationGroupId: z.string().trim().min(1).optional().nullable(),
   excerpt: z.string().trim().max(500).optional().or(z.literal('')),
   content: z.string().trim().min(50),
   coverImage: z.string().url().optional().or(z.literal('')),
@@ -215,7 +229,7 @@ export const createBlogPostSchema = z.object({
   seoDescription: z.string().max(160).optional().or(z.literal('')),
   canonicalUrl: z.string().url().optional().or(z.literal('')),
   ogImage: z.string().url().optional().or(z.literal('')),
-  publishDate: z.string().datetime().optional(),
+  publishDate: z.string().datetime().optional().nullable().or(z.literal('')),
   status: z.enum(publishStatusValues).default('DRAFT'),
 });
 

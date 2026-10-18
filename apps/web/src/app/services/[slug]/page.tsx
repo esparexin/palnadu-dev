@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { services, siteConfig, getBreadcrumbSchema, getOrganizationRef } from '@palnadu/config';
 import { Button } from '@/components/ui/button';
-import { CheckCircle2, HelpCircle, Layers, ArrowLeft } from 'lucide-react';
+import { CheckCircle2, HelpCircle, ArrowLeft } from 'lucide-react';
 
 interface ServiceDetailData {
   content: string[];

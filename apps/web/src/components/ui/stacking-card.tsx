@@ -19,7 +19,7 @@ import { cn } from '@/lib/utils';
 // ─────────────────────────────────────────────────────────────
 
 export interface StackingDeckProps {
-  children: ((deckProgress: MotionValue<number>) => React.ReactNode) | React.ReactNode;
+  children: ((_deckProgress: MotionValue<number>) => React.ReactNode) | React.ReactNode;
   className?: string;
   /** How many cards are in the deck — used to calculate container height */
   cardCount?: number;

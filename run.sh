@@ -44,7 +44,7 @@ ensure_env_files() {
       log_success "Created apps/api/.env from .env.example"
     else
       cat << 'EOF' > apps/api/.env
-DATABASE_URL="postgresql://postgres:password@localhost:5432/palnadu_dev?schema=public"
+DATABASE_URL="mongodb+srv://<username>:<password>@<cluster>.mongodb.net/palnadu_dev?retryWrites=true&w=majority"
 JWT_SECRET="palnadu-dev-jwt-super-secret-key-production-ready-2024"
 JWT_EXPIRES_IN="7d"
 PORT=4000
@@ -67,6 +67,15 @@ EOF
 }
 
 start_docker() {
+  # If database is configured with remote MongoDB Atlas, local container startup is unnecessary
+  if [ -f apps/api/.env ]; then
+    DB_URL=$(grep "^DATABASE_URL=" apps/api/.env | cut -d '=' -f2- | tr -d '"' || true)
+    if [[ "$DB_URL" == *"mongodb+srv://"* ]]; then
+      log_info "Remote MongoDB Atlas database configured. Skipping local database container."
+      return 0
+    fi
+  fi
+
   log_info "Checking Docker daemon status..."
 
   if ! docker info >/dev/null 2>&1; then
@@ -87,30 +96,17 @@ start_docker() {
 
       if ! docker info >/dev/null 2>&1; then
         echo ""
-        log_error "Docker took too long to start. Please ensure Docker Desktop is open and try again."
-        exit 1
+        log_warn "Docker took too long to start. Proceeding if using cloud database..."
+        return 0
       fi
     else
-      log_error "Docker is not running. Please start Docker Desktop and run this script again."
-      exit 1
+      log_warn "Docker is not running. Proceeding assuming remote database is accessible."
+      return 0
     fi
   fi
 
-  log_info "Starting database containers..."
-  docker compose up -d postgres
-  # Try starting redis container if port 6379 is not already occupied by local service
-  docker compose up -d redis 2>/dev/null || true
-
-  log_info "Waiting for PostgreSQL database to be healthy..."
-  for i in {1..20}; do
-    if docker compose exec -T postgres pg_isready -U postgres -d palnadu_dev >/dev/null 2>&1; then
-      log_success "Database is ready and accepting connections."
-      return 0
-    fi
-    sleep 1
-  done
-
-  log_warn "Postgres healthcheck timed out, proceeding with startup..."
+  log_info "Starting local MongoDB container if configured..."
+  docker compose up -d mongodb 2>/dev/null || true
 }
 
 setup_database() {
@@ -141,7 +137,7 @@ cmd_db() {
   ensure_env_files
   start_docker
   setup_database
-  log_success "Database setup and seeding completed successfully!"
+  log_success "Database setup completed successfully!"
 }
 
 cmd_stop() {
@@ -164,8 +160,7 @@ cmd_dev() {
   echo -e "    ├ Email:              admin@palnadu.dev"
   echo -e "    └ Password:           admin@palnadu2024"
   echo -e "  ${BOLD}REST API:${RESET}               http://localhost:4000/api"
-  echo -e "  ${BOLD}PostgreSQL:${RESET}             localhost:5432"
-  echo -e "  ${BOLD}Redis:${RESET}                  localhost:6379"
+  echo -e "  ${BOLD}Database:${RESET}               MongoDB (configured in apps/api/.env)"
   echo -e "${GREEN}${BOLD}====================================================${RESET}"
   echo ""
 
@@ -196,11 +191,11 @@ case "$ACTION" in
     echo "Usage: ./run.sh [command]"
     echo ""
     echo "Commands:"
-    echo "  dev (default)   Start Docker DB, apply migrations/seeds, and run all apps in dev mode"
+    echo "  dev (default)   Prepare database, generate Prisma client, and run all apps in dev mode"
     echo "  build           Generate Prisma client and build all packages & apps for production"
     echo "  test            Run validation and test suites across all workspaces"
-    echo "  db              Start Docker and run Prisma schema push & database seeding"
-    echo "  stop            Stop Docker containers (Postgres & Redis)"
+    echo "  db              Sync Prisma schema and apply seeds"
+    echo "  stop            Stop Docker containers"
     echo "  help            Display this help message"
     ;;
   *)

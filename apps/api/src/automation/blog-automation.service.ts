@@ -12,7 +12,6 @@ import { canonicalizeTopic, SearchIntent, toTopicKey } from './topic-identity';
 import {
   allocateQuota,
   readBilingualConfig,
-  BILINGUAL_QUOTA_DEFAULT,
   type BilingualQuota,
   type BilingualConfig,
 } from './bilingual-quota';
@@ -281,7 +280,9 @@ export class BlogAutomationService {
 
     for (const s of this.dynamicServices) {
       for (const loc of this.dynamicLocations) {
-        const topic = `How ${s.service} Modernizes Growing Businesses in ${loc}`;
+        // Grammatical concord: plural service subjects take "Modernize", singular take "Modernizes"
+        const verb = s.service.endsWith('s') ? 'Modernize' : 'Modernizes';
+        const topic = `How ${s.service} ${verb} Growing Businesses in ${loc}`;
         const topicKey = toTopicKey(topic);
         // Matrix seeds are English; scope the check to the English identity.
         if (generatedKeys.has(`${topicKey}::${BlogLanguage.en}`) || seen.has(topicKey)) continue;
@@ -769,7 +770,7 @@ export class BlogAutomationService {
       language: BlogLanguage;
     },
     forcePublish = false,
-    workerId = 'manual',
+    _workerId = 'manual',
   ): Promise<GenerationResult> {
     const started = Date.now();
     const { topicKey, topic, categorySlug, language } = topicRow;
