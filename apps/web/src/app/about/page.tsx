@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { siteConfig, getBreadcrumbSchema } from '@palnadu/config';
 import { LampContainer } from '@/components/ui/lamp';
+import { MoltenRingCarouselDemo } from '@/components/ui/molten-ring-carousel-demo';
 
 import { CtaSection } from '@/components/sections/cta-section';
 
@@ -93,6 +94,13 @@ export default function AboutPage() {
               </p>
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* Interactive Craft Showcase */}
+      <section className="bg-palnadu-dark text-white border-t border-white/10">
+        <div className="container max-w-5xl">
+          <MoltenRingCarouselDemo />
         </div>
       </section>
 
