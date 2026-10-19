@@ -51,6 +51,17 @@ export interface MoltenRingCarouselProps extends Omit<
   glass?: boolean;
   /** Extra classes on the root surface. @default undefined */
   className?: string;
+  /**
+   * When true, direct window/page scrolling will drive carousel rotation.
+   * Wheel events will not block the page.
+   * @default true
+   */
+  scrollLinked?: boolean;
+  /**
+   * Optional normalized scroll progress (0 to 1) passed from a parent sticky scroll container.
+   * When provided, the carousel's goal rotation is directly tied to this progress value.
+   */
+  scrollProgress?: number;
 }
 
 /** Each uniform-array element occupies a vec4 register; WebGL2 guarantees only
@@ -498,6 +509,8 @@ export function MoltenRingCarousel({
   fuse = FUSE,
   threads = true,
   glass = true,
+  scrollLinked = true,
+  scrollProgress,
   className,
   ...props
 }: MoltenRingCarouselProps) {
@@ -505,6 +518,11 @@ export function MoltenRingCarousel({
   const [active, setActive] = React.useState(0);
   const [reduced, setReduced] = React.useState(false);
   const [supported, setSupported] = React.useState(true);
+
+  const scrollProgressRef = React.useRef(scrollProgress);
+  scrollProgressRef.current = scrollProgress;
+  const scrollLinkedRef = React.useRef(scrollLinked);
+  scrollLinkedRef.current = scrollLinked;
 
   const settings = React.useRef({
     arc,
@@ -662,14 +680,11 @@ export function MoltenRingCarousel({
     observer.observe(canvas);
 
     // --- input ------------------------------------------------------------
-    const onWheel = (event: WheelEvent) => {
-      event.preventDefault();
-      tween = null;
-      goal += event.deltaY * WHEEL;
+    const onWheel = () => {
+      // Passive listener allows window to scroll naturally without trapping the cursor
       lastInput = performance.now();
-      snapped = false;
     };
-    canvas.addEventListener("wheel", onWheel, { passive: false });
+    canvas.addEventListener("wheel", onWheel, { passive: true });
 
     step.current = (by: number) => {
       tween = { from: goal, to: Math.round(goal) + by, at: performance.now() };
@@ -677,13 +692,20 @@ export function MoltenRingCarousel({
       snapped = true;
     };
 
-    let dragFrom: number | null = null;
+    let dragFromY: number | null = null;
+    let dragFromX: number | null = null;
     let dragTravel = 0;
+    let isCaptured = false;
+
     const onDown = (event: PointerEvent) => {
-      dragFrom = event.clientY;
+      dragFromY = event.clientY;
+      dragFromX = event.clientX;
       dragTravel = 0;
       tween = null;
-      canvas.setPointerCapture(event.pointerId);
+      if (event.pointerType === "mouse") {
+        canvas.setPointerCapture(event.pointerId);
+        isCaptured = true;
+      }
     };
     const onMove = (event: PointerEvent) => {
       const box = canvas.getBoundingClientRect();
@@ -692,18 +714,47 @@ export function MoltenRingCarousel({
       pointerSpeed = Math.hypot(nx - pointerX, ny - pointerY);
       pointerX = nx;
       pointerY = ny;
-      if (dragFrom !== null) {
-        const travel = dragFrom - event.clientY;
-        dragTravel += Math.abs(travel);
-        dragFrom = event.clientY;
-        goal += travel * DRAG;
-        lastInput = performance.now();
-        snapped = false;
+      if (dragFromY !== null && dragFromX !== null) {
+        const travelY = dragFromY - event.clientY;
+        const travelX = dragFromX - event.clientX;
+        const totalTravel = Math.hypot(travelX, travelY);
+        dragTravel += totalTravel;
+
+        if (event.pointerType === "mouse") {
+          dragFromY = event.clientY;
+          dragFromX = event.clientX;
+          goal += (travelY + travelX * 0.5) * DRAG;
+          lastInput = performance.now();
+          snapped = false;
+        } else if (Math.abs(travelX) > Math.abs(travelY) && totalTravel > 5) {
+          if (!isCaptured) {
+            try {
+              canvas.setPointerCapture(event.pointerId);
+              isCaptured = true;
+            } catch {
+              // ignore
+            }
+          }
+          dragFromX = event.clientX;
+          dragFromY = event.clientY;
+          goal += travelX * DRAG;
+          lastInput = performance.now();
+          snapped = false;
+        }
       }
     };
-    const onUp = () => {
-      const wasClick = dragFrom !== null && dragTravel < CLICK_SLOP;
-      dragFrom = null;
+    const onUp = (event: PointerEvent) => {
+      if (isCaptured) {
+        try {
+          canvas.releasePointerCapture(event.pointerId);
+        } catch {
+          // ignore
+        }
+        isCaptured = false;
+      }
+      const wasClick = dragFromY !== null && dragTravel < CLICK_SLOP;
+      dragFromY = null;
+      dragFromX = null;
       if (!wasClick || hovered < 0) return;
       // Rotate to the front slot, taking whichever direction is shorter.
       const want = (((hovered - FRONT) % count) + count) % count;
@@ -726,6 +777,29 @@ export function MoltenRingCarousel({
     canvas.addEventListener("pointercancel", onUp);
     canvas.addEventListener("pointerleave", onLeave);
 
+    // --- Window Scroll Tracking (Connects cards directly to page scrolling) ---
+    let lastScrollY = typeof window !== "undefined" ? window.scrollY : 0;
+    const onWindowScroll = () => {
+      const currentScrollY = window.scrollY;
+      const delta = currentScrollY - lastScrollY;
+      lastScrollY = currentScrollY;
+
+      if (!scrollLinkedRef.current || typeof scrollProgressRef.current === "number") return;
+      if (!canvas) return;
+
+      const rect = canvas.getBoundingClientRect();
+      const inView = rect.bottom > 0 && rect.top < window.innerHeight;
+      if (!inView) return;
+
+      if (dragFromY !== null || dragFromX !== null) return;
+
+      tween = null;
+      goal += delta * WHEEL;
+      lastInput = performance.now();
+      snapped = false;
+    };
+    window.addEventListener("scroll", onWindowScroll, { passive: true });
+
     // --- frame ------------------------------------------------------------
     const draw = (now: number) => {
       frame = requestAnimationFrame(draw);
@@ -743,7 +817,10 @@ export function MoltenRingCarousel({
       const spread = inOutCubic(entry);
 
       // --- turn -----------------------------------------------------------
-      if (tween) {
+      if (typeof scrollProgressRef.current === "number" && dragFromY === null && !tween) {
+        goal = clamp(scrollProgressRef.current, 0, 1) * (count - 1);
+        snapped = false;
+      } else if (tween) {
         const t = clamp((now - tween.at) / CLICK_MS, 0, 1);
         goal = tween.from + (tween.to - tween.from) * outCubic(t);
         if (t >= 1) tween = null;
@@ -942,6 +1019,7 @@ export function MoltenRingCarousel({
     return () => {
       cancelAnimationFrame(frame);
       observer.disconnect();
+      window.removeEventListener("scroll", onWindowScroll);
       canvas.removeEventListener("wheel", onWheel);
       canvas.removeEventListener("pointerdown", onDown);
       canvas.removeEventListener("pointermove", onMove);
@@ -1008,7 +1086,7 @@ export function MoltenRingCarousel({
         role="listbox"
         aria-label={brand ?? "Gallery"}
         aria-activedescendant={`molten-ring-${active}`}
-        className="text-white focus-visible:outline-palnadu-teal absolute inset-0 h-full w-full cursor-grab touch-pan-x outline-none focus-visible:outline-2 focus-visible:-outline-offset-4 active:cursor-grabbing"
+        className="text-white focus-visible:outline-palnadu-teal absolute inset-0 h-full w-full cursor-grab touch-pan-y outline-none focus-visible:outline-2 focus-visible:-outline-offset-4 active:cursor-grabbing"
         onKeyDown={(event) => {
           if (event.key === "ArrowDown") step.current(1);
           else if (event.key === "ArrowUp") step.current(-1);
