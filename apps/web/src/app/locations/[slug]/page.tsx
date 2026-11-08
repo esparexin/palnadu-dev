@@ -2,9 +2,12 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { coreLocations, siteConfig, getBreadcrumbSchema, getOrganizationRef } from '@palnadu/config';
-import { ArrowRight, MapPin, Building2, AlertCircle, CheckCircle2, HelpCircle, ArrowLeft } from 'lucide-react';
+import { ArrowRight, MapPin, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { CtaSection } from '@/components/sections/cta-section';
+import { LocationProfile } from './location-profile';
+import { LocationServices } from './location-services';
+import { LocationFaq } from './location-faq';
 
 type Props = {
   params: Promise<{ slug: string }>;
@@ -47,7 +50,6 @@ export default async function LocationDetailPage({ params }: Props) {
     notFound();
   }
 
-  // Local Google Schema for regional search engine dominance
   const localBusinessSchema = {
     '@context': 'https://schema.org',
     '@type': 'ProfessionalService',
@@ -188,182 +190,9 @@ export default async function LocationDetailPage({ params }: Props) {
           </div>
         </section>
 
-        {/* Economic Profile & Regional Context */}
-        <section className="py-14 sm:py-20 border-b border-palnadu-border">
-          <div className="container max-w-4xl space-y-10">
-            <div className="space-y-3">
-              <p className="text-xs font-mono uppercase tracking-widest text-palnadu-blue font-bold">
-                Regional Commercial Profile
-              </p>
-              <h2 className="text-2xl sm:text-3xl font-extrabold text-palnadu-dark tracking-tight">
-                Empowering Enterprises Across {location.name}
-              </h2>
-              <p className="text-sm sm:text-base text-palnadu-body leading-relaxed">
-                {location.economicProfile}
-              </p>
-            </div>
-
-            {/* Key Industries in this Location */}
-            <div className="space-y-4">
-              <h3 className="text-xs font-mono uppercase tracking-widest text-palnadu-secondary font-bold flex items-center gap-1.5">
-                <Building2 className="h-3.5 w-3.5 text-palnadu-blue" />
-                <span>Primary Commercial Sectors in {location.name}</span>
-              </h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5">
-                {location.keyIndustries.map((industry) => (
-                  <div
-                    key={industry}
-                    className="p-3 rounded-lg border border-palnadu-border bg-palnadu-off-white/50 text-xs font-semibold text-palnadu-dark flex items-center gap-2"
-                  >
-                    <span className="h-1.5 w-1.5 rounded-full bg-palnadu-blue shrink-0" />
-                    <span>{industry}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Surrounding Mandals & Corridors Served */}
-            {location.surroundingMandals && location.surroundingMandals.length > 0 && (
-              <div className="rounded-xl border border-palnadu-border bg-palnadu-off-white/40 p-6 space-y-3">
-                <div className="flex items-center gap-2 text-palnadu-dark">
-                  <MapPin className="h-4 w-4 text-palnadu-blue shrink-0" />
-                  <h3 className="text-sm font-bold">
-                    Serving {location.name} & Surrounding Mandals / Corridors:
-                  </h3>
-                </div>
-                <div className="flex flex-wrap gap-2 pt-1">
-                  {location.surroundingMandals.map((mandal) => (
-                    <span
-                      key={mandal}
-                      className="inline-flex items-center px-2.5 py-1 rounded-md bg-white border border-palnadu-border text-xs font-medium text-palnadu-dark shadow-sm"
-                    >
-                      {mandal}
-                    </span>
-                  ))}
-                </div>
-                <p className="text-[11px] text-palnadu-secondary leading-relaxed">
-                  Traders, clinics, schools, and enterprises across these regional mandals receive direct engineering advisory and on-site support from Palnadu.dev.
-                </p>
-              </div>
-            )}
-
-            {/* Common Operational Challenges Solved */}
-            <div className="rounded-xl border border-red-200 bg-red-50/40 p-6 space-y-3">
-              <div className="flex items-center gap-2 text-red-800">
-                <AlertCircle className="h-4 w-4 shrink-0" />
-                <h3 className="text-sm font-bold">
-                  Common Bottlenecks Facing Businesses in {location.name}
-                </h3>
-              </div>
-              <ul className="space-y-2 text-xs sm:text-sm text-palnadu-body">
-                {location.commonPainPoints.map((pain, idx) => (
-                  <li key={idx} className="flex items-start gap-2">
-                    <span className="text-red-500 font-bold shrink-0 mt-0.5">•</span>
-                    <span>{pain}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-        </section>
-
-        {/* Tailored Services for this Location */}
-        <section className="py-14 sm:py-20 bg-palnadu-off-white/30 border-b border-palnadu-border" id="services-offered">
-          <div className="container max-w-4xl space-y-8">
-            <div className="space-y-2">
-              <p className="text-xs font-mono uppercase tracking-widest text-palnadu-blue font-bold">
-                Capabilities
-              </p>
-              <h2 className="text-2xl sm:text-3xl font-extrabold text-palnadu-dark tracking-tight">
-                Recommended Software Services for {location.name}
-              </h2>
-              <p className="text-xs sm:text-sm text-palnadu-body">
-                Engineered with Next.js, TypeScript, and modern cloud databases for zero vendor lock-in.
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {location.popularServices.map((serviceName, idx) => {
-                const lower = serviceName.toLowerCase();
-                const targetSlug =
-                  lower.includes('website') ? 'website-development' :
-                  lower.includes('erp') || lower.includes('custom') || lower.includes('inventory') ? 'custom-software' :
-                  lower.includes('automation') || lower.includes('mandi') ? 'business-automation' :
-                  lower.includes('mobile') || lower.includes('android') ? 'android-app-development' :
-                  'web-development';
-
-                return (
-                  <div
-                    key={idx}
-                    className="p-5 rounded-xl border border-palnadu-border bg-white shadow-sm hover:border-palnadu-blue transition-all space-y-2 flex flex-col justify-between"
-                  >
-                    <div className="space-y-2">
-                      <div className="flex items-center gap-2 text-palnadu-teal">
-                        <CheckCircle2 className="h-4 w-4 shrink-0" />
-                        <h3 className="text-sm font-bold text-palnadu-dark">{serviceName}</h3>
-                      </div>
-                      <p className="text-xs text-palnadu-secondary leading-relaxed">
-                        Designed around regional workflows, local GST reporting, and phone/tablet interfaces.
-                      </p>
-                    </div>
-                    <div className="pt-2 border-t border-palnadu-border/40">
-                      <Link
-                        href={`/services/${targetSlug}`}
-                        className="text-xs font-semibold text-palnadu-blue hover:underline inline-flex items-center gap-1"
-                      >
-                        <span>Explore our engineering capability</span>
-                        <ArrowRight className="h-3 w-3" />
-                      </Link>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-            <div className="pt-2 text-center">
-              <Link
-                href="/services"
-                className="text-xs sm:text-sm font-semibold text-palnadu-blue hover:underline inline-flex items-center gap-1.5"
-              >
-                <span>View all software engineering & digital services across Andhra Pradesh</span>
-                <ArrowRight className="h-3.5 w-3.5" />
-              </Link>
-            </div>
-          </div>
-        </section>
-
-        {/* Local FAQ Section */}
-        {location.faq.length > 0 && (
-          <section className="py-14 sm:py-20 bg-white">
-            <div className="container max-w-3xl space-y-8">
-              <div className="space-y-2 text-center">
-                <p className="text-xs font-mono uppercase tracking-widest text-palnadu-blue font-bold">
-                  Questions & Answers
-                </p>
-                <h2 className="text-2xl sm:text-3xl font-extrabold text-palnadu-dark tracking-tight">
-                  Frequently Asked Questions in {location.name}
-                </h2>
-              </div>
-
-              <div className="space-y-4">
-                {location.faq.map((item, idx) => (
-                  <div
-                    key={idx}
-                    className="p-5 rounded-xl border border-palnadu-border bg-palnadu-off-white/40 space-y-2"
-                  >
-                    <h3 className="text-sm font-bold text-palnadu-dark flex items-start gap-2">
-                      <HelpCircle className="h-4 w-4 text-palnadu-blue shrink-0 mt-0.5" />
-                      <span>{item.q}</span>
-                    </h3>
-                    <p className="text-xs sm:text-sm text-palnadu-body pl-6 leading-relaxed">
-                      {item.a}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </section>
-        )}
-
+        <LocationProfile location={location} />
+        <LocationServices location={location} />
+        <LocationFaq location={location} />
         <CtaSection />
       </div>
     </>
