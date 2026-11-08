@@ -37,11 +37,13 @@ interface ActiveBranding {
   footerLogoUrl: string | null;
 }
 
-async function getActiveBranding(): Promise<ActiveBranding> {
+let activeBrandingPromise: Promise<ActiveBranding> | null = null;
+
+async function fetchActiveBranding(): Promise<ActiveBranding> {
   try {
     const res = await fetch(`${API_URL}/api/settings/branding`, {
       next: { revalidate: 30 },
-      signal: AbortSignal.timeout(1200),
+      signal: AbortSignal.timeout(350),
     });
     if (res.ok) {
       const json = await res.json();
@@ -62,6 +64,13 @@ async function getActiveBranding(): Promise<ActiveBranding> {
     headerLogoUrl: null,
     footerLogoUrl: null,
   };
+}
+
+function getActiveBranding(): Promise<ActiveBranding> {
+  if (!activeBrandingPromise) {
+    activeBrandingPromise = fetchActiveBranding();
+  }
+  return activeBrandingPromise;
 }
 
 export async function generateMetadata(): Promise<Metadata> {
