@@ -74,7 +74,9 @@ describe('fallback template is a single shared body', () => {
 
 describe('template output cannot auto-publish', () => {
   it('publish step honours forceDraft over the auto-publish setting', () => {
-    const service = readFileSync('src/automation/blog-automation.service.ts', 'utf8');
+    const service =
+      readFileSync('src/automation/blog-automation.service.ts', 'utf8') +
+      readFileSync('src/automation/blog/blog-publisher.service.ts', 'utf8');
 
     // The publish decision must reference forceDraft and downgrade to DRAFT.
     assert.match(
@@ -95,7 +97,9 @@ describe('template output cannot auto-publish', () => {
   });
 
   it('raises a distinct alert so the operator knows to rewrite', () => {
-    const service = readFileSync('src/automation/blog-automation.service.ts', 'utf8');
+    const service =
+      readFileSync('src/automation/blog-automation.service.ts', 'utf8') +
+      readFileSync('src/automation/blog/blog-publisher.service.ts', 'utf8');
     assert.match(
       service,
       /Automated Blog Needs Rewriting \(LLM Fallback\)/,

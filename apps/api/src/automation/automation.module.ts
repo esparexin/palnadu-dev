@@ -1,7 +1,15 @@
 import { Module } from '@nestjs/common';
 import { ScheduleModule } from '@nestjs/schedule';
 import { PrismaModule } from '../prisma.module';
-import { BlogAutomationService } from './blog-automation.service';
+import {
+  BlogAutomationService,
+  BlogQueueService,
+  BlogComposerService,
+  BlogPublisherService,
+  BlogBilingualService,
+  BlogStatusService,
+  BlogBatchService,
+} from './blog-automation.service';
 import { ContentResearchService } from './content-research.service';
 import { ImageSourcingService } from './image-sourcing.service';
 import { FreeKeywordResearchService } from './free-keyword-research.service';
@@ -41,6 +49,12 @@ export { REFERENCE_SOURCES };
   controllers: [AutomationController],
   providers: [
     BlogAutomationService,
+    BlogQueueService,
+    BlogComposerService,
+    BlogPublisherService,
+    BlogBilingualService,
+    BlogStatusService,
+    BlogBatchService,
     ContentResearchService,
     ImageSourcingService,
     FreeKeywordResearchService,
@@ -80,6 +94,12 @@ export { REFERENCE_SOURCES };
   ],
   exports: [
     BlogAutomationService,
+    BlogQueueService,
+    BlogComposerService,
+    BlogPublisherService,
+    BlogBilingualService,
+    BlogStatusService,
+    BlogBatchService,
     ContentResearchService,
     ImageSourcingService,
     FreeKeywordResearchService,
