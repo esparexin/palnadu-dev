@@ -1,7 +1,7 @@
 import { describe, it, before } from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
-import { mkdirSync } from 'node:fs';
+import { mkdirSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { createRequire } from 'node:module';
 
@@ -16,33 +16,46 @@ describe('AI-Powered SEO Research & Source-Confidence System', () => {
   before(() => {
     const outDir = join(process.cwd(), 'node_modules', '.cache', 'ai-seo-engine-test');
     mkdirSync(outDir, { recursive: true });
-    execFileSync(
-      'npx',
-      [
-        'tsc',
-        'src/automation/topic-identity.ts',
-        'src/automation/script-utils.ts',
-        'src/automation/seo-strategy.ts',
-        'src/automation/seo-sources.ts',
-        'src/automation/free-keyword-research.service.ts',
-        'src/automation/content-research.service.ts',
-        'src/automation/content-similarity-rules.ts',
-        'src/automation/seo-validation-rules.ts',
-        '--outDir',
-        outDir,
-        '--module',
-        'commonjs',
-        '--target',
-        'es2022',
-        '--moduleResolution',
-        'node',
-        '--skipLibCheck',
-        '--esModuleInterop',
-      ],
-      { cwd: process.cwd(), stdio: 'pipe' },
-    );
+    try {
+      execFileSync(
+        'npx',
+        [
+          'tsc',
+          'src/automation/topic-identity.ts',
+          'src/automation/script-utils.ts',
+          'src/automation/seo-strategy.ts',
+          'src/automation/seo-sources.ts',
+          'src/automation/free-keyword-research.service.ts',
+          'src/automation/content-research.service.ts',
+          'src/automation/content-similarity-rules.ts',
+          'src/automation/seo-validation-rules.ts',
+          'src/automation/technical-seo-crawler.service.ts',
+          '--outDir',
+          outDir,
+          '--module',
+          'commonjs',
+          '--target',
+          'es2022',
+          '--moduleResolution',
+          'node',
+          '--experimentalDecorators',
+          '--emitDecoratorMetadata',
+          '--skipLibCheck',
+          '--esModuleInterop',
+        ],
+        { cwd: process.cwd(), stdio: 'pipe' },
+      );
+    } catch (err) {
+      if (err.stdout) console.error('TSC STDOUT:', err.stdout.toString());
+      if (err.stderr) console.error('TSC STDERR:', err.stderr.toString());
+      throw err;
+    }
 
-    const req = (name) => require(join(outDir, name));
+    const req = (name) => {
+      const nested = join(outDir, 'automation', name);
+      if (existsSync(nested)) return require(nested);
+      return require(join(outDir, name));
+    };
     mod = {
       identity: req('topic-identity.js'),
       strategy: req('seo-strategy.js'),
@@ -51,6 +64,7 @@ describe('AI-Powered SEO Research & Source-Confidence System', () => {
       researchService: req('content-research.service.js'),
       similarity: req('content-similarity-rules.js'),
       validation: req('seo-validation-rules.js'),
+      crawlerService: req('technical-seo-crawler.service.js'),
     };
   });
 
@@ -315,6 +329,37 @@ describe('AI-Powered SEO Research & Source-Confidence System', () => {
 
       assert.strictEqual(outcome.passed, true, `Validation failed: ${outcome.summary}`);
       assert.strictEqual(outcome.failures.length, 0);
+    });
+  });
+
+  describe('TechnicalSeoCrawlerService', () => {
+    it('successfully crawls routes, detects Macherla focus opportunity, and computes composite scores', async () => {
+      const { TechnicalSeoCrawlerService } = mod.crawlerService;
+
+      // Mock PrismaService
+      const mockPrisma = {
+        blogPost: {
+          findMany: async () => [
+            { slug: 'weighbridge-automation-software', language: 'en' },
+            { slug: 'billing-software-shops', language: 'te' },
+          ],
+        },
+        seoAuditResult: {
+          create: async ({ data }) => ({ id: 'mock-audit-id', createdAt: new Date(), ...data }),
+          findFirst: async () => null,
+          findMany: async () => [],
+        },
+      };
+
+      const crawler = new TechnicalSeoCrawlerService(mockPrisma);
+      const report = await crawler.runAudit('https://www.palnadu.dev');
+
+      assert.strictEqual(report.status, 'COMPLETED');
+      assert.ok(report.pagesCrawled >= 18);
+      assert.ok(report.seoScore > 80);
+      assert.ok(report.performanceScore >= 90);
+      assert.ok(report.issues.some((i) => i.url.includes('/locations/macherla')));
+      assert.match(report.summary, /Audited \d+ URLs/);
     });
   });
 });

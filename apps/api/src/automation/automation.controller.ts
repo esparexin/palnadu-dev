@@ -6,6 +6,7 @@ import { UserRole, BlogLanguage } from '@prisma/client';
 import { BlogAutomationService } from './blog-automation.service';
 import { FreeKeywordResearchService } from './free-keyword-research.service';
 import { TopicDiscoveryService } from './topic-discovery.service';
+import { TechnicalSeoCrawlerService } from './technical-seo-crawler.service';
 import {
   GoogleSearchConsoleSource,
   BingWebmasterSource,
@@ -38,6 +39,7 @@ export class AutomationController {
     @Optional() private bingSource?: BingWebmasterSource,
     @Optional() private indexNowSource?: IndexNowSource,
     @Optional() private pageSpeedSource?: PageSpeedInsightsSource,
+    @Optional() private crawlerService?: TechnicalSeoCrawlerService,
   ) {}
 
   @Get('keywords')
@@ -345,6 +347,48 @@ export class AutomationController {
     return {
       success: !!result,
       data: result,
+    };
+  }
+
+  /** Trigger on-demand technical SEO crawl (Replaces Screaming Frog) */
+  @Post('crawler/run')
+  async runCrawler(@Body('url') url?: string) {
+    if (!this.crawlerService) {
+      return { success: false, message: 'Crawler service not initialized' };
+    }
+    const report = await this.crawlerService.runAudit(url || 'https://www.palnadu.dev');
+    return {
+      success: true,
+      message: `Audit completed: ${report.summary}`,
+      data: report,
+    };
+  }
+
+  /** Get latest completed technical SEO audit */
+  @Get('crawler/latest')
+  async getLatestAudit() {
+    if (!this.crawlerService) {
+      return { success: false, message: 'Crawler service not initialized', data: null };
+    }
+    const audit = await this.crawlerService.getLatestAudit();
+    return {
+      success: true,
+      data: audit,
+    };
+  }
+
+  /** Get historical technical SEO audits */
+  @Get('crawler/history')
+  async getAuditHistory(@Query('limit') limit?: string) {
+    if (!this.crawlerService) {
+      return { success: false, message: 'Crawler service not initialized', data: [] };
+    }
+    const take = Math.min(Number(limit || 10), 50);
+    const history = await this.crawlerService.listAudits(take);
+    return {
+      success: true,
+      count: history.length,
+      data: history,
     };
   }
 }

@@ -8,6 +8,7 @@ import { FreeKeywordResearchService } from './free-keyword-research.service';
 import { TopicDiscoveryService } from './topic-discovery.service';
 import { ContentSimilarityService } from './content-similarity.service';
 import { SeoValidationService } from './seo-validation.service';
+import { TechnicalSeoCrawlerService } from './technical-seo-crawler.service';
 import { AutomationController } from './automation.controller';
 
 // Reference sources. Credential-gated adapters are always registered so the
@@ -46,6 +47,7 @@ export { REFERENCE_SOURCES };
     TopicDiscoveryService,
     ContentSimilarityService,
     SeoValidationService,
+    TechnicalSeoCrawlerService,
 
     GoogleAutocompleteSource,
     GoogleTrendsSource,
@@ -84,6 +86,7 @@ export { REFERENCE_SOURCES };
     TopicDiscoveryService,
     ContentSimilarityService,
     SeoValidationService,
+    TechnicalSeoCrawlerService,
     GoogleSearchConsoleSource,
     BingWebmasterSource,
     IndexNowSource,

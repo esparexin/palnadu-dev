@@ -256,6 +256,18 @@ export const api = {
       adminApi<{ success: boolean; message?: string; data: any }>(
         `/api/admin/automation/pagespeed?url=${encodeURIComponent(url)}`,
       ),
+    crawlerRun: (url?: string) =>
+      adminApi<{ success: boolean; message: string; data: any }>('/api/admin/automation/crawler/run', {
+        method: 'POST',
+        body: JSON.stringify({ url }),
+        timeoutMs: 60000,
+      }),
+    crawlerLatest: () =>
+      adminApi<{ success: boolean; data: any }>('/api/admin/automation/crawler/latest'),
+    crawlerHistory: (limit?: number) =>
+      adminApi<{ success: boolean; count: number; data: any[] }>(
+        `/api/admin/automation/crawler/history?limit=${limit || 10}`,
+      ),
   },
   media: {
     list: (params?: Record<string, string>) => adminApi('/api/admin/media', { params }),
