@@ -1,5 +1,6 @@
 import { ScrollGlobe } from '@/components/ui/landing-page';
 import { siteConfig, getOrganizationSchema, getWebsiteSchema } from '@palnadu/config';
+import { DiwaliIntro } from '@/components/homepage/diwali-intro';
 
 // Comprehensive Google SEO Structured Data (JSON-LD)
 function JsonLd() {
@@ -98,6 +99,7 @@ export default function HomePage() {
   return (
     <>
       <JsonLd />
+      <DiwaliIntro />
       <ScrollGlobe />
     </>
   );
