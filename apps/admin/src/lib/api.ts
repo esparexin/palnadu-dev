@@ -210,6 +210,10 @@ export const api = {
       adminApi<{ success: boolean; query: string; location: string; count: number; data: any[] }>(
         `/api/admin/automation/keywords?seed=${encodeURIComponent(seed || '')}&location=${encodeURIComponent(location || '')}`,
       ),
+    questions: (seed?: string, location?: string) =>
+      adminApi<{ success: boolean; query: string; location: string; count: number; data: any[] }>(
+        `/api/admin/automation/questions?seed=${encodeURIComponent(seed || '')}&location=${encodeURIComponent(location || '')}`,
+      ),
     getBilingual: () =>
       adminApi<{ success: boolean; data: BilingualStatus }>('/api/admin/automation/bilingual'),
     updateBilingual: (data: { enabled?: boolean; te?: number; en?: number }) =>
