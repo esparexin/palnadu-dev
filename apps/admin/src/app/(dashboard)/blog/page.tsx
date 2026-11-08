@@ -707,6 +707,17 @@ export default function BlogAdminPage() {
                           size="sm"
                           variant="secondary"
                           onClick={() => quickPublish(post)}
+                          disabled={publishingId === post.id}
+                          className="h-7 px-2 text-xs"
+                          title="1-Click Approve & Publish"
+                        >
+                          {publishingId === post.id ? (
+                            <Loader2 className="h-3 w-3 animate-spin mr-1" />
+                          ) : (
+                            <CheckCircle2 className="h-3 w-3 mr-1" />
+                          )}
+                          <span>{publishingId === post.id ? 'Publishing...' : 'Approve'}</span>
+                        </Button>
                       )}
                       {post.status === 'PUBLISHED' && (
                         <a
