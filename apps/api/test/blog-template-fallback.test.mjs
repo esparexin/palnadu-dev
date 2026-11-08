@@ -21,7 +21,9 @@ const require = createRequire(import.meta.url);
 
 let source;
 before(() => {
-  source = readFileSync('src/automation/content-research.service.ts', 'utf8');
+  source =
+    readFileSync('src/automation/content-research.service.ts', 'utf8') +
+    readFileSync('src/automation/content-research/structured-fallback.ts', 'utf8');
 });
 
 /** Extract the fallback template body from the real source. */
