@@ -260,6 +260,8 @@ export interface LocationData {
   commonPainPoints: string[];
   popularServices: string[];
   geo?: { latitude: number; longitude: number };
+  serviceOffice?: string;
+  postalCode?: string;
   faq: { q: string; a: string }[];
 }
 
@@ -515,12 +517,27 @@ export const coreLocations: LocationData[] = [
       'Contract & Gate Pass Management Software',
       'Hospitality & Hotel Web Platforms',
       'Industrial Supplier Corporate Websites',
+      'Retail Billing & GST POS Systems',
     ],
     geo: { latitude: 16.4807, longitude: 79.2965 },
+    serviceOffice: 'Main Road, Macherla, Palnadu District, Andhra Pradesh 522426',
+    postalCode: '522426',
     faq: [
       {
-        q: 'Can we integrate weighbridge or gate entry records into our custom web portal?',
-        a: 'Yes. We build APIs and data ingestion connectors that sync gate passes, weigh slips, and vendor invoices into your centralized dashboard.',
+        q: 'Can we integrate weighbridge or gate entry records into our custom web portal in Macherla?',
+        a: 'Yes. We build APIs and data ingestion connectors that sync electronic weigh slips, vendor invoices, and industrial gate passes directly into your centralized dashboard.',
+      },
+      {
+        q: 'How fast can Palnadu.dev build a business website or software for a Macherla enterprise?',
+        a: 'Standard commercial websites and landing pages are delivered within 5 to 10 business days. Custom business ERPs, POS billing, or logistics portals typically take 2 to 4 weeks with full on-site onboarding.',
+      },
+      {
+        q: 'Do you offer on-site consultation and support in Macherla, Gurazala, and Piduguralla?',
+        a: 'Yes. Our core engineering and support team directly serves Macherla town and surrounding industrial corridors across Gurazala division, providing on-site workflow audits and in-person team training.',
+      },
+      {
+        q: 'Can our staff use the software in Telugu as well as English?',
+        a: 'Absolutely. All our enterprise web portals, mobile apps, and invoice generators support bilingual English and Telugu interfaces tailored for local operational teams.',
       },
     ],
   },
@@ -559,7 +576,7 @@ export const sitemapPages: SitemapPage[] = [
   { path: '/locations/chilakaluripet', changeFrequency: 'monthly', priority: 0.7 },
   { path: '/locations/sattenapalle',   changeFrequency: 'monthly', priority: 0.7 },
   { path: '/locations/vinukonda',      changeFrequency: 'monthly', priority: 0.7 },
-  { path: '/locations/macherla',       changeFrequency: 'monthly', priority: 0.7 },
+  { path: '/locations/macherla',       changeFrequency: 'weekly',  priority: 0.9 },
   // ── Legal ──
   { path: '/privacy',    changeFrequency: 'yearly',  priority: 0.3 },
   { path: '/terms',      changeFrequency: 'yearly',  priority: 0.3 },

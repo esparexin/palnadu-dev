@@ -78,7 +78,9 @@ export default async function LocationDetailPage({ params }: Props) {
     parentOrganization: getOrganizationRef(),
     address: {
       '@type': 'PostalAddress',
+      streetAddress: location.serviceOffice || `Commercial Business Hub, ${location.name}`,
       addressLocality: location.name,
+      postalCode: location.postalCode || '522426',
       addressRegion: 'Andhra Pradesh',
       addressCountry: 'IN',
     },
@@ -160,6 +162,15 @@ export default async function LocationDetailPage({ params }: Props) {
             <p className="text-sm sm:text-lg text-palnadu-light-blue/90 leading-relaxed max-w-2xl">
               {location.tagline}
             </p>
+
+            {location.serviceOffice && (
+              <div className="pt-1">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 border border-white/20 text-xs font-mono text-palnadu-teal">
+                  <MapPin className="h-3 w-3 text-palnadu-teal" />
+                  <span>Regional Hub: {location.serviceOffice}</span>
+                </span>
+              </div>
+            )}
 
             <div className="pt-4 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
               <Button asChild className="bg-palnadu-teal hover:bg-palnadu-teal-dark text-white font-semibold text-xs sm:text-sm h-11 px-6 shadow-sm">
