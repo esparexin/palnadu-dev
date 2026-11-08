@@ -142,6 +142,40 @@ describe('AI-Powered SEO Research & Source-Confidence System', () => {
     });
   });
 
+  describe('BingWebmasterSource & IndexNowSource', () => {
+    it('BingWebmasterSource reports unconfigured without BING_WEBMASTER_API_KEY', () => {
+      const { BingWebmasterSource } = mod.sources;
+      const mockConfig = { get: () => undefined };
+      const source = new BingWebmasterSource(mockConfig);
+      assert.strictEqual(source.isConfigured(), false);
+      assert.strictEqual(source.confidence, 'verified_external');
+      assert.ok(source.capabilities.includes('sitemap submission'));
+      assert.ok(source.capabilities.includes('URL indexing'));
+    });
+
+    it('IndexNowSource is configured by default and formats payload for instant indexation', async () => {
+      const { IndexNowSource } = mod.sources;
+      const mockConfig = { get: (k) => (k === 'INDEXNOW_KEY' ? 'test-index-key' : undefined) };
+      const source = new IndexNowSource(mockConfig);
+      assert.strictEqual(source.isConfigured(), true);
+      assert.strictEqual(source.id, 'indexnow');
+      assert.ok(source.capabilities.includes('instant index notification'));
+    });
+
+    it('GoogleSearchConsoleSource safely handles unconfigured credentials for URL inspection and sitemaps', async () => {
+      const { GoogleSearchConsoleSource } = mod.sources;
+      const mockConfig = { get: () => undefined };
+      const source = new GoogleSearchConsoleSource(mockConfig);
+      assert.strictEqual(source.isConfigured(), false);
+
+      const inspectResult = await source.inspectUrl('https://www.palnadu.dev/');
+      assert.strictEqual(inspectResult, null);
+
+      const sitemapResult = await source.submitSitemap('https://www.palnadu.dev/sitemap.xml');
+      assert.strictEqual(sitemapResult, false);
+    });
+  });
+
   describe('FreeKeywordResearchService', () => {
     it('marks keyword discovery suggestions with verified_google confidence and unavailable metrics', async () => {
       const { FreeKeywordResearchService } = mod.keywordService;

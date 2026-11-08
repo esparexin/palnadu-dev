@@ -68,7 +68,9 @@ export type ReferenceSourceId =
   | 'semrush'
   | 'ahrefs'
   | 'answerthepublic'
-  | 'screaming-frog';
+  | 'screaming-frog'
+  | 'bing-webmaster'
+  | 'indexnow';
 
 /**
  * Reference URL each integration corresponds to.
@@ -91,6 +93,8 @@ export const REFERENCE_SOURCE_URLS: Record<ReferenceSourceId, string> = {
   ahrefs: 'https://ahrefs.com/',
   answerthepublic: 'https://answerthepublic.com/',
   'screaming-frog': 'https://www.screamingfrog.co.uk/seo-spider/',
+  'bing-webmaster': 'https://www.bing.com/webmasters/',
+  indexnow: 'https://www.indexnow.org/',
 };
 
 export type Availability = 'available' | 'unconfigured' | 'error';
@@ -495,6 +499,53 @@ export class GoogleSearchConsoleSource extends CredentialGatedSource {
     void location;
     return topics;
   }
+
+  /**
+   * Official Google Search Console URL Inspection API.
+   * Returns index status, mobile usability, and rich results verdict for a specific URL.
+   */
+  async inspectUrl(inspectionUrl: string): Promise<any> {
+    const token = this.config.get<string>('GSC_ACCESS_TOKEN');
+    const siteUrl = this.config.get<string>('GSC_SITE_URL');
+    if (!token || !siteUrl) return null;
+
+    try {
+      const endpoint = 'https://searchconsole.googleapis.com/v1/urlInspection/index:inspect';
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ inspectionUrl, siteUrl }),
+        signal: AbortSignal.timeout(20000),
+      });
+      if (!res.ok) return null;
+      return await res.json();
+    } catch (err) {
+      this.logger.warn(`GSC inspectUrl failed for ${inspectionUrl}: ${String(err)}`);
+      return null;
+    }
+  }
+
+  /**
+   * Official Google Search Console Sitemap Submission API.
+   */
+  async submitSitemap(sitemapUrl: string): Promise<boolean> {
+    const token = this.config.get<string>('GSC_ACCESS_TOKEN');
+    const siteUrl = this.config.get<string>('GSC_SITE_URL');
+    if (!token || !siteUrl) return false;
+
+    try {
+      const endpoint = `https://www.googleapis.com/webmasters/v3/sites/${encodeURIComponent(siteUrl)}/sitemaps/${encodeURIComponent(sitemapUrl)}`;
+      const res = await fetch(endpoint, {
+        method: 'PUT',
+        headers: { Authorization: `Bearer ${token}` },
+        signal: AbortSignal.timeout(15000),
+      });
+      return res.ok;
+    } catch (err) {
+      this.logger.warn(`GSC submitSitemap failed: ${String(err)}`);
+      return false;
+    }
+  }
 }
 
 @Injectable()
@@ -831,5 +882,106 @@ export class ScreamingFrogSource implements ReferenceSource {
       this.logger.warn(`Screaming Frog export unreadable: ${String(err)}`);
       return null;
     }
+  }
+}
+
+@Injectable()
+export class BingWebmasterSource extends CredentialGatedSource {
+  constructor(config: ConfigService) {
+    super(config);
+  }
+  readonly id: ReferenceSourceId = 'bing-webmaster';
+  readonly confidence: SourceConfidence = 'verified_external';
+  readonly capabilities = ['sitemap submission', 'URL indexing', 'search traffic statistics'];
+  readonly credentialKeys = ['BING_WEBMASTER_API_KEY', 'BING_SITE_URL'];
+
+  async submitUrl(url: string): Promise<boolean> {
+    const apiKey = this.config.get<string>('BING_WEBMASTER_API_KEY');
+    const siteUrl = this.config.get<string>('BING_SITE_URL');
+    if (!apiKey || !siteUrl) return false;
+
+    const endpoint = `https://ssl.bing.com/webmaster/api.svc/json/SubmitUrl?apikey=${encodeURIComponent(apiKey)}`;
+    try {
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ siteUrl, url }),
+        signal: AbortSignal.timeout(15000),
+      });
+      return res.ok;
+    } catch (err) {
+      this.logger.warn(`Bing URL submission failed: ${String(err)}`);
+      return false;
+    }
+  }
+
+  async submitSitemap(sitemapUrl: string): Promise<boolean> {
+    const apiKey = this.config.get<string>('BING_WEBMASTER_API_KEY');
+    const siteUrl = this.config.get<string>('BING_SITE_URL');
+    if (!apiKey || !siteUrl) return false;
+
+    const endpoint = `https://ssl.bing.com/webmaster/api.svc/json/SubmitFeed?apikey=${encodeURIComponent(apiKey)}`;
+    try {
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ siteUrl, feedUrl: sitemapUrl }),
+        signal: AbortSignal.timeout(15000),
+      });
+      return res.ok;
+    } catch (err) {
+      this.logger.warn(`Bing sitemap submission failed: ${String(err)}`);
+      return false;
+    }
+  }
+
+  async fetchTopics(): Promise<DiscoveredTopic[]> {
+    return [];
+  }
+}
+
+@Injectable()
+export class IndexNowSource implements ReferenceSource {
+  readonly id: ReferenceSourceId = 'indexnow';
+  readonly confidence: SourceConfidence = 'verified_external';
+  readonly capabilities = ['instant index notification', 'Bing & Yandex crawl dispatch'];
+  private readonly logger = new Logger(IndexNowSource.name);
+
+  constructor(private readonly config: ConfigService) {}
+
+  isConfigured(): boolean {
+    return true; // IndexNow endpoint is public and uses domain key
+  }
+
+  async submitUrls(host: string, urlList: string[], key?: string): Promise<{ success: boolean; submitted: number; status: number }> {
+    const apiKey = key || this.config.get<string>('INDEXNOW_KEY') || 'palnadudev-indexnow-key';
+    const payload = {
+      host,
+      key: apiKey,
+      keyLocation: `https://${host}/${apiKey}.txt`,
+      urlList: urlList.slice(0, 100),
+    };
+
+    try {
+      const res = await fetch('https://api.indexnow.org/indexnow', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json; charset=utf-8' },
+        body: JSON.stringify(payload),
+        signal: AbortSignal.timeout(15000),
+      });
+
+      return {
+        success: res.status === 200 || res.status === 202,
+        submitted: urlList.length,
+        status: res.status,
+      };
+    } catch (err) {
+      this.logger.warn(`IndexNow submission failed: ${String(err)}`);
+      return { success: false, submitted: 0, status: 500 };
+    }
+  }
+
+  async discover(): Promise<DiscoveredTopic[]> {
+    return [];
   }
 }

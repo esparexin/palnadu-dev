@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Patch, Body, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Body, Query, UseGuards, Optional } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
@@ -6,6 +6,12 @@ import { UserRole, BlogLanguage } from '@prisma/client';
 import { BlogAutomationService } from './blog-automation.service';
 import { FreeKeywordResearchService } from './free-keyword-research.service';
 import { TopicDiscoveryService } from './topic-discovery.service';
+import {
+  GoogleSearchConsoleSource,
+  BingWebmasterSource,
+  IndexNowSource,
+  PageSpeedInsightsSource,
+} from './seo-sources';
 import { PrismaService } from '../prisma.service';
 import { ZodValidationPipe } from '../common/pipes/zod-validation.pipe';
 import {
@@ -28,6 +34,10 @@ export class AutomationController {
     private keywordService: FreeKeywordResearchService,
     private discoveryService: TopicDiscoveryService,
     private prisma: PrismaService,
+    @Optional() private gscSource?: GoogleSearchConsoleSource,
+    @Optional() private bingSource?: BingWebmasterSource,
+    @Optional() private indexNowSource?: IndexNowSource,
+    @Optional() private pageSpeedSource?: PageSpeedInsightsSource,
   ) {}
 
   @Get('keywords')
@@ -253,6 +263,88 @@ export class AutomationController {
     return {
       success: true,
       message: `Auto-publish mode set to: ${body.autoPublish ? 'PUBLISHED (Automatic)' : 'DRAFT (Human Review Required)'}`,
+    };
+  }
+
+  /** Immediate IndexNow URL dispatch for Bing & participating search engines */
+  @Post('indexnow/submit')
+  async submitIndexNow(@Body() body: { urls?: string[]; host?: string }) {
+    const urls = body?.urls || ['https://www.palnadu.dev/'];
+    const host = body?.host || 'www.palnadu.dev';
+    if (!this.indexNowSource) {
+      return { success: false, message: 'IndexNow source not initialized', submitted: 0 };
+    }
+    const res = await this.indexNowSource.submitUrls(host, urls);
+    return {
+      success: res.success,
+      message: res.success ? `Submitted ${res.submitted} URL(s) to IndexNow` : 'IndexNow submission failed',
+      data: res,
+    };
+  }
+
+  /** Google Search Console URL inspection */
+  @Get('gsc/inspect')
+  async inspectGscUrl(@Query('url') url?: string) {
+    const targetUrl = url || 'https://www.palnadu.dev/';
+    if (!this.gscSource || !this.gscSource.isConfigured()) {
+      return {
+        success: false,
+        message: 'Google Search Console credentials (GSC_ACCESS_TOKEN, GSC_SITE_URL) not configured',
+        data: null,
+      };
+    }
+    const result = await this.gscSource.inspectUrl(targetUrl);
+    return {
+      success: !!result,
+      data: result,
+    };
+  }
+
+  /** Google Search Console sitemap submission */
+  @Post('gsc/sitemap')
+  async submitGscSitemap(@Body('sitemapUrl') sitemapUrl?: string) {
+    const url = sitemapUrl || 'https://www.palnadu.dev/sitemap.xml';
+    if (!this.gscSource || !this.gscSource.isConfigured()) {
+      return {
+        success: false,
+        message: 'Google Search Console credentials not configured',
+      };
+    }
+    const ok = await this.gscSource.submitSitemap(url);
+    return {
+      success: ok,
+      message: ok ? `Sitemap submitted to Google Search Console: ${url}` : 'Failed to submit sitemap to GSC',
+    };
+  }
+
+  /** Bing Webmaster Tools URL submission */
+  @Post('bing/submit')
+  async submitBingUrl(@Body('url') url?: string) {
+    const targetUrl = url || 'https://www.palnadu.dev/';
+    if (!this.bingSource || !this.bingSource.isConfigured()) {
+      return {
+        success: false,
+        message: 'Bing Webmaster API credentials (BING_WEBMASTER_API_KEY, BING_SITE_URL) not configured',
+      };
+    }
+    const ok = await this.bingSource.submitUrl(targetUrl);
+    return {
+      success: ok,
+      message: ok ? `URL submitted to Bing Webmaster Tools: ${targetUrl}` : 'Failed to submit URL to Bing',
+    };
+  }
+
+  /** Google PageSpeed Insights live audit */
+  @Get('pagespeed')
+  async runPageSpeed(@Query('url') url?: string) {
+    const targetUrl = url || 'https://www.palnadu.dev/';
+    if (!this.pageSpeedSource) {
+      return { success: false, message: 'PageSpeed Insights source not initialized' };
+    }
+    const result = await this.pageSpeedSource.analyseUrl(targetUrl);
+    return {
+      success: !!result,
+      data: result,
     };
   }
 }

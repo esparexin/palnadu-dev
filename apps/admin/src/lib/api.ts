@@ -233,6 +233,29 @@ export const api = {
         method: 'PATCH',
         body: JSON.stringify({ autoPublish }),
       }),
+    indexNowSubmit: (urls: string[]) =>
+      adminApi<{ success: boolean; message: string; data: any }>('/api/admin/automation/indexnow/submit', {
+        method: 'POST',
+        body: JSON.stringify({ urls }),
+      }),
+    gscInspect: (url: string) =>
+      adminApi<{ success: boolean; message?: string; data: any }>(
+        `/api/admin/automation/gsc/inspect?url=${encodeURIComponent(url)}`,
+      ),
+    gscSubmitSitemap: (sitemapUrl: string) =>
+      adminApi<{ success: boolean; message: string }>('/api/admin/automation/gsc/sitemap', {
+        method: 'POST',
+        body: JSON.stringify({ sitemapUrl }),
+      }),
+    bingSubmitUrl: (url: string) =>
+      adminApi<{ success: boolean; message: string }>('/api/admin/automation/bing/submit', {
+        method: 'POST',
+        body: JSON.stringify({ url }),
+      }),
+    pageSpeed: (url: string) =>
+      adminApi<{ success: boolean; message?: string; data: any }>(
+        `/api/admin/automation/pagespeed?url=${encodeURIComponent(url)}`,
+      ),
   },
   media: {
     list: (params?: Record<string, string>) => adminApi('/api/admin/media', { params }),

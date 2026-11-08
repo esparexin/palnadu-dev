@@ -23,6 +23,8 @@ import {
   AhrefsSource,
   AnswerThePublicSource,
   ScreamingFrogSource,
+  BingWebmasterSource,
+  IndexNowSource,
   ReferenceSource,
   REFERENCE_SOURCES,
 } from './seo-sources';
@@ -54,6 +56,8 @@ export { REFERENCE_SOURCES };
     AhrefsSource,
     AnswerThePublicSource,
     ScreamingFrogSource,
+    BingWebmasterSource,
+    IndexNowSource,
     {
       provide: REFERENCE_SOURCES,
       inject: [
@@ -66,6 +70,8 @@ export { REFERENCE_SOURCES };
         AhrefsSource,
         AnswerThePublicSource,
         ScreamingFrogSource,
+        BingWebmasterSource,
+        IndexNowSource,
       ],
       useFactory: (...sources: ReferenceSource[]): ReferenceSource[] => sources,
     },
@@ -78,6 +84,10 @@ export { REFERENCE_SOURCES };
     TopicDiscoveryService,
     ContentSimilarityService,
     SeoValidationService,
+    GoogleSearchConsoleSource,
+    BingWebmasterSource,
+    IndexNowSource,
+    PageSpeedInsightsSource,
     REFERENCE_SOURCES,
   ],
 })

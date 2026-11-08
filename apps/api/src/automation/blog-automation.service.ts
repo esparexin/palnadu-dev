@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Optional } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import { PrismaService } from '../prisma.service';
 import { ContentResearchService } from './content-research.service';
@@ -7,7 +7,7 @@ import { ImageSourcingService, type LicensedImage } from './image-sourcing.servi
 import { ContentSimilarityService } from './content-similarity.service';
 import { SeoValidationService } from './seo-validation.service';
 import { TopicDiscoveryService } from './topic-discovery.service';
-import { DiscoveredTopic } from './seo-sources';
+import { DiscoveredTopic, IndexNowSource } from './seo-sources';
 import { canonicalizeTopic, SearchIntent, toTopicKey } from './topic-identity';
 import {
   allocateQuota,
@@ -167,6 +167,7 @@ export class BlogAutomationService {
     private similarityService: ContentSimilarityService,
     private validationService: SeoValidationService,
     private discoveryService: TopicDiscoveryService,
+    @Optional() private indexNow?: IndexNowSource,
   ) {}
 
   // Dynamic Industry & Regional Matrix to ensure perpetual topic generation
@@ -1037,6 +1038,18 @@ export class BlogAutomationService {
         durationMs: Date.now() - started,
       },
     });
+
+    // Real-time IndexNow notification for newly published articles
+    if (publishStatus === PublishStatus.PUBLISHED && this.indexNow) {
+      const canonicalPath =
+        post.language === BlogLanguage.te
+          ? `/te/blog/${post.slug}`
+          : `/blog/${post.slug}`;
+      const fullUrl = `https://www.palnadu.dev${canonicalPath}`;
+      this.indexNow.submitUrls('www.palnadu.dev', [fullUrl]).catch((err) => {
+        this.logger.warn(`Real-time IndexNow notification failed: ${String(err)}`);
+      });
+    }
 
     await this.prisma.notification.create({
       data: {
