@@ -590,6 +590,17 @@ describe('SEO strategy', () => {
     assert.equal(parsed.title, 'Hi');
   });
 
+  it('parses JSON containing internal markdown code blocks', () => {
+    const { parseLooseJson } = mod.strategy;
+    const jsonStr = JSON.stringify({
+      title: 'Guide',
+      content: '## Overview\n```ts\nconst x = 1;\n```\nExplanation',
+    });
+    const parsed = parseLooseJson(jsonStr);
+    assert.equal(parsed.title, 'Guide');
+    assert.match(parsed.content, /const x = 1;/);
+  });
+
   it('throws rather than silently returning junk', () => {
     const { parseLooseJson } = mod.strategy;
     assert.throws(() => parseLooseJson('no json at all here'));

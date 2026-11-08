@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from 'next';
+import Script from 'next/script';
 import { Plus_Jakarta_Sans, JetBrains_Mono } from 'next/font/google';
 import { siteConfig } from '@palnadu/config';
 import { Navbar } from '@/components/layout/navbar';
@@ -29,6 +30,7 @@ export const viewport: Viewport = {
 };
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+const GTM_ID = process.env.NEXT_PUBLIC_GTM_ID || 'GTM-NQL8ZJKP';
 
 interface ActiveBranding {
   faviconUrl: string;
@@ -149,6 +151,21 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       suppressHydrationWarning
     >
       <body className="min-h-screen font-sans antialiased bg-white text-palnadu-body selection:bg-palnadu-light-blue selection:text-palnadu-blue">
+        {GTM_ID && (
+          <>
+            <Script
+              src={`https://www.googletagmanager.com/gtm.js?id=${GTM_ID}`}
+              strategy="afterInteractive"
+            />
+            <Script id="google-tag-manager" strategy="afterInteractive">
+              {`
+                window.dataLayer = window.dataLayer || [];
+                function gtag(){dataLayer.push(arguments);}
+                gtag('js', new Date());
+              `}
+            </Script>
+          </>
+        )}
         <SmoothScrollProvider>
           <div className="relative flex min-h-screen flex-col bg-white">
             <Navbar initialLogoUrl={branding.headerLogoUrl} />

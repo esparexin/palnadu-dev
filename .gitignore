@@ -15,6 +15,7 @@ build/
 
 # Turbo
 .turbo/
+.pnpm-store/
 
 # IDE
 .vscode/

@@ -2,7 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import { PrismaService } from '../prisma.service';
 import { ContentResearchService } from './content-research.service';
-import { defaultStrategy, SeoStrategy } from './seo-strategy';
+import { defaultStrategy, SeoStrategy, VALID_INTENTS } from './seo-strategy';
 import { ImageSourcingService, type LicensedImage } from './image-sourcing.service';
 import { ContentSimilarityService } from './content-similarity.service';
 import { SeoValidationService } from './seo-validation.service';
@@ -410,6 +410,7 @@ export class BlogAutomationService {
       where: {
         status: TopicStatus.PENDING,
         attempts: { lt: maxAttempts },
+        OR: [{ nextRetryAt: null }, { nextRetryAt: { lte: now } }],
       },
       orderBy: { createdAt: 'asc' },
     });
@@ -449,6 +450,7 @@ export class BlogAutomationService {
         status: TopicStatus.PENDING,
         language,
         attempts: { lt: maxAttempts },
+        OR: [{ nextRetryAt: null }, { nextRetryAt: { lte: now } }],
       },
       orderBy: { createdAt: 'asc' },
     });
@@ -724,6 +726,23 @@ export class BlogAutomationService {
           topicKey,
         };
       }
+      // If already queued, proceed to generate using the queued topic row
+      if (enqueued.reason === 'already queued') {
+        const queued = await this.prisma.blogTopic.findUnique({
+          where: { topicKey_language: { topicKey, language } },
+        });
+        if (queued) {
+          return this.generateForTopic(
+            {
+              ...queued,
+              categorySlug: categorySlug || queued.categorySlug,
+              targetLocation: targetLocation ?? queued.targetLocation,
+            },
+            forcePublish,
+            `manual:${process.pid}:${Date.now()}`,
+          );
+        }
+      }
       // Not queued and not published, but it overlapped something. Refuse.
       throw new Error(`Topic refused: ${enqueued.reason}.`);
     }
@@ -757,6 +776,9 @@ export class BlogAutomationService {
       targetLocation: string | null;
       referenceSources: string[];
       language: BlogLanguage;
+      primaryKeyword?: string | null;
+      keywords?: string[];
+      searchIntent?: string | null;
     },
     forcePublish = false,
     _workerId = 'manual',
@@ -793,7 +815,15 @@ export class BlogAutomationService {
       topicRow.targetLocation ?? 'Guntur, Andhra Pradesh',
       language,
     );
-    if (topicRow.referenceSources?.length) {
+    if (topicRow.primaryKeyword) {
+      strategy.primaryKeyword = topicRow.primaryKeyword;
+    }
+    if (topicRow.keywords && topicRow.keywords.length > 0) {
+      strategy.secondaryKeywords = topicRow.keywords;
+    }
+    if (topicRow.searchIntent && VALID_INTENTS.has(topicRow.searchIntent)) {
+      strategy.searchIntent = topicRow.searchIntent as SearchIntent;
+    } else if (topicRow.referenceSources?.length) {
       strategy.searchIntent = (strategy.searchIntent ?? 'INFORMATIONAL') as SearchIntent;
     }
 

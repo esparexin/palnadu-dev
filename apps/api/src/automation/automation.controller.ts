@@ -41,8 +41,60 @@ export class AutomationController {
       success: true,
       query: topic,
       location: location || 'Guntur & Palnadu',
+      confidence: 'verified_google',
       count: suggestions.length,
       data: suggestions,
+    };
+  }
+
+  /** Customer questions & FAQ discovery (Replaces AnswerThePublic) */
+  @Get('questions')
+  async getQuestions(
+    @Query('seed') seed?: string,
+    @Query('location') location?: string,
+  ) {
+    const topic = seed || 'billing software for retail';
+    const questions = await this.keywordService.discoverCustomerQuestions(topic, location);
+    return {
+      success: true,
+      query: topic,
+      location: location || 'Palnadu and Guntur',
+      count: questions.length,
+      data: questions,
+    };
+  }
+
+  /** Competitor comparison & gap discovery (Replaces SEMrush) */
+  @Get('competitor-gaps')
+  async getCompetitorGaps(
+    @Query('seed') seed?: string,
+    @Query('location') location?: string,
+  ) {
+    const topic = seed || 'website development';
+    const gaps = await this.keywordService.discoverCompetitorQueries(topic, location);
+    return {
+      success: true,
+      query: topic,
+      location: location || 'Guntur',
+      count: gaps.length,
+      data: gaps,
+    };
+  }
+
+  /** AI-assisted directory & backlink outreach opportunities (Replaces Ahrefs) */
+  @Get('backlinks')
+  async getBacklinks(
+    @Query('topic') topic?: string,
+    @Query('location') location?: string,
+  ) {
+    const term = topic || 'software development';
+    const opportunities = await this.keywordService.discoverBacklinkOpportunities(term, location);
+    return {
+      success: true,
+      topic: term,
+      location: location || 'Palnadu and Guntur, Andhra Pradesh',
+      count: opportunities.length,
+      data: opportunities,
     };
   }
 
@@ -53,9 +105,7 @@ export class AutomationController {
   }
 
   /**
-   * Availability and capabilities of every reference source. Sources requiring
-   * credentials report `unconfigured` until those are provisioned; nothing is
-   * scraped and no private data is implied by a public URL.
+   * Availability, confidence tier, and capabilities of every reference source.
    */
   @Get('sources')
   async getSources() {
@@ -66,8 +116,12 @@ export class AutomationController {
         ...s,
         note:
           s.availability === 'unconfigured'
-            ? 'Requires an account or API credential. No public data is available for this source.'
-            : 'Public endpoint, no credential required.',
+            ? 'Optional Google OAuth/Developer credential not configured. Not required for auto-blogging.'
+            : s.confidence === 'verified_google'
+              ? 'Active: Verified Google search endpoint (zero credentials required).'
+              : s.confidence === 'ai_suggestion'
+                ? 'Active: AI-assisted research powered by Gemini & Google query patterns (zero paid subscriptions required).'
+                : 'Active: Verified external research endpoint.',
       })),
     };
   }

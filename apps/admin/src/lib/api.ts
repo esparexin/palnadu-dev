@@ -194,6 +194,7 @@ export const api = {
       adminApi<{ success: boolean; message: string; data: any }>('/api/admin/automation/generate', {
         method: 'POST',
         body: JSON.stringify(data || {}),
+        timeoutMs: 120000,
       }),
     discover: (limit?: number) =>
       adminApi<{
@@ -203,6 +204,7 @@ export const api = {
       }>('/api/admin/automation/discover', {
         method: 'POST',
         body: JSON.stringify({ limit: limit ?? 40 }),
+        timeoutMs: 60000,
       }),
     keywords: (seed?: string, location?: string) =>
       adminApi<{ success: boolean; query: string; location: string; count: number; data: any[] }>(

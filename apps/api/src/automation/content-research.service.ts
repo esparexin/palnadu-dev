@@ -70,9 +70,19 @@ export class ContentResearchService {
   }
 
   /**
-   * Conducts live web research via Tavily or returns foundational facts
+   * Conducts live technical research combining verified Google search demand
+   * with AI-based structured source analysis.
+   *
+   * Completely replaces mandatory Tavily dependency while retaining optional Tavily support.
    */
-  async conductResearch(topic: string): Promise<string> {
+  async conductResearch(topic: string, locationContext?: string): Promise<string> {
+    const loc = locationContext || 'Palnadu and Guntur, Andhra Pradesh';
+
+    // 1. Fetch live Google search queries (verified Google data)
+    const googleQueries = await this.fetchGoogleSuggestions(topic);
+
+    // 2. If Tavily key is present, pull external snippets optionally
+    let externalSnippets = '';
     if (this.tavilyApiKey) {
       try {
         const res = await fetch('https://api.tavily.com/search', {
@@ -89,16 +99,90 @@ export class ContentResearchService {
 
         if (res.ok) {
           const data = await res.json();
-          const snippets = data.results?.map((r: any) => `- ${r.title}: ${r.content}`).join('\n') || '';
-          this.logger.log(`Tavily research gathered for: "${topic}"`);
-          return `${data.answer || ''}\n\nKey Research Sources:\n${snippets}`;
+          externalSnippets = data.results?.map((r: any) => `- ${r.title}: ${r.content}`).join('\n') || '';
         }
       } catch (err) {
-        this.logger.warn(`Tavily research failed: ${err instanceof Error ? err.message : err}`);
+        this.logger.warn(`Optional Tavily research skipped: ${err instanceof Error ? err.message : err}`);
       }
     }
 
-    return `Synthesize latest best practices for: ${topic}. Focus on practical business impact, cost-efficiency, technical architecture, and real operational workflows.`;
+    // 3. AI-based source analysis using our existing configured LLM
+    const aiAnalysis = await this.performAiSourceAnalysis(topic, loc, googleQueries);
+
+    const verifiedSection = googleQueries.length > 0
+      ? `=== VERIFIED GOOGLE SEARCH DEMAND (Source: Google Live Suggest) ===\n${googleQueries.map((q) => `- "${q}"`).join('\n')}\n\n`
+      : '';
+
+    const webSection = externalSnippets
+      ? `=== EXTERNAL WEB RESEARCH (Source: Web Snippets) ===\n${externalSnippets}\n\n`
+      : '';
+
+    return `${verifiedSection}${webSection}=== TECHNICAL & OPERATIONAL SOURCE ANALYSIS (Source: AI Research Engine) ===\n${aiAnalysis}`;
+  }
+
+  private async fetchGoogleSuggestions(query: string): Promise<string[]> {
+    try {
+      const url = `https://suggestqueries.google.com/complete/search?client=firefox&hl=en&gl=in&q=${encodeURIComponent(query)}`;
+      const res = await fetch(url, {
+        headers: { Accept: 'application/json', 'User-Agent': 'Mozilla/5.0' },
+        signal: AbortSignal.timeout(6000),
+      });
+      if (res.ok) {
+        const json = await res.json();
+        if (Array.isArray(json[1])) {
+          return json[1].slice(0, 6).filter((q: unknown): q is string => typeof q === 'string');
+        }
+      }
+    } catch {
+      // ignore
+    }
+    return [];
+  }
+
+  private async performAiSourceAnalysis(
+    topic: string,
+    location: string,
+    queries: string[],
+  ): Promise<string> {
+    if (!this.geminiApiKey && !this.anthropicApiKey && !this.openaiApiKey) {
+      return `Foundational Analysis for: "${topic}" in ${location}.\nFocus on operational workflows, real data architectures, and practical business impact for growing regional enterprises.`;
+    }
+
+    try {
+      if (this.geminiApiKey) {
+        const prompt = `As a principal software architect, provide a factual technical and business briefing for an article about: "${topic}" in "${location}".
+Real search queries identified: ${queries.slice(0, 4).join(', ') || 'N/A'}.
+
+Provide 4 direct, candid sections without fluff or emojis:
+1. Operational Workflows: Real day-to-day workflow problems faced by businesses in this region.
+2. Architecture & Tech Stack: Realistic database/cloud architecture trade-offs and failure modes.
+3. Cost Realities & Timelines: Honest budget ranges and implementation milestones.
+4. Core Owner Questions: What business owners must verify before signing a development contract.`;
+
+        const res = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${this.geminiApiKey}`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            signal: AbortSignal.timeout(12000),
+            body: JSON.stringify({
+              contents: [{ role: 'user', parts: [{ text: prompt }] }],
+              generationConfig: { temperature: 0.4 },
+            }),
+          },
+        );
+
+        if (res.ok) {
+          const json = await res.json();
+          const text = json.candidates?.[0]?.content?.parts?.[0]?.text;
+          if (text) return text.trim();
+        }
+      }
+    } catch (err) {
+      this.logger.warn(`AI source analysis fallback: ${err instanceof Error ? err.message : err}`);
+    }
+
+    return `Operational realities and software engineering best practices for: "${topic}" in ${location}.\nEmphasis on practical operational workflow automation, robust data persistence, local network constraints, and measurable ROI.`;
   }
 
   /**
@@ -111,8 +195,8 @@ export class ContentResearchService {
     strategy?: SeoStrategy,
     language: BlogLanguage = BlogLanguage.en,
   ): Promise<GeneratedBlogDraft> {
-    const researchContext = await this.conductResearch(topicTitle);
     const locationContext = targetLocation || 'Palnadu and Guntur, Andhra Pradesh';
+    const researchContext = await this.conductResearch(topicTitle, locationContext);
     const s = strategy ?? defaultStrategy(topicTitle, categorySlug, locationContext);
     const writeTelugu = language === BlogLanguage.te;
 
@@ -282,7 +366,7 @@ Return strictly a valid JSON object matching this schema:
   ): Promise<{ draft: any; provider: string } | null> {
     // 1. Try Google Gemini if configured (with automatic model resilience fallback)
     if (this.geminiApiKey) {
-      const geminiModels = ['gemini-3.6-flash', 'gemini-3.5-flash', 'gemini-flash-latest'];
+      const geminiModels = ['gemini-3.6-flash', 'gemini-3.5-flash', 'gemini-3.8-flash'];
       for (const model of geminiModels) {
         try {
           const res = await fetch(
@@ -290,6 +374,7 @@ Return strictly a valid JSON object matching this schema:
             {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
+              signal: AbortSignal.timeout(45000),
               body: JSON.stringify({
                 contents: [
                   {

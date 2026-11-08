@@ -27,7 +27,26 @@ export const VALID_INTENTS: ReadonlySet<string> = new Set<SearchIntent>([
   'FAQ',
 ]);
 
-/** The SEO plan for one article: keywords, intent, links, FAQ and tags. */
+export type SourceConfidence =
+  | 'verified_google'
+  | 'verified_external'
+  | 'ai_suggestion'
+  | 'unavailable';
+
+export interface BacklinkOpportunity {
+  sourceName: string;
+  category:
+    | 'business_directory'
+    | 'industry_association'
+    | 'regional_chamber'
+    | 'guest_editorial'
+    | 'resource_page';
+  urlHint?: string;
+  outreachAngle: string;
+  confidence: SourceConfidence;
+}
+
+/** The SEO plan for one article: keywords, intent, links, FAQ, backlinks, and tags. */
 export interface SeoStrategy {
   primaryKeyword: string;
   secondaryKeywords: string[];
@@ -39,6 +58,7 @@ export interface SeoStrategy {
   externalReferences: { title: string; url: string }[];
   imageSuggestions: { alt: string; caption: string }[];
   faqOpportunities: string[];
+  backlinkOpportunities?: BacklinkOpportunity[];
 }
 
 /** What a reader searching with this intent actually wants from the page. */
@@ -87,15 +107,17 @@ export function defaultStrategy(
 ): SeoStrategy {
   // The English pipeline strips question openers and ASCII-folds; applied to
   // Telugu that would erase the entire keyword. Telugu keeps its own text.
+  const rawClean = topicTitle
+    .toLowerCase()
+    .replace(/^(how|what|why|when|which|the|a|an)\s+/, '')
+    .replace(/[^\w\s-]/g, '')
+    .trim();
   const primaryKeyword =
     language === 'te'
       ? topicTitle.replace(/\s+/g, ' ').trim().slice(0, 70)
-      : topicTitle
-          .toLowerCase()
-          .replace(/^(how|what|why|when|which|the|a|an)\s+/, '')
-          .replace(/[^\w\s-]/g, '')
-          .trim()
-          .slice(0, 70);
+      : rawClean.length <= 70
+        ? rawClean
+        : (rawClean.slice(0, 70).match(/^(.*)\s+[^\s]*$/)?.[1] || rawClean.slice(0, 70)).trim();
 
   const loc = locationContext.split(',')[0]?.trim() ?? 'Guntur';
 
@@ -119,6 +141,20 @@ export function defaultStrategy(
         `${primaryKeyword} కు ఎంత సమయం పడుతుంది?`,
         `చిన్న వ్యాపారానికి ${primaryKeyword} అవసరమా?`,
       ],
+      backlinkOpportunities: [
+        {
+          sourceName: 'Andhra Pradesh MSME & Industry Directory',
+          category: 'business_directory',
+          outreachAngle: 'Listing of verified local software development and digitization services',
+          confidence: 'ai_suggestion',
+        },
+        {
+          sourceName: 'Guntur District Chamber of Commerce and Industry',
+          category: 'regional_chamber',
+          outreachAngle: 'Resource partner for regional business modernization and IT adoption',
+          confidence: 'ai_suggestion',
+        },
+      ],
     };
   }
 
@@ -140,6 +176,26 @@ export function defaultStrategy(
       `What does ${primaryKeyword} cost?`,
       `How long does ${primaryKeyword} take?`,
       `Do I need ${primaryKeyword} for a small business?`,
+    ],
+    backlinkOpportunities: [
+      {
+        sourceName: 'Andhra Pradesh MSME & Industry Directory',
+        category: 'business_directory',
+        outreachAngle: 'Listing of verified local software development and digitization services',
+        confidence: 'ai_suggestion',
+      },
+      {
+        sourceName: 'Guntur District Chamber of Commerce and Industry',
+        category: 'regional_chamber',
+        outreachAngle: 'Resource partner for regional business modernization and IT adoption',
+        confidence: 'ai_suggestion',
+      },
+      {
+        sourceName: 'Local Trade & Commerce Association Portals',
+        category: 'industry_association',
+        outreachAngle: 'Educational case studies and vendor profiles for regional enterprises',
+        confidence: 'ai_suggestion',
+      },
     ],
   };
 }
@@ -200,19 +256,32 @@ export function extractHeadings(markdown: string, level: 2 | 3): string[] {
 export function parseLooseJson(raw: string): Record<string, unknown> {
   const text = raw.trim();
 
-  const fenced = text.match(/```(?:json)?\s*([\s\S]*?)```/i);
-  const candidate = (fenced ? fenced[1] : text).trim();
-
+  // 1. Direct JSON parse (fastest & handles JSON with internal markdown code blocks)
   try {
-    return JSON.parse(candidate);
+    return JSON.parse(text);
   } catch {
-    // fall through to brace matching
+    // continue
   }
 
-  const start = candidate.indexOf('{');
-  const end = candidate.lastIndexOf('}');
+  // 2. Outer markdown code fence: ```json ... ``` or ``` ... ```
+  const outerFence = text.match(/^```(?:json)?\s*([\s\S]*?)\s*```$/i);
+  if (outerFence && outerFence[1]) {
+    try {
+      return JSON.parse(outerFence[1].trim());
+    } catch {
+      // continue
+    }
+  }
+
+  // 3. Outermost JSON object braces { ... }
+  const start = text.indexOf('{');
+  const end = text.lastIndexOf('}');
   if (start !== -1 && end > start) {
-    return JSON.parse(candidate.slice(start, end + 1));
+    try {
+      return JSON.parse(text.slice(start, end + 1));
+    } catch {
+      // continue
+    }
   }
 
   throw new Error('LLM response did not contain parseable JSON');

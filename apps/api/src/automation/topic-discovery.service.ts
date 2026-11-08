@@ -49,6 +49,7 @@ export class TopicDiscoveryService {
       referenceUrl: REFERENCE_SOURCE_URLS[s.id],
       availability: s.isConfigured() ? ('available' as const) : ('unconfigured' as const),
       capabilities: s.capabilities,
+      confidence: s.confidence,
     }));
   }
 
@@ -76,7 +77,7 @@ export class TopicDiscoveryService {
       this.logger.warn('No reference source returned topics; no new topics will be discovered.');
     }
 
-    // Merge duplicates that several sources surfaced, keeping all provenance.
+    // Merge duplicates that several sources surfaced, keeping all provenance and highest confidence.
     const merged = new Map<string, DiscoveredTopic>();
     for (const t of collected) {
       const existing = merged.get(t.topicKey);
@@ -86,6 +87,15 @@ export class TopicDiscoveryService {
         existing.longTailKeywords = [...new Set([...existing.longTailKeywords, ...t.longTailKeywords])];
         if (!existing.primaryKeyword || existing.primaryKeyword === existing.phrase.toLowerCase()) {
           if (t.primaryKeyword) existing.primaryKeyword = t.primaryKeyword;
+        }
+        // Confidence hierarchy: verified_google > verified_external > ai_suggestion
+        if (t.confidence === 'verified_google') {
+          existing.confidence = 'verified_google';
+        } else if (existing.confidence !== 'verified_google' && t.confidence) {
+          existing.confidence = t.confidence;
+        }
+        if (!existing.metrics && t.metrics) {
+          existing.metrics = t.metrics;
         }
       } else {
         merged.set(t.topicKey, { ...t });
