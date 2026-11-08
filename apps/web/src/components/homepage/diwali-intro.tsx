@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useEffect, useRef, useState, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import Image from 'next/image';
-import { Button } from '@/components/ui/button';
 import {
   DIWALI_2026_CAMPAIGN,
   isDiwaliCampaignActive,
@@ -236,7 +236,6 @@ export function DiwaliIntro() {
   const [shouldRender, setShouldRender] = useState(false);
   const [state, setState] = useState<IntroState>('intro');
   const [overlayOpacity, setOverlayOpacity] = useState(1);
-  const [liteMode, setLiteMode] = useState(false);
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const animFrameRef = useRef<number | null>(null);
@@ -256,23 +255,12 @@ export function DiwaliIntro() {
       const forcePlay =
         urlParams.get('diwali') === 'true' || urlParams.get('preview') === 'diwali';
       const isDev = process.env.NODE_ENV === 'development';
-      const hasViewedInSession =
-        !isDev && !forcePlay && sessionStorage.getItem('palnadu_diwali_2026_viewed');
+      const hasDismissedInSession =
+        !isDev && !forcePlay && sessionStorage.getItem('palnadu_diwali_2026_dismissed');
 
-      if (hasViewedInSession) {
+      // Only skip if the visitor explicitly clicked "Enter Website" earlier in this session
+      if (hasDismissedInSession) {
         return;
-      }
-
-      const prefersReducedMotion = window.matchMedia(
-        '(prefers-reduced-motion: reduce)'
-      ).matches;
-
-      try {
-        sessionStorage.setItem('palnadu_diwali_2026_viewed', 'true');
-      } catch {}
-
-      if (prefersReducedMotion) {
-        setLiteMode(true);
       }
 
       setShouldRender(true);
@@ -281,12 +269,28 @@ export function DiwaliIntro() {
     }
   }, []);
 
+  // Lock body scroll while full-screen festive experience is active
+  useEffect(() => {
+    if (!shouldRender || state === 'website') return;
+
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    return () => {
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [shouldRender, state]);
+
   // Event-Driven Transition: Only visitor action dismisses the introduction (no auto-dismissal)
   const handleEnterWebsite = useCallback(() => {
     if (state !== 'intro') return;
 
     setState('transitioning');
     setOverlayOpacity(0);
+
+    try {
+      sessionStorage.setItem('palnadu_diwali_2026_dismissed', 'true');
+    } catch {}
 
     // Stop canvas loops immediately
     isRunningRef.current = false;
@@ -295,7 +299,7 @@ export function DiwaliIntro() {
       animFrameRef.current = null;
     }
 
-    // Smooth 400ms fade-out, then clean unmount and resource release
+    // Smooth fade-out, then clean unmount and resource release
     setTimeout(() => {
       setState('website');
       setShouldRender(false);
@@ -303,7 +307,7 @@ export function DiwaliIntro() {
       particlePoolRef.current.length = 0;
       rocketsRef.current.length = 0;
       flashesRef.current.length = 0;
-    }, 400);
+    }, 450);
   }, [state]);
 
   // Keyboard accessibility: Enter or Escape triggers Enter Website
@@ -320,38 +324,37 @@ export function DiwaliIntro() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [shouldRender, state, handleEnterWebsite]);
 
-  // High-Performance Large-Scale Diwali Rocket Fireworks Simulation
+  // High-Performance Large-Scale Diwali Rocket & Anaar Fireworks Simulation
   useEffect(() => {
-    if (!shouldRender || state !== 'intro' || liteMode) return;
+    if (!shouldRender || state !== 'intro') return;
 
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d', { alpha: true });
     if (!ctx) return;
 
-    isRunningRef.current = true;
+    // Detect high-DPI retina display (capped at 2x for smooth 60fps mobile GPU rendering)
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
 
-    let width = (canvas.width = window.innerWidth);
-    let height = (canvas.height = window.innerHeight);
+    let displayWidth = window.innerWidth || document.documentElement.clientWidth || 390;
+    let displayHeight = window.innerHeight || document.documentElement.clientHeight || 844;
 
-    const handleResize = () => {
-      if (!canvas) return;
-      width = canvas.width = window.innerWidth;
-      height = canvas.height = window.innerHeight;
+    const resizeCanvas = () => {
+      if (!canvas || !ctx) return;
+      displayWidth = window.innerWidth || document.documentElement.clientWidth;
+      displayHeight = window.innerHeight || document.documentElement.clientHeight;
+
+      canvas.width = Math.floor(displayWidth * dpr);
+      canvas.height = Math.floor(displayHeight * dpr);
+      canvas.style.width = '100%';
+      canvas.style.height = '100%';
+
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.scale(dpr, dpr);
     };
-    window.addEventListener('resize', handleResize);
 
-    // Handle background tab pause to eliminate CPU/battery waste
-    const handleVisibilityChange = () => {
-      if (document.hidden) {
-        isRunningRef.current = false;
-      } else if (state === 'intro') {
-        isRunningRef.current = true;
-        lastFrameTime = performance.now();
-        animFrameRef.current = requestAnimationFrame(loop);
-      }
-    };
-    document.addEventListener('visibilitychange', handleVisibilityChange);
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
 
     // ── Pre-allocated Particle Pool (ZERO runtime GC allocation) ──
     const POOL_SIZE = 480;
@@ -397,7 +400,7 @@ export function DiwaliIntro() {
       active: false,
       x: 0,
       y: 0,
-      radius: 120,
+      radius: 80,
       maxRadius: 280,
       alpha: 0,
     }));
@@ -473,8 +476,8 @@ export function DiwaliIntro() {
     for (let i = 0; i < 18; i++) {
       spawnParticle(
         'ember',
-        Math.random() * width,
-        Math.random() * height,
+        Math.random() * displayWidth,
+        Math.random() * displayHeight,
         (Math.random() - 0.5) * 0.4,
         -(Math.random() * 0.6 + 0.3),
         0,
@@ -485,7 +488,7 @@ export function DiwaliIntro() {
       );
     }
 
-    let lastRocketLaunch = performance.now() - 1500;
+    let lastRocketLaunch = performance.now() - 1200;
     let rocketLaunchCount = 0;
     let lastFrameTime = performance.now();
 
@@ -495,13 +498,13 @@ export function DiwaliIntro() {
       const delta = Math.min(currentTime - lastFrameTime, 64);
       lastFrameTime = currentTime;
 
-      ctx.clearRect(0, 0, width, height);
+      ctx.clearRect(0, 0, displayWidth, displayHeight);
 
-      const isMobile = width < 640;
-      // Anaar nozzle positions aligned with bottom corner bases
-      const leftNozzleX = width * (isMobile ? 0.12 : 0.15);
-      const rightNozzleX = width * (isMobile ? 0.88 : 0.85);
-      const nozzleY = height - (isMobile ? 55 : 68);
+      const isMobile = displayWidth < 640;
+      // Real-device responsive Anaar nozzle positions
+      const leftNozzleX = displayWidth * (isMobile ? 0.13 : 0.15);
+      const rightNozzleX = displayWidth * (isMobile ? 0.87 : 0.85);
+      const nozzleY = displayHeight - (isMobile ? 54 : 68);
 
       // ── Alternating Firing Cycle Between Left & Right Anaars ──
       const cycleTime = (currentTime % 7000) / 7000;
@@ -527,35 +530,35 @@ export function DiwaliIntro() {
         rightIntensity *= 1.25;
       }
 
-      // ── Emit Left Anaar Sparks ──
-      const leftSparksToEmit = Math.floor(leftIntensity * 2.8);
+      // ── Emit Left Anaar Sparks (Thick, prominent golden fountains) ──
+      const leftSparksToEmit = Math.floor(leftIntensity * (isMobile ? 2.5 : 2.8));
       for (let i = 0; i < leftSparksToEmit; i++) {
         const angle = -Math.PI / 2 + (Math.random() - 0.5) * 0.44;
-        const speed = (Math.random() * 8.5 + 7) * (0.8 + 0.35 * leftIntensity);
+        const speed = (Math.random() * 8.5 + 6.5) * (isMobile ? 0.88 : 1) * (0.8 + 0.35 * leftIntensity);
         const vx = Math.cos(angle) * speed;
         const vy = Math.sin(angle) * speed;
         const life = Math.floor(Math.random() * 25 + 35);
-        const size = Math.random() * 1.6 + 1.2;
+        const size = isMobile ? Math.random() * 1.8 + 1.8 : Math.random() * 1.6 + 1.2;
         const color = anaarColors[Math.floor(Math.random() * anaarColors.length)];
 
         spawnParticle('anaar', leftNozzleX, nozzleY, vx, vy, 0.25, 0.988, life, size, color);
       }
 
       // ── Emit Right Anaar Sparks ──
-      const rightSparksToEmit = Math.floor(rightIntensity * 2.8);
+      const rightSparksToEmit = Math.floor(rightIntensity * (isMobile ? 2.5 : 2.8));
       for (let i = 0; i < rightSparksToEmit; i++) {
         const angle = -Math.PI / 2 + (Math.random() - 0.5) * 0.44;
-        const speed = (Math.random() * 8.5 + 7) * (0.8 + 0.35 * rightIntensity);
+        const speed = (Math.random() * 8.5 + 6.5) * (isMobile ? 0.88 : 1) * (0.8 + 0.35 * rightIntensity);
         const vx = Math.cos(angle) * speed;
         const vy = Math.sin(angle) * speed;
         const life = Math.floor(Math.random() * 25 + 35);
-        const size = Math.random() * 1.6 + 1.2;
+        const size = isMobile ? Math.random() * 1.8 + 1.8 : Math.random() * 1.6 + 1.2;
         const color = anaarColors[Math.floor(Math.random() * anaarColors.length)];
 
         spawnParticle('anaar', rightNozzleX, nozzleY, vx, vy, 0.25, 0.988, life, size, color);
       }
 
-      // ── Large-Scale Sky Rockets Launching from Bottom Corners (Every 2.4 - 3.2s) ──
+      // ── Sky Rockets Launching from Bottom Corners (Every 2.4 - 3.2s) ──
       if (currentTime - lastRocketLaunch > 2600) {
         lastRocketLaunch = currentTime;
         rocketLaunchCount++;
@@ -565,32 +568,32 @@ export function DiwaliIntro() {
             const r = rockets[i];
             r.active = true;
 
-            // Launch prominently from bottom corners and arch high across screen
             const slot = rocketLaunchCount % 3;
             if (slot === 0) {
               // Left corner launch arching toward upper-left / center
-              r.x = width * (0.12 + Math.random() * 0.10);
-              r.vx = (Math.random() * 2.4 + 1.2);
-              r.targetY = height * (0.13 + Math.random() * 0.15); // High altitude apex
-              r.burstScale = 1.35; // Grand massive explosion
+              r.x = displayWidth * (0.12 + Math.random() * 0.10);
+              r.vx = (Math.random() * 2.2 + 1.0) * (isMobile ? 0.75 : 1);
+              r.targetY = displayHeight * (isMobile ? 0.22 + Math.random() * 0.14 : 0.14 + Math.random() * 0.14);
+              r.burstScale = isMobile ? 1.15 : 1.35;
             } else if (slot === 1) {
               // Right corner launch arching toward upper-right / center
-              r.x = width * (0.78 + Math.random() * 0.10);
-              r.vx = -(Math.random() * 2.4 + 1.2);
-              r.targetY = height * (0.13 + Math.random() * 0.15);
-              r.burstScale = 1.35; // Grand massive explosion
+              r.x = displayWidth * (0.78 + Math.random() * 0.10);
+              r.vx = -(Math.random() * 2.2 + 1.0) * (isMobile ? 0.75 : 1);
+              r.targetY = displayHeight * (isMobile ? 0.22 + Math.random() * 0.14 : 0.14 + Math.random() * 0.14);
+              r.burstScale = isMobile ? 1.15 : 1.35;
             } else {
-              // Center-flank high aerial salute
-              r.x = width * (0.35 + Math.random() * 0.30);
-              r.vx = (Math.random() - 0.5) * 1.6;
-              r.targetY = height * (0.10 + Math.random() * 0.14); // Very high background explosion
-              r.burstScale = 1.5; // Epic wide radial burst
+              // High aerial background salute
+              r.x = displayWidth * (0.35 + Math.random() * 0.30);
+              r.vx = (Math.random() - 0.5) * (isMobile ? 1.0 : 1.5);
+              r.targetY = displayHeight * (isMobile ? 0.18 + Math.random() * 0.12 : 0.11 + Math.random() * 0.14);
+              r.burstScale = isMobile ? 1.25 : 1.5;
             }
 
-            r.y = height + 10;
+            r.y = displayHeight + 10;
             r.prevX = r.x;
             r.prevY = r.y;
-            r.vy = -(Math.random() * 3.5 + 18); // Powerful rocket launch velocity
+            // Calibrated launch velocity for phone and desktop viewports
+            r.vy = -(Math.random() * 2.5 + (isMobile ? 13.5 : 18.0));
             r.palette = rocketPalettes[rocketLaunchCount % rocketPalettes.length];
             r.color = '#FFFFFF';
             break;
@@ -607,22 +610,22 @@ export function DiwaliIntro() {
         r.prevY = r.y;
         r.x += r.vx;
         r.y += r.vy;
-        r.vy += 0.11; // Gravity deceleration as rocket climbs toward apex
+        r.vy += isMobile ? 0.13 : 0.11;
 
-        // Dense, glowing propellant tail (multiple sparks per frame)
-        for (let t = 0; t < 4; t++) {
-          const tailVx = -r.vx * 0.2 + (Math.random() - 0.5) * 2.2;
-          const tailVy = -r.vy * 0.15 + Math.random() * 3.5;
+        // Dense, glowing propellant tail
+        for (let t = 0; t < 3; t++) {
+          const tailVx = -r.vx * 0.2 + (Math.random() - 0.5) * 2.0;
+          const tailVy = -r.vy * 0.14 + Math.random() * 3.0;
           spawnParticle(
             'rocket_tail',
-            r.x + (Math.random() - 0.5) * 3,
-            r.y + 4,
+            r.x + (Math.random() - 0.5) * 2.5,
+            r.y + 3,
             tailVx,
             tailVy,
             0.15,
             0.96,
-            Math.floor(Math.random() * 14 + 14),
-            Math.random() * 2.2 + 1.4,
+            Math.floor(Math.random() * 12 + 12),
+            isMobile ? Math.random() * 2.4 + 1.6 : Math.random() * 2.0 + 1.2,
             Math.random() > 0.35 ? '#FFFFFF' : '#FEF08A'
           );
         }
@@ -633,37 +636,35 @@ export function DiwaliIntro() {
         ctx.moveTo(r.prevX, r.prevY);
         ctx.lineTo(r.x, r.y);
         ctx.strokeStyle = '#FFFFFF';
-        ctx.lineWidth = 3.5;
+        ctx.lineWidth = isMobile ? 3.0 : 3.5;
         ctx.stroke();
 
         // Brilliant head flare
         ctx.beginPath();
-        ctx.arc(r.x, r.y, 4.5, 0, Math.PI * 2);
+        ctx.arc(r.x, r.y, isMobile ? 3.8 : 4.5, 0, Math.PI * 2);
         ctx.fillStyle = '#FEF08A';
         ctx.fill();
         ctx.restore();
 
-        // ── Apex Detonation: Massive Wide Radial Explosion (300px - 450px) ──
+        // ── Apex Detonation: Massive Radial Explosion with Atmospheric Light Flash ──
         if (r.y <= r.targetY || r.vy >= -1.0) {
           r.active = false;
 
-          // Grand atmospheric night-sky lighting flash
-          const flashRadius = (isMobile ? 200 : 320) * r.burstScale;
+          // Atmospheric night-sky lighting flash
+          const flashRadius = (isMobile ? 180 : 300) * r.burstScale;
           triggerLightFlash(r.x, r.y, flashRadius);
 
-          // Substantially larger radial explosion (44 - 52 star particles)
-          const starCount = Math.floor((isMobile ? 32 : 46) * r.burstScale);
+          // Starburst particles
+          const starCount = Math.floor((isMobile ? 34 : 46) * r.burstScale);
           for (let s = 0; s < starCount; s++) {
             const angle = (s / starCount) * Math.PI * 2 + (Math.random() - 0.5) * 0.32;
-            // High velocity blast expansion creates 300px-450px wide burst
-            const speed = (Math.random() * 6.5 + 4.5) * (isMobile ? 0.8 : 1.15) * r.burstScale;
+            const speed = (Math.random() * 5.5 + 4.0) * (isMobile ? 0.85 : 1.15) * r.burstScale;
             const vx = Math.cos(angle) * speed;
             const vy = Math.sin(angle) * speed;
-            const life = Math.floor(Math.random() * 32 + 42); // Long lingering cascading trails
-            const size = Math.random() * 2.4 + 2.0; // Larger prominent star size
+            const life = Math.floor(Math.random() * 30 + 38);
+            const size = isMobile ? Math.random() * 2.6 + 2.4 : Math.random() * 2.4 + 1.8;
             const color = r.palette[s % r.palette.length];
 
-            // Gentle gravity creates majestic weeping willow / falling star curve
             spawnParticle('rocket_burst', r.x, r.y, vx, vy, 0.12, 0.962, life, size, color);
           }
         }
@@ -713,11 +714,11 @@ export function DiwaliIntro() {
         p.vy += p.gravity * step;
         p.life -= step;
 
-        if (p.life <= 0 || p.y > height + 25 || p.x < -30 || p.x > width + 30) {
+        if (p.life <= 0 || p.y > displayHeight + 25 || p.x < -30 || p.x > displayWidth + 30) {
           if (p.type === 'ember') {
             p.active = true;
-            p.x = Math.random() * width;
-            p.y = height + 10;
+            p.x = Math.random() * displayWidth;
+            p.y = displayHeight + 10;
             p.prevX = p.x;
             p.prevY = p.y;
             p.prevX2 = p.x;
@@ -746,11 +747,11 @@ export function DiwaliIntro() {
         }
         ctx.stroke();
 
-        // For large rocket bursts, draw glowing starhead droplet
-        if (p.type === 'rocket_burst' && alpha > 0.4) {
+        // Glowing starhead bead on rocket starbursts
+        if (p.type === 'rocket_burst' && alpha > 0.35) {
           ctx.fillStyle = p.color;
           ctx.beginPath();
-          ctx.arc(p.x, p.y, p.size * 0.6, 0, Math.PI * 2);
+          ctx.arc(p.x, p.y, p.size * 0.65, 0, Math.PI * 2);
           ctx.fill();
         }
       }
@@ -760,27 +761,57 @@ export function DiwaliIntro() {
       animFrameRef.current = requestAnimationFrame(loop);
     };
 
-    animFrameRef.current = requestAnimationFrame(loop);
+    const startAnimation = () => {
+      if (!isRunningRef.current) {
+        isRunningRef.current = true;
+        lastFrameTime = performance.now();
+        animFrameRef.current = requestAnimationFrame(loop);
+      }
+    };
 
-    return () => {
+    const stopAnimation = () => {
       isRunningRef.current = false;
       if (animFrameRef.current !== null) {
         cancelAnimationFrame(animFrameRef.current);
         animFrameRef.current = null;
       }
-      window.removeEventListener('resize', handleResize);
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+
+    const handleVisibility = () => {
+      if (document.hidden) {
+        stopAnimation();
+      } else if (state === 'intro') {
+        startAnimation();
+      }
+    };
+
+    // Robust multi-event mobile lifecycle listeners
+    document.addEventListener('visibilitychange', handleVisibility);
+    window.addEventListener('pageshow', handleVisibility);
+    window.addEventListener('focus', handleVisibility);
+
+    // Initial loop ignition
+    isRunningRef.current = true;
+    lastFrameTime = performance.now();
+    animFrameRef.current = requestAnimationFrame(loop);
+
+    return () => {
+      stopAnimation();
+      window.removeEventListener('resize', resizeCanvas);
+      document.removeEventListener('visibilitychange', handleVisibility);
+      window.removeEventListener('pageshow', handleVisibility);
+      window.removeEventListener('focus', handleVisibility);
       pool.length = 0;
       rockets.length = 0;
       flashes.length = 0;
     };
-  }, [shouldRender, state, liteMode]);
+  }, [shouldRender, state]);
 
-  if (!shouldRender || state === 'website') {
+  if (!shouldRender || state === 'website' || typeof document === 'undefined') {
     return null;
   }
 
-  return (
+  const content = (
     <>
       <style>{`
         @keyframes diwaliFlameFlicker {
@@ -792,11 +823,11 @@ export function DiwaliIntro() {
         }
       `}</style>
 
-      {/* Full-Screen Overlay covering everything, including the z-[60] navbar */}
+      {/* Full-Screen Overlay Portalled directly to document.body (Guaranteed above all navbars & stacking contexts) */}
       <aside
         aria-label="Palnadu.dev Happy Diwali Special Experience"
         role="region"
-        className="fixed inset-0 z-[100] flex flex-col items-center justify-between bg-black text-palnadu-off-white overflow-hidden transition-opacity duration-500 ease-in-out select-none will-change-[opacity]"
+        className="fixed inset-0 z-[99999] flex flex-col items-center justify-between bg-black text-palnadu-off-white overflow-hidden transition-opacity duration-500 ease-in-out select-none will-change-[opacity]"
         style={{
           opacity: overlayOpacity,
           pointerEvents: overlayOpacity > 0.2 ? 'auto' : 'none',
@@ -804,40 +835,42 @@ export function DiwaliIntro() {
       >
         {/* Full-Screen Deep Midnight Gradient with Warm Center Aura */}
         <div
-          className="absolute inset-0 pointer-events-none opacity-95"
+          className="absolute inset-0 pointer-events-none z-0 opacity-95"
           style={{
             background:
-              'radial-gradient(circle at 50% 38%, rgba(4, 44, 83, 0.82) 0%, rgba(2, 12, 24, 0.96) 65%, rgba(0, 0, 0, 0.99) 100%)',
+              'radial-gradient(circle at 50% 38%, rgba(4, 44, 83, 0.88) 0%, rgba(2, 12, 24, 0.98) 65%, rgba(0, 0, 0, 1) 100%)',
           }}
         />
 
         {/* Ambient Center Warmth Halo */}
-        <div className="absolute top-[35%] left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[350px] rounded-full bg-palnadu-warning/10 blur-3xl pointer-events-none" />
+        <div className="absolute top-[35%] left-1/2 -translate-x-1/2 -translate-y-1/2 w-[520px] h-[360px] rounded-full bg-palnadu-warning/10 blur-3xl pointer-events-none z-0" />
 
-        {/* Realistic Grand Scale Sky Rockets & Fireworks Canvas */}
-        {!liteMode && (
-          <canvas
-            ref={canvasRef}
-            className="absolute inset-0 pointer-events-none z-0"
-          />
-        )}
+        {/* High-Performance Full-Screen Fireworks Canvas (Always active on mobile & desktop) */}
+        <canvas
+          ref={canvasRef}
+          className="absolute inset-0 pointer-events-none z-10 block"
+          style={{
+            width: '100%',
+            height: '100%',
+          }}
+        />
 
         {/* Corner Rangoli Flourishes */}
-        <div className="absolute top-0 left-0 w-48 sm:w-56 h-48 sm:h-56 -translate-x-10 -translate-y-10 pointer-events-none opacity-25">
+        <div className="absolute top-0 left-0 w-48 sm:w-56 h-48 sm:h-56 -translate-x-10 -translate-y-10 pointer-events-none opacity-25 z-20">
           <RangoliPattern className="w-full h-full" />
         </div>
-        <div className="absolute top-0 right-0 w-48 sm:w-56 h-48 sm:h-56 translate-x-10 -translate-y-10 pointer-events-none opacity-25">
+        <div className="absolute top-0 right-0 w-48 sm:w-56 h-48 sm:h-56 translate-x-10 -translate-y-10 pointer-events-none opacity-25 z-20">
           <RangoliPattern className="w-full h-full" />
         </div>
-        <div className="absolute bottom-0 left-0 w-48 sm:w-56 h-48 sm:h-56 -translate-x-10 translate-y-10 pointer-events-none opacity-25">
+        <div className="absolute bottom-0 left-0 w-48 sm:w-56 h-48 sm:h-56 -translate-x-10 translate-y-10 pointer-events-none opacity-25 z-20">
           <RangoliPattern className="w-full h-full" />
         </div>
-        <div className="absolute bottom-0 right-0 w-48 sm:w-56 h-48 sm:h-56 translate-x-10 translate-y-10 pointer-events-none opacity-25">
+        <div className="absolute bottom-0 right-0 w-48 sm:w-56 h-48 sm:h-56 translate-x-10 translate-y-10 pointer-events-none opacity-25 z-20">
           <RangoliPattern className="w-full h-full" />
         </div>
 
-        {/* Top Header Bar: Clean single logo & branding (Counter removed per user request) */}
-        <header className="relative z-30 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-5 sm:pt-6 flex items-center justify-between">
+        {/* Top Header Bar: Clean single logo & branding */}
+        <header className="relative z-20 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 sm:pt-6 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Image
               src="/palnadu-logo-white.svg"
@@ -853,56 +886,55 @@ export function DiwaliIntro() {
           </div>
         </header>
 
-        {/* Main Centerpiece Typography (Fully Visible, High Contrast Lighting) */}
-        <main className="relative z-20 flex-1 w-full max-w-4xl mx-auto px-4 flex flex-col items-center justify-center text-center my-auto">
+        {/* Main Centerpiece Typography (Crisp, High Contrast Festive Presentation) */}
+        <main className="relative z-20 flex-1 w-full max-w-3xl mx-auto px-4 flex flex-col items-center justify-center text-center my-auto">
           {/* Brand: Palnadu.dev */}
           <div className="flex flex-col items-center">
-            <h2 className="text-4xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight text-white filter drop-shadow-[0_0_28px_rgba(245,158,11,0.7)]">
+            <h2 className="text-4xl sm:text-6xl font-extrabold tracking-tight select-none">
               <span className="text-palnadu-warning">Palnadu</span>
-              <span className="text-palnadu-off-white">.dev</span>
+              <span className="text-white">.dev</span>
             </h2>
 
             {/* Brand Attribution: by Kalyan V Medaboina */}
-            <p className="mt-2.5 sm:mt-3 text-xs sm:text-sm font-mono uppercase tracking-widest text-palnadu-off-white font-medium">
+            <p className="mt-2 text-xs sm:text-sm font-mono uppercase tracking-widest text-palnadu-warning/90 font-medium">
               {DIWALI_2026_CAMPAIGN.attribution}
             </p>
           </div>
 
           {/* Grand Festive Greeting & Message */}
-          <div className="mt-6 sm:mt-8 flex flex-col items-center max-w-2xl mx-auto">
+          <div className="mt-5 sm:mt-7 flex flex-col items-center max-w-xl mx-auto">
             {/* Radiant Happy Diwali Greeting */}
-            <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-white flex items-center justify-center">
-              <span className="text-palnadu-warning filter drop-shadow-[0_0_24px_rgba(245,158,11,0.85)]">
+            <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-white flex items-center justify-center">
+              <span className="text-palnadu-warning">
                 {DIWALI_2026_CAMPAIGN.greeting}
               </span>
             </h1>
 
-            {/* High-Contrast Inspiring Festive Message */}
-            <p className="mt-4 sm:mt-5 text-sm sm:text-base lg:text-lg text-palnadu-off-white max-w-xl mx-auto leading-relaxed font-normal">
+            {/* Inspiring Festive Message */}
+            <p className="mt-3 sm:mt-4 text-xs sm:text-base text-palnadu-off-white max-w-lg mx-auto leading-relaxed font-normal">
               {DIWALI_2026_CAMPAIGN.supportingMessage}
             </p>
 
             {/* Brand Signature */}
-            <p className="mt-4 text-xs sm:text-sm font-mono tracking-widest text-palnadu-warning font-semibold uppercase">
+            <p className="mt-3 text-xs sm:text-sm font-mono tracking-widest text-palnadu-warning font-semibold uppercase">
               {DIWALI_2026_CAMPAIGN.brandSignature}
             </p>
 
             {/* Single Prominent Enter Website Golden Button (Primary CTA) */}
-            <Button
-              variant="default"
-              size="lg"
+            <button
+              type="button"
               onClick={handleEnterWebsite}
-              className="mt-7 sm:mt-8 px-7 sm:px-9 py-3 sm:py-3.5 h-auto text-sm sm:text-base font-bold tracking-wide rounded-md bg-palnadu-warning hover:bg-palnadu-warning/90 text-palnadu-dark shadow-lg shadow-palnadu-warning/30 hover:scale-[1.03] active:scale-95 transition-all flex items-center gap-2 cursor-pointer border border-white/20"
+              className="mt-6 sm:mt-8 px-7 sm:px-9 py-3 sm:py-3.5 text-sm sm:text-base font-bold tracking-wide rounded-md bg-palnadu-warning hover:bg-palnadu-warning/90 text-palnadu-dark shadow-lg shadow-palnadu-warning/30 hover:scale-[1.03] active:scale-95 transition-all flex items-center gap-2 cursor-pointer border border-white/20 select-none"
               aria-label="Enter Palnadu.dev website"
             >
               <span>Enter Website</span>
               <span aria-hidden="true" className="text-base sm:text-lg">→</span>
-            </Button>
+            </button>
           </div>
         </main>
 
         {/* Footer Area with Anaar Flower-Pot Crackers & Glowing Clay Diyas */}
-        <footer className="relative z-30 w-full max-w-5xl mx-auto px-4 sm:px-8 pb-4 sm:pb-6 flex items-end justify-between">
+        <footer className="relative z-20 w-full max-w-5xl mx-auto px-4 sm:px-8 pb-4 sm:pb-6 flex items-end justify-between">
           {/* Bottom-Left: Anaar Cracker Base + Diya */}
           <div className="flex items-end gap-3 sm:gap-6">
             <AnaarCone className="-mb-1 sm:mb-0" />
@@ -935,6 +967,8 @@ export function DiwaliIntro() {
       </aside>
     </>
   );
+
+  return createPortal(content, document.body);
 }
 
 export default DiwaliIntro;
