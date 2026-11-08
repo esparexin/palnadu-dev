@@ -17,7 +17,11 @@ import { TopicDiscoveryService } from './topic-discovery.service';
 import { ContentSimilarityService } from './content-similarity.service';
 import { SeoValidationService } from './seo-validation.service';
 import { TechnicalSeoCrawlerService } from './technical-seo-crawler.service';
-import { AutomationController } from './automation.controller';
+import {
+  AutomationController,
+  WebmasterAutomationController,
+  KeywordResearchController,
+} from './automation.controller';
 
 // Reference sources. Credential-gated adapters are always registered so the
 // admin UI can report their status; each reports itself unavailable until its
@@ -46,7 +50,11 @@ export { REFERENCE_SOURCES };
     ScheduleModule.forRoot(),
     PrismaModule,
   ],
-  controllers: [AutomationController],
+  controllers: [
+    AutomationController,
+    WebmasterAutomationController,
+    KeywordResearchController,
+  ],
   providers: [
     BlogAutomationService,
     BlogQueueService,
