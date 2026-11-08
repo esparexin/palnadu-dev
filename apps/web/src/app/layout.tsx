@@ -86,7 +86,7 @@ export async function generateMetadata(): Promise<Metadata> {
     authors: [{ name: siteConfig.creator }],
     creator: siteConfig.creator,
     alternates: {
-      canonical: '/',
+      canonical: 'https://www.palnadu.dev/',
     },
     icons: {
       icon: [
@@ -100,11 +100,20 @@ export async function generateMetadata(): Promise<Metadata> {
     openGraph: {
       type: 'website',
       locale: 'en_IN',
-      url: siteConfig.url,
+      url: 'https://www.palnadu.dev/',
       title: siteConfig.title,
       description: siteConfig.description,
       siteName: siteConfig.name,
-      images: [{ url: siteConfig.ogImage, width: 1200, height: 630, alt: siteConfig.name }],
+      images: [
+        {
+          url: siteConfig.ogImage,
+          secureUrl: siteConfig.ogImage,
+          width: 1200,
+          height: 630,
+          type: 'image/png',
+          alt: siteConfig.name,
+        },
+      ],
     },
     twitter: {
       card: 'summary_large_image',
