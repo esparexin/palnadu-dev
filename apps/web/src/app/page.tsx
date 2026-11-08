@@ -58,6 +58,23 @@ function JsonLd() {
     telephone: siteConfig.contact.phone,
     email: siteConfig.contact.email,
     priceRange: '₹₹ / $$',
+    currenciesAccepted: 'INR, USD',
+    paymentAccepted: 'Cash, Credit Card, Bank Transfer, UPI',
+    openingHoursSpecification: [
+      {
+        '@type': 'OpeningHoursSpecification',
+        dayOfWeek: [
+          'Monday',
+          'Tuesday',
+          'Wednesday',
+          'Thursday',
+          'Friday',
+          'Saturday',
+        ],
+        opens: '09:00',
+        closes: '19:00',
+      },
+    ],
     address: {
       '@type': 'PostalAddress',
       addressRegion: 'Andhra Pradesh',
