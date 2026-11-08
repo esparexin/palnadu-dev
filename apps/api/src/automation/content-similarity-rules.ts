@@ -1,135 +1,33 @@
 /**
  * Content-similarity scoring.
- *
- * Guards against "same subject, different words" duplication, which a topicKey
- * check cannot catch: a new topic phrased differently but covering the same
- * search intent must be rejected rather than re-titled into a second article.
- *
- * This module is intentionally free of framework imports so the scoring can be
- * unit tested directly.
  */
 
 import { canonicalizeTopic, topicTokenOverlap } from './topic-identity';
-import type { SearchIntent } from './seo-strategy';
+import type {
+  ExistingArticle,
+  SimilarityInput,
+  SimilarityMatch,
+  SimilarityResult,
+  SimilarityThresholds,
+} from './content-similarity-types';
+import { DEFAULT_THRESHOLDS } from './content-similarity-types';
+import {
+  significantWords,
+  jaccard,
+  shingleSimilarity,
+} from './content-similarity-shingles';
 
-export interface ExistingArticle {
-  id: string;
-  topicKey: string | null;
-  title: string;
-  slug: string;
-  topic?: string | null;
-  primaryKeyword?: string | null;
-  secondaryKeywords: string[];
-  searchIntent?: string | null;
-  content: string;
-  /** Language of the existing post. Absent on legacy callers: unknown language
-   *  never suppresses a match, it only disables the cross-language exemption. */
-  language?: string | null;
-}
-
-export interface SimilarityInput {
-  topic: string;
-  title?: string;
-  slug?: string;
-  primaryKeyword?: string;
-  secondaryKeywords?: string[];
-  searchIntent?: SearchIntent | string | null;
-  content?: string;
-  /** Language being generated. When set, same-topicKey matches in another
-   *  language are reported as translation candidates, not duplicates. */
-  language?: string | null;
-}
-
-export interface SimilarityMatch {
-  postId: string;
-  title: string;
-  slug: string;
-  /** 0..1 */
-  score: number;
-  reasons: string[];
-}
-
-export interface SimilarityResult {
-  /** Highest-scoring existing article, if any. */
-  nearest: SimilarityMatch | null;
-  /** True when the candidate should be rejected as too close to existing work. */
-  isDuplicate: boolean;
-  matches: SimilarityMatch[];
-}
-
-export interface SimilarityThresholds {
-  /** Reject when token overlap alone reaches this. */
-  topicOverlap: number;
-  /** Reject when content shingle similarity reaches this. */
-  contentSimilarity: number;
-  /** Reject when keyword overlap reaches this. */
-  keywordOverlap: number;
-}
-
-export const DEFAULT_THRESHOLDS: SimilarityThresholds = {
-  topicOverlap: 0.7,
-  contentSimilarity: 0.55,
-  keywordOverlap: 0.75,
+export type {
+  ExistingArticle,
+  SimilarityInput,
+  SimilarityMatch,
+  SimilarityResult,
+  SimilarityThresholds,
 };
-
-/**
- * Words too common in this domain to distinguish one article from another.
- * Without this, every article about "software in Guntur" scores high overlap.
- */
-const DOMAIN_NOISE = new Set([
-  'business', 'businesses', 'software', 'system', 'systems', 'solution', 'solutions',
-  'company', 'companies', 'service', 'services', 'development', 'website', 'app',
-  'apps', 'gunter', 'guntur', 'palnadu', 'andhra', 'pradesh', 'india', 'modern',
-  'growing', 'enterprise', 'enterprises', 'team', 'work', 'time', 'need', 'help',
-  'best', 'good', 'use', 'using', 'used', 'make', 'makes', 'made', 'get', 'gets',
-]);
-
-export function significantWords(text: string): Set<string> {
-  return new Set(
-    text
-      .toLowerCase()
-      .replace(/[^a-z0-9\s]/g, ' ')
-      .split(/\s+/)
-      .map((w) => w.trim())
-      .filter((w) => w.length > 2 && !DOMAIN_NOISE.has(w)),
-  );
-}
-
-/** Jaccard similarity of two word sets. */
-export function jaccard(a: Set<string>, b: Set<string>): number {
-  if (a.size === 0 || b.size === 0) return 0;
-  let shared = 0;
-  for (const w of a) if (b.has(w)) shared += 1;
-  return shared / (a.size + b.size - shared);
-}
-
-/**
- * Word-level shingle (3-gram) Jaccard over normalised text.
- * More robust than raw word Jaccard for detecting rewritten boilerplate, which
- * is exactly what a templated generator produces.
- */
-export function shingleSimilarity(a: string, b: string, shingleSize = 3): number {
-  const shingles = (text: string): Set<string> => {
-    const words = text
-      .toLowerCase()
-      .replace(/[^a-z0-9\s]/g, ' ')
-      .split(/\s+/)
-      .filter(Boolean);
-    const out = new Set<string>();
-    for (let i = 0; i + shingleSize <= words.length; i++) {
-      out.add(words.slice(i, i + shingleSize).join(' '));
-    }
-    return out;
-  };
-  return jaccard(shingles(a), shingles(b));
-}
-
+export { DEFAULT_THRESHOLDS, significantWords, jaccard, shingleSimilarity };
 
 /**
  * Scores a candidate topic against the existing corpus.
- *
- * Pure: no I/O, so it can be tested without Prisma. ContentSimilarityService is
- * a thin wrapper that loads the corpus and calls this.
  */
 export function scoreAgainstCorpus(
   candidate: SimilarityInput,
@@ -147,11 +45,6 @@ export function scoreAgainstCorpus(
 
   const matches: SimilarityMatch[] = [];
 
-  // Text-overlap rules below compare words, which are script-bound: Telugu and
-  // English text essentially never overlap meaningfully. Cross-language
-  // duplication is therefore governed by topicKey identity (concept-based and
-  // script-independent), not by text scores. When both languages are known and
-  // differ, only the topicKey rule runs.
   const sameLanguageAs = (post: ExistingArticle): boolean | null => {
     if (!candidate.language || !post.language) return null;
     return candidate.language === post.language;
@@ -161,10 +54,6 @@ export function scoreAgainstCorpus(
     const reasons: string[] = [];
     const sameLang = sameLanguageAs(post);
 
-    // 1. Identical stable identity — decisive within a language, informational
-    //    across languages. A Telugu article on the same topicKey as an English
-    //    post is a translation candidate: it must be linked explicitly via
-    //    linkTranslations, never inferred from this score, and never blocked.
     if (post.topicKey && post.topicKey === candidateKey) {
       if (sameLang === false) {
         matches.push({
@@ -186,13 +75,8 @@ export function scoreAgainstCorpus(
       continue;
     }
 
-    // Cross-language text comparison is noise (different scripts share almost
-    // no tokens); skip rules 2-6 and let topicKey identity decide.
     if (sameLang === false) continue;
 
-    // 2. Topic text overlap (symmetric, order-insensitive).
-    // If both topics specify distinct, non-matching locations, they represent distinct
-    // regional landing topics rather than text duplicates.
     const otherTopic = post.topic ?? post.title;
     const otherCanonical = canonicalizeTopic(otherTopic);
     const distinctLocations = !!(
@@ -204,7 +88,6 @@ export function scoreAgainstCorpus(
     const topicSim = distinctLocations ? 0 : topicTokenOverlap(candidate.topic, otherTopic);
     if (topicSim >= thresholds.topicOverlap) reasons.push(`topic overlap ${topicSim.toFixed(2)}`);
 
-    // 3. Keyword overlap.
     const otherKeywords = new Set(
       [post.primaryKeyword, ...post.secondaryKeywords]
         .filter((k): k is string => !!k)
@@ -213,7 +96,6 @@ export function scoreAgainstCorpus(
     const kwSim = jaccard(candidateKeywordWords, otherKeywords);
     if (kwSim >= thresholds.keywordOverlap) reasons.push(`keyword overlap ${kwSim.toFixed(2)}`);
 
-    // 4. Intent match strengthens the signal.
     const sameIntent =
       !!candidate.searchIntent &&
       !!post.searchIntent &&
@@ -222,7 +104,6 @@ export function scoreAgainstCorpus(
       reasons.push(`same intent (${candidate.searchIntent}) with topic overlap ${topicSim.toFixed(2)}`);
     }
 
-    // 5. Content similarity, only when we have content to compare.
     let contentSim = 0;
     if (candidate.content && candidate.content.length > 400) {
       contentSim = shingleSimilarity(candidate.content, post.content);
@@ -231,7 +112,6 @@ export function scoreAgainstCorpus(
       }
     }
 
-    // 6. Title/slug near-duplicate (same words, cosmetic reorder).
     const titleSim = distinctLocations ? 0 : Math.max(
       jaccard(candidateTopicWords, significantWords(post.title)),
       jaccard(candidateTopicWords, significantWords(post.slug.replace(/-/g, ' '))),

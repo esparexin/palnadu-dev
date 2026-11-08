@@ -1,91 +1,21 @@
 /**
  * The publish gate.
- *
- * Required order:
- *
- *   topic uniqueness -> search intent -> keyword relevance -> content
- *   originality -> title uniqueness -> slug uniqueness -> content similarity ->
- *   internal links -> SEO metadata -> category -> canonical URL ->
- *   final publishing validation
- *
- * Checks accumulate: all are evaluated so the audit log records every problem,
- * but publishing requires every blocking check to pass.
- *
- * This module is intentionally free of framework imports so the gate can be
- * unit tested directly.
  */
 
 import { VALID_INTENTS } from './seo-strategy';
-import { teluguScriptRatio } from './script-utils';
-import type { GeneratedBlogDraft } from './content-research.service';
-import type { SimilarityResult } from './content-similarity-rules';
+import type {
+  CheckName,
+  CheckResult,
+  ValidationOutcome,
+  ValidationInput,
+} from './seo-validation-types';
+import { EMOJI_RE } from './seo-validation-types';
+import {
+  checkKeywordRelevance,
+  checkTeluguScriptCoverage,
+} from './seo-validation-content';
 
-/**
- * Emoji and legacy-symbol ranges the editorial standard forbids.
- *
- * Ranges are written with explicit \u escapes and grouped so no adjacent pair
- * forms a surrogate boundary: \u{1F300}-\u{1FAFF} are astral code points, so the
- * range must be expressed per code point rather than as raw characters.
- */
-const EMOJI_RE =
-  /[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]|\u{FE0F}/u;
-
-export type CheckName =
-  | 'topic_uniqueness'
-  | 'search_intent'
-  | 'keyword_relevance'
-  | 'content_originality'
-  | 'title_uniqueness'
-  | 'slug_uniqueness'
-  | 'content_similarity'
-  | 'internal_links'
-  | 'seo_metadata'
-  | 'category'
-  | 'canonical_url'
-  | 'template_fallback_marker'
-  | 'telugu_script_coverage'
-  | 'final_publishing_validation';
-
-export interface CheckResult {
-  name: CheckName;
-  passed: boolean;
-  /** Blocking checks must pass before an article may be published. */
-  blocking: boolean;
-  detail: string;
-}
-
-export interface ValidationOutcome {
-  passed: boolean;
-  checks: CheckResult[];
-  failures: CheckResult[];
-  /** Compact, storable summary for the audit trail. */
-  summary: string;
-  /**
-   * Set when the draft came from the static fallback template. The caller must
-   * force DRAFT status and surface a warning, even if auto-publish is enabled.
-   */
-  forceDraft: boolean;
-}
-
-export interface ValidationInput {
-  topicKey: string;
-  topic: string;
-  draft: GeneratedBlogDraft & { llmProvider?: string };
-  categorySlug: string;
-  categoryExists: boolean;
-  similarity: SimilarityResult;
-  /** True when the topicKey already has a completed post. */
-  topicKeyTaken: boolean;
-  /** Existing slugs on the site, for slug collision detection. */
-  existingSlugs: Set<string>;
-  existingTitles: Set<string>;
-  wordCount: number;
-  /**
-   * Language being validated. Optional so existing callers keep working;
-   * when 'te', the Telugu script-coverage check applies.
-   */
-  language?: 'en' | 'te';
-}
+export type { CheckName, CheckResult, ValidationOutcome, ValidationInput };
 
 /**
  * Runs the full publish gate. Pure: no I/O, no framework, fully testable.
@@ -94,7 +24,7 @@ export function validate(input: ValidationInput): ValidationOutcome {
   const checks: CheckResult[] = [];
   const d = input.draft;
 
-  // 1. Topic uniqueness — the hard gate that fixed the original bug.
+  // 1. Topic uniqueness
   checks.push({
     name: 'topic_uniqueness',
     passed: !input.topicKeyTaken && !!input.topicKey,
@@ -104,7 +34,7 @@ export function validate(input: ValidationInput): ValidationOutcome {
       : `topicKey "${input.topicKey}" is unused`,
   });
 
-  // 2. Search intent must be declared and recognised.
+  // 2. Search intent
   const intentOk = VALID_INTENTS.has(d.searchIntent);
   checks.push({
     name: 'search_intent',
@@ -115,31 +45,13 @@ export function validate(input: ValidationInput): ValidationOutcome {
       : `missing or unknown searchIntent "${d.searchIntent ?? ''}"`,
   });
 
-  // 3. Keyword relevance: a primary keyword that actually appears in the body.
-  const primary = (d.primaryKeyword ?? '').trim().toLowerCase();
-  const body = d.content.toLowerCase();
-  const primaryInBody = primary.length > 0 && body.includes(primary);
-  const secondaryCount = d.secondaryKeywords?.length ?? 0;
-  checks.push({
-    name: 'keyword_relevance',
-    passed: primaryInBody && secondaryCount > 0,
-    blocking: true,
-    detail: !primary
-      ? 'no primary keyword'
-      : !primaryInBody
-        ? `primary keyword "${primary}" does not appear in the article body`
-        : secondaryCount === 0
-          ? 'no secondary keywords'
-          : `primary + ${secondaryCount} secondary keyword(s) present`,
-  });
+  // 3. Keyword relevance
+  checks.push(checkKeywordRelevance(d));
 
   // 4. Content originality: substantive length, no keyword stuffing, and not
   //    produced by the static fallback template.
-  //
-  //    A template-fallback draft is never original: the fallback body is
-  //    byte-identical for every topic with only the title and location swapped,
-  //    so many topics would yield many unique URLs carrying identical content.
-  //    That is the bulk-generated pattern Google treats as scaled content abuse.
+  const primary = (d.primaryKeyword ?? '').trim().toLowerCase();
+  const body = d.content.toLowerCase();
   const words = input.wordCount;
   const occurrences = primary ? body.split(primary).length - 1 : 0;
   const density = words > 0 ? occurrences / words : 0;
@@ -159,9 +71,7 @@ export function validate(input: ValidationInput): ValidationOutcome {
           : `${words} words, primary keyword density ${(density * 100).toFixed(2)}%`,
   });
 
-  // 4b. Records the template decision for the publish step. Non-blocking on
-  //     purpose: the draft is still created for human review instead of being
-  //     discarded, but it can never become PUBLISHED automatically.
+  // 4b. Records the template decision for the publish step.
   checks.push({
     name: 'template_fallback_marker',
     passed: !isTemplate,
@@ -171,26 +81,12 @@ export function validate(input: ValidationInput): ValidationOutcome {
       : 'LLM-generated original content',
   });
 
-  // 4c. Telugu script coverage. A `te`-tagged draft whose body is mostly
-  //     Latin script is a mixed-language row: either the LLM ignored the
-  //     language directive or English copy leaked in. Blocking, because such
-  //     a row would publish English content under a Telugu tag and URL.
-  //     Threshold 0.5 keeps proper nouns, URLs, and code spans harmless while
-  //     catching an English body decisively.
+  // 4c. Telugu script coverage
   if (input.language === 'te') {
-    const ratio = teluguScriptRatio(`${d.title}\n${d.content}`);
-    checks.push({
-      name: 'telugu_script_coverage',
-      passed: ratio >= 0.5,
-      blocking: true,
-      detail:
-        ratio >= 0.5
-          ? `Telugu script ratio ${(ratio * 100).toFixed(0)}%`
-          : `only ${(ratio * 100).toFixed(0)}% Telugu script — body is not Telugu`,
-    });
+    checks.push(checkTeluguScriptCoverage(d));
   }
 
-  // 5. Title uniqueness and sanity.
+  // 5. Title uniqueness and sanity
   const titleNorm = d.title.toLowerCase().trim();
   const titleTaken = input.existingTitles.has(titleNorm);
   checks.push({
@@ -206,7 +102,7 @@ export function validate(input: ValidationInput): ValidationOutcome {
           : `unique title (${d.title.length} chars)`,
   });
 
-  // 6. Slug uniqueness and format.
+  // 6. Slug uniqueness and format
   const slugOk = /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(d.slug);
   const slugTaken = input.existingSlugs.has(d.slug);
   checks.push({
@@ -220,7 +116,7 @@ export function validate(input: ValidationInput): ValidationOutcome {
         : `unique slug (${d.slug})`,
   });
 
-  // 7. Content similarity against existing articles.
+  // 7. Content similarity against existing articles
   checks.push({
     name: 'content_similarity',
     passed: !input.similarity.isDuplicate,
@@ -232,7 +128,7 @@ export function validate(input: ValidationInput): ValidationOutcome {
       : 'no substantial overlap with existing content',
   });
 
-  // 8. Internal links must exist and point at real site paths.
+  // 8. Internal links
   const internalLinks = d.internalLinks ?? [];
   const badLinks = internalLinks.filter((l) => !l.url.startsWith('/'));
   checks.push({
@@ -247,7 +143,7 @@ export function validate(input: ValidationInput): ValidationOutcome {
           : `${internalLinks.length} internal link(s), all site-relative`,
   });
 
-  // 9. SEO metadata completeness and SERP-length discipline.
+  // 9. SEO metadata completeness
   const metaTitleOk = (d.metaTitle ?? '').length > 0 && (d.metaTitle ?? '').length <= 70;
   const metaDescOk = (d.metaDescription ?? '').length > 0 && (d.metaDescription ?? '').length <= 175;
   const hasH1 = !!d.h1 && d.h1.length > 0;
@@ -267,7 +163,7 @@ export function validate(input: ValidationInput): ValidationOutcome {
             : `meta title ${(d.metaTitle ?? '').length}, description ${(d.metaDescription ?? '').length}, H1 + ${h2Count} H2s`,
   });
 
-  // 10. Category must exist.
+  // 10. Category
   checks.push({
     name: 'category',
     passed: input.categoryExists && !!input.categorySlug,
@@ -277,7 +173,7 @@ export function validate(input: ValidationInput): ValidationOutcome {
       : `category "${input.categorySlug}" does not exist`,
   });
 
-  // 11. Canonical URL must match the slug.
+  // 11. Canonical URL
   const expectedCanonical = `/blog/${d.slug}`;
   checks.push({
     name: 'canonical_url',
@@ -289,7 +185,7 @@ export function validate(input: ValidationInput): ValidationOutcome {
         : `canonical "${d.canonicalUrl}" does not match "${expectedCanonical}"`,
   });
 
-  // 12. Final gate: everything blocking must have passed.
+  // 12. Final gate
   const failures = checks.filter((c) => c.blocking && !c.passed);
   checks.push({
     name: 'final_publishing_validation',
@@ -301,9 +197,6 @@ export function validate(input: ValidationInput): ValidationOutcome {
         : `${failures.length} blocking check(s) failed: ${failures.map((f) => f.name).join(', ')}`,
   });
 
-  // The gate considers blocking checks only. A non-blocking advisory (the
-  // template marker) must not fail an otherwise valid article, but it does force
-  // DRAFT so template output can never reach the live site unattended.
   const passed = failures.length === 0;
   const summary = checks
     .map((c) => `${c.passed ? 'PASS' : 'FAIL'} ${c.name}: ${c.detail}`)

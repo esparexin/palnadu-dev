@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { SourceConfidence, TopicMetrics } from './seo-sources';
 import { BacklinkOpportunity } from './seo-strategy';
+import { getRegionalBacklinkOpportunities } from './free-backlink-discovery';
 
 export interface KeywordSuggestion {
   keyword: string;
@@ -24,7 +25,8 @@ export class FreeKeywordResearchService {
         const url = `https://suggestqueries.google.com/complete/search?client=${client}&q=${encodeURIComponent(seed)}&gl=in&hl=en`;
         const res = await fetch(url, {
           headers: {
-            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+            'User-Agent':
+              'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
           },
         });
 
@@ -35,7 +37,9 @@ export class FreeKeywordResearchService {
           }
         }
       } catch (err) {
-        this.logger.warn(`Google Suggest lookup failed for "${seed}" (${client}): ${err instanceof Error ? err.message : err}`);
+        this.logger.warn(
+          `Google Suggest lookup failed for "${seed}" (${client}): ${err instanceof Error ? err.message : err}`,
+        );
       }
     }
     return [];
@@ -58,7 +62,6 @@ export class FreeKeywordResearchService {
       `${seedTopic} price`,
     ];
 
-    // Query Google suggestions in parallel
     const batches = await Promise.all(
       searchSeeds.map((seed) => this.getGoogleSuggestions(seed)),
     );
@@ -72,12 +75,16 @@ export class FreeKeywordResearchService {
       });
     });
 
-    // Score and classify intent
     const results: KeywordSuggestion[] = Array.from(rawSuggestions).map((kw, index) => {
       let intent: KeywordSuggestion['intent'] = 'commercial';
       if (kw.includes('cost') || kw.includes('price') || kw.includes('buy') || kw.includes('charges')) {
         intent = 'transactional';
-      } else if (kw.includes('near me') || kw.includes('in guntur') || kw.includes('in palnadu') || kw.includes('narasaraopet')) {
+      } else if (
+        kw.includes('near me') ||
+        kw.includes('in guntur') ||
+        kw.includes('in palnadu') ||
+        kw.includes('narasaraopet')
+      ) {
         intent = 'local';
       } else if (kw.includes('how') || kw.includes('what') || kw.includes('meaning') || kw.includes('free')) {
         intent = 'informational';
@@ -96,7 +103,8 @@ export class FreeKeywordResearchService {
           domainAuthority: null,
           backlinks: null,
           status: 'unavailable',
-          notes: 'Search volume & CPC metrics unavailable without Google Ads API; suggestions verified via Google Suggest.',
+          notes:
+            'Search volume & CPC metrics unavailable without Google Ads API; suggestions verified via Google Suggest.',
         },
       };
     });
@@ -106,7 +114,6 @@ export class FreeKeywordResearchService {
 
   /**
    * Discovers customer questions and long-tail FAQs using Google question patterns
-   * (Replaces AnswerThePublic subscription).
    */
   async discoverCustomerQuestions(seedTopic: string, location?: string): Promise<KeywordSuggestion[]> {
     const loc = location || 'Palnadu and Guntur';
@@ -172,7 +179,6 @@ export class FreeKeywordResearchService {
 
   /**
    * Discovers competitor queries and commercial comparison gaps
-   * (Replaces SEMrush subscription).
    */
   async discoverCompetitorQueries(seedTopic: string, location?: string): Promise<KeywordSuggestion[]> {
     const loc = location || 'Guntur';
@@ -217,44 +223,8 @@ export class FreeKeywordResearchService {
 
   /**
    * Discovers realistic regional backlink and directory outreach opportunities
-   * (Replaces Ahrefs backlink recommendation subscription).
-   *
-   * Crucially: Never fabricates DR, DA, or backlink counts.
    */
   async discoverBacklinkOpportunities(topic: string, location?: string): Promise<BacklinkOpportunity[]> {
-    const loc = location || 'Palnadu and Guntur, Andhra Pradesh';
-    return [
-      {
-        sourceName: 'Andhra Pradesh MSME & Industry Directory',
-        category: 'business_directory',
-        urlHint: 'https://msme.ap.gov.in',
-        outreachAngle: `Listing Palnadu.dev as a verified technology and ${topic} service provider in ${loc}`,
-        confidence: 'ai_suggestion',
-      },
-      {
-        sourceName: 'Guntur District Chamber of Commerce and Industry',
-        category: 'regional_chamber',
-        outreachAngle: `Co-authoring regional digital transformation guide for business owners regarding ${topic}`,
-        confidence: 'ai_suggestion',
-      },
-      {
-        sourceName: 'Andhra Chamber of Commerce & Trade Associations',
-        category: 'industry_association',
-        outreachAngle: `Vendor case study on cost-effective regional software modernization and ${topic}`,
-        confidence: 'ai_suggestion',
-      },
-      {
-        sourceName: 'IndiaMart & TradeIndia Regional Tech Profiles',
-        category: 'business_directory',
-        outreachAngle: `Verified local engineering supplier registration for enterprises in ${loc}`,
-        confidence: 'ai_suggestion',
-      },
-      {
-        sourceName: 'Regional Business & Tech Resource Guides',
-        category: 'resource_page',
-        outreachAngle: `Educational resource citations explaining ${topic} implementation architectures`,
-        confidence: 'ai_suggestion',
-      },
-    ];
+    return getRegionalBacklinkOpportunities(topic, location);
   }
 }

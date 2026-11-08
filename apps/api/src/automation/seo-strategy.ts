@@ -1,10 +1,17 @@
 /**
  * Pure SEO strategy helpers.
- *
- * Deliberately free of framework imports so the strategy, normalization, and
- * validation rules can be unit tested with `node --test` without booting Nest
- * or Prisma. The services in this directory are thin wrappers around these.
  */
+
+import {
+  str,
+  arr,
+  objArr,
+  normaliseSlug,
+  extractHeadings,
+  parseLooseJson,
+} from './seo-parsing';
+
+export { str, arr, objArr, normaliseSlug, extractHeadings, parseLooseJson };
 
 export type SearchIntent =
   | 'INFORMATIONAL'
@@ -83,11 +90,6 @@ export const INTENT_GUIDANCE: Record<SearchIntent, string> = {
 
 /**
  * Telugu writing guidance appended to the generation prompt for `te` drafts.
- *
- * Kept as a named export (not buried in a template literal) so tests can
- * assert on each requirement individually. Covers what the generic directive
- * does not: Telugu SEO conventions, sentence rhythm, and the exact boundary
- * between allowed English tokens and forbidden mixed-language body copy.
  */
 export const TELUGU_STYLE_GUIDANCE = `TELUGU WRITING GUIDANCE:
 - Tone: direct and practical, as if explaining to a shop owner in Guntur. Short sentences. No ornamental openings.
@@ -105,8 +107,6 @@ export function defaultStrategy(
   locationContext: string,
   language: 'en' | 'te' = 'en',
 ): SeoStrategy {
-  // The English pipeline strips question openers and ASCII-folds; applied to
-  // Telugu that would erase the entire keyword. Telugu keeps its own text.
   const rawClean = topicTitle
     .toLowerCase()
     .replace(/^(how|what|why|when|which|the|a|an)\s+/, '')
@@ -198,91 +198,4 @@ export function defaultStrategy(
       },
     ],
   };
-}
-
-// ── Defensive parsing of LLM output ────────────────────────────────────────
-
-export function str(v: unknown): string {
-  return typeof v === 'string' ? v.trim() : '';
-}
-
-export function arr(v: unknown): string[] {
-  return Array.isArray(v)
-    ? v.filter((x): x is string => typeof x === 'string' && x.trim().length > 0)
-    : [];
-}
-
-export function objArr<T extends Record<string, string> = Record<string, string>>(
-  v: unknown,
-  keys: string[],
-): T[] {
-  if (!Array.isArray(v)) return [];
-  return v
-    .filter((x): x is Record<string, unknown> => !!x && typeof x === 'object')
-    .map((x) => Object.fromEntries(keys.map((k) => [k, str(x[k])])) as T)
-    .filter((x) => keys.every((k) => ((x as Record<string, string>)[k] ?? '').length > 0));
-}
-
-/** Slugify defensively: the LLM sometimes returns spaces, underscores or mixed case. */
-export function normaliseSlug(input: string): string {
-  return str(input)
-    .toLowerCase()
-    // Underscores are word separators, not junk: normalise them before the
-    // "strip everything but alphanumerics" pass, which would otherwise eat them
-    // and silently fuse words together ("a--b__c" -> "a-bc").
-    .replace(/_/g, ' ')
-    .replace(/[^a-z0-9\s-]/g, '')
-    .trim()
-    .replace(/[\s-]+/g, '-')
-    .replace(/^-/, '')
-    .replace(/-$/, '')
-    .slice(0, 90);
-}
-
-/** Recovers headings when the LLM omits the structured arrays. */
-export function extractHeadings(markdown: string, level: 2 | 3): string[] {
-  const re = new RegExp(`^#{${level}}\\s+(.+)$`, 'gm');
-  return [...markdown.matchAll(re)].map((m) => (m[1] ?? '').trim()).filter(Boolean);
-}
-
-/**
- * Tolerant JSON extraction. Models frequently wrap JSON in a ```json fence or
- * prepend prose; a bare JSON.parse would throw and silently drop the whole
- * generation into the fallback path.
- */
-// The model's response shape is validated field-by-field at the call site via
-// str()/arr()/objArr(), so an open object type is correct here rather than a
-// hand-written interface that would still need defensive narrowing.
-export function parseLooseJson(raw: string): Record<string, unknown> {
-  const text = raw.trim();
-
-  // 1. Direct JSON parse (fastest & handles JSON with internal markdown code blocks)
-  try {
-    return JSON.parse(text);
-  } catch {
-    // continue
-  }
-
-  // 2. Outer markdown code fence: ```json ... ``` or ``` ... ```
-  const outerFence = text.match(/^```(?:json)?\s*([\s\S]*?)\s*```$/i);
-  if (outerFence && outerFence[1]) {
-    try {
-      return JSON.parse(outerFence[1].trim());
-    } catch {
-      // continue
-    }
-  }
-
-  // 3. Outermost JSON object braces { ... }
-  const start = text.indexOf('{');
-  const end = text.lastIndexOf('}');
-  if (start !== -1 && end > start) {
-    try {
-      return JSON.parse(text.slice(start, end + 1));
-    } catch {
-      // continue
-    }
-  }
-
-  throw new Error('LLM response did not contain parseable JSON');
 }
