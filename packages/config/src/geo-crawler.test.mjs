@@ -38,3 +38,4 @@ describe('GEO and Crawler Accessibility Verification', () => {
     assert.ok(content.includes('Macherla'), 'llms.txt must include regional presence');
   });
 });
+

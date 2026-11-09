@@ -50,3 +50,4 @@ export function ArticleFaq({ faqItems, locale }: ArticleFaqProps) {
     </section>
   );
 }
+

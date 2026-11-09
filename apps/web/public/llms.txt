@@ -34,3 +34,4 @@ Palnadu.dev builds web applications, Android & iOS mobile applications, startup 
 - GitHub: https://github.com/esparexin
 - LinkedIn: https://linkedin.com/company/palnadudev
 - X / Twitter: https://twitter.com/palnadudev
+

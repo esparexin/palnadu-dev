@@ -52,3 +52,4 @@ export function LandingFaq() {
     </div>
   );
 }
+
