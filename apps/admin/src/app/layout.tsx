@@ -21,7 +21,10 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
 
 async function getActiveFavicon(): Promise<string> {
   try {
-    const res = await fetch(`${API_URL}/api/settings/branding`, { next: { revalidate: 30 } });
+    const res = await fetch(`${API_URL}/api/settings/branding`, {
+      next: { revalidate: 30 },
+      signal: AbortSignal.timeout(350),
+    });
     if (res.ok) {
       const json = await res.json();
       if (json.success && json.data?.favicon?.url) {

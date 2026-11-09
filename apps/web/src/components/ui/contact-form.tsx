@@ -238,7 +238,7 @@ export function ContactFormCard({
           disabled={isSubmitting}
           className="w-full bg-palnadu-blue hover:bg-palnadu-dark-hover text-white font-semibold text-sm h-11 sm:h-10 rounded-md transition-colors shadow-sm mt-1 disabled:opacity-50 cursor-pointer"
         >
-          {isSubmitting ? 'Sending...' : 'Send Message →'}
+          {isSubmitting ? 'Sending Message...' : 'Send Message →'}
         </Button>
       </form>
     </>

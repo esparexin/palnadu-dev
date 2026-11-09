@@ -21,7 +21,7 @@ export function GrowPositioningCard({ deckProgress }: GrowCardsProps) {
           Clear Commercial Direction
         </p>
 
-        <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black text-palnadu-dark tracking-tight leading-snug sm:leading-tight mb-4 sm:mb-8">
+        <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-extrabold text-palnadu-dark tracking-tight leading-snug sm:leading-tight mb-4 sm:mb-8">
           Your business doesn’t need more marketing noise.
         </h2>
 

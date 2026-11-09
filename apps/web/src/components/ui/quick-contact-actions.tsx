@@ -13,8 +13,7 @@ export function QuickContactActions({
   sourceSection = 'quick_contact',
   sourcePage = '/contact',
 }: QuickContactActionsProps) {
-  const whatsappUrl =
-    'https://wa.me/919030787819?text=Hello%20Palnadu.dev%2C%20I%20would%20like%20to%20discuss%20a%20project';
+  const whatsappUrl = siteConfig.contact.whatsappUrl;
 
   return (
     <div className="flex flex-wrap items-center gap-2.5 w-full sm:w-auto">
@@ -25,7 +24,7 @@ export function QuickContactActions({
         onClick={() =>
           trackContactChannelClick({
             channel: 'whatsapp',
-            destination: 'https://wa.me/919030787819',
+            destination: siteConfig.contact.whatsappDestination,
             source_section: sourceSection,
             source_page: sourcePage,
           })

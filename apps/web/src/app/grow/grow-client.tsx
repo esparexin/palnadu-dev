@@ -30,7 +30,7 @@ export function GrowExperienceClient() {
       </section>
 
       {/* 2-9. Stacking Cards Deck: Full Progressive Journey */}
-      <StackingDeck className="bg-[#020b18]" cardCount={8}>
+      <StackingDeck className="bg-palnadu-dark" cardCount={8}>
         {(deckProgress) => (
           <>
             <GrowPositioningCard deckProgress={deckProgress} />

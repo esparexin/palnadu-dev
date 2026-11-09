@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import dynamic from 'next/dynamic';
 import { ScrollGlobe } from '@/components/ui/landing-page';
 import {
   siteConfig,
@@ -6,8 +7,11 @@ import {
   getWebsiteSchema,
   getProfessionalServiceSchema,
 } from '@palnadu/config';
-import { DiwaliIntro } from '@/components/homepage/diwali-intro';
 import { HOMEPAGE_FAQS } from '@/components/ui/landing-faq';
+
+const DiwaliIntro = dynamic(
+  () => import('@/components/homepage/diwali-intro').then((m) => m.DiwaliIntro)
+);
 
 // Default Homepage OpenGraph & Canonical Metadata (SSOT for Social Sharing & WhatsApp)
 export const metadata: Metadata = {

@@ -35,15 +35,15 @@ export default function SettingsPage() {
       </div>
 
       {successMessage && (
-        <div className="p-3.5 rounded-lg bg-emerald-50 border border-emerald-300 text-xs text-emerald-800 font-medium flex items-center gap-2 animate-fade-in">
-          <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
+        <div className="p-3.5 rounded-lg bg-palnadu-teal/10 border border-palnadu-teal/30 text-xs text-palnadu-teal-dark font-medium flex items-center gap-2 animate-fade-in">
+          <CheckCircle2 className="h-4 w-4 text-palnadu-teal shrink-0" />
           <span>{successMessage}</span>
         </div>
       )}
 
       {errorMessage && (
-        <div className="p-3.5 rounded-lg bg-red-50 border border-red-300 text-xs text-red-800 font-medium flex items-center gap-2 animate-fade-in">
-          <AlertCircle className="h-4 w-4 text-red-600 shrink-0" />
+        <div className="p-3.5 rounded-lg bg-palnadu-error/10 border border-palnadu-error/30 text-xs text-palnadu-error font-medium flex items-center gap-2 animate-fade-in">
+          <AlertCircle className="h-4 w-4 text-palnadu-error shrink-0" />
           <span>{errorMessage}</span>
         </div>
       )}

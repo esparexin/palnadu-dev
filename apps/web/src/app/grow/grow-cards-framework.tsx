@@ -15,14 +15,14 @@ export function GrowPipelineCard({ deckProgress }: GrowCardsProps) {
       i={3}
       total={8}
       progress={deckProgress}
-      cardClassName="bg-[#041E3A] border-white/10 text-white p-5 sm:p-8 lg:p-12"
+      cardClassName="bg-palnadu-dark border-white/10 text-white p-5 sm:p-8 lg:p-12"
     >
       <div className="max-w-5xl mx-auto">
         <div className="text-center max-w-3xl mx-auto mb-6 sm:mb-10 space-y-2.5 sm:space-y-3">
           <p className="text-xs font-semibold uppercase tracking-wider text-palnadu-teal">
             The Progression Framework
           </p>
-          <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black text-white tracking-tight leading-snug sm:leading-tight">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-extrabold text-white tracking-tight leading-snug sm:leading-tight">
             From Visibility to Business Growth
           </h2>
           <p className="text-xs sm:text-sm lg:text-base text-palnadu-light-blue/80 max-w-xl mx-auto">
@@ -100,7 +100,7 @@ export function GrowTailoredCard({ deckProgress }: GrowCardsProps) {
             return (
               <div
                 key={idx}
-                className="rounded-2xl border border-palnadu-border bg-[#FAFCFF] p-4 space-y-2 hover:border-palnadu-blue transition-colors"
+                className="rounded-2xl border border-palnadu-border bg-palnadu-off-white p-4 space-y-2 hover:border-palnadu-blue transition-colors"
               >
                 <div className="flex items-center gap-2.5">
                   <div className="h-8 w-8 sm:h-9 sm:w-9 rounded-lg bg-palnadu-light-blue text-palnadu-blue flex items-center justify-center shrink-0">
@@ -143,14 +143,14 @@ export function GrowTransparencyCard({ deckProgress }: GrowCardsProps) {
       i={5}
       total={8}
       progress={deckProgress}
-      cardClassName="bg-[#F5F8FC] border-palnadu-border p-5 sm:p-8 lg:p-12"
+      cardClassName="bg-palnadu-light-blue border-palnadu-border p-5 sm:p-8 lg:p-12"
     >
       <div className="max-w-5xl mx-auto">
         <div className="max-w-3xl mx-auto text-center space-y-2 sm:space-y-3 mb-6 sm:mb-10">
           <p className="text-xs font-semibold uppercase tracking-wider text-palnadu-blue">
             Engineering Transparency
           </p>
-          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black text-palnadu-dark tracking-tight leading-snug sm:leading-tight">
+          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-palnadu-dark tracking-tight leading-snug sm:leading-tight">
             We Show the Work Behind the Growth
           </h2>
           <p className="text-xs sm:text-sm lg:text-base text-palnadu-body max-w-xl mx-auto leading-relaxed">

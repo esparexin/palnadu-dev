@@ -21,14 +21,14 @@ export function GrowStagesShowcase({ deckProgress }: GrowStagesShowcaseProps) {
       i={1}
       total={8}
       progress={deckProgress}
-      cardClassName="bg-[#FAFCFF] border-palnadu-border p-5 sm:p-8 lg:p-12"
+      cardClassName="bg-palnadu-off-white border-palnadu-border p-5 sm:p-8 lg:p-12"
     >
       <div className="max-w-6xl mx-auto">
         <div className="text-center max-w-3xl mx-auto mb-6 sm:mb-10 space-y-2 sm:space-y-3">
           <p className="text-xs font-semibold uppercase tracking-wider text-palnadu-blue">
             Progressive Growth System
           </p>
-          <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black text-palnadu-dark tracking-tight leading-snug sm:leading-tight">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-extrabold text-palnadu-dark tracking-tight leading-snug sm:leading-tight">
             We Don’t Just Talk About Growth.
             <br />
             <span className="text-palnadu-blue">We Work Towards It.</span>
@@ -154,7 +154,7 @@ export function GrowStagesShowcase({ deckProgress }: GrowStagesShowcaseProps) {
                 </p>
 
                 {/* Clean simulated visual element (text-[11px] replaced with text-xs) */}
-                <div className="rounded-xl bg-[#091527] text-white p-4 border border-white/10 space-y-2 text-xs">
+                <div className="rounded-xl bg-palnadu-dark text-white p-4 border border-white/10 space-y-2 text-xs">
                   <div className="flex items-center justify-between border-b border-white/10 pb-2">
                     <span className="text-xs text-white/90 font-semibold">
                       {growthStages[activeStage].previewContent.headline}

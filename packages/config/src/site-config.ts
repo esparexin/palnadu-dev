@@ -17,6 +17,10 @@ export const siteConfig = {
   contact: {
     email: 'hello@palnadu.dev',
     phone: '+91-9030787819',
+    whatsapp: '+91-9030787819',
+    whatsappDestination: 'https://wa.me/919030787819',
+    whatsappUrl:
+      'https://wa.me/919030787819?text=Hello%20Palnadu.dev%2C%20I%20would%20like%20to%20discuss%20a%20project',
   },
 } as const;
 

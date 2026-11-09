@@ -32,8 +32,8 @@ export const growthStages = [
     description:
       "Build meaningful connections with your customers through the right digital channels, high-speed mobile pages, and clear, authoritative content.",
     metrics: "< 1s Mobile Page Load & Clean UI",
-    color: "from-teal-600/20 to-emerald-500/10",
-    badgeColor: "bg-teal-50 text-teal-700 border-teal-200",
+    color: "from-palnadu-teal/20 to-palnadu-teal/10",
+    badgeColor: "bg-palnadu-light-blue text-palnadu-teal-dark border-palnadu-border",
     icon: Users,
     previewContent: {
       type: "engagement",

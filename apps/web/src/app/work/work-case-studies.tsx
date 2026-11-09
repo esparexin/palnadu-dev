@@ -60,8 +60,8 @@ export function WorkCaseStudies() {
               </div>
 
               <div className="pt-4 border-t border-palnadu-border/60 space-y-3">
-                <div className="text-xs bg-emerald-50 text-emerald-900 border border-emerald-200/60 p-3 rounded-lg leading-relaxed">
-                  <strong className="font-semibold text-emerald-950">Verified Outcome: </strong>
+                <div className="text-xs bg-palnadu-light-blue text-palnadu-dark border border-palnadu-border p-3 rounded-lg leading-relaxed">
+                  <strong className="font-semibold text-palnadu-dark">Verified Outcome: </strong>
                   <span>{study.outcome}</span>
                 </div>
 

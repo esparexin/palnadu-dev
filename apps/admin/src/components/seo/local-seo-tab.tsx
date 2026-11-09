@@ -59,7 +59,7 @@ export function LocalSeoTab() {
             <div key={idx} className="rounded-md border border-palnadu-border p-3.5 space-y-1.5 bg-palnadu-off-white/30">
               <div className="flex items-center justify-between">
                 <span className="font-bold text-xs text-palnadu-dark">{cit.directory}</span>
-                <span className="text-xs px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 font-medium">
+                <span className="text-xs px-2 py-0.5 rounded bg-palnadu-teal/10 text-palnadu-teal-dark font-medium">
                   {cit.status}
                 </span>
               </div>
