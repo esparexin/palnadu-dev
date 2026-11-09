@@ -23,10 +23,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const location = coreLocations.find((l) => l.slug === slug);
 
-  if (!location) return { title: 'Location Not Found | Palnadu.dev' };
+  if (!location) return { title: 'Location Not Found' };
 
-  const title = `Web Developer & Software Company in ${location.name} | Palnadu.dev`;
-  const description = `${location.tagline}. Professional web development, website design, and custom software for businesses in ${location.name}, Andhra Pradesh.`;
+  const title = `Web Development, Software & Digital Solutions in ${location.name}`;
+  const description = `${location.tagline}. Professional web development, custom software engineering, and digital growth solutions for businesses in ${location.name}, Andhra Pradesh.`;
 
   return {
     title,
@@ -139,7 +139,7 @@ export default async function LocationDetailPage({ params }: Props) {
 
       <div className="bg-white">
         {/* Header Hero */}
-        <section className="relative overflow-hidden bg-gradient-to-b from-palnadu-dark via-[#083b6f] to-palnadu-dark py-16 sm:py-24 text-white">
+        <section className="relative overflow-hidden bg-gradient-to-b from-palnadu-dark via-palnadu-dark-hover to-palnadu-dark py-16 sm:py-24 text-white">
           <div className="container max-w-4xl space-y-4">
             <div className="flex items-center gap-2">
               <Link
@@ -157,7 +157,7 @@ export default async function LocationDetailPage({ params }: Props) {
             </div>
 
             <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-white leading-tight">
-              Web Developers & Software Development in{' '}
+              Web Development, Software &amp; Digital Solutions in{' '}
               <span className="text-palnadu-teal">{location.name}</span>
             </h1>
 

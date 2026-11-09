@@ -3,14 +3,34 @@ import { HelpCircle } from 'lucide-react';
 
 export const HOMEPAGE_FAQS = [
   {
-    question: 'What does Palnadu.dev specialize in?',
+    question: 'What services does Palnadu.dev provide?',
     answer:
-      'Palnadu.dev is a problem-first software studio specializing in web applications, mobile apps, custom business software, startup MVP development, business automation, and technical consulting.',
+      'Palnadu.dev is a technology, software engineering, and digital growth studio. Our portfolio covers professional website development, modern UI/UX design, custom web applications, custom software engineering, mobile apps (iOS and Android), advanced digital marketing, technical SEO, AEO, GEO, software testing, QA, and real-time practical software training.',
   },
   {
-    question: 'What does "Start with the problem" mean?',
+    question: 'How does your "Start with the problem" approach work?',
     answer:
-      'Instead of pushing unnecessary frameworks or features, we diagnose what is broken in your workflow or idea first. We evaluate feasibility, limitations, and future costs before writing any code.',
+      'We diagnose your workflow, user bottlenecks, and technical requirements before writing code. We evaluate architecture feasibility, scalability limits, and realistic costs upfront. If an existing tool solves your challenge without custom software, we tell you directly.',
+  },
+  {
+    question: 'What are Answer Engine Optimization (AEO) and Generative Engine Optimization (GEO)?',
+    answer:
+      'AEO and GEO optimize your digital presence for AI-powered search engines and answer engines including ChatGPT, Perplexity, and Google AI Overviews. We build structured entity schemas, factual machine-readable content, and authoritative references so AI systems accurately identify, summarize, and cite your business.',
+  },
+  {
+    question: 'Do you provide software testing and quality assurance?',
+    answer:
+      'Yes. We conduct automated end-to-end testing, cross-device responsiveness verification, security audits, and performance benchmarking to ensure zero bugs and sub-second load times before production launch.',
+  },
+  {
+    question: 'What is the real-time practical software training program?',
+    answer:
+      'We offer hands-on practical training mentored directly by active software engineers. Participants work on live production web applications, learning modern Next.js, TypeScript, cloud deployments, QA testing, and technical SEO with genuine portfolio code.',
+  },
+  {
+    question: 'Which locations and regions does Palnadu.dev serve?',
+    answer:
+      'We are headquartered in Palnadu with regional service hubs in Macherla, Narasaraopet, Guntur, Chilakaluripet, Sattenapalle, and Vinukonda, serving enterprises across Andhra Pradesh and global clients.',
   },
 ] as const;
 

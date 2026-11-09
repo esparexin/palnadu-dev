@@ -20,6 +20,10 @@ describe('SEO Configuration & Domain Canonicalization SSOT', () => {
   it('should have brandName and name matching Palnadu.dev exactly', () => {
     assert.equal(siteConfig.name, 'Palnadu.dev');
     assert.equal(siteConfig.brandName, 'Palnadu.dev');
+    assert.equal(
+      siteConfig.title,
+      'Palnadu.dev | Web Development, Software & Digital Marketing Studio'
+    );
   });
 
   it('should define absolute ogImage hosted on canonical domain', () => {
@@ -146,10 +150,14 @@ describe('SEO Configuration & Domain Canonicalization SSOT', () => {
     const requiredSlugs = [
       'website-development',
       'web-development',
+      'custom-software',
       'android-app-development',
       'ios-app-development',
-      'business-automation',
       'digital-marketing',
+      'seo-aeo-geo',
+      'software-testing-qa',
+      'practical-training',
+      'business-automation',
     ];
 
     const serviceSlugs = services.map((s) => s.slug);

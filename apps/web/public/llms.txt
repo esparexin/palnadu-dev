@@ -1,20 +1,23 @@
 # Palnadu.dev
 
-> Problem-first software engineering studio and digital technology partner based in Palnadu, Andhra Pradesh.
+> Technology, software engineering, and advanced digital growth studio based in Palnadu, Andhra Pradesh.
 
-Palnadu.dev builds web applications, Android & iOS mobile applications, startup Minimum Viable Products (MVPs), and custom business automation systems for regional enterprises and startups across Andhra Pradesh and worldwide.
+Palnadu.dev is a full-service technology studio engineering high-performance websites, custom web applications, mobile applications, and custom software systems. We deliver advanced technical SEO, Answer Engine Optimization (AEO), Generative Engine Optimization (GEO), software testing, quality assurance, and real-time practical software training for regional enterprises, startups, and institutions across Andhra Pradesh and worldwide.
 
 ## Core Capabilities & Services
-- [Website Development](https://www.palnadu.dev/services/website-development): High-performance corporate websites and institutional platforms built with Next.js.
-- [Web Applications](https://www.palnadu.dev/services/web-development): Scalable SaaS products, commercial portals, dashboards, and custom web applications.
+- [Website Development & UI/UX Design](https://www.palnadu.dev/services/website-development): High-performance corporate websites, modern UI/UX design, and institutional portals engineered with Next.js.
+- [Web Applications & Full-Stack Development](https://www.palnadu.dev/services/web-development): Scalable SaaS products, commercial portals, dashboards, and custom web applications.
+- [Custom Software Engineering](https://www.palnadu.dev/services/custom-software): Tailored software designed around specific business workflows, godown operations, and inventory.
 - [Mobile Applications](https://www.palnadu.dev/services/mobile-app-development): Production iOS, Android, and cross-platform mobile apps.
 - [Android App Development](https://www.palnadu.dev/services/android-app-development): Native and cross-platform Android mobile applications for regional commerce.
 - [iOS App Development](https://www.palnadu.dev/services/ios-app-development): Premium iOS mobile applications built for iPhone and iPad.
+- [Advanced Digital Marketing & Content Strategy](https://www.palnadu.dev/services/digital-marketing): Data-driven digital marketing, content strategy, and commercial lead funnels.
+- [Technical SEO, AEO & GEO](https://www.palnadu.dev/services/seo-aeo-geo): Technical SEO, Local Google Maps optimization, Answer Engine Optimization (AEO), and Generative Engine Optimization (GEO).
+- [Software Testing & Quality Assurance](https://www.palnadu.dev/services/software-testing-qa): Automated regression testing, cross-device responsiveness verification, and manual QA audits.
+- [Real-Time Practical Software & Digital Training](https://www.palnadu.dev/services/practical-training): Hands-on practical training in web development, software engineering, UI/UX design, QA testing, and digital marketing.
+- [Business Automation](https://www.palnadu.dev/services/business-automation): Elimination of repetitive manual spreadsheets and paper slips through custom cloud workflows.
 - [Idea Validation](https://www.palnadu.dev/services/idea-validation): Technical feasibility assessment, customer workflow analysis, and MVP roadmap scoping.
 - [MVP Development](https://www.palnadu.dev/services/mvp-development): Rapid 3-to-6-week minimum viable product launches with 100% source code ownership.
-- [Custom Software](https://www.palnadu.dev/services/custom-software): Tailored software designed around specific business workflows and requirements.
-- [Business Automation](https://www.palnadu.dev/services/business-automation): Elimination of repetitive manual spreadsheets and paper slips through custom portals.
-- [Digital Marketing & SEO](https://www.palnadu.dev/services/digital-marketing): Data-driven technical SEO, Google Search optimization, and local visibility.
 - [Technical Consulting](https://www.palnadu.dev/services/technical-consulting): Architecture reviews, technology selection, and system analysis.
 
 ## Key Hubs & Regional Presence
@@ -34,4 +37,3 @@ Palnadu.dev builds web applications, Android & iOS mobile applications, startup 
 - GitHub: https://github.com/esparexin
 - LinkedIn: https://linkedin.com/company/palnadudev
 - X / Twitter: https://twitter.com/palnadudev
-

@@ -6,9 +6,9 @@ import { CtaSection } from '@/components/sections/cta-section';
 import { actualServiceDetails, products } from './services-data';
 
 export const metadata: Metadata = {
-  title: 'Services',
+  title: 'Engineering Services & Digital Solutions',
   description:
-    'Web applications, mobile apps, MVP development, custom software, business automation, and technical consulting. Built by engineers from Palnadu.',
+    'Explore our complete portfolio: website development, UI/UX design, custom web applications, mobile apps, software engineering, digital marketing, SEO/AEO/GEO, QA testing, and practical training.',
   alternates: {
     canonical: '/services',
   },
@@ -18,9 +18,9 @@ export default function ServicesPage() {
   const servicesJsonLd = {
     '@context': 'https://schema.org',
     '@type': 'ItemList',
-    name: 'Palnadu.dev Engineering Services',
+    name: 'Palnadu.dev Engineering & Digital Solutions',
     description:
-      'Web applications, mobile apps, MVP development, custom software, business automation, and technical consulting.',
+      'Complete engineering and digital growth portfolio: websites, web apps, software engineering, digital marketing, SEO, AEO, GEO, QA testing, and real-time training.',
     url: `${siteConfig.url}/services`,
     provider: getOrganizationRef(),
     itemListElement: services.map((service, idx) => ({
@@ -54,10 +54,10 @@ export default function ServicesPage() {
           <div className="container max-w-4xl mx-auto px-4 sm:px-6">
             <div className="mb-10 sm:mb-14">
               <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-palnadu-dark leading-tight">
-                Software Engineering and Web Development Capabilities
+                Software Engineering, Web Development & Digital Growth Capabilities
               </h2>
               <p className="mt-3 text-base sm:text-lg text-palnadu-body leading-relaxed max-w-2xl">
-                Every project at Palnadu.dev is built by software engineers working directly with business owners. We focus on dependable architecture, clear timelines, and software that genuinely supports your business operations.
+                Every project at Palnadu.dev is built by software engineers working directly with business owners. We focus on dependable architecture, clear timelines, and digital solutions that genuinely support your business operations and growth.
               </p>
             </div>
 
