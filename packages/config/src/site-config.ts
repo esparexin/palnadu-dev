@@ -3,9 +3,9 @@
 export const siteConfig = {
   name: 'Palnadu.dev',
   brandName: 'Palnadu.dev',
-  title: 'Palnadu.dev — Web Developer & Software Development Studio in Palnadu',
+  title: 'Palnadu.dev | Web Development, Software & Digital Marketing Studio',
   description:
-    'Palnadu.dev is a web development and custom software engineering studio in Palnadu. We build high-performance websites, web applications, and mobile apps for regional businesses in Narasaraopet, Guntur, and Andhra Pradesh.',
+    'Palnadu.dev is a technology, software engineering, and advanced digital growth studio in Palnadu. We engineer high-performance websites, custom web applications, mobile apps, software testing, SEO, AEO, GEO, and real-time practical training for businesses in Narasaraopet, Guntur, and Andhra Pradesh.',
   url: 'https://www.palnadu.dev',
   ogImage: 'https://www.palnadu.dev/og.png',
   creator: 'Palnadu.dev',
@@ -71,10 +71,10 @@ export const processSteps = [
 
 export const services = [
   {
-    title: 'Website Development & Design',
+    title: 'Website Development & UI/UX Design',
     slug: 'website-development',
     shortDescription:
-      'High-performance corporate websites, modern web design, school platforms, and institutional portals engineered with Next.js.',
+      'High-performance corporate websites, modern UI/UX design, school platforms, and institutional portals engineered with Next.js.',
     icon: 'Globe',
   },
   {
@@ -83,6 +83,13 @@ export const services = [
     shortDescription:
       'Build scalable web applications, full-stack portals, SaaS platforms, and custom business dashboards.',
     icon: 'Globe',
+  },
+  {
+    title: 'Custom Software Engineering',
+    slug: 'custom-software',
+    shortDescription:
+      'Custom software engineering built around specific business operations, godown workflows, and inventory systems.',
+    icon: 'Code',
   },
   {
     title: 'Mobile Applications',
@@ -106,6 +113,41 @@ export const services = [
     icon: 'Smartphone',
   },
   {
+    title: 'Advanced Digital Marketing & Content Strategy',
+    slug: 'digital-marketing',
+    shortDescription:
+      'Data-driven digital marketing, content strategy, brand authority building, and high-converting acquisition funnels.',
+    icon: 'BarChart',
+  },
+  {
+    title: 'Technical SEO, AEO & GEO',
+    slug: 'seo-aeo-geo',
+    shortDescription:
+      'Technical SEO, Local Google Maps optimization, Answer Engine Optimization (AEO), and Generative Engine Optimization (GEO).',
+    icon: 'Search',
+  },
+  {
+    title: 'Software Testing & Quality Assurance',
+    slug: 'software-testing-qa',
+    shortDescription:
+      'Automated and manual testing, performance benchmarking, security audits, and end-to-end quality assurance.',
+    icon: 'CheckSquare',
+  },
+  {
+    title: 'Real-Time Practical Software & Digital Training',
+    slug: 'practical-training',
+    shortDescription:
+      'Hands-on practical training in web development, software engineering, UI/UX design, QA testing, and digital marketing.',
+    icon: 'GraduationCap',
+  },
+  {
+    title: 'Business Automation',
+    slug: 'business-automation',
+    shortDescription:
+      'Reduce repetitive manual processes through practical automation.',
+    icon: 'Zap',
+  },
+  {
     title: 'Idea Validation',
     slug: 'idea-validation',
     shortDescription:
@@ -118,27 +160,6 @@ export const services = [
     shortDescription:
       'Launch your minimum viable product quickly with the right technology and scope.',
     icon: 'Rocket',
-  },
-  {
-    title: 'Custom Software',
-    slug: 'custom-software',
-    shortDescription:
-      'Build software around specific business workflows and requirements.',
-    icon: 'Code',
-  },
-  {
-    title: 'Business Automation',
-    slug: 'business-automation',
-    shortDescription:
-      'Reduce repetitive manual processes through practical automation.',
-    icon: 'Zap',
-  },
-  {
-    title: 'Digital Marketing & SEO',
-    slug: 'digital-marketing',
-    shortDescription:
-      'Data-driven technical SEO, Google Search optimization, local search visibility, and digital growth for enterprises.',
-    icon: 'BarChart',
   },
   {
     title: 'Technical Consulting',

@@ -19,13 +19,16 @@ export const mainNavItems: NavItem[] = [
 
 export const footerNavItems = {
   services: [
-    { title: 'Website Development', href: '/services/website-development' },
+    { title: 'Website Development & UI/UX', href: '/services/website-development' },
     { title: 'Web Applications', href: '/services/web-development' },
+    { title: 'Custom Software Engineering', href: '/services/custom-software' },
     { title: 'Android App Development', href: '/services/android-app-development' },
     { title: 'iOS App Development', href: '/services/ios-app-development' },
-    { title: 'Custom Software', href: '/services/custom-software' },
+    { title: 'Digital Marketing & Content', href: '/services/digital-marketing' },
+    { title: 'Technical SEO, AEO & GEO', href: '/services/seo-aeo-geo' },
+    { title: 'Software Testing & QA', href: '/services/software-testing-qa' },
+    { title: 'Practical Software Training', href: '/services/practical-training' },
     { title: 'Business Automation', href: '/services/business-automation' },
-    { title: 'Digital Marketing & SEO', href: '/services/digital-marketing' },
     { title: 'MVP Development', href: '/services/mvp-development' },
     { title: 'Technical Consulting', href: '/services/technical-consulting' },
   ],
