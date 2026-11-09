@@ -98,7 +98,7 @@ export default function NotFound() {
                       <span>{item.title}</span>
                       <ArrowRight className="h-3 w-3 opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
                     </h2>
-                    <p className="text-[11px] sm:text-xs text-palnadu-body line-clamp-1 leading-snug">
+                    <p className="text-xs text-palnadu-body line-clamp-1 leading-snug">
                       {item.description}
                     </p>
                   </div>

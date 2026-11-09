@@ -175,7 +175,7 @@ export const ProductCard = ({
 
         {/* Service Title & Route Badge: 100% clear and legible on all devices */}
         <div className="absolute inset-x-0 bottom-0 p-4 sm:p-5 flex flex-col justify-end z-10">
-          <p className="text-[11px] sm:text-xs font-semibold text-emerald-400 tracking-wide mb-1">
+          <p className="text-xs font-semibold text-palnadu-teal tracking-wide mb-1">
             Engineering Service
           </p>
           <h2 className="text-base sm:text-lg md:text-xl font-extrabold text-white leading-snug drop-shadow-md">

@@ -42,7 +42,7 @@ export function WorkClient() {
             <div className="absolute inset-0 bg-gradient-to-t from-palnadu-dark/80 via-transparent to-transparent" />
             <div className="absolute bottom-4 left-4 right-4 sm:bottom-6 sm:left-6 sm:right-6 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-white">
               <div>
-                <p className="text-xs uppercase tracking-wider text-emerald-400 font-semibold">Live Operational Platform</p>
+                <p className="text-xs uppercase tracking-wider text-palnadu-teal font-semibold">Live Operational Platform</p>
                 <p className="text-sm sm:text-base font-bold">Custom ERP, Dispatch & Multi-Branch Inventory Dashboard</p>
               </div>
               <span className="text-xs text-white/80 bg-white/10 backdrop-blur-md px-3 py-1 rounded-full w-fit">

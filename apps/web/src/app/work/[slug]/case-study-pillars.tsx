@@ -38,8 +38,8 @@ export function CaseStudyPillars({ study }: CaseStudyPillarsProps) {
         </div>
 
         {/* The Measurable Result */}
-        <div className="p-6 sm:p-8 rounded-xl border border-emerald-200 bg-emerald-50/40 space-y-3">
-          <h2 className="text-xs font-mono uppercase tracking-widest text-emerald-800 font-bold flex items-center gap-1.5">
+        <div className="p-6 sm:p-8 rounded-xl border border-palnadu-border bg-palnadu-light-blue/50 space-y-3">
+          <h2 className="text-xs font-mono uppercase tracking-widest text-palnadu-teal-dark font-bold flex items-center gap-1.5">
             <BarChart3 className="h-4 w-4" />
             <span>03. The Result & Commercial ROI</span>
           </h2>

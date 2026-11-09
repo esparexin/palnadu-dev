@@ -29,7 +29,7 @@ export function CaseStudyHero({ study }: CaseStudyHeroProps) {
           )}
         </div>
 
-        <h1 className="text-2xl sm:text-4xl lg:text-5xl font-black tracking-tight text-white leading-tight">
+        <h1 className="text-2xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-white leading-tight">
           {study.title}
         </h1>
 

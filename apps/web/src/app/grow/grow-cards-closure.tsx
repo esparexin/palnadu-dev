@@ -14,14 +14,14 @@ export function GrowPrinciplesCard({ deckProgress }: GrowCardsProps) {
       i={6}
       total={8}
       progress={deckProgress}
-      cardClassName="bg-[#091527] border-white/10 text-white p-5 sm:p-8 lg:p-12"
+      cardClassName="bg-palnadu-dark border-white/10 text-white p-5 sm:p-8 lg:p-12"
     >
       <div className="max-w-5xl mx-auto space-y-6 sm:space-y-8">
         <div className="text-center max-w-3xl mx-auto space-y-2 sm:space-y-3">
           <p className="text-xs font-semibold uppercase tracking-wider text-palnadu-teal">
             Honest Principles
           </p>
-          <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black text-white tracking-tight leading-snug sm:leading-tight">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-extrabold text-white tracking-tight leading-snug sm:leading-tight">
             Results Over Promises
           </h2>
           <p className="text-xs sm:text-sm lg:text-base text-palnadu-light-blue/80 max-w-xl mx-auto">
@@ -143,14 +143,14 @@ export function GrowNextChapterCard({ deckProgress }: GrowCardsProps) {
       i={7}
       total={8}
       progress={deckProgress}
-      cardClassName="bg-gradient-to-br from-palnadu-dark via-palnadu-blue to-[#0b2447] border-white/20 text-white p-5 sm:p-10 lg:p-14 text-center"
+      cardClassName="bg-gradient-to-br from-palnadu-dark via-palnadu-blue to-palnadu-dark border-white/20 text-white p-5 sm:p-10 lg:p-14 text-center"
     >
       <div className="relative z-10 space-y-4 sm:space-y-6 max-w-2xl mx-auto">
         <p className="text-xs sm:text-sm font-semibold uppercase tracking-wider text-palnadu-teal">
           Your Next Chapter
         </p>
 
-        <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black text-white tracking-tight leading-snug sm:leading-tight">
+        <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-extrabold text-white tracking-tight leading-snug sm:leading-tight">
           Your next customer may already be looking for you.
           <br />
           <span className="text-palnadu-teal">Let’s Make Sure They Can Find You.</span>

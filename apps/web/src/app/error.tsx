@@ -36,7 +36,7 @@ export default function ErrorBoundary({ error, reset }: ErrorProps) {
 
         {/* Digest reference if available */}
         {error.digest && (
-          <div className="p-2 rounded-md bg-palnadu-off-white border border-palnadu-border text-[10px] font-mono text-palnadu-secondary">
+          <div className="p-2 rounded-md bg-palnadu-off-white border border-palnadu-border text-xs font-mono text-palnadu-secondary">
             <span>Reference ID: {error.digest}</span>
           </div>
         )}
