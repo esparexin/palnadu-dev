@@ -20,34 +20,50 @@ for (const pkg of compiledPackages) {
   }
 }
 
-// 2. Verify Canonical Exports in packages/types/dist/index.d.ts
-const typesDts = path.join(rootDir, 'packages/types/dist/index.d.ts');
-if (fs.existsSync(typesDts)) {
-  const content = fs.readFileSync(typesDts, 'utf-8');
+/** Recursively read combined .d.ts content for modular package dist directories */
+function readAllDts(pkgName) {
+  const distPath = path.join(rootDir, 'packages', pkgName, 'dist');
+  if (!fs.existsSync(distPath)) return '';
+  let combined = '';
+  function walk(dir) {
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+      const fullPath = path.join(dir, entry.name);
+      if (entry.isDirectory()) {
+        walk(fullPath);
+      } else if (entry.isFile() && entry.name.endsWith('.d.ts')) {
+        combined += fs.readFileSync(fullPath, 'utf-8') + '\n';
+      }
+    }
+  }
+  walk(distPath);
+  return combined;
+}
+
+// 2. Verify Canonical Exports in packages/types/dist
+const typesContent = readAllDts('types');
+if (typesContent) {
   const requiredTypes = ['BlogPost', 'BlogLanguage', 'Lead', 'Client', 'User'];
   for (const t of requiredTypes) {
-    if (!content.includes(t)) {
+    if (!typesContent.includes(t)) {
       errors.push(`@palnadu/types is missing canonical export: "${t}"`);
     }
   }
 }
 
-// 3. Verify Canonical Exports in packages/config/dist/index.d.ts
-const configDts = path.join(rootDir, 'packages/config/dist/index.d.ts');
-if (fs.existsSync(configDts)) {
-  const content = fs.readFileSync(configDts, 'utf-8');
+// 3. Verify Canonical Exports in packages/config/dist
+const configContent = readAllDts('config');
+if (configContent) {
   const requiredConfigExports = ['slugify', 'siteConfig', 'coreLocations', 'services'];
   for (const exp of requiredConfigExports) {
-    if (!content.includes(exp)) {
+    if (!configContent.includes(exp)) {
       errors.push(`@palnadu/config is missing canonical export: "${exp}"`);
     }
   }
 }
 
-// 4. Verify Canonical Exports in packages/ui/dist/index.d.ts
-const uiDts = path.join(rootDir, 'packages/ui/dist/index.d.ts');
-if (fs.existsSync(uiDts)) {
-  const content = fs.readFileSync(uiDts, 'utf-8');
+// 4. Verify Canonical Exports in packages/ui/dist
+const uiContent = readAllDts('ui');
+if (uiContent) {
   const requiredUiExports = [
     'Button',
     'Input',
@@ -59,16 +75,15 @@ if (fs.existsSync(uiDts)) {
     'useToast',
   ];
   for (const exp of requiredUiExports) {
-    if (!content.includes(exp)) {
+    if (!uiContent.includes(exp)) {
       errors.push(`@palnadu/ui is missing canonical export: "${exp}"`);
     }
   }
 }
 
-// 5. Verify Canonical Exports in packages/validation/dist/index.d.ts
-const validationDts = path.join(rootDir, 'packages/validation/dist/index.d.ts');
-if (fs.existsSync(validationDts)) {
-  const content = fs.readFileSync(validationDts, 'utf-8');
+// 5. Verify Canonical Exports in packages/validation/dist
+const validationContent = readAllDts('validation');
+if (validationContent) {
   const requiredValidationExports = [
     'createLeadSchema',
     'loginSchema',
@@ -76,7 +91,7 @@ if (fs.existsSync(validationDts)) {
     'updateUserSchema',
   ];
   for (const exp of requiredValidationExports) {
-    if (!content.includes(exp)) {
+    if (!validationContent.includes(exp)) {
       errors.push(`@palnadu/validation is missing canonical export: "${exp}"`);
     }
   }

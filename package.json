@@ -22,7 +22,8 @@
     "gate:circular": "node scripts/check-circular.mjs",
     "gate:secrets": "node scripts/scan-secrets.mjs",
     "gate:routes": "node scripts/validate-routes.mjs",
-    "gate:all": "pnpm gate:structure && pnpm gate:circular && pnpm gate:contracts && pnpm gate:secrets && pnpm lint && pnpm test && pnpm build && pnpm gate:routes"
+    "gate:lines": "node scripts/validate-line-counts.mjs",
+    "gate:all": "pnpm gate:lines && pnpm gate:structure && pnpm gate:circular && pnpm gate:contracts && pnpm gate:secrets && pnpm lint && pnpm test && pnpm build && pnpm gate:routes"
   },
   "engines": {
     "node": ">=20",
