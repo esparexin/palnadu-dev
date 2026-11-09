@@ -30,6 +30,14 @@ describe('SEO Configuration & Domain Canonicalization SSOT', () => {
     assert.equal(siteConfig.ogImage, 'https://www.palnadu.dev/og.png');
   });
 
+  it('should define official contact phone, email, and WhatsApp SSOT endpoints', () => {
+    assert.equal(siteConfig.contact.email, 'hello@palnadu.dev');
+    assert.equal(siteConfig.contact.phone, '+91-9030787819');
+    assert.equal(siteConfig.contact.whatsapp, '+91-9030787819');
+    assert.equal(siteConfig.contact.whatsappDestination, 'https://wa.me/919030787819');
+    assert.ok(siteConfig.contact.whatsappUrl.startsWith('https://wa.me/919030787819'));
+  });
+
   it('should ensure all sitemap paths start with / or are root empty string', () => {
     for (const page of sitemapPages) {
       assert.ok(
