@@ -1,15 +1,22 @@
 "use client";
 
-import React, { useState } from 'react';
-import { useForm } from 'react-hook-form';
+import React, { useState, useRef } from 'react';
+import { useForm, type FieldErrors } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { createLeadSchema, type CreateLeadInput } from '@palnadu/validation';
 import { Button } from '@/components/ui/button';
 import { siteConfig } from '@palnadu/config';
 import { api } from '@/lib/api';
-import { CheckCircle2 } from 'lucide-react';
+import {
+  trackFormStart,
+  trackFormSubmitAttempt,
+  trackFormSubmitFailure,
+  trackGenerateLead,
+  trackContactChannelClick,
+} from '@/lib/analytics';
 import { renderSocialIcon, helpTypeMapping, type ContactSectionProps } from './contact-data';
 import { ContactFormFields } from './contact-form-fields';
+import { ContactSuccessState } from './contact-success-state';
 
 interface ContactFormProps {
   mainMessage: string;
@@ -29,6 +36,18 @@ export function ContactFormCard({
   const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
   const [submitted, setSubmitted] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const hasStartedRef = useRef(false);
+
+  const handleInteractionStart = () => {
+    if (!hasStartedRef.current) {
+      hasStartedRef.current = true;
+      trackFormStart({
+        form_id: 'contact_form_main',
+        form_name: 'Lead Contact Inquiry Form',
+        source_page: '/contact',
+      });
+    }
+  };
 
   const {
     register,
@@ -66,64 +85,72 @@ export function ContactFormCard({
     });
   };
 
+  const onValidationError = (validationErrors: FieldErrors<CreateLeadInput>) => {
+    const firstField = Object.keys(validationErrors)[0] || 'unknown';
+    const firstMessage = validationErrors[firstField as keyof CreateLeadInput]?.message || 'Validation failed';
+    trackFormSubmitFailure({
+      form_id: 'contact_form_main',
+      form_name: 'Lead Contact Inquiry Form',
+      error_message: String(firstMessage),
+      error_field: firstField,
+    });
+  };
+
   const onFormSubmit = async (data: CreateLeadInput) => {
     setErrorMessage(null);
+    trackFormSubmitAttempt({
+      form_id: 'contact_form_main',
+      form_name: 'Lead Contact Inquiry Form',
+      source_page: '/contact',
+      lead_category: data.requiredHelp || 'web_software_inquiry',
+    });
+
     try {
+      let createdId = `lead_${Date.now()}`;
       if (onSubmit) {
         await onSubmit({ ...data, projectType: selectedTypes });
       } else {
-        await api.leads.create({
+        const response = await api.leads.create({
           ...data,
           additionalInfo:
             selectedTypes.length > 0 ? `Interested in: ${selectedTypes.join(', ')}` : undefined,
-        });
-      }
-      setSubmitted(true);
-      if (typeof window !== 'undefined') {
-        const win = window as any;
-        win.dataLayer = win.dataLayer || [];
-        win.dataLayer.push({
-          event: 'generate_lead',
-          lead_category: data.requiredHelp || 'web_software_inquiry',
-          project_stage: data.projectStage || 'JUST_AN_IDEA',
-        });
-        if (typeof win.gtag === 'function') {
-          win.gtag('event', 'generate_lead', {
-            event_category: 'engagement',
-            event_label: data.requiredHelp || 'inquiry',
-          });
+        }) as { data?: { id?: string } };
+        if (response?.data?.id) {
+          createdId = response.data.id;
         }
       }
+
+      setSubmitted(true);
+      trackGenerateLead({
+        form_id: 'contact_form_main',
+        lead_id: createdId,
+        lead_category: data.requiredHelp || 'web_software_inquiry',
+        project_stage: data.projectStage || 'JUST_AN_IDEA',
+        has_budget: Boolean(data.budget && data.budget.trim()),
+        source_page: '/contact',
+      });
+
       reset();
       setSelectedTypes([]);
     } catch (err) {
-      setErrorMessage(err instanceof Error ? err.message : 'Failed to send message. Please try again.');
+      const message = err instanceof Error ? err.message : 'Failed to send message. Please try again.';
+      setErrorMessage(message);
+      trackFormSubmitFailure({
+        form_id: 'contact_form_main',
+        form_name: 'Lead Contact Inquiry Form',
+        error_message: message,
+      });
     }
   };
 
   if (submitted) {
     return (
-      <div className="py-10 text-center space-y-3 animate-fade-in">
-        <div className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-palnadu-light-blue text-palnadu-teal mx-auto">
-          <CheckCircle2 className="h-5 w-5" />
-        </div>
-        <h3 className="text-xl font-bold text-palnadu-dark">Message Received</h3>
-        <p className="text-xs text-palnadu-body max-w-xs mx-auto leading-relaxed">
-          Thank you. We have received your inquiry and will reply with honest engineering advice within one business day.
-        </p>
-        <div className="pt-2">
-          <Button
-            onClick={() => {
-              setSubmitted(false);
-              setSelectedTypes([]);
-            }}
-            variant="outline"
-            className="border-palnadu-blue text-palnadu-blue hover:bg-palnadu-light-blue rounded-md text-xs px-4 h-8"
-          >
-            Send another message
-          </Button>
-        </div>
-      </div>
+      <ContactSuccessState
+        onReset={() => {
+          setSubmitted(false);
+          setSelectedTypes([]);
+        }}
+      />
     );
   }
 
@@ -133,13 +160,35 @@ export function ContactFormCard({
         <div>
           <h2 className="text-base sm:text-lg font-bold text-palnadu-dark">{mainMessage}</h2>
           <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs">
-            <a href={`mailto:${contactEmail}`} className="font-semibold text-palnadu-blue hover:underline">
+            <a
+              href={`mailto:${contactEmail}`}
+              onClick={() =>
+                trackContactChannelClick({
+                  channel: 'email',
+                  destination: contactEmail,
+                  source_section: 'contact_form_header',
+                  source_page: '/contact',
+                })
+              }
+              className="font-semibold text-palnadu-blue hover:underline"
+            >
               {contactEmail}
             </a>
             {siteConfig.contact.phone && (
               <>
                 <span className="text-palnadu-secondary/60">•</span>
-                <a href={`tel:${siteConfig.contact.phone}`} className="font-semibold font-mono text-palnadu-blue hover:underline">
+                <a
+                  href={`tel:${siteConfig.contact.phone}`}
+                  onClick={() =>
+                    trackContactChannelClick({
+                      channel: 'phone',
+                      destination: siteConfig.contact.phone,
+                      source_section: 'contact_form_header',
+                      source_page: '/contact',
+                    })
+                  }
+                  className="font-semibold font-mono text-palnadu-blue hover:underline"
+                >
                   {siteConfig.contact.phone}
                 </a>
               </>
@@ -164,7 +213,12 @@ export function ContactFormCard({
         </div>
       </div>
 
-      <form onSubmit={handleSubmit(onFormSubmit)} noValidate className="space-y-3">
+      <form
+        onSubmit={handleSubmit(onFormSubmit, onValidationError)}
+        onFocusCapture={handleInteractionStart}
+        noValidate
+        className="space-y-3"
+      >
         <ContactFormFields
           register={register}
           errors={errors}
@@ -174,7 +228,7 @@ export function ContactFormCard({
         />
 
         {errorMessage && (
-          <div role="alert" className="p-2 rounded-md bg-red-50 border border-palnadu-error/40 text-xs text-palnadu-error font-medium">
+          <div role="alert" className="p-2 rounded-md bg-palnadu-error/5 border border-palnadu-error/30 text-xs text-palnadu-error font-medium">
             {errorMessage}
           </div>
         )}

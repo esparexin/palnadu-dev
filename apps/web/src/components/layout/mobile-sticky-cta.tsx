@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
+import { trackConsultationRequest } from '@/lib/analytics';
 
 export function MobileStickyCta() {
   const [visible, setVisible] = useState(false);
@@ -31,6 +32,14 @@ export function MobileStickyCta() {
     >
       <Link
         href="/contact"
+        onClick={() =>
+          trackConsultationRequest({
+            cta_label: 'Discuss your idea or process',
+            source_section: 'mobile_sticky_cta',
+            source_page: pathname,
+            destination_url: '/contact',
+          })
+        }
         className="flex items-center justify-between w-full max-w-sm mx-auto px-5 py-3 rounded-md bg-palnadu-blue text-white font-semibold shadow-md text-sm active:scale-95 transition-transform"
       >
         <span>Discuss your idea or process</span>

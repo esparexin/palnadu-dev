@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { ContainerScroll } from "@/components/ui/container-scroll-animation";
 import { Button } from "@/components/ui/button";
+import { trackConsultationRequest } from "@/lib/analytics";
 import { engineeringStandards } from "./work-data";
 import { WorkCaseStudies } from "./work-case-studies";
 
@@ -102,14 +103,38 @@ export function WorkClient() {
               asChild
               className="bg-palnadu-blue hover:bg-palnadu-dark-hover text-white font-semibold px-7 h-11 text-sm rounded-lg shadow-sm"
             >
-              <Link href="/contact">Schedule an Engineering Consultation</Link>
+              <Link
+                href="/contact"
+                onClick={() =>
+                  trackConsultationRequest({
+                    cta_label: 'Schedule an Engineering Consultation',
+                    source_section: 'work_portfolio_bottom_cta',
+                    source_page: '/work',
+                    destination_url: '/contact',
+                  })
+                }
+              >
+                Schedule an Engineering Consultation
+              </Link>
             </Button>
             <Button
               asChild
               variant="outline"
               className="border-white/20 bg-transparent text-white hover:bg-white/10 font-semibold px-6 h-11 text-sm rounded-lg"
             >
-              <Link href="/services">Explore All Services</Link>
+              <Link
+                href="/services"
+                onClick={() =>
+                  trackConsultationRequest({
+                    cta_label: 'Explore All Services',
+                    source_section: 'work_portfolio_bottom_cta',
+                    source_page: '/work',
+                    destination_url: '/services',
+                  })
+                }
+              >
+                Explore All Services
+              </Link>
             </Button>
           </div>
         </div>

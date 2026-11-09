@@ -7,6 +7,7 @@ import { Menu, X, ArrowRight } from 'lucide-react';
 import { mainNavItems } from '@palnadu/config';
 import { Button } from '@/components/ui/button';
 import { BrandLogo } from '@/components/ui/brand-logo';
+import { trackConsultationRequest } from '@/lib/analytics';
 import { cn } from '@/lib/utils';
 
 interface NavbarProps {
@@ -102,7 +103,18 @@ export function Navbar({ initialLogoUrl }: NavbarProps = {}) {
               size="sm"
               className="bg-palnadu-blue text-white hover:bg-palnadu-dark-hover shadow-sm font-medium"
             >
-              <Link href="/contact" className="flex items-center gap-1.5">
+              <Link
+                href="/contact"
+                onClick={() =>
+                  trackConsultationRequest({
+                    cta_label: 'Discuss your idea',
+                    source_section: 'navbar_desktop',
+                    source_page: pathname || '/',
+                    destination_url: '/contact',
+                  })
+                }
+                className="flex items-center gap-1.5"
+              >
                 <span>Discuss your idea</span>
                 <ArrowRight className="h-3.5 w-3.5" />
               </Link>
@@ -167,7 +179,15 @@ export function Navbar({ initialLogoUrl }: NavbarProps = {}) {
                     href="/contact"
                     prefetch={true}
                     className="flex items-center justify-center gap-2"
-                    onClick={() => setMobileOpen(false)}
+                    onClick={() => {
+                      setMobileOpen(false);
+                      trackConsultationRequest({
+                        cta_label: 'Discuss your idea',
+                        source_section: 'navbar_mobile_drawer',
+                        source_page: pathname || '/',
+                        destination_url: '/contact',
+                      });
+                    }}
                   >
                     <span>Discuss your idea</span>
                     <ArrowRight className="h-4 w-4" />

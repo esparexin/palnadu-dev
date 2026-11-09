@@ -12,6 +12,7 @@
   "scripts": {
     "build": "tsc",
     "clean": "rm -rf dist",
+    "audit:analytics": "node src/analytics/verify-analytics-setup.mjs",
     "dev": "tsc --watch",
     "test": "node --test src/seo-config.test.mjs src/blog-i18n.test.mjs src/geo-crawler.test.mjs"
   },

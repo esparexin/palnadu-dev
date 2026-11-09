@@ -1,5 +1,8 @@
+'use client';
+
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import { trackConsultationRequest } from '@/lib/analytics';
 
 export function CtaSection() {
   return (
@@ -22,7 +25,17 @@ export function CtaSection() {
             asChild
             className="w-full sm:w-auto bg-palnadu-teal text-white hover:bg-palnadu-teal-dark font-semibold px-6 h-11 sm:h-10 rounded-md text-sm shadow-sm"
           >
-            <Link href="/contact">
+            <Link
+              href="/contact"
+              onClick={() =>
+                trackConsultationRequest({
+                  cta_label: 'Tell us what you want to build',
+                  source_section: 'article_bottom_cta_section',
+                  source_page: typeof window !== 'undefined' ? window.location.pathname : '/',
+                  destination_url: '/contact',
+                })
+              }
+            >
               Tell us what you want to build
             </Link>
           </Button>
@@ -31,7 +44,19 @@ export function CtaSection() {
             variant="outline"
             className="w-full sm:w-auto border-palnadu-blue text-palnadu-blue bg-white hover:bg-palnadu-off-white px-6 h-11 sm:h-10 rounded-md text-sm"
           >
-            <Link href="/services">View services</Link>
+            <Link
+              href="/services"
+              onClick={() =>
+                trackConsultationRequest({
+                  cta_label: 'View services',
+                  source_section: 'article_bottom_cta_section',
+                  source_page: typeof window !== 'undefined' ? window.location.pathname : '/',
+                  destination_url: '/services',
+                })
+              }
+            >
+              View services
+            </Link>
           </Button>
         </div>
       </div>

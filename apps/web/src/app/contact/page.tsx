@@ -1,7 +1,8 @@
 import type { Metadata } from 'next';
 import { siteConfig, getBreadcrumbSchema } from '@palnadu/config';
 import { ContactSection } from '@/components/ui/contact';
-import { ShieldCheck, Clock, Users, Phone, Mail, MessageSquare } from 'lucide-react';
+import { QuickContactActions } from '@/components/ui/quick-contact-actions';
+import { ShieldCheck, Clock, Users } from 'lucide-react';
 
 
 export const metadata: Metadata = {
@@ -111,31 +112,7 @@ export default function ContactPage() {
               </p>
             </div>
 
-            <div className="flex flex-wrap items-center gap-2.5 w-full sm:w-auto">
-              <a
-                href="https://wa.me/919030787819?text=Hello%20Palnadu.dev%2C%20I%20would%20like%20to%20discuss%20a%20project"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-md bg-palnadu-teal hover:bg-palnadu-teal-dark text-white text-xs font-semibold shadow-sm transition-colors"
-              >
-                <MessageSquare className="h-3.5 w-3.5" />
-                <span>WhatsApp</span>
-              </a>
-              <a
-                href={`tel:${siteConfig.contact.phone}`}
-                className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-md bg-palnadu-blue text-white text-xs font-semibold hover:bg-palnadu-dark-hover transition-colors"
-              >
-                <Phone className="h-3.5 w-3.5" />
-                <span>{siteConfig.contact.phone}</span>
-              </a>
-              <a
-                href={`mailto:${siteConfig.contact.email}`}
-                className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-md border border-palnadu-border text-palnadu-dark text-xs font-semibold hover:bg-palnadu-off-white transition-colors"
-              >
-                <Mail className="h-3.5 w-3.5" />
-                <span>{siteConfig.contact.email}</span>
-              </a>
-            </div>
+            <QuickContactActions sourceSection="contact_page_methods" sourcePage="/contact" />
           </div>
         </div>
       </section>

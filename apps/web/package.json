@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "next dev --port 3000",
     "build": "next build",
+    "test": "node --test \"src/**/*.test.mjs\"",
     "start": "next start",
     "lint": "eslint . --quiet",
     "clean": "rm -rf .next .turbo node_modules",
