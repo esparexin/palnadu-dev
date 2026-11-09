@@ -156,7 +156,7 @@ export default async function LocationDetailPage({ params }: Props) {
               </span>
             </div>
 
-            <h1 className="text-3xl sm:text-5xl font-black tracking-tight text-white leading-tight">
+            <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-white leading-tight">
               Software Development & Web Design in{' '}
               <span className="text-palnadu-teal">{location.name}</span>
             </h1>

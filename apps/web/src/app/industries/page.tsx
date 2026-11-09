@@ -180,7 +180,7 @@ export default function IndustriesPage() {
                           <h2 className="text-base sm:text-lg font-bold text-palnadu-dark leading-snug">
                             {sector.name}
                           </h2>
-                          <p className="text-[11px] font-mono text-palnadu-teal font-semibold">
+                          <p className="text-xs font-mono text-palnadu-teal font-semibold">
                             {sector.subtitle}
                           </p>
                         </div>
@@ -191,7 +191,7 @@ export default function IndustriesPage() {
                       </p>
 
                       <div className="pt-2 space-y-2 border-t border-palnadu-border/60">
-                        <p className="text-[11px] font-mono uppercase tracking-wider text-palnadu-secondary font-bold">
+                        <p className="text-xs font-mono uppercase tracking-wider text-palnadu-secondary font-bold">
                           Core Solutions Delivered:
                         </p>
                         <ul className="grid gap-1.5 text-xs text-palnadu-body">

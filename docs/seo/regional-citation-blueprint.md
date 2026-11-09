@@ -18,8 +18,8 @@ To maintain search engine trust and avoid local citation fragmentation, identica
 | **State** | Andhra Pradesh | ఆంధ్రప్రదేశ్ |
 | **Postal Code** | 522426 | 522426 |
 | **Country** | India (IN) | భారతదేశం |
-| **Phone** | +91 94948 42426 | +91 94948 42426 |
-| **Official Email**| contact@palnadu.dev | contact@palnadu.dev |
+| **Phone** | +91-9030787819 | +91-9030787819 |
+| **Official Email**| hello@palnadu.dev | hello@palnadu.dev |
 | **Website URL** | https://www.palnadu.dev/ | https://www.palnadu.dev/te |
 
 ---
