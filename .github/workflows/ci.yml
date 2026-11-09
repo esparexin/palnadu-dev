@@ -11,7 +11,7 @@ permissions:
 
 jobs:
   pre-flight:
-    name: Structure, Secrets & Circular Dependency Gates
+    name: Structure, Line Counts, Secrets & Circular Dependency Gates
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -24,6 +24,9 @@ jobs:
 
       - name: Gate 1 - Monorepo Structure & Organization
         run: node scripts/validate-structure.mjs
+
+      - name: Gate 2 - Strict 250-Line Source File Policy
+        run: node scripts/validate-line-counts.mjs
 
       - name: Gate 7 - Circular Dependency Check
         run: node scripts/check-circular.mjs
