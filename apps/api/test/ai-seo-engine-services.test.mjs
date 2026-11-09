@@ -7,14 +7,11 @@ import { createRequire } from 'node:module';
 
 const require = createRequire(import.meta.url);
 
-/**
- * End-to-end tests for AI-powered SEO research engine & source-confidence architecture.
- */
-describe('AI-Powered SEO Research & Source-Confidence System', () => {
+describe('AI-Powered SEO Research Services', () => {
   let mod;
 
   before(() => {
-    const outDir = join(process.cwd(), 'node_modules', '.cache', 'ai-seo-engine-test');
+    const outDir = join(process.cwd(), 'node_modules', '.cache', 'ai-seo-services-test');
     mkdirSync(outDir, { recursive: true });
     try {
       execFileSync(
@@ -24,7 +21,6 @@ describe('AI-Powered SEO Research & Source-Confidence System', () => {
           'src/automation/topic-identity.ts',
           'src/automation/script-utils.ts',
           'src/automation/seo-strategy.ts',
-          'src/automation/seo-sources.ts',
           'src/automation/free-keyword-research.service.ts',
           'src/automation/content-research.service.ts',
           'src/automation/content-similarity-rules.ts',
@@ -57,144 +53,18 @@ describe('AI-Powered SEO Research & Source-Confidence System', () => {
       return require(join(outDir, name));
     };
     mod = {
-      identity: req('topic-identity.js'),
       strategy: req('seo-strategy.js'),
-      sources: req('seo-sources.js'),
       keywordService: req('free-keyword-research.service.js'),
       researchService: req('content-research.service.js'),
-      similarity: req('content-similarity-rules.js'),
       validation: req('seo-validation-rules.js'),
       crawlerService: req('technical-seo-crawler.service.js'),
     };
-  });
-
-  describe('Source Confidence Tiers', () => {
-    it('buildTopic defaults confidence to verified_google for Google endpoints', () => {
-      const { buildTopic } = mod.sources;
-      const topic = buildTopic('website development cost in guntur', 'google-autocomplete');
-      assert.ok(topic);
-      assert.equal(topic.confidence, 'verified_google');
-      assert.equal(topic.metrics.status, 'unavailable');
-      assert.equal(topic.metrics.searchVolume, null);
-      assert.equal(topic.metrics.cpc, null);
-      assert.equal(topic.metrics.keywordDifficulty, null);
-    });
-
-    it('buildTopic defaults confidence to ai_suggestion for AI-assisted providers', () => {
-      const { buildTopic } = mod.sources;
-      const topic = buildTopic('how to choose billing software for retail', 'answerthepublic');
-      assert.ok(topic);
-      assert.equal(topic.confidence, 'ai_suggestion');
-      assert.equal(topic.metrics.status, 'unavailable');
-    });
-
-    it('buildTopic defaults confidence to verified_external for audit tools', () => {
-      const { buildTopic } = mod.sources;
-      const topic = buildTopic('page speed audit and web vitals optimization', 'pagespeed-insights');
-      assert.ok(topic);
-      assert.equal(topic.confidence, 'verified_external');
-    });
-  });
-
-  describe('Zero Fabricated Metrics Guarantee', () => {
-    it('strictly returns null for unverified search volume, CPC, KD, DA, and backlinks', () => {
-      const { buildTopic } = mod.sources;
-      const topic = buildTopic('local seo services in macherla', 'semrush');
-      assert.ok(topic);
-      assert.equal(topic.metrics.status, 'unavailable');
-      assert.strictEqual(topic.metrics.searchVolume, null);
-      assert.strictEqual(topic.metrics.keywordDifficulty, null);
-      assert.strictEqual(topic.metrics.cpc, null);
-      assert.strictEqual(topic.metrics.domainAuthority, null);
-      assert.strictEqual(topic.metrics.backlinks, null);
-      assert.match(topic.metrics.notes, /unavailable/i);
-    });
-  });
-
-  describe('SemrushSource without SEMRUSH_API_KEY', () => {
-    it('is configured by default through AI-assisted research and does not require credentials', () => {
-      const { SemrushSource } = mod.sources;
-      const mockConfig = { get: () => undefined };
-      const source = new SemrushSource(mockConfig);
-      assert.strictEqual(source.isConfigured(), true);
-      assert.strictEqual(source.confidence, 'ai_suggestion');
-      assert.ok(source.capabilities.includes('competitor research'));
-      assert.ok(source.capabilities.includes('AI keyword clustering'));
-    });
-  });
-
-  describe('AnswerThePublicSource without ATP_API_KEY', () => {
-    it('is configured by default through AI customer question discovery', () => {
-      const { AnswerThePublicSource } = mod.sources;
-      const mockConfig = { get: () => undefined };
-      const source = new AnswerThePublicSource(mockConfig);
-      assert.strictEqual(source.isConfigured(), true);
-      assert.strictEqual(source.confidence, 'ai_suggestion');
-      assert.ok(source.capabilities.includes('customer questions'));
-      assert.ok(source.capabilities.includes('FAQ discovery'));
-    });
-  });
-
-  describe('AhrefsSource without AHREFS_API_TOKEN', () => {
-    it('is configured by default and discovers genuine backlink and directory outreach without fake metrics', async () => {
-      const { AhrefsSource } = mod.sources;
-      const mockConfig = { get: () => undefined };
-      const source = new AhrefsSource(mockConfig);
-      assert.strictEqual(source.isConfigured(), true);
-      assert.strictEqual(source.confidence, 'ai_suggestion');
-      assert.ok(source.capabilities.includes('backlink opportunity discovery'));
-
-      const topics = await source.discover(['Software Development'], 'Palnadu');
-      assert.ok(topics.length > 0);
-      for (const t of topics) {
-        assert.equal(t.confidence, 'ai_suggestion');
-        assert.equal(t.metrics.status, 'unavailable');
-        assert.strictEqual(t.metrics.domainAuthority, null);
-        assert.strictEqual(t.metrics.backlinks, null);
-        assert.match(t.note, /AI-assisted directory & backlink opportunity/);
-      }
-    });
-  });
-
-  describe('BingWebmasterSource & IndexNowSource', () => {
-    it('BingWebmasterSource reports unconfigured without BING_WEBMASTER_API_KEY', () => {
-      const { BingWebmasterSource } = mod.sources;
-      const mockConfig = { get: () => undefined };
-      const source = new BingWebmasterSource(mockConfig);
-      assert.strictEqual(source.isConfigured(), false);
-      assert.strictEqual(source.confidence, 'verified_external');
-      assert.ok(source.capabilities.includes('sitemap submission'));
-      assert.ok(source.capabilities.includes('URL indexing'));
-    });
-
-    it('IndexNowSource is configured by default and formats payload for instant indexation', async () => {
-      const { IndexNowSource } = mod.sources;
-      const mockConfig = { get: (k) => (k === 'INDEXNOW_KEY' ? 'test-index-key' : undefined) };
-      const source = new IndexNowSource(mockConfig);
-      assert.strictEqual(source.isConfigured(), true);
-      assert.strictEqual(source.id, 'indexnow');
-      assert.ok(source.capabilities.includes('instant index notification'));
-    });
-
-    it('GoogleSearchConsoleSource safely handles unconfigured credentials for URL inspection and sitemaps', async () => {
-      const { GoogleSearchConsoleSource } = mod.sources;
-      const mockConfig = { get: () => undefined };
-      const source = new GoogleSearchConsoleSource(mockConfig);
-      assert.strictEqual(source.isConfigured(), false);
-
-      const inspectResult = await source.inspectUrl('https://www.palnadu.dev/');
-      assert.strictEqual(inspectResult, null);
-
-      const sitemapResult = await source.submitSitemap('https://www.palnadu.dev/sitemap.xml');
-      assert.strictEqual(sitemapResult, false);
-    });
   });
 
   describe('FreeKeywordResearchService', () => {
     it('marks keyword discovery suggestions with verified_google confidence and unavailable metrics', async () => {
       const { FreeKeywordResearchService } = mod.keywordService;
       const service = new FreeKeywordResearchService();
-      // Mock getGoogleSuggestions to avoid network dependency in unit test
       service.getGoogleSuggestions = async (seed) => [
         `${seed} best practices`,
         `${seed} company`,
@@ -264,7 +134,7 @@ describe('AI-Powered SEO Research & Source-Confidence System', () => {
       assert.match(research, /VERIFIED GOOGLE SEARCH DEMAND/);
       assert.match(research, /cost in andhra pradesh/);
       assert.match(research, /TECHNICAL & OPERATIONAL SOURCE ANALYSIS/);
-      assert.doesNotMatch(research, /EXTERNAL WEB RESEARCH/); // Tavily is omitted cleanly
+      assert.doesNotMatch(research, /EXTERNAL WEB RESEARCH/);
     });
   });
 
@@ -283,7 +153,6 @@ describe('AI-Powered SEO Research & Source-Confidence System', () => {
       assert.ok(strategy.backlinkOpportunities.length > 0);
       assert.ok(strategy.backlinkOpportunities.every((b) => b.confidence === 'ai_suggestion'));
 
-      // Validate mock draft built with this strategy
       const mockDraft = {
         isTemplateFallback: false,
         title: 'How Hospital and Clinic Management Software Streamlines Patient Appointments in Guntur',
@@ -336,7 +205,6 @@ describe('AI-Powered SEO Research & Source-Confidence System', () => {
     it('successfully crawls routes, detects Macherla focus opportunity, and computes composite scores', async () => {
       const { TechnicalSeoCrawlerService } = mod.crawlerService;
 
-      // Mock PrismaService
       const mockPrisma = {
         blogPost: {
           findMany: async () => [

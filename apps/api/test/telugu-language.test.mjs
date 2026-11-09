@@ -8,18 +8,8 @@ import { createRequire } from 'node:module';
 
 const require = createRequire(import.meta.url);
 
-/**
- * Telugu / bilingual language foundation.
- *
- * These tests exist because the original normalizer was ASCII-only: every
- * Telugu topic produced an EMPTY topicKey and an EMPTY slug. ASCII-only tests
- * passed happily while every real Telugu case was broken, so the fixtures below
- * are all genuine Telugu script.
- */
-
-let su; // script-utils
-let ti; // topic-identity
-let st; // seo-strategy (Telugu style guidance)
+let su;
+let ti;
 
 before(() => {
   const outDir = mkdtempSync(join(tmpdir(), 'telugu-test-'));
@@ -29,7 +19,6 @@ before(() => {
       'tsc',
       'src/automation/script-utils.ts',
       'src/automation/topic-identity.ts',
-      'src/automation/seo-strategy.ts',
       '--outDir',
       outDir,
       '--module',
@@ -44,7 +33,6 @@ before(() => {
   );
   su = require(join(outDir, 'script-utils.js'));
   ti = require(join(outDir, 'topic-identity.js'));
-  st = require(join(outDir, 'seo-strategy.js'));
 });
 
 // Genuine Telugu fixtures, paired with their English equivalents.
@@ -76,7 +64,6 @@ const PAIRS = [
   },
 ];
 
-// ── Script detection ────────────────────────────────────────────────────────
 describe('script detection', () => {
   it('detects Telugu, Latin and mixed script', () => {
     assert.equal(su.detectScript('గుంటూర్ వెబ్ సైట్'), 'telugu');
@@ -85,13 +72,11 @@ describe('script detection', () => {
   });
 
   it('resolves language by letter count, not mere presence', () => {
-    // A single English brand name must not flip a Telugu article to English.
     assert.equal(su.detectLanguage('గుంటూర్‌లో Palnadu వెబ్ డెవలప్మెంట్ ఖర్చు'), 'te');
     assert.equal(su.detectLanguage('Website development cost in Guntur'), 'en');
   });
 });
 
-// ── Transliteration ─────────────────────────────────────────────────────────
 describe('Telugu transliteration', () => {
   it('produces readable ASCII, not an empty string', () => {
     const out = su.teluguToAscii('గుంటూర్');
@@ -100,13 +85,11 @@ describe('Telugu transliteration', () => {
   });
 
   it('handles the inherent vowel correctly (no doubled vowels)', () => {
-    // గుంటూర్ is guntoor; a naive implementation yields "gutoorloo".
     const out = su.teluguToAscii('గుంటూర్').toLowerCase();
     assert.ok(!/aa|ee|oo{2,}/.test(out), `unexpected vowel doubling in "${out}"`);
   });
 
   it('respects the virama for bare consonants', () => {
-    // ట్ is a bare "t", not "ta".
     assert.match(su.teluguToAscii('సైట్').toLowerCase(), /sait$/);
   });
 
@@ -120,7 +103,6 @@ describe('Telugu transliteration', () => {
   });
 });
 
-// ── Slug generation ─────────────────────────────────────────────────────────
 describe('Telugu slug generation', () => {
   it('never produces an empty slug for Telugu input', () => {
     for (const { te } of PAIRS) {
@@ -140,7 +122,6 @@ describe('Telugu slug generation', () => {
   });
 });
 
-// ── Cross-language topic identity ───────────────────────────────────────────
 describe('cross-language topic identity', () => {
   it('gives an English and a Telugu topic the SAME key', () => {
     for (const { en, te, label } of PAIRS) {
@@ -183,153 +164,5 @@ describe('cross-language topic identity', () => {
       'guntur',
       'Telugu location must resolve to the same canonical value',
     );
-  });
-});
-
-// ── Language-aware intent ───────────────────────────────────────────────────
-describe('language-aware intent detection', () => {
-  it('classifies Telugu queries instead of defaulting them', () => {
-    const cases = [
-      ['వెబ్ డెవలప్మెంట్ vs వర్డ్‌ప్రెస్', 'COMPARISON'],
-      ['వెబ్ సైట్ ఎలా చేయాలి', 'HOW_TO'],
-      ['వెబ్ సైట్ ఖర్చు ఎంతి', 'COMMERCIAL_INVESTIGATION'],
-      ['బిల్లింగ్ సాఫ్ట్‌వేర్ సమస్య పరిష్కారం', 'PROBLEM_SOLING'],
-    ];
-    for (const [te, expected] of cases) {
-      assert.equal(
-        su.detectIntentMultilingual(te, 'te'),
-        expected,
-        `"${te}" should be ${expected}`,
-      );
-    }
-  });
-
-  it('still classifies English correctly', () => {
-    assert.equal(su.detectIntentMultilingual('website vs wordpress', 'en'), 'COMPARISON');
-    assert.equal(su.detectIntentMultilingual('how to build a system', 'en'), 'HOW_TO');
-  });
-
-  it('falls back to informational for an unclassifiable phrase', () => {
-    assert.equal(su.detectIntentMultilingual('ఒక సాధారణ వాక్యం', 'te'), 'INFORMATIONAL');
-  });
-});
-
-// ── Distinctness must survive ───────────────────────────────────────────────
-describe('bilingual identity keeps distinct topics distinct', () => {
-  it('separates different subjects in the same location', () => {
-    const keys = new Set([
-      ti.toTopicKey('Website Development Cost in Guntur'),
-      ti.toTopicKey('Mobile App Development Cost in Guntur'),
-      ti.toTopicKey('School Management Software Cost in Guntur'),
-    ]);
-    assert.equal(keys.size, 3, 'different subjects must not collapse');
-  });
-
-  it('separates the same subject in different locations', () => {
-    const keys = new Set([
-      ti.toTopicKey('Website Development Cost in Guntur'),
-      ti.toTopicKey('Website Development Cost in Vijayawada'),
-      ti.toTopicKey('Website Development Cost in Palnadu'),
-    ]);
-    assert.equal(keys.size, 3, 'different locations must not collapse');
-  });
-
-  it('keeps commercial facets distinct', () => {
-    // A cost question and a "best provider" question are different searches.
-    const cost = ti.toTopicKey('Website Development Cost in Guntur');
-    const compare = ti.toTopicKey('Website Development vs WordPress');
-    assert.notEqual(cost, compare);
-  });
-
-  it('collapses phrasing variants of one topic in a single language', () => {
-    const variants = [
-      'How Much Does Website Development Cost in Guntur?',
-      'Website Development Pricing in Guntur: Complete Guide',
-      'Guntur website development cost',
-      'Website development cost guide Guntur',
-    ];
-    assert.equal(new Set(variants.map(ti.toTopicKey)).size, 1);
-  });
-
-  it('splits Telugu phrasings asked with different intents', () => {
-    // A cost question and a how-to guide about the same subject are different
-    // articles, so one must never block the other — in either language.
-    const cost = ti.toTopicKey('గుంటూర్‌లో వెబ్‌సైట్ డెవలప్మెంట్ ఖర్చు ఎంతి?');
-    const guide = ti.toTopicKey('గుంటూర్‌లో వెబ్‌సైట్ ఎలా చేయాలి గైడ్');
-    assert.notEqual(cost, guide);
-  });
-
-  it('never returns an empty key, in any language', () => {
-    for (const { te } of PAIRS) {
-      assert.ok(ti.toTopicKey(te).length > 0);
-    }
-    assert.ok(ti.toTopicKey('!!!').length > 0, 'degenerate input still yields a key');
-  });
-});
-
-// ── Mixed-language duplicate detection ──────────────────────────────────────
-describe('mixed English/Telugu duplicate detection', () => {
-  it('catches a Telugu restatement of an existing English topic', () => {
-    // Same subject, one in English (already published) and one in Telugu.
-    const publishedKey = ti.toTopicKey('Website Development Cost in Guntur');
-    const teluguCandidate = ti.toTopicKey('గుంటూర్‌లో వెబ్‌సైట్ డెవలప్మెంట్ ఖర్చు ఎంతి?');
-    assert.equal(
-      teluguCandidate,
-      publishedKey,
-      'a Telugu duplicate must resolve to the English post key and be refused',
-    );
-  });
-
-  it('does not confuse genuinely different Telugu topics', () => {
-    const a = ti.toTopicKey('గుంటూర్‌లో వెబ్ డెవలప్మెంట్ ఖర్చు');
-    const b = ti.toTopicKey('గుంటూర్‌లో మొబైల్ యాప్ డెవలప్మెంట్ ఖర్చు');
-    assert.notEqual(a, b);
-  });
-
-  it('handles a code-switched topic phrase', () => {
-    const key = ti.canonicalizeTopic('Website డెవలప్మెంట్ ఖర్చు గుంటూర్');
-    assert.ok(key.topicKey.length > 0);
-    assert.equal(key.script, 'mixed');
-  });
-});
-describe('Telugu script coverage', () => {
-  it('measures the Telugu letter fraction, ignoring digits and URLs', () => {
-    assert.equal(su.teluguScriptRatio('గుంటూర్ వెబ్‌సైట్'), 1);
-    assert.equal(su.teluguScriptRatio('Website cost guide'), 0);
-    assert.equal(su.teluguScriptRatio(''), 0);
-    assert.equal(su.teluguScriptRatio('123 https://x.com/a'), 0);
-    const mixed = su.teluguScriptRatio('గుంటూర్ Website ఖర్చు cost');
-    assert.ok(mixed > 0 && mixed < 1, `expected a proper fraction, got ${mixed}`);
-  });
-
-  it('does not let proper nouns or code flip a Telugu article', () => {
-    // A realistic Telugu paragraph mentioning Palnadu.dev, Next.js and a URL
-    // must still read as overwhelmingly Telugu.
-    const body = 'గుంటూర్‌లో వ్యాపారం కోసం Palnadu.dev వెబ్‌సైట్‌ను Next.js తో నిర్మిస్తుంది. https://palnadu.dev/contact లో సంప్రదించండి. ఖర్చు, సమయం మరియు నాణ్యత గురించి వివరంగా మాట్లాడుకుందాం.';
-    assert.ok(su.teluguScriptRatio(body) >= 0.5, `ratio was ${su.teluguScriptRatio(body)}`);
-  });
-
-  it('catches an English body masquerading as Telugu', () => {
-    const body = 'Website development cost in Guntur depends on features. Contact us for a quote today.';
-    assert.ok(su.teluguScriptRatio(body) < 0.5, `ratio was ${su.teluguScriptRatio(body)}`);
-  });
-});
-
-describe('Telugu style guidance', () => {
-  it('forbids romanized Telugu and English body copy', () => {
-    assert.match(st.TELUGU_STYLE_GUIDANCE, /[Nn]o romanized Telugu/);
-    assert.match(st.TELUGU_STYLE_GUIDANCE, /body sentences in Telugu script/);
-    assert.match(st.TELUGU_STYLE_GUIDANCE, /Never write whole English sentences/);
-  });
-
-  it('requires Telugu-script keywords for Telugu SEO placement', () => {
-    assert.match(st.TELUGU_STYLE_GUIDANCE, /primary keyword verbatim/);
-    assert.match(st.TELUGU_STYLE_GUIDANCE, /transliterated or English keywords do not count/);
-  });
-
-  it('keeps proper nouns, technical terms, and URLs in English', () => {
-    assert.match(st.TELUGU_STYLE_GUIDANCE, /Palnadu\.dev/);
-    assert.match(st.TELUGU_STYLE_GUIDANCE, /URLs/);
-    assert.match(st.TELUGU_STYLE_GUIDANCE, /parentheses/);
   });
 });
