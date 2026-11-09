@@ -89,7 +89,7 @@ export async function generateMetadata(): Promise<Metadata> {
     authors: [{ name: siteConfig.creator }],
     creator: siteConfig.creator,
     alternates: {
-      canonical: 'https://www.palnadu.dev/',
+      canonical: siteConfig.url,
     },
     icons: {
       icon: [
@@ -103,7 +103,7 @@ export async function generateMetadata(): Promise<Metadata> {
     openGraph: {
       type: 'website',
       locale: 'en_IN',
-      url: 'https://www.palnadu.dev/',
+      url: siteConfig.url,
       title: siteConfig.title,
       description: siteConfig.description,
       siteName: siteConfig.name,

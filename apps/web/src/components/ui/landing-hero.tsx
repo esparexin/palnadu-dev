@@ -8,16 +8,16 @@ export function LandingHero() {
       {/* Left Column (7 cols): Content & Trust Proof */}
       <div className="lg:col-span-7 space-y-4 sm:space-y-5 text-left">
         <p className="text-xs font-mono uppercase tracking-widest text-palnadu-blue font-bold mb-1.5 sm:mb-2">
-          Web Development & Software Engineering Studio
+          Technology, Software Engineering &amp; Digital Growth Studio
         </p>
 
         <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-palnadu-dark leading-[1.12]">
-          Web Developers In Palnadu.
-          <span className="block text-palnadu-blue mt-1">Start With The Problem.</span>
+          Web Development, Software Engineering
+          <span className="block text-palnadu-blue mt-1">&amp; Digital Growth in Palnadu</span>
         </h1>
 
         <p className="text-sm sm:text-base md:text-lg text-palnadu-body leading-relaxed max-w-xl">
-          Palnadu.dev is a web development and custom software engineering studio in Palnadu. We build high-performance websites, web applications, and mobile apps for growing businesses in Narasaraopet, Guntur, and Andhra Pradesh.
+          Palnadu.dev is a technology and software engineering studio in Palnadu. We build high-performance websites, custom web applications, mobile apps, business automation, and deliver advanced SEO, AEO, GEO, software testing, QA, and real-time practical software training for enterprises across Narasaraopet, Guntur, and Andhra Pradesh.
         </p>
 
         {/* Mobile 2-Column Action Buttons | Desktop Wide Action Buttons */}
@@ -26,33 +26,33 @@ export function LandingHero() {
             href="/contact"
             className="w-full sm:w-auto lg:min-w-[210px] px-3 py-3 sm:px-7 sm:py-3.5 lg:px-8 lg:py-4 rounded-md font-semibold text-xs sm:text-sm lg:text-base text-center inline-flex items-center justify-center bg-palnadu-blue text-white hover:bg-palnadu-dark-hover shadow-sm transition-colors"
           >
-            <span>Any Idea</span>
+            <span>Start A Project</span>
             <ArrowRight className="ml-1.5 lg:ml-2 h-3.5 w-3.5 sm:h-4 sm:w-4 lg:h-4.5 lg:w-4.5 shrink-0" />
           </Link>
           <Link
             href="/services"
             className="w-full sm:w-auto lg:min-w-[210px] px-3 py-3 sm:px-7 sm:py-3.5 lg:px-8 lg:py-4 rounded-md font-semibold text-xs sm:text-sm lg:text-base text-center inline-flex items-center justify-center border border-palnadu-blue bg-white text-palnadu-blue hover:bg-palnadu-light-blue transition-colors"
           >
-            Services
+            All Capabilities
           </Link>
         </div>
 
         {/* Trust Metrics Bar */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-4 gap-y-4 sm:gap-4 pt-8 sm:pt-9 border-t border-palnadu-border/50">
           <div className="space-y-0.5">
-            <p className="text-xl sm:text-2xl font-black text-palnadu-dark">8+ Years</p>
+            <p className="text-xl sm:text-2xl font-extrabold text-palnadu-dark">8+ Years</p>
             <p className="text-xs text-palnadu-secondary">Engineering Experience</p>
           </div>
           <div className="space-y-0.5">
-            <p className="text-xl sm:text-2xl font-black text-palnadu-teal">100%</p>
+            <p className="text-xl sm:text-2xl font-extrabold text-palnadu-teal">100%</p>
             <p className="text-xs text-palnadu-secondary">Code Ownership</p>
           </div>
           <div className="space-y-0.5">
-            <p className="text-xl sm:text-2xl font-black text-palnadu-blue">Fixed Scope</p>
+            <p className="text-xl sm:text-2xl font-extrabold text-palnadu-blue">Fixed Scope</p>
             <p className="text-xs text-palnadu-secondary">No Surprise Bills</p>
           </div>
           <div className="space-y-0.5">
-            <p className="text-xl sm:text-2xl font-black text-palnadu-dark">Direct Access</p>
+            <p className="text-xl sm:text-2xl font-extrabold text-palnadu-dark">Direct Access</p>
             <p className="text-xs text-palnadu-secondary">To Senior Engineers</p>
           </div>
         </div>

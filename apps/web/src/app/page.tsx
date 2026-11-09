@@ -14,12 +14,12 @@ export const metadata: Metadata = {
   title: siteConfig.title,
   description: siteConfig.description,
   alternates: {
-    canonical: 'https://www.palnadu.dev/',
+    canonical: siteConfig.url,
   },
   openGraph: {
     type: 'website',
     locale: 'en_IN',
-    url: 'https://www.palnadu.dev/',
+    url: siteConfig.url,
     title: siteConfig.title,
     description: siteConfig.description,
     siteName: siteConfig.name,
