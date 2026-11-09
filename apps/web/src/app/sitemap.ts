@@ -7,6 +7,8 @@ import {
   type BlogLocale,
 } from '@palnadu/config';
 import { api } from '@/lib/api';
+import { caseStudies } from './work/work-data';
+import { industrySectors } from './industries/industries-data';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = siteConfig.url;
@@ -57,12 +59,27 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.8,
   }));
 
-  // ── Dynamic: published case studies ──
-  let caseStudyPages: MetadataRoute.Sitemap = [];
+  // ── Industry sector pages ──
+  const industryPages: MetadataRoute.Sitemap = industrySectors.map((sector) => ({
+    url: `${baseUrl}/industries/${sector.slug}`,
+    lastModified: new Date(),
+    changeFrequency: 'monthly' as const,
+    priority: 0.7,
+  }));
+
+  // ── Dynamic & Verified case studies ──
+  const staticCaseStudyEntries: MetadataRoute.Sitemap = caseStudies.map((study) => ({
+    url: `${baseUrl}/work/${study.slug}`,
+    lastModified: new Date(),
+    changeFrequency: 'monthly' as const,
+    priority: 0.8,
+  }));
+
+  let caseStudyPages: MetadataRoute.Sitemap = [...staticCaseStudyEntries];
   try {
     const res: any = await api.caseStudies.list();
     const studies = res?.data || [];
-    caseStudyPages = studies
+    const dynamicEntries = studies
       .filter((study: any) => study.status === 'PUBLISHED' || !study.status)
       .map((study: any) => ({
         url: `${baseUrl}/work/${study.slug}`,
@@ -70,14 +87,19 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         changeFrequency: 'monthly' as const,
         priority: 0.8,
       }));
+
+    const seen = new Set(staticCaseStudyEntries.map((e) => e.url));
+    for (const d of dynamicEntries) {
+      if (!seen.has(d.url)) {
+        caseStudyPages.push(d);
+        seen.add(d.url);
+      }
+    }
   } catch {
-    caseStudyPages = [];
+    caseStudyPages = staticCaseStudyEntries;
   }
 
   // ── Dynamic: published & archived blog posts, both languages ──
-  // Deliberately unfiltered by language: every locale gets its own URL.
-  // Entries are deduplicated by URL and carry hreflang alternates only for
-  // translations that exist in this same dataset.
   let blogPages: MetadataRoute.Sitemap = [];
   try {
     const res: any = await api.blog.list({ page: '1', limit: '500', includeArchived: 'true' });
@@ -103,5 +125,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     blogPages = [];
   }
 
-  return [...staticPages, ...teBlogIndex, ...servicePages, ...caseStudyPages, ...blogPages];
+  return [
+    ...staticPages,
+    ...teBlogIndex,
+    ...servicePages,
+    ...industryPages,
+    ...caseStudyPages,
+    ...blogPages,
+  ];
 }
