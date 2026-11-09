@@ -23,9 +23,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const location = coreLocations.find((l) => l.slug === slug);
 
-  if (!location) return { title: 'Location Not Found | Palnadu.dev' };
+  if (!location) return { title: 'Location Not Found' };
 
-  const title = `Web Development, Software & Digital Solutions in ${location.name} | Palnadu.dev`;
+  const title = `Web Development, Software & Digital Solutions in ${location.name}`;
   const description = `${location.tagline}. Professional web development, custom software engineering, and digital growth solutions for businesses in ${location.name}, Andhra Pradesh.`;
 
   return {
