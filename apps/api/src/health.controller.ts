@@ -8,11 +8,10 @@ export class HealthController {
   @Get()
   async check() {
     try {
-      const servicesCount = await this.prisma.service.count();
+      const isDbAlive = await this.prisma.ping();
       return {
-        status: 'ok',
-        database: 'connected',
-        servicesCount,
+        status: isDbAlive ? 'ok' : 'degraded',
+        database: isDbAlive ? 'connected' : 'disconnected',
         env: process.env.NODE_ENV,
         dbUrlConfigured: !!process.env.DATABASE_URL,
         dbUrlType: process.env.DATABASE_URL?.startsWith('mongodb') ? 'mongodb' : 'other',
