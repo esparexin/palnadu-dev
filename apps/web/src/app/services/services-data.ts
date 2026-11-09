@@ -46,8 +46,23 @@ export const actualServiceDetails: Record<string, { summary: string; deliverable
   },
   'digital-marketing': {
     summary:
-      'Search engine optimization and Google Business Profile management designed to help regional customers find your business when looking for your services.',
-    deliverables: ['Technical SEO', 'Google Maps Visibility', 'Local Directory Listings', 'Lead Tracking'],
+      'Search engine optimization, Google Business Profile management, and content strategy designed to build authority and drive commercial inbound leads.',
+    deliverables: ['Google Maps Visibility', 'Local Directory Listings', 'Content Strategy', 'Lead Funnels'],
+  },
+  'seo-aeo-geo': {
+    summary:
+      'Unified search optimization spanning technical SEO, Answer Engine Optimization (AEO), and Generative Engine Optimization (GEO) for search engines and AI models.',
+    deliverables: ['Technical SEO Audits', 'AEO Answer Structuring', 'GEO AI Crawler Optimization', 'Local Knowledge Graph'],
+  },
+  'software-testing-qa': {
+    summary:
+      'Automated regression testing, cross-device responsiveness verification, and manual quality assurance for reliable production software.',
+    deliverables: ['Automated E2E Tests', 'Mobile Responsiveness QA', 'Security & Vulnerability Audits', 'Core Web Vitals Gates'],
+  },
+  'practical-training': {
+    summary:
+      'Hands-on practical training in website development, web applications, software engineering, QA testing, and digital marketing mentored by engineers.',
+    deliverables: ['Production Next.js Projects', 'Git & CI/CD Workflows', 'QA & Test Automation', 'Technical SEO Mastery'],
   },
   'technical-consulting': {
     summary:
@@ -116,6 +131,24 @@ export const products = [
     link: '/services/digital-marketing',
     thumbnail:
       'https://cdn.21st.dev/assets/mirror/e5/e51c0891a3642cb996939dbd684f05c25be0eaae0b07d35e3bc116f4ac27851c.png',
+  },
+  {
+    title: 'Technical SEO, AEO & GEO',
+    link: '/services/seo-aeo-geo',
+    thumbnail:
+      'https://cdn.21st.dev/assets/mirror/3d/3d180ec296d869336365946cb2daefe986ecbd39d8a5d4a4048609ec1cb7ebbb.png',
+  },
+  {
+    title: 'Software Testing & QA',
+    link: '/services/software-testing-qa',
+    thumbnail:
+      'https://cdn.21st.dev/assets/mirror/b5/b51f454a6a9bb89c7d7e7fc105f7d160f1153025cdf67e5c64a51a9b63c4a573.png',
+  },
+  {
+    title: 'Practical Software Training',
+    link: '/services/practical-training',
+    thumbnail:
+      'https://cdn.21st.dev/assets/mirror/3c/3cc4bdb349803dd76c89837cc1ca7dd4a113515584aa000312d80fdb1a413f04.png',
   },
   {
     title: 'Technical Consulting',
