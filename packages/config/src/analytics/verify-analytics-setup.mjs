@@ -96,3 +96,4 @@ for (const rel of filesToCheck) {
 console.log(`  ✅ All ${filesToCheck.length} source files strictly respect the 249-line maximum`);
 
 console.log('\n🎉 All Analytics & Marketing Intelligence checks PASSED cleanly!\n');
+
