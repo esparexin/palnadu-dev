@@ -109,11 +109,11 @@ Provide 4 direct, candid sections without fluff or emojis:
 4. Core Owner Questions: What business owners must verify before signing a development contract.`;
 
         const res = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${this.geminiApiKey}`,
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent?key=${this.geminiApiKey}`,
           {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            signal: AbortSignal.timeout(12000),
+            signal: AbortSignal.timeout(20000),
             body: JSON.stringify({
               contents: [{ role: 'user', parts: [{ text: prompt }] }],
               generationConfig: { temperature: 0.4 },
@@ -153,7 +153,8 @@ Core engineering principles:
 5. Zero asterisks: Do NOT use bold asterisks (**text**) or italic asterisks (*text*) anywhere in headings, paragraphs, bullet lists, or tables. Write clean, natural prose using standard sentences. Never decorate words with double or single asterisks.
 6. Formatting: Write clean, readable paragraphs. Use bullet points or comparison tables only where structurally necessary for technical specifications or checklists.
 7. Zero plagiarism: Formulate 100% original sentence structures and real practical examples from ${locationContext}.
-8. SEO Keywords: Weave target keywords naturally into the title, the first 100 words, at least one H2 heading, and 2-3 body paragraphs without keyword stuffing.`;
+8. SEO Keywords: Weave target keywords naturally into the title, the first 100 words, at least one H2 heading, and 2-3 body paragraphs without keyword stuffing.
+9. Length & Depth Requirement: The "content" body must be at least 750 words (aim for 850-1100 words) with deep, practical operational advice across at least 5 distinct sections with H2 headings (## Heading).`;
 
     const intentGuidance = INTENT_GUIDANCE[s.searchIntent] ?? INTENT_GUIDANCE.INFORMATIONAL;
     const languageDirective = writeTelugu
@@ -170,6 +171,7 @@ INTERNAL LINKS: ${s.internalLinks.map((l) => `${l.url} ("${l.anchor}")`).join(',
 EXTERNAL REFERENCES: ${s.externalReferences.map((r) => `${r.title} (${r.url})`).join(', ') || 'none'}
 IMAGE SUGGESTIONS: ${s.imageSuggestions.map((i) => `"${i.alt}"`).join(', ') || 'none'}
 FAQ: ${s.faqOpportunities.join(', ') || 'none'}
+LENGTH MANDATE: The "content" field must contain at least 750 words (comprehensive in-depth technical guide with at least 4 to 6 H2 sections). Do not shorten or truncate.
 Return strictly a valid JSON object with title, slug, excerpt, content, h1, metaTitle, metaDescription, seoTitle, seoDescription, primaryKeyword, secondaryKeywords, relatedKeywords, longTailKeywords, searchIntent, h2Headings, h3Headings, internalLinks, externalReferences, imageSuggestions, faq, tags.`;
 
     const keys = { geminiApiKey: this.geminiApiKey, anthropicApiKey: this.anthropicApiKey, openaiApiKey: this.openaiApiKey };

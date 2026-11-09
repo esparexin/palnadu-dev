@@ -5,7 +5,10 @@ import type { CheckResult } from './seo-validation-types';
 export function checkKeywordRelevance(d: GeneratedBlogDraft): CheckResult {
   const primary = (d.primaryKeyword ?? '').trim().toLowerCase();
   const body = d.content.toLowerCase();
-  const primaryInBody = primary.length > 0 && body.includes(primary);
+  const title = (d.title ?? '').toLowerCase();
+  const words = primary.split(/\s+/).filter((w) => w.length > 2);
+  const allWordsPresent = words.length > 0 && words.every((w) => body.includes(w) || title.includes(w));
+  const primaryInBody = primary.length > 0 && (body.includes(primary) || title.includes(primary) || allWordsPresent);
   const secondaryCount = d.secondaryKeywords?.length ?? 0;
 
   return {
@@ -25,13 +28,15 @@ export function checkKeywordRelevance(d: GeneratedBlogDraft): CheckResult {
 export function checkContentOriginality(
   d: GeneratedBlogDraft,
   wordCount: number,
+  isTelugu = false,
 ): { originalityCheck: CheckResult; templateMarkerCheck: CheckResult } {
   const primary = (d.primaryKeyword ?? '').trim().toLowerCase();
   const body = d.content.toLowerCase();
   const occurrences = primary ? body.split(primary).length - 1 : 0;
   const density = wordCount > 0 ? occurrences / wordCount : 0;
   const stuffed = primary.length > 0 && density > 0.03;
-  const tooShort = wordCount < 600;
+  const minWords = isTelugu ? 400 : 600;
+  const tooShort = wordCount < minWords;
   const isTemplate = d.isTemplateFallback === true;
 
   const originalityCheck: CheckResult = {
@@ -41,7 +46,7 @@ export function checkContentOriginality(
     detail: isTemplate
       ? 'generated from the static fallback template (identical body for every topic) - must not be auto-published'
       : tooShort
-        ? `article too short (${wordCount} words, minimum 600)`
+        ? `article too short (${wordCount} words, minimum ${minWords})`
         : stuffed
           ? `keyword density ${(density * 100).toFixed(2)}% for "${primary}" exceeds 3% (stuffing)`
           : `${wordCount} words, primary keyword density ${(density * 100).toFixed(2)}%`,

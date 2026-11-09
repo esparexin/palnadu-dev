@@ -1,6 +1,6 @@
 import { Injectable, Logger, Optional } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
-import type { PrismaService } from '../prisma.service';
+import { PrismaService } from '../prisma.service';
 import { PageSpeedInsightsSource } from './seo-sources';
 
 export interface CrawlIssue {

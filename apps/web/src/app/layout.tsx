@@ -30,7 +30,7 @@ export const viewport: Viewport = {
 };
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
-const GTM_ID = process.env.NEXT_PUBLIC_GTM_ID || 'GTM-NQL8ZJKP';
+const GTM_ID = process.env.NEXT_PUBLIC_GTM_ID || 'GTM-TTNNVNM5';
 const GA_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID || 'G-65H205CD90';
 
 interface ActiveBranding {

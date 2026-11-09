@@ -115,7 +115,7 @@ export class BlogQueueService {
       where: {
         status: TopicStatus.PENDING,
         attempts: { lt: maxAttempts },
-        OR: [{ nextRetryAt: null }, { nextRetryAt: { lte: now } }],
+        OR: [{ nextRetryAt: null }, { nextRetryAt: { isSet: false } as any }, { nextRetryAt: { lte: now } }],
       },
       orderBy: { createdAt: 'asc' },
     });
@@ -125,7 +125,7 @@ export class BlogQueueService {
       where: {
         id: candidate.id,
         status: { in: [TopicStatus.PENDING, TopicStatus.FAILED] },
-        OR: [{ claimedAt: null }, { claimedAt: { lt: staleBefore } }],
+        OR: [{ claimedAt: null }, { claimedAt: { isSet: false } as any }, { claimedAt: { lt: staleBefore } }],
       },
       data: { status: TopicStatus.CLAIMED, claimedAt: now, claimedBy: workerId },
     });
@@ -147,7 +147,7 @@ export class BlogQueueService {
         status: TopicStatus.PENDING,
         language,
         attempts: { lt: maxAttempts },
-        OR: [{ nextRetryAt: null }, { nextRetryAt: { lte: now } }],
+        OR: [{ nextRetryAt: null }, { nextRetryAt: { isSet: false } as any }, { nextRetryAt: { lte: now } }],
       },
       orderBy: { createdAt: 'asc' },
     });
@@ -157,7 +157,7 @@ export class BlogQueueService {
       where: {
         id: candidate.id,
         status: { in: [TopicStatus.PENDING, TopicStatus.FAILED] },
-        OR: [{ claimedAt: null }, { claimedAt: { lt: staleBefore } }],
+        OR: [{ claimedAt: null }, { claimedAt: { isSet: false } as any }, { claimedAt: { lt: staleBefore } }],
       },
       data: { status: TopicStatus.CLAIMED, claimedAt: now, claimedBy: workerId },
     });

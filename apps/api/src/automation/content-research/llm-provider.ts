@@ -18,7 +18,7 @@ export async function callLlmProvider(
 
   // 1. Try Google Gemini if configured (with automatic model resilience fallback)
   if (geminiApiKey) {
-    const geminiModels = ['gemini-3.6-flash', 'gemini-3.5-flash', 'gemini-3.8-flash'];
+    const geminiModels = ['gemini-3.1-flash-lite', 'gemini-3-flash-preview'];
     for (const model of geminiModels) {
       try {
         const res = await fetch(
@@ -26,7 +26,7 @@ export async function callLlmProvider(
           {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            signal: AbortSignal.timeout(45000),
+            signal: AbortSignal.timeout(60000),
             body: JSON.stringify({
               contents: [
                 {
