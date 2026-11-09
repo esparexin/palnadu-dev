@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { siteConfig } from '@palnadu/config';
+import { siteConfig, getBreadcrumbSchema } from '@palnadu/config';
 
 export const metadata: Metadata = {
   title: 'Terms of Service',
@@ -10,15 +10,44 @@ export const metadata: Metadata = {
 };
 
 export default function TermsPage() {
+  const webPageJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'WebPage',
+    '@id': `${siteConfig.url}/terms/#webpage`,
+    url: `${siteConfig.url}/terms`,
+    name: 'Terms of Service | Palnadu.dev',
+    description: 'Terms of service, engineering standards, and intellectual property terms for Palnadu.dev software engineering studio.',
+    isPartOf: {
+      '@type': 'WebSite',
+      '@id': `${siteConfig.url}/#website`,
+      name: siteConfig.name,
+      url: siteConfig.url,
+    },
+  };
+
+  const breadcrumbJsonLd = getBreadcrumbSchema([
+    { name: 'Home', path: '' },
+    { name: 'Terms of Service', path: '/terms' },
+  ]);
+
   return (
-    <div className="bg-white">
-      <section className="py-14 sm:py-20">
-        <div className="container">
-          <div className="mx-auto max-w-3xl prose prose-slate prose-headings:text-palnadu-dark prose-p:text-palnadu-body prose-a:text-palnadu-blue">
-            <h1 className="text-3xl sm:text-4xl font-extrabold text-palnadu-dark">Terms of Service</h1>
-            <p className="text-xs font-mono text-palnadu-secondary">
-              Effective Date: {new Date().toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' })}
-            </p>
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(webPageJsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
+      />
+      <div className="bg-white">
+        <section className="py-14 sm:py-20">
+          <div className="container">
+            <div className="mx-auto max-w-3xl prose prose-slate prose-headings:text-palnadu-dark prose-p:text-palnadu-body prose-a:text-palnadu-blue">
+              <h1 className="text-3xl sm:text-4xl font-extrabold text-palnadu-dark">Terms of Service</h1>
+              <p className="text-xs font-mono text-palnadu-secondary">
+                Effective Date: November 1, 2026
+              </p>
 
             <p className="lead">
               These Terms of Service (&quot;Terms&quot;) govern the access, utilization, and contractual engagement of software engineering, web application development, and technical consulting services provided by Palnadu.dev (&quot;Company,&quot; &quot;we,&quot; &quot;our,&quot; or &quot;us&quot;). By accessing our website or engaging us for software services, you agree to be bound by these Terms.
@@ -92,5 +121,6 @@ export default function TermsPage() {
         </div>
       </section>
     </div>
+    </>
   );
 }
