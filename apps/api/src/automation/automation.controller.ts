@@ -4,7 +4,6 @@ import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { UserRole, BlogLanguage } from '@prisma/client';
 import { BlogAutomationService } from './blog-automation.service';
-import { FreeKeywordResearchService } from './free-keyword-research.service';
 import { TopicDiscoveryService } from './topic-discovery.service';
 import { PrismaService } from '../prisma.service';
 import { ZodValidationPipe } from '../common/pipes/zod-validation.pipe';
@@ -19,32 +18,18 @@ import {
   type AutomationBilingualInput,
 } from '@palnadu/validation';
 
+export * from './webmaster-automation.controller';
+export * from './keyword-research.controller';
+
 @Controller('admin/automation')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.EDITOR)
 export class AutomationController {
   constructor(
     private automationService: BlogAutomationService,
-    private keywordService: FreeKeywordResearchService,
     private discoveryService: TopicDiscoveryService,
     private prisma: PrismaService,
   ) {}
-
-  @Get('keywords')
-  async getKeywords(
-    @Query('seed') seed?: string,
-    @Query('location') location?: string,
-  ) {
-    const topic = seed || 'billing software for shop';
-    const suggestions = await this.keywordService.discoverKeywords(topic, location);
-    return {
-      success: true,
-      query: topic,
-      location: location || 'Guntur & Palnadu',
-      count: suggestions.length,
-      data: suggestions,
-    };
-  }
 
   @Get('status')
   async getStatus() {
@@ -53,9 +38,7 @@ export class AutomationController {
   }
 
   /**
-   * Availability and capabilities of every reference source. Sources requiring
-   * credentials report `unconfigured` until those are provisioned; nothing is
-   * scraped and no private data is implied by a public URL.
+   * Availability, confidence tier, and capabilities of every reference source.
    */
   @Get('sources')
   async getSources() {
@@ -66,8 +49,12 @@ export class AutomationController {
         ...s,
         note:
           s.availability === 'unconfigured'
-            ? 'Requires an account or API credential. No public data is available for this source.'
-            : 'Public endpoint, no credential required.',
+            ? 'Optional Google OAuth/Developer credential not configured. Not required for auto-blogging.'
+            : s.confidence === 'verified_google'
+              ? 'Active: Verified Google search endpoint (zero credentials required).'
+              : s.confidence === 'ai_suggestion'
+                ? 'Active: AI-assisted research powered by Gemini & Google query patterns (zero paid subscriptions required).'
+                : 'Active: Verified external research endpoint.',
       })),
     };
   }

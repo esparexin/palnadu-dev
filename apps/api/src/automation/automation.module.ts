@@ -1,14 +1,27 @@
 import { Module } from '@nestjs/common';
 import { ScheduleModule } from '@nestjs/schedule';
 import { PrismaModule } from '../prisma.module';
-import { BlogAutomationService } from './blog-automation.service';
+import {
+  BlogAutomationService,
+  BlogQueueService,
+  BlogComposerService,
+  BlogPublisherService,
+  BlogBilingualService,
+  BlogStatusService,
+  BlogBatchService,
+} from './blog-automation.service';
 import { ContentResearchService } from './content-research.service';
 import { ImageSourcingService } from './image-sourcing.service';
 import { FreeKeywordResearchService } from './free-keyword-research.service';
 import { TopicDiscoveryService } from './topic-discovery.service';
 import { ContentSimilarityService } from './content-similarity.service';
 import { SeoValidationService } from './seo-validation.service';
-import { AutomationController } from './automation.controller';
+import { TechnicalSeoCrawlerService } from './technical-seo-crawler.service';
+import {
+  AutomationController,
+  WebmasterAutomationController,
+  KeywordResearchController,
+} from './automation.controller';
 
 // Reference sources. Credential-gated adapters are always registered so the
 // admin UI can report their status; each reports itself unavailable until its
@@ -23,6 +36,8 @@ import {
   AhrefsSource,
   AnswerThePublicSource,
   ScreamingFrogSource,
+  BingWebmasterSource,
+  IndexNowSource,
   ReferenceSource,
   REFERENCE_SOURCES,
 } from './seo-sources';
@@ -35,15 +50,26 @@ export { REFERENCE_SOURCES };
     ScheduleModule.forRoot(),
     PrismaModule,
   ],
-  controllers: [AutomationController],
+  controllers: [
+    AutomationController,
+    WebmasterAutomationController,
+    KeywordResearchController,
+  ],
   providers: [
     BlogAutomationService,
+    BlogQueueService,
+    BlogComposerService,
+    BlogPublisherService,
+    BlogBilingualService,
+    BlogStatusService,
+    BlogBatchService,
     ContentResearchService,
     ImageSourcingService,
     FreeKeywordResearchService,
     TopicDiscoveryService,
     ContentSimilarityService,
     SeoValidationService,
+    TechnicalSeoCrawlerService,
 
     GoogleAutocompleteSource,
     GoogleTrendsSource,
@@ -54,6 +80,8 @@ export { REFERENCE_SOURCES };
     AhrefsSource,
     AnswerThePublicSource,
     ScreamingFrogSource,
+    BingWebmasterSource,
+    IndexNowSource,
     {
       provide: REFERENCE_SOURCES,
       inject: [
@@ -66,18 +94,31 @@ export { REFERENCE_SOURCES };
         AhrefsSource,
         AnswerThePublicSource,
         ScreamingFrogSource,
+        BingWebmasterSource,
+        IndexNowSource,
       ],
       useFactory: (...sources: ReferenceSource[]): ReferenceSource[] => sources,
     },
   ],
   exports: [
     BlogAutomationService,
+    BlogQueueService,
+    BlogComposerService,
+    BlogPublisherService,
+    BlogBilingualService,
+    BlogStatusService,
+    BlogBatchService,
     ContentResearchService,
     ImageSourcingService,
     FreeKeywordResearchService,
     TopicDiscoveryService,
     ContentSimilarityService,
     SeoValidationService,
+    TechnicalSeoCrawlerService,
+    GoogleSearchConsoleSource,
+    BingWebmasterSource,
+    IndexNowSource,
+    PageSpeedInsightsSource,
     REFERENCE_SOURCES,
   ],
 })

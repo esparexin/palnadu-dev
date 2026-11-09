@@ -445,3 +445,83 @@ model Notification {
   @@index([userId, read])
   @@map("notifications")
 }
+
+// ─── SEO Management & Optimization Models ─────────────────────
+
+model SeoAuditResult {
+  id               String   @id @default(auto()) @map("_id") @db.ObjectId
+  crawlUrl         String
+  status           String   @default("COMPLETED")
+  performanceScore Float?
+  seoScore         Float?
+  pagesCrawled     Int      @default(0)
+  brokenLinks      Json?
+  missingAltTags   Json?
+  issues           Json?
+  summary          String?
+  durationMs       Int?
+  createdAt        DateTime @default(now())
+
+  @@index([crawlUrl, createdAt(sort: Desc)])
+  @@map("seo_audit_results")
+}
+
+model KeywordTarget {
+  id             String   @id @default(auto()) @map("_id") @db.ObjectId
+  keyword        String   @unique
+  location       String?
+  intent         String   @default("informational")
+  targetUrl      String?
+  currentRank    Int?
+  previousRank   Int?
+  confidence     String   @default("verified_google")
+  monthlyVolume  Int?
+  difficulty     Int?
+  cpc            Float?
+  competitorUrl  String?
+  notes          String?
+  active         Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([location, active])
+  @@map("keyword_targets")
+}
+
+model SearchConsoleSnapshot {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  siteUrl     String
+  date        String
+  query       String?
+  page        String?
+  device      String?
+  country     String?
+  clicks      Int      @default(0)
+  impressions Int      @default(0)
+  ctr         Float    @default(0.0)
+  position    Float    @default(0.0)
+  createdAt   DateTime @default(now())
+
+  @@index([siteUrl, date(sort: Desc)])
+  @@index([query, date(sort: Desc)])
+  @@map("search_console_snapshots")
+}
+
+model LocalCitation {
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  directoryName   String
+  listingUrl      String?
+  location        String   @default("Macherla")
+  napStatus       String   @default("CONSISTENT")
+  verified        Boolean  @default(false)
+  phoneReported   String?
+  addressReported String?
+  notes           String?
+  lastCheckedAt   DateTime @default(now())
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@unique([directoryName, location])
+  @@map("local_citations")
+}
+

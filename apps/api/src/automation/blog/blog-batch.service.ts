@@ -1,0 +1,91 @@
+import { Injectable, Logger } from '@nestjs/common';
+import { PrismaService } from '../../prisma.service';
+import { TopicStatus } from '@prisma/client';
+import { allocateQuota, BilingualQuota } from '../bilingual-quota';
+import { BlogQueueService } from './blog-queue.service';
+import { ClaimedTopic, GenerationResult, RejectedTopic, RejectionReason } from './types';
+
+@Injectable()
+export class BlogBatchService {
+  private readonly logger = new Logger(BlogBatchService.name);
+
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly queueService: BlogQueueService,
+  ) {}
+
+  async generateBatch(
+    count = 5,
+    forcePublish = false,
+    workerId = `manual:${process.pid}:${Date.now()}`,
+    generateFn: (topic: ClaimedTopic, forcePublish: boolean, workerId: string) => Promise<GenerationResult>,
+  ): Promise<{ results: GenerationResult[]; rejected: RejectedTopic[] }> {
+    const results: GenerationResult[] = [];
+    const rejected: RejectedTopic[] = [];
+
+    for (let i = 0; i < count; i++) {
+      const topic = await this.queueService.claimNextTopic(workerId, this.queueService.maxAttempts);
+      if (!topic) break;
+      await this.attemptTopic(topic, forcePublish, workerId, results, rejected, generateFn);
+    }
+
+    return { results, rejected };
+  }
+
+  async generateBilingualBatch(
+    quota: BilingualQuota,
+    forcePublish = false,
+    workerId = `manual:${process.pid}:${Date.now()}`,
+    generateFn: (topic: ClaimedTopic, forcePublish: boolean, workerId: string) => Promise<GenerationResult>,
+  ): Promise<{ results: GenerationResult[]; rejected: RejectedTopic[] }> {
+    const results: GenerationResult[] = [];
+    const rejected: RejectedTopic[] = [];
+
+    const pending = await this.prisma.blogTopic.findMany({
+      where: { status: TopicStatus.PENDING, attempts: { lt: this.queueService.maxAttempts } },
+      orderBy: { createdAt: 'asc' },
+    });
+    const selected = allocateQuota(pending, quota);
+
+    for (const row of selected) {
+      const topic = await this.queueService.claimNextTopicForLanguage(workerId, row.language, this.queueService.maxAttempts);
+      if (!topic) continue;
+      await this.attemptTopic(topic, forcePublish, workerId, results, rejected, generateFn);
+    }
+
+    return { results, rejected };
+  }
+
+  async attemptTopic(
+    topic: ClaimedTopic,
+    forcePublish: boolean,
+    workerId: string,
+    results: GenerationResult[],
+    rejected: RejectedTopic[],
+    generateFn: (topic: ClaimedTopic, forcePublish: boolean, workerId: string) => Promise<GenerationResult>,
+  ): Promise<void> {
+    const topicKey = topic.topicKey;
+    try {
+      const generated = await generateFn(topic, forcePublish, workerId);
+      results.push(generated);
+    } catch (err) {
+      const detail = err instanceof Error ? err.message : String(err);
+      const reason: RejectionReason = detail.startsWith('validation:') ? 'validation_failed' : 'generation_failed';
+      rejected.push({ topicKey, topic: topic.topic, reason, detail });
+
+      const permanent = reason === 'validation_failed';
+      await this.prisma.blogTopic.update({
+        where: { topicKey_language: { topicKey, language: topic.language } },
+        data: {
+          attempts: { increment: 1 },
+          lastError: detail.slice(0, 500),
+          status: permanent ? TopicStatus.FAILED : TopicStatus.PENDING,
+          nextRetryAt: permanent ? null : new Date(Date.now() + this.queueService.retryDelayMs),
+          claimedAt: null,
+          claimedBy: null,
+        },
+      });
+      this.logger.error(`topicKey="${topicKey}" ${reason}: ${detail}`);
+    }
+  }
+}

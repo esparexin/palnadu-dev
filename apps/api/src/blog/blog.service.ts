@@ -1,7 +1,8 @@
 import { Injectable, ConflictException, BadRequestException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
 import { Prisma, PublishStatus, BlogLanguage } from '@prisma/client';
-import { canJoinGroup, parseLanguageValue, SupportedLanguage } from './blog-translations';
+import { parseLanguageValue } from './blog-translations';
+import { assertCanJoinGroup, linkBlogTranslations } from './blog-translation-manager';
 
 /** Languages the API accepts. Anything else is a client error, not a silent default. */
 export function parseLanguage(value: unknown): BlogLanguage | undefined {
@@ -28,7 +29,7 @@ export class BlogService {
 
     const { translationGroupId, ...rest } = data;
     if (translationGroupId !== undefined && translationGroupId !== null) {
-      await this.assertCanJoinGroup(translationGroupId, { id: '', language });
+      await assertCanJoinGroup(this.prisma, translationGroupId, { id: '', language });
     }
 
     return this.prisma.blogPost.create({
@@ -37,10 +38,6 @@ export class BlogService {
     });
   }
 
-  // Public: published articles (and optionally archived articles).
-  // `language` is intentionally NOT defaulted: the API stays backward
-  // compatible (no param = all languages, as before) and each caller passes
-  // its own locale explicitly (`/blog` passes `en`, `/te/blog/...` passes `te`).
   async findPublished(params: {
     page?: number;
     limit?: number;
@@ -87,19 +84,10 @@ export class BlogService {
 
     return {
       data: posts,
-      meta: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit),
-      },
+      meta: { page, limit, total, totalPages: Math.ceil(total / limit) },
     };
   }
 
-  // Public: single post by slug, scoped to one language, with related posts
-  // in the same language and the published translations for hreflang.
-  // `language` defaults to `en` so existing English URLs keep resolving
-  // exactly as before.
   async findBySlug(slug: string, language: BlogLanguage = BlogLanguage.en) {
     const post = await this.prisma.blogPost.findFirst({
       where: {
@@ -115,9 +103,6 @@ export class BlogService {
 
     if (!post) return null;
 
-    // Related posts stay in the same language: linking a Telugu article to an
-    // English `/blog/<slug>` URL (or vice versa) would 404 under the
-    // language-scoped routes.
     const relatedPosts = await this.prisma.blogPost.findMany({
       where: {
         status: { in: [PublishStatus.PUBLISHED, PublishStatus.ARCHIVED] },
@@ -140,9 +125,6 @@ export class BlogService {
       },
     });
 
-    // Published translations for hreflang. Draft translations are excluded:
-    // emitting an hreflang alternate to an unpublished URL is worse than
-    // emitting none.
     const translations = post.translationGroupId
       ? await this.prisma.blogPost.findMany({
           where: {
@@ -157,103 +139,10 @@ export class BlogService {
     return { ...post, relatedPosts, translations };
   }
 
-  /**
-   * Links posts as localized versions of each other.
-   *
-   * Explicit and group-scoped: at most one post per language may belong to a
-   * group, so a second Telugu article for an already-translated subject is
-   * refused rather than silently attached. Pass explicit ids; nothing is
-   * inferred from matching topicKeys.
-   */
-  async linkTranslations(postIds: string[], groupId?: string): Promise<{ translationGroupId: string; members: { id: string; slug: string; language: BlogLanguage }[] }> {
-    if (postIds.length === 0) {
-      throw new BadRequestException('At least one post id is required to form a translation group');
-    }
-
-    const posts = await this.prisma.blogPost.findMany({
-      where: { id: { in: postIds } },
-      select: { id: true, slug: true, language: true, translationGroupId: true },
-    });
-    if (posts.length !== postIds.length) {
-      const found = new Set(posts.map((p) => p.id));
-      throw new BadRequestException(
-        `Unknown post id(s): ${postIds.filter((id) => !found.has(id)).join(', ')}`,
-      );
-    }
-
-    const seen = new Set<SupportedLanguage>();
-    for (const p of posts) {
-      const lang = p.language as SupportedLanguage;
-      if (seen.has(lang)) {
-        throw new ConflictException(
-          `Language '${lang}' is already represented in this group; one post per language only`,
-        );
-      }
-      seen.add(lang);
-    }
-
-    // Members already grouped elsewhere keep their existing group only if it
-    // is the same one being formed here; otherwise refuse rather than move.
-    const foreignGroups = new Set(
-      posts.map((p) => p.translationGroupId).filter((g): g is string => !!g && g !== groupId),
-    );
-    if (groupId && foreignGroups.size > 0) {
-      throw new ConflictException(
-        `Post(s) already belong to another translation group: ${[...foreignGroups].join(', ')}`,
-      );
-    }
-
-    const translationGroupId =
-      groupId ?? `tg_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
-
-    // If merging into an existing group, the stored members count too.
-    if (groupId) {
-      const siblings = await this.prisma.blogPost.findMany({
-        where: { translationGroupId: groupId, id: { notIn: postIds } },
-        select: { id: true, language: true },
-      });
-      for (const s of siblings) {
-        if (!canJoinGroup(posts.map((p) => ({ id: p.id, language: p.language as SupportedLanguage })), { id: s.id, language: s.language as SupportedLanguage })) {
-          throw new ConflictException(
-            `Language '${s.language}' is already represented in group '${groupId}'`,
-          );
-        }
-      }
-    }
-
-    await this.prisma.blogPost.updateMany({
-      where: { id: { in: postIds } },
-      data: { translationGroupId },
-    });
-
-    const members = await this.prisma.blogPost.findMany({
-      where: { translationGroupId },
-      select: { id: true, slug: true, language: true },
-    });
-    return { translationGroupId, members };
+  async linkTranslations(postIds: string[], groupId?: string) {
+    return linkBlogTranslations(this.prisma, postIds, groupId);
   }
 
-  /** Shared by create/update: one post per language per group. */
-  private async assertCanJoinGroup(
-    translationGroupId: string,
-    candidate: { id: string; language: BlogLanguage },
-  ): Promise<void> {
-    const siblings = await this.prisma.blogPost.findMany({
-      where: { translationGroupId, id: { not: candidate.id } },
-      select: { id: true, language: true },
-    });
-    const ok = canJoinGroup(
-      siblings.map((s) => ({ id: s.id, language: s.language as SupportedLanguage })),
-      { id: candidate.id, language: candidate.language as SupportedLanguage },
-    );
-    if (!ok) {
-      throw new ConflictException(
-        `Language '${candidate.language}' is already represented in translation group '${translationGroupId}'`,
-      );
-    }
-  }
-
-  // Admin: all posts
   async findAllAdmin(params: {
     page?: number;
     limit?: number;
@@ -292,12 +181,7 @@ export class BlogService {
 
     return {
       data: posts,
-      meta: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit),
-      },
+      meta: { page, limit, total, totalPages: Math.ceil(total / limit) },
     };
   }
 
@@ -317,8 +201,6 @@ export class BlogService {
     const nextLanguage = (data.language ?? existing.language) as BlogLanguage;
     const nextSlug = typeof data.slug === 'string' ? data.slug : existing.slug;
 
-    // Slug uniqueness is per language: moving a slug across languages (or
-    // renaming within one) must not collide with a sibling in that locale.
     if (nextSlug !== existing.slug || nextLanguage !== existing.language) {
       const clash = await this.prisma.blogPost.findUnique({
         where: { language_slug: { language: nextLanguage, slug: nextSlug } },
@@ -332,7 +214,7 @@ export class BlogService {
     const nextGroup =
       translationGroupId === undefined ? existing.translationGroupId : translationGroupId;
     if (nextGroup !== null && nextGroup !== undefined) {
-      await this.assertCanJoinGroup(nextGroup, { id, language: nextLanguage });
+      await assertCanJoinGroup(this.prisma, nextGroup, { id, language: nextLanguage });
     }
 
     return this.prisma.blogPost.update({
@@ -342,18 +224,13 @@ export class BlogService {
   }
 
   async delete(id: string) {
-    return this.prisma.blogPost.delete({
-      where: { id },
-    });
+    return this.prisma.blogPost.delete({ where: { id } });
   }
 
   async getPublishedCount() {
-    return this.prisma.blogPost.count({
-      where: { status: PublishStatus.PUBLISHED },
-    });
+    return this.prisma.blogPost.count({ where: { status: PublishStatus.PUBLISHED } });
   }
 
-  // Categories
   async getCategories() {
     return this.prisma.blogCategory.findMany({
       include: { _count: { select: { posts: true } } },

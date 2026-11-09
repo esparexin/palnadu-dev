@@ -1,6 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  poweredByHeader: false,
+  trailingSlash: false,
   transpilePackages: ['@palnadu/ui', '@palnadu/config', '@palnadu/types', '@palnadu/validation'],
   images: {
     formats: ['image/avif', 'image/webp'],
@@ -27,6 +29,22 @@ const nextConfig = {
       },
     ],
   },
+  async redirects() {
+    return [
+      // 301 Permanent Redirect: apex domain palnadu.dev -> canonical www.palnadu.dev
+      {
+        source: '/:path*',
+        has: [
+          {
+            type: 'host',
+            value: 'palnadu.dev',
+          },
+        ],
+        destination: 'https://www.palnadu.dev/:path*',
+        permanent: true,
+      },
+    ];
+  },
   async headers() {
     return [
       {
@@ -36,6 +54,7 @@ const nextConfig = {
           { key: 'X-Content-Type-Options', value: 'nosniff' },
           { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
           { key: 'X-DNS-Prefetch-Control', value: 'on' },
+          { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
         ],
       },
     ];
@@ -43,3 +62,4 @@ const nextConfig = {
 };
 
 module.exports = nextConfig;
+

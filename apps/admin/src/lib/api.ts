@@ -1,124 +1,9 @@
-import type {
-  AutomationCoverage,
-  AutomationReferenceSource,
-  AutomationStatus,
-  BilingualStatus,
-} from '@palnadu/types';
+import { adminApi, getToken, API_URL } from './api/client';
+import { automationApi } from './api/automation';
+import { settingsApi } from './api/settings';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+export { adminApi, getToken, API_URL };
 
-interface FetchOptions extends RequestInit {
-  params?: Record<string, string>;
-  timeoutMs?: number;
-}
-
-function getToken(): string | null {
-  if (typeof window === 'undefined') return null;
-  return localStorage.getItem('admin_token');
-}
-
-export async function adminApi<T>(endpoint: string, options: FetchOptions = {}): Promise<T> {
-  const { params, timeoutMs = 15000, ...fetchOptions } = options;
-  const token = getToken();
-
-  let url = `${API_URL}${endpoint}`;
-  if (params) {
-    const searchParams = new URLSearchParams(params);
-    url += `?${searchParams.toString()}`;
-  }
-
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
-  if (fetchOptions.signal) {
-    fetchOptions.signal.addEventListener('abort', () => controller.abort());
-  }
-
-  let response: Response;
-  try {
-    response = await fetch(url, {
-      headers: {
-        'Content-Type': 'application/json',
-        ...(token && { Authorization: `Bearer ${token}` }),
-        ...fetchOptions.headers,
-      },
-      ...fetchOptions,
-      signal: controller.signal,
-    });
-  } catch (networkErr: any) {
-    if (controller.signal.aborted && networkErr?.name === 'AbortError') {
-      throw new Error(`Request to ${endpoint} timed out after ${Math.round(timeoutMs / 1000)}s.`);
-    }
-    throw new Error(
-      'Unable to connect to the backend server. Please check your internet connection or verify the API is running.',
-    );
-  } finally {
-    clearTimeout(timeoutId);
-  }
-
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    const serverMessage = errorData.message || errorData.error;
-
-    // 1. Handle 401 Unauthorized (Differentiate login failure vs session expiry)
-    if (response.status === 401) {
-      // If error happened during an active login attempt
-      if (endpoint.includes('/auth/login')) {
-        throw new Error(
-          serverMessage || 'Invalid email or password. Please verify your credentials and try again.',
-        );
-      }
-
-      // If error happened on a protected route (session expired or token invalid)
-      if (typeof window !== 'undefined') {
-        localStorage.removeItem('admin_token');
-        localStorage.removeItem('admin_user');
-        if (window.location.pathname !== '/login') {
-          window.location.href = '/login?session=expired';
-        }
-      }
-      throw new Error(
-        serverMessage || 'Your session has expired. Please sign in again to continue.',
-      );
-    }
-
-    // 2. Handle 403 Forbidden (RBAC permission violation)
-    if (response.status === 403) {
-      throw new Error(
-        serverMessage || 'Access denied: You do not have sufficient permissions to perform this action.',
-      );
-    }
-
-    // 3. Handle 404 Not Found
-    if (response.status === 404) {
-      throw new Error(
-        serverMessage || 'The requested record or resource was not found.',
-      );
-    }
-
-    // 4. Handle 400 Bad Request
-    if (response.status === 400) {
-      throw new Error(
-        serverMessage || 'Invalid request. Please check your input parameters and try again.',
-      );
-    }
-
-    // 5. Handle 500+ Internal Server Errors
-    if (response.status >= 500) {
-      throw new Error(
-        serverMessage || 'A server error occurred. Please try again or contact the technical administrator.',
-      );
-    }
-
-    // Fallback error
-    throw new Error(
-      serverMessage || `Request failed with status code ${response.status}.`,
-    );
-  }
-
-  return response.json();
-}
-
-// Admin API calls
 export const api = {
   auth: {
     login: (data: { email: string; password: string }) =>
@@ -181,57 +66,7 @@ export const api = {
     delete: (id: string) => adminApi(`/api/admin/blog/${id}`, { method: 'DELETE' }),
     categories: () => adminApi('/api/blog/categories'),
   },
-  automation: {
-    status: () => adminApi<{ success: boolean; data: AutomationStatus }>('/api/admin/automation/status'),
-    generate: (data?: {
-      topic?: string;
-      categorySlug?: string;
-      targetLocation?: string;
-      forcePublish?: boolean;
-      batchCount?: number;
-      language?: 'en' | 'te';
-    }) =>
-      adminApi<{ success: boolean; message: string; data: any }>('/api/admin/automation/generate', {
-        method: 'POST',
-        body: JSON.stringify(data || {}),
-      }),
-    discover: (limit?: number) =>
-      adminApi<{
-        success: boolean;
-        message: string;
-        data: { discovered: number; enqueued: number; rejected: string[] };
-      }>('/api/admin/automation/discover', {
-        method: 'POST',
-        body: JSON.stringify({ limit: limit ?? 40 }),
-      }),
-    keywords: (seed?: string, location?: string) =>
-      adminApi<{ success: boolean; query: string; location: string; count: number; data: any[] }>(
-        `/api/admin/automation/keywords?seed=${encodeURIComponent(seed || '')}&location=${encodeURIComponent(location || '')}`,
-      ),
-    getBilingual: () =>
-      adminApi<{ success: boolean; data: BilingualStatus }>('/api/admin/automation/bilingual'),
-    updateBilingual: (data: { enabled?: boolean; te?: number; en?: number }) =>
-      adminApi<{ success: boolean; message: string; data: BilingualStatus }>(
-        '/api/admin/automation/bilingual',
-        {
-          method: 'PATCH',
-          body: JSON.stringify(data),
-        },
-      ),
-    sources: () =>
-      adminApi<{ success: boolean; data: AutomationReferenceSource[] }>('/api/admin/automation/sources'),
-    coverage: () =>
-      adminApi<{ success: boolean; data: AutomationCoverage }>('/api/admin/automation/coverage'),
-    auditLog: (limit?: number) =>
-      adminApi<{ success: boolean; data: any[] }>('/api/admin/automation/audit-log', {
-        params: limit ? { limit: String(limit) } : undefined,
-      }),
-    updateSettings: (autoPublish: boolean) =>
-      adminApi<{ success: boolean; message: string }>('/api/admin/automation/settings', {
-        method: 'PATCH',
-        body: JSON.stringify({ autoPublish }),
-      }),
-  },
+  automation: automationApi,
   media: {
     list: (params?: Record<string, string>) => adminApi('/api/admin/media', { params }),
     upload: async (file: File) => {
@@ -258,48 +93,5 @@ export const api = {
   dashboard: {
     stats: () => adminApi('/api/admin/dashboard/stats'),
   },
-  settings: {
-    branding: {
-      get: () => adminApi<{ success: boolean; data: any }>('/api/settings/branding'),
-      uploadAsset: async (type: 'header' | 'footer' | 'favicon' | 'ogImage', file: File) => {
-        const token = getToken();
-        const formData = new FormData();
-        formData.append('file', file);
-        const response = await fetch(`${API_URL}/api/admin/settings/branding/asset/${type}`, {
-          method: 'POST',
-          headers: { ...(token && { Authorization: `Bearer ${token}` }) },
-          body: formData,
-        });
-        if (!response.ok) {
-          const err = await response.json().catch(() => ({}));
-          throw new Error(err.message || `${type} upload failed`);
-        }
-        return response.json();
-      },
-      removeAsset: (type: 'header' | 'footer' | 'favicon' | 'ogImage') =>
-        adminApi<{ success: boolean; message: string; data: any }>(
-          `/api/admin/settings/branding/asset/${type}`,
-          { method: 'DELETE' },
-        ),
-      uploadLogo: async (file: File) => {
-        const token = getToken();
-        const formData = new FormData();
-        formData.append('file', file);
-        const response = await fetch(`${API_URL}/api/admin/settings/branding/logo`, {
-          method: 'POST',
-          headers: { ...(token && { Authorization: `Bearer ${token}` }) },
-          body: formData,
-        });
-        if (!response.ok) {
-          const err = await response.json().catch(() => ({}));
-          throw new Error(err.message || 'Logo upload failed');
-        }
-        return response.json();
-      },
-      removeLogo: () =>
-        adminApi<{ success: boolean; message: string; data: any }>('/api/admin/settings/branding/logo', {
-          method: 'DELETE',
-        }),
-    },
-  },
+  settings: settingsApi,
 };

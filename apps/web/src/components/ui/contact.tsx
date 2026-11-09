@@ -1,110 +1,17 @@
 "use client";
 
-import React, { useState } from 'react';
-import Image from 'next/image';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { createLeadSchema, type CreateLeadInput } from '@palnadu/validation';
+import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
-import { Checkbox } from '@/components/ui/checkbox';
 import { siteConfig } from '@palnadu/config';
-import { api } from '@/lib/api';
 import { cn } from '@/lib/utils';
-import { CheckCircle2 } from 'lucide-react';
+import {
+  defaultSocialLinks,
+  defaultProjectTypes,
+  type ContactSectionProps,
+} from './contact-data';
+import { ContactFormCard } from './contact-form';
 
-export interface ContactSectionProps {
-  /**
-   * The title for the contact section.
-   */
-  title?: string;
-  /**
-   * The subtitle or main message for the introductory part.
-   */
-  mainMessage?: string;
-  /**
-   * The contact email to display.
-   */
-  contactEmail?: string;
-  /**
-   * Array of social media links. Each object should have an 'id', 'name', 'iconSrc', and 'href'.
-   */
-  socialLinks?: Array<{ id: string; name: string; iconSrc: string; href: string }>;
-  /**
-   * Placeholder image for the background.
-   */
-  backgroundImageSrc?: string;
-  /**
-   * List of project types for checkboxes.
-   */
-  projectTypeOptions?: string[];
-  /**
-   * Whether to display the top navbar inside the section.
-   */
-  showNav?: boolean;
-  /**
-   * Callback function when the form is submitted.
-   * @param data The form data.
-   */
-  onSubmit?: (_data: any) => void;
-  className?: string;
-}
-
-function renderSocialIcon(link: { name: string; iconSrc: string }) {
-  const name = link.name.toLowerCase();
-  if (name.includes('x') || name.includes('twitter')) {
-    return (
-      <svg className="h-3 w-3 fill-current text-palnadu-dark" viewBox="0 0 24 24" aria-hidden="true">
-        <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-      </svg>
-    );
-  }
-  if (name.includes('linkedin')) {
-    return (
-      <svg className="h-3 w-3 fill-current text-palnadu-dark" viewBox="0 0 24 24" aria-hidden="true">
-        <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z" />
-      </svg>
-    );
-  }
-  if (name.includes('github')) {
-    return (
-      <svg className="h-3 w-3 fill-current text-palnadu-dark" viewBox="0 0 24 24" aria-hidden="true">
-        <path fillRule="evenodd" clipRule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" />
-      </svg>
-    );
-  }
-  return <Image src={link.iconSrc} alt={link.name} width={12} height={12} className="h-3 w-3" unoptimized />;
-}
-
-const defaultSocialLinks = [
-  { id: '1', name: 'X', iconSrc: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/x.svg', href: siteConfig.links.twitter },
-  { id: '2', name: 'LinkedIn', iconSrc: 'https://cdn.21st.dev/assets/mirror/26/2687ac468d96bd03e748dc8646ef6465cb4cc7f34b96e1d0bc86fcb3dd79121a.svg', href: siteConfig.links.linkedin },
-  { id: '3', name: 'GitHub', iconSrc: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/github.svg', href: siteConfig.links.github },
-];
-
-const defaultProjectTypes = [
-  'Web Application',
-  'Mobile App',
-  'MVP Development',
-  'Custom Software',
-  'Business Automation',
-  'Technical Consulting',
-  'Idea Validation',
-  'Other',
-];
-
-const helpTypeMapping: Record<string, CreateLeadInput['requiredHelp']> = {
-  'Web Application': 'WEB_APPLICATION',
-  'Mobile App': 'MOBILE_APPLICATION',
-  'MVP Development': 'MVP_DEVELOPMENT',
-  'Custom Software': 'CUSTOM_SOFTWARE',
-  'Business Automation': 'AUTOMATION',
-  'Technical Consulting': 'TECHNICAL_CONSULTING',
-  'Idea Validation': 'IDEA_VALIDATION',
-  'Other': 'NOT_SURE',
-};
+export type { ContactSectionProps };
 
 export const ContactSection: React.FC<ContactSectionProps> = ({
   title = "We turn real-world problems into practical digital solutions",
@@ -117,76 +24,6 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
   onSubmit,
   className,
 }) => {
-  const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
-  const [submitted, setSubmitted] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-
-  // Zod-validated react-hook-form integration
-  const {
-    register,
-    handleSubmit,
-    setValue,
-    reset,
-    formState: { errors, isSubmitting },
-  } = useForm<CreateLeadInput>({
-    resolver: zodResolver(createLeadSchema),
-    mode: 'onTouched',
-    defaultValues: {
-      name: '',
-      email: '',
-      phone: '',
-      company: '',
-      budget: '',
-      problemDescription: '',
-      projectStage: 'JUST_AN_IDEA',
-      requiredHelp: 'NOT_SURE',
-    },
-  });
-
-  const handleCheckboxToggle = (type: string) => {
-    setSelectedTypes((prev) => {
-      const updated = prev.includes(type)
-        ? prev.filter((t) => t !== type)
-        : [...prev, type];
-      
-      if (updated.length > 0) {
-        const primaryHelp = helpTypeMapping[updated[0]] || 'NOT_SURE';
-        setValue('requiredHelp', primaryHelp);
-        setValue('additionalInfo', `Interested in: ${updated.join(', ')}`);
-      } else {
-        setValue('requiredHelp', 'NOT_SURE');
-        setValue('additionalInfo', undefined);
-      }
-      return updated;
-    });
-  };
-
-  const onFormSubmit = async (data: CreateLeadInput) => {
-    setErrorMessage(null);
-
-    try {
-      if (onSubmit) {
-        await onSubmit({
-          ...data,
-          projectType: selectedTypes,
-        });
-      } else {
-        await api.leads.create({
-          ...data,
-          additionalInfo:
-            selectedTypes.length > 0
-              ? `Interested in: ${selectedTypes.join(', ')}`
-              : undefined,
-        });
-      }
-      setSubmitted(true);
-      reset();
-      setSelectedTypes([]);
-    } catch (err) {
-      setErrorMessage(err instanceof Error ? err.message : 'Failed to send message. Please try again.');
-    }
-  };
-
   return (
     <section className={cn("relative min-h-[90vh] w-full overflow-hidden bg-white text-palnadu-dark", className)}>
       {/* Background Image with Palnadu Primary Dark overlay */}
@@ -194,7 +31,6 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
         className="absolute inset-0 bg-cover bg-center transition-all duration-500 ease-in-out"
         style={{ backgroundImage: `url(${backgroundImageSrc})` }}
       >
-        {/* Palnadu Primary Dark tint overlay (#042C53) */}
         <div className="absolute inset-0 bg-palnadu-dark/70 mix-blend-multiply" />
         <div className="absolute inset-0 bg-gradient-to-r from-palnadu-dark/95 via-palnadu-dark/75 to-palnadu-dark/50" />
 
@@ -219,7 +55,6 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
 
       {/* Main Content Container — Top-aligned, responsive padding */}
       <div className="relative z-10 flex flex-col items-center justify-start w-full h-full px-3 py-3 sm:px-6 sm:py-6 md:px-8 lg:px-12">
-        {/* Optional Sub-Navigation Bar */}
         {showNav && (
           <nav className="w-full max-w-6xl flex items-center justify-between p-3.5 bg-white/90 backdrop-blur-md rounded-xl border border-palnadu-border shadow-md mb-4">
             <span className="font-extrabold text-lg text-palnadu-dark">Palnadu<span className="text-palnadu-blue">.dev</span></span>
@@ -229,9 +64,9 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
           </nav>
         )}
 
-        {/* Mobile Header (Concise & Compact — does NOT occupy the whole page) */}
+        {/* Mobile Header (Concise & Compact — replaced banned text-[11px] with text-xs) */}
         <div className="lg:hidden text-center space-y-1.5 my-2 max-w-sm">
-          <p className="text-[11px] font-mono uppercase tracking-widest text-palnadu-light-blue font-bold">
+          <p className="text-xs font-mono uppercase tracking-widest text-palnadu-light-blue font-bold">
             Start With The Problem
           </p>
           <h1 className="text-2xl sm:text-2xl font-black text-white leading-tight drop-shadow-sm">
@@ -241,7 +76,6 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
 
         {/* Main Grid: Desktop 2-Column (Left Headline, Right Form) | Mobile Form-First */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-10 w-full max-w-6xl pb-8" id="contact-card">
-          {/* Desktop Left Side: Headline & Brand Statement (Hidden on small mobile to avoid occupying whole screen) */}
           <div className="hidden lg:flex lg:col-span-5 flex-col justify-center p-4 lg:p-6 space-y-4">
             <p className="text-xs font-mono uppercase tracking-widest text-palnadu-light-blue font-bold">
               Start With The Problem
@@ -254,281 +88,18 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
             </p>
           </div>
 
-          {/* Right Side: Contact Form Card (Compact & Streamlined) */}
           <div className="lg:col-span-7 bg-white/95 backdrop-blur-md p-4 sm:p-6 lg:p-7 rounded-xl sm:rounded-2xl shadow-xl border border-palnadu-border">
-            {submitted ? (
-              <div className="py-10 text-center space-y-3 animate-fade-in">
-                <div className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-palnadu-light-blue text-palnadu-teal mx-auto">
-                  <CheckCircle2 className="h-5 w-5" />
-                </div>
-                <h3 className="text-xl font-bold text-palnadu-dark">Message Received</h3>
-                <p className="text-xs text-palnadu-body max-w-xs mx-auto leading-relaxed">
-                  Thank you. We have received your inquiry and will reply with honest engineering advice within one business day.
-                </p>
-                <div className="pt-2">
-                  <Button
-                    onClick={() => {
-                      setSubmitted(false);
-                      setSelectedTypes([]);
-                    }}
-                    variant="outline"
-                    className="border-palnadu-blue text-palnadu-blue hover:bg-palnadu-light-blue rounded-md text-xs px-4 h-8"
-                  >
-                    Send another message
-                  </Button>
-                </div>
-              </div>
-            ) : (
-              <>
-                {/* Compact Card Header */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 mb-3 border-b border-palnadu-border/60">
-                  <div>
-                    <h2 className="text-base sm:text-lg font-bold text-palnadu-dark">{mainMessage}</h2>
-                    <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs">
-                      <a
-                        href={`mailto:${contactEmail}`}
-                        className="font-semibold text-palnadu-blue hover:underline"
-                      >
-                        {contactEmail}
-                      </a>
-                      {siteConfig.contact.phone && (
-                        <>
-                          <span className="text-palnadu-secondary/60">•</span>
-                          <a
-                            href={`tel:${siteConfig.contact.phone}`}
-                            className="font-semibold font-mono text-palnadu-blue hover:underline"
-                          >
-                            {siteConfig.contact.phone}
-                          </a>
-                        </>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Social Channel Links */}
-                  <div className="flex items-center gap-1.5 self-start sm:self-auto">
-                    {socialLinks.map((link) => (
-                      <Button
-                        key={link.id}
-                        variant="outline"
-                        size="icon"
-                        asChild
-                        className="h-7 w-7 rounded-md border-palnadu-border bg-white hover:bg-palnadu-light-blue hover:border-palnadu-blue"
-                      >
-                        <a href={link.href} target="_blank" rel="noopener noreferrer" aria-label={link.name}>
-                          {renderSocialIcon(link)}
-                        </a>
-                      </Button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Form with Zod Validation */}
-                <form onSubmit={handleSubmit(onFormSubmit)} noValidate className="space-y-3">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                    {/* Name Field */}
-                    <div className="space-y-0.5">
-                      <Label htmlFor="name" className="text-xs sm:text-sm font-semibold text-palnadu-dark">
-                        Your Name <span className="text-palnadu-error">*</span>
-                      </Label>
-                      <Input
-                        id="name"
-                        placeholder="e.g. John Doe"
-                        aria-invalid={!!errors.name}
-                        className={cn(
-                          "bg-white text-palnadu-body text-xs h-8 rounded-md transition-colors",
-                          errors.name
-                            ? "border-palnadu-error focus-visible:ring-palnadu-error"
-                            : "border-palnadu-border focus-visible:ring-palnadu-blue"
-                        )}
-                        {...register('name')}
-                      />
-                      {errors.name && (
-                        <p className="text-xs text-palnadu-error font-medium">{errors.name.message}</p>
-                      )}
-                    </div>
-
-                    {/* Email Field */}
-                    <div className="space-y-0.5">
-                      <Label htmlFor="email" className="text-xs sm:text-sm font-semibold text-palnadu-dark">
-                        Email Address <span className="text-palnadu-error">*</span>
-                      </Label>
-                      <Input
-                        id="email"
-                        type="email"
-                        placeholder="name@example.com"
-                        aria-invalid={!!errors.email}
-                        className={cn(
-                          "bg-white text-palnadu-body text-xs h-8 rounded-md transition-colors",
-                          errors.email
-                            ? "border-palnadu-error focus-visible:ring-palnadu-error"
-                            : "border-palnadu-border focus-visible:ring-palnadu-blue"
-                        )}
-                        {...register('email')}
-                      />
-                      {errors.email && (
-                        <p className="text-xs text-palnadu-error font-medium">{errors.email.message}</p>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                    {/* Phone Field */}
-                    <div className="space-y-0.5">
-                      <Label htmlFor="phone" className="text-xs sm:text-sm font-semibold text-palnadu-dark">
-                        Phone or WhatsApp
-                      </Label>
-                      <Input
-                        id="phone"
-                        type="tel"
-                        placeholder="+91 98765 43210"
-                        aria-invalid={!!errors.phone}
-                        className={cn(
-                          "bg-white text-palnadu-body text-xs h-8 rounded-md transition-colors",
-                          errors.phone
-                            ? "border-palnadu-error focus-visible:ring-palnadu-error"
-                            : "border-palnadu-border focus-visible:ring-palnadu-blue"
-                        )}
-                        {...register('phone')}
-                      />
-                      {errors.phone && (
-                        <p className="text-xs text-palnadu-error font-medium">{errors.phone.message}</p>
-                      )}
-                    </div>
-
-                    {/* Company Field */}
-                    <div className="space-y-0.5">
-                      <Label htmlFor="company" className="text-xs sm:text-sm font-semibold text-palnadu-dark">
-                        Company or Startup Name
-                      </Label>
-                      <Input
-                        id="company"
-                        placeholder="e.g. Acme Corp / Stealth"
-                        className="bg-white border-palnadu-border text-palnadu-body text-xs h-8 rounded-md focus-visible:ring-palnadu-blue"
-                        {...register('company')}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                    {/* Project Stage */}
-                    <div className="space-y-0.5">
-                      <Label htmlFor="projectStage" className="text-xs sm:text-sm font-semibold text-palnadu-dark">
-                        Project Stage
-                      </Label>
-                      <select
-                        id="projectStage"
-                        className="w-full bg-white border border-palnadu-border text-palnadu-body text-xs h-8 rounded-md px-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-palnadu-blue cursor-pointer"
-                        {...register('projectStage')}
-                      >
-                        <option value="JUST_AN_IDEA">Just an idea / Concept</option>
-                        <option value="EXISTING_BUSINESS">Existing business workflow</option>
-                        <option value="EXISTING_PRODUCT">Existing software / MVP update</option>
-                        <option value="MANUAL_PROCESS">Manual process automation</option>
-                        <option value="NEED_TECHNICAL_HELP">Need technical consulting</option>
-                      </select>
-                    </div>
-
-                    {/* Budget Range */}
-                    <div className="space-y-0.5">
-                      <Label htmlFor="budget" className="text-xs sm:text-sm font-semibold text-palnadu-dark">
-                        Estimated Budget
-                      </Label>
-                      <select
-                        id="budget"
-                        className="w-full bg-white border border-palnadu-border text-palnadu-body text-xs h-8 rounded-md px-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-palnadu-blue cursor-pointer"
-                        {...register('budget')}
-                      >
-                        <option value="">Flexible / Exploring options</option>
-                        <option value="Under ₹1 Lakh / $1.2k">Under ₹1 Lakh (&lt; $1.2k)</option>
-                        <option value="₹1L - ₹3L / $1.2k-$3.5k">₹1 Lakh – ₹3 Lakh ($1.2k–$3.5k)</option>
-                        <option value="₹3L - ₹8L / $3.5k-$10k">₹3 Lakh – ₹8 Lakh ($3.5k–$10k)</option>
-                        <option value="₹8L+ / $10k+">₹8 Lakh+ ($10k+)</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  {/* Message Field */}
-                  <div className="space-y-0.5">
-                    <Label htmlFor="problemDescription" className="text-xs sm:text-sm font-semibold text-palnadu-dark">
-                      What problem are you trying to solve? <span className="text-palnadu-error">*</span>
-                    </Label>
-                    <Textarea
-                      id="problemDescription"
-                      placeholder="Briefly describe your idea, manual process, or technical challenge..."
-                      rows={3}
-                      aria-invalid={!!errors.problemDescription}
-                      className={cn(
-                        "bg-white text-palnadu-body text-xs py-1.5 rounded-md transition-colors",
-                        errors.problemDescription
-                          ? "border-palnadu-error focus-visible:ring-palnadu-error"
-                          : "border-palnadu-border focus-visible:ring-palnadu-blue"
-                      )}
-                      {...register('problemDescription')}
-                    />
-                    {errors.problemDescription && (
-                      <p className="text-xs text-palnadu-error font-medium">{errors.problemDescription.message}</p>
-                    )}
-                  </div>
-
-                  {/* Project Type Multi-select Checkboxes */}
-                  <div className="space-y-1.5 pt-0.5">
-                    <p className="text-xs sm:text-sm font-semibold text-palnadu-dark">
-                      Help needed with:
-                    </p>
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
-                      {projectTypeOptions.map((option) => {
-                        const id = option.replace(/\s+/g, '-').toLowerCase();
-                        const isChecked = selectedTypes.includes(option);
-                        return (
-                          <div
-                            key={option}
-                            className={cn(
-                              "flex items-center space-x-1.5 p-1.5 rounded-md border transition-colors cursor-pointer",
-                              isChecked
-                                ? "border-palnadu-blue bg-palnadu-light-blue/60"
-                                : "border-palnadu-border/70 bg-palnadu-off-white/40 hover:bg-palnadu-light-blue/30"
-                            )}
-                            onClick={() => handleCheckboxToggle(option)}
-                          >
-                            <Checkbox
-                              id={id}
-                              checked={isChecked}
-                              onCheckedChange={() => handleCheckboxToggle(option)}
-                            />
-                            <Label
-                              htmlFor={id}
-                              className="text-xs font-medium text-palnadu-dark cursor-pointer select-none leading-none truncate"
-                            >
-                              {option}
-                            </Label>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  {errorMessage && (
-                    <div role="alert" className="p-2 rounded-md bg-red-50 border border-palnadu-error/40 text-xs text-palnadu-error font-medium">
-                      {errorMessage}
-                    </div>
-                  )}
-
-                  <Button
-                    type="submit"
-                    disabled={isSubmitting}
-                    className="w-full bg-palnadu-blue hover:bg-palnadu-dark-hover text-white font-semibold text-sm h-11 sm:h-10 rounded-md transition-colors shadow-sm mt-1 disabled:opacity-50 cursor-pointer"
-                  >
-                    {isSubmitting ? 'Sending...' : 'Send Message →'}
-                  </Button>
-                </form>
-              </>
-            )}
+            <ContactFormCard
+              mainMessage={mainMessage}
+              contactEmail={contactEmail}
+              socialLinks={socialLinks}
+              projectTypeOptions={projectTypeOptions}
+              onSubmit={onSubmit}
+            />
           </div>
         </div>
       </div>
 
-      {/* Bubble Animation Keyframes */}
       <style jsx global>{`
         @keyframes bubble {
           0% {

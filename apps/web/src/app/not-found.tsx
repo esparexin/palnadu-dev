@@ -6,6 +6,10 @@ import { Button } from '@/components/ui/button';
 export const metadata: Metadata = {
   title: 'Page Not Found (404)',
   description: 'The requested page could not be found on Palnadu.dev.',
+  robots: {
+    index: false,
+    follow: false,
+  },
 };
 
 export default function NotFound() {
