@@ -32,6 +32,13 @@ assert.equal(sendPageViewParam?.value, 'false', 'sendPageView must be false to a
 const leadTag = tags.find((t) => t.name.includes('generate_lead'));
 assert.ok(leadTag, 'Primary conversion generate_lead tag must exist in GTM');
 
+const gaaweTags = tags.filter((t) => t.type === 'gaawe');
+assert.equal(gaaweTags.length, 6, 'Expected exactly 6 GA4 Event tags');
+for (const tag of gaaweTags) {
+  const overrideParam = tag.parameter.find((p) => p.key === 'measurementIdOverride');
+  assert.ok(overrideParam?.value?.startsWith('G-'), `GA4 event tag ${tag.name} must have valid measurementIdOverride`);
+}
+
 console.log('  ✅ GTM Container JSON export verified (7 tags, 6 triggers, 16 variables)');
 
 // 2. Audit apps/web/src/app/layout.tsx
