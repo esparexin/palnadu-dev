@@ -4,6 +4,7 @@ import {
   siteConfig,
   imagePresets,
   getBreadcrumbSchema,
+  cleanBlogTitle,
   type BlogLocale,
 } from '@palnadu/config';
 import { CtaSection } from '@/components/sections/cta-section';
@@ -26,12 +27,13 @@ export function ArticleView({ post, locale }: ArticleViewProps) {
   const inLanguage = locale === 'te' ? 'te' : 'en';
   const translations = articleTranslations(post);
   const alternate = translations.find((t) => t.language !== locale);
+  const title = cleanBlogTitle(post.title);
 
   const articleSchema = {
     '@context': 'https://schema.org',
     '@type': 'BlogPosting',
     '@id': `${canonicalUrl}/#article`,
-    headline: post.title,
+    headline: title,
     description: post.seoDescription || post.excerpt,
     image: post.coverImage || `${siteConfig.url}/og.png`,
     datePublished: post.publishDate || post.createdAt,
@@ -56,7 +58,7 @@ export function ArticleView({ post, locale }: ArticleViewProps) {
   const breadcrumbJsonLd = getBreadcrumbSchema([
     { name: 'Home', path: '' },
     { name: 'Blog', path: basePath },
-    { name: post.title, path: `${basePath}/${post.slug}` },
+    { name: title, path: `${basePath}/${post.slug}` },
   ]);
 
   const faqItems: Array<{ q: string; a: string }> = Array.isArray(post.faqData)
@@ -154,7 +156,7 @@ export function ArticleView({ post, locale }: ArticleViewProps) {
           {/* Article Header */}
           <header className="space-y-4 pb-8 border-b border-palnadu-border/60">
             <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-palnadu-dark leading-[1.15]">
-              {post.title}
+              {title}
             </h1>
 
             {post.excerpt && (
@@ -192,7 +194,7 @@ export function ArticleView({ post, locale }: ArticleViewProps) {
             <div className="relative aspect-[16/9] max-h-[480px] my-8 rounded-xl overflow-hidden border border-palnadu-border shadow-sm bg-palnadu-off-white">
               <Image
                 src={imagePresets.blogHero(post.coverImage)}
-                alt={post.title}
+                alt={title}
                 fill
                 priority
                 sizes="(max-width: 1024px) 100vw, 800px"
@@ -206,13 +208,13 @@ export function ArticleView({ post, locale }: ArticleViewProps) {
                 {post.category?.name || 'Engineering Insight'}
               </span>
               <h2 className="text-2xl sm:text-3xl font-extrabold text-white leading-tight">
-                {post.title}
+                {title}
               </h2>
             </div>
           )}
 
           {/* Article Body Content */}
-          <ArticleContent paragraphs={paragraphs} postTitle={post.title} />
+          <ArticleContent paragraphs={paragraphs} postTitle={title} />
 
           {/* Article FAQs */}
           <ArticleFaq faqItems={faqItems} locale={locale} />

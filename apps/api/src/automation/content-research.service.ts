@@ -180,16 +180,21 @@ Return strictly a valid JSON object with title, slug, excerpt, content, h1, meta
       const { draft: llmDraft, provider } = llmResult;
       const cleanContent = (llmDraft.content || '').replace(/\*\*([^*]+)\*\*/g, '$1').replace(/\*([^*\n]+)\*/g, '$1').replace(/\*\*/g, '');
       const words = cleanContent.split(/\s+/).length;
-      const slug = writeTelugu ? toAsciiSlug(str(llmDraft.slug) || topicTitle) : normaliseSlug(llmDraft.slug || topicTitle);
+      const rawTitle = str(llmDraft.title) || topicTitle;
+      const title = rawTitle.replace(/^[#\*\-\s>]+/, '').replace(/[#\*]+$/, '').replace(/\*+/g, '').trim();
+      let slug = writeTelugu ? toAsciiSlug(str(llmDraft.slug) || topicTitle) : normaliseSlug(llmDraft.slug || topicTitle);
+      if (/^\d+$/.test(slug)) {
+        slug = `${categorySlug}-${slug}`;
+      }
       const primaryKeyword = str(llmDraft.primaryKeyword) || s.primaryKeyword;
       const secondaryKeywords = arr(llmDraft.secondaryKeywords).length ? arr(llmDraft.secondaryKeywords) : s.secondaryKeywords;
       const metaTitle = str(llmDraft.metaTitle) || str(llmDraft.seoTitle) || `${primaryKeyword} | Palnadu.dev`;
 
       return {
         isTemplateFallback: false,
-        title: str(llmDraft.title) || topicTitle,
+        title,
         slug,
-        h1: str(llmDraft.h1) || str(llmDraft.title) || topicTitle,
+        h1: str(llmDraft.h1) ? str(llmDraft.h1).replace(/^[#\*\-\s>]+/, '').replace(/[#\*]+$/, '').replace(/\*+/g, '').trim() : title,
         excerpt: str(llmDraft.excerpt) || '',
         content: cleanContent,
         metaTitle: metaTitle.slice(0, 70),
