@@ -60,3 +60,4 @@ export function captureUtmFromSearch(searchParams: URLSearchParams): UtmParamete
 
   return null;
 }
+

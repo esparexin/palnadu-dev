@@ -122,3 +122,4 @@ export type AnalyticsEventName = keyof AnalyticsEventMap;
 export type AnalyticsDataLayerPayload<T extends AnalyticsEventName = AnalyticsEventName> = {
   event: T;
 } & AnalyticsEventMap[T];
+
