@@ -25,8 +25,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   if (!location) return { title: 'Location Not Found | Palnadu.dev' };
 
-  const title = `Software Development & Web Design in ${location.name}`;
-  const description = `${location.tagline}. High-performance web applications, business automation, and custom software for enterprises in ${location.name}, Andhra Pradesh.`;
+  const title = `Web Developer & Software Company in ${location.name} | Palnadu.dev`;
+  const description = `${location.tagline}. Professional web development, website design, and custom software for businesses in ${location.name}, Andhra Pradesh.`;
 
   return {
     title,
@@ -80,8 +80,8 @@ export default async function LocationDetailPage({ params }: Props) {
     parentOrganization: getOrganizationRef(),
     address: {
       '@type': 'PostalAddress',
-      streetAddress: location.serviceOffice || `Commercial Business Hub, ${location.name}`,
-      addressLocality: location.name,
+      streetAddress: location.serviceOffice || 'Main Road, Near Municipal Office',
+      addressLocality: location.serviceOffice ? location.name : 'Macherla',
       postalCode: location.postalCode || '522426',
       addressRegion: 'Andhra Pradesh',
       addressCountry: 'IN',
@@ -157,7 +157,7 @@ export default async function LocationDetailPage({ params }: Props) {
             </div>
 
             <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-white leading-tight">
-              Software Development & Web Design in{' '}
+              Web Developers & Software Development in{' '}
               <span className="text-palnadu-teal">{location.name}</span>
             </h1>
 

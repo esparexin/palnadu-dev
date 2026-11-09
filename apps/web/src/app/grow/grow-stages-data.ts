@@ -9,7 +9,7 @@ export const growthStages = [
     tagline: "Be Found When People Look",
     description:
       "Help your business get discovered by the people searching for what you offer across search engines, Google Maps, and local directories.",
-    metrics: "Top 3 Regional Search Ranking",
+    metrics: "First-Page Regional Search Visibility",
     color: "from-palnadu-blue/20 to-palnadu-teal/10",
     badgeColor: "bg-blue-50 text-blue-700 border-blue-200",
     icon: Search,
@@ -17,9 +17,9 @@ export const growthStages = [
       type: "search",
       headline: "Google Search & Regional Discovery",
       details: [
-        { label: "Target Search Term", val: "Industrial electrical services in Narasaraopet" },
-        { label: "Google Search Ranking", val: "#1 Organic Result" },
-        { label: "Google Business Profile", val: "Verified local listing" },
+        { label: "Target Search Category", val: "Custom Business Software in Palnadu" },
+        { label: "Organic Search Visibility", val: "High-Intent Regional Discovery" },
+        { label: "Google Business Profile", val: "Verified local business entity" },
       ],
     },
   },
@@ -41,7 +41,7 @@ export const growthStages = [
       details: [
         { label: "Mobile Experience", val: "Fully responsive and sub-second loading" },
         { label: "Credibility Signals", val: "Verified project portfolio and credentials" },
-        { label: "Mobile Engagement", val: "42% improvement in user retention" },
+        { label: "Performance Metric", val: "Sub-1-second mobile page loads" },
       ],
     },
   },

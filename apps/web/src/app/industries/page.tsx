@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { siteConfig } from '@palnadu/config';
+import { siteConfig, getBreadcrumbSchema } from '@palnadu/config';
 import { CtaSection } from '@/components/sections/cta-section';
 import { Rocket, GraduationCap, Building2, Stethoscope, Store, Factory, ArrowRight, CheckCircle2 } from 'lucide-react';
 
@@ -115,24 +115,10 @@ export default function IndustriesPage() {
     })),
   };
 
-  const breadcrumbJsonLd = {
-    '@context': 'https://schema.org',
-    '@type': 'BreadcrumbList',
-    itemListElement: [
-      {
-        '@type': 'ListItem',
-        position: 1,
-        name: 'Home',
-        item: siteConfig.url,
-      },
-      {
-        '@type': 'ListItem',
-        position: 2,
-        name: 'Industries',
-        item: `${siteConfig.url}/industries`,
-      },
-    ],
-  };
+  const breadcrumbJsonLd = getBreadcrumbSchema([
+    { name: 'Home', path: '' },
+    { name: 'Industries', path: '/industries' },
+  ]);
 
   return (
     <>

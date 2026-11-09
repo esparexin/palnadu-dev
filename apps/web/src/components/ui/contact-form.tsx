@@ -79,6 +79,21 @@ export function ContactFormCard({
         });
       }
       setSubmitted(true);
+      if (typeof window !== 'undefined') {
+        const win = window as any;
+        win.dataLayer = win.dataLayer || [];
+        win.dataLayer.push({
+          event: 'generate_lead',
+          lead_category: data.requiredHelp || 'web_software_inquiry',
+          project_stage: data.projectStage || 'JUST_AN_IDEA',
+        });
+        if (typeof win.gtag === 'function') {
+          win.gtag('event', 'generate_lead', {
+            event_category: 'engagement',
+            event_label: data.requiredHelp || 'inquiry',
+          });
+        }
+      }
       reset();
       setSelectedTypes([]);
     } catch (err) {

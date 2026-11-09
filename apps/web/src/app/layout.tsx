@@ -169,6 +169,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             <Script id="google-tags" strategy="afterInteractive">
               {`
                 window.dataLayer = window.dataLayer || [];
+                ${GTM_ID ? `window.dataLayer.push({'gtm.start': new Date().getTime(), event:'gtm.js'});` : ''}
                 function gtag(){dataLayer.push(arguments);}
                 gtag('js', new Date());
                 ${GA_ID ? `gtag('config', '${GA_ID}');` : ''}
