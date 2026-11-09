@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import { siteConfig, getBreadcrumbSchema, getOrganizationRef } from '@palnadu/config';
 import { api } from '@/lib/api';
 import { CtaSection } from '@/components/sections/cta-section';
+import { caseStudies } from '../work-data';
 import { CaseStudyHero } from './case-study-hero';
 import { CaseStudyPillars } from './case-study-pillars';
 
@@ -10,60 +11,80 @@ type Props = {
   params: Promise<{ slug: string }>;
 };
 
+async function getCaseStudyData(slug: string) {
+  try {
+    const res: any = await api.caseStudies.getBySlug(slug);
+    if (res?.data && (res.data.status === 'PUBLISHED' || !res.data.status)) {
+      return res.data;
+    }
+  } catch {
+    // API unavailable or record not in DB, fall back to static SSOT
+  }
+
+  const staticMatch = caseStudies.find((s) => s.slug === slug);
+  if (staticMatch) {
+    return {
+      title: staticMatch.title,
+      slug: staticMatch.slug,
+      category: staticMatch.category,
+      location: staticMatch.location,
+      problem: staticMatch.problem,
+      solution: staticMatch.solution,
+      result: staticMatch.outcome,
+      technology: staticMatch.techStack,
+      images: [staticMatch.image],
+      status: 'PUBLISHED',
+      createdAt: '2026-01-01T00:00:00Z',
+      updatedAt: '2026-01-01T00:00:00Z',
+    };
+  }
+
+  return null;
+}
+
 export async function generateStaticParams() {
+  const staticSlugs = caseStudies.map((s) => ({ slug: s.slug }));
   try {
     const res: any = await api.caseStudies.list();
-    const studies = res?.data || [];
-    return studies
+    const dynamicSlugs: string[] = (res?.data || [])
       .filter((s: any) => s.status === 'PUBLISHED' || !s.status)
-      .map((s: any) => ({ slug: s.slug }));
+      .map((s: any) => String(s.slug));
+    const all = [...new Set([...staticSlugs.map((s) => s.slug), ...dynamicSlugs])];
+    return all.map((slug) => ({ slug }));
   } catch {
-    return [];
+    return staticSlugs;
   }
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
+  const study = await getCaseStudyData(slug);
 
-  try {
-    const res: any = await api.caseStudies.getBySlug(slug);
-    const study = res?.data;
+  if (!study) {
+    return { title: 'Case Study Not Found | Palnadu.dev' };
+  }
 
-    if (!study) {
-      return { title: 'Case Study Not Found | Palnadu.dev' };
-    }
+  const title = study.seoTitle || `${study.title} | Case Study | ${siteConfig.name}`;
+  const description = study.seoDescription || study.result || study.problem;
 
-    const title = study.seoTitle || `${study.title} | Case Study | ${siteConfig.name}`;
-    const description = study.seoDescription || study.result || study.problem;
-
-    return {
+  return {
+    title,
+    description,
+    alternates: {
+      canonical: `/work/${slug}`,
+    },
+    openGraph: {
       title,
       description,
-      alternates: {
-        canonical: `/work/${slug}`,
-      },
-      openGraph: {
-        title,
-        description,
-        url: `${siteConfig.url}/work/${slug}`,
-        images: study.images?.[0] ? [{ url: study.images[0] }] : undefined,
-      },
-    };
-  } catch {
-    return { title: 'Case Study | Palnadu.dev' };
-  }
+      url: `${siteConfig.url}/work/${slug}`,
+      images: study.images?.[0] ? [{ url: study.images[0] }] : undefined,
+    },
+  };
 }
 
 export default async function CaseStudyPage({ params }: Props) {
   const { slug } = await params;
-
-  let study: any = null;
-  try {
-    const res: any = await api.caseStudies.getBySlug(slug);
-    study = res?.data;
-  } catch {
-    notFound();
-  }
+  const study = await getCaseStudyData(slug);
 
   if (!study || study.status !== 'PUBLISHED') {
     notFound();

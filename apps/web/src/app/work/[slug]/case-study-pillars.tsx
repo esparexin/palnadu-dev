@@ -12,8 +12,8 @@ export function CaseStudyPillars({ study }: CaseStudyPillarsProps) {
     <section className="py-14 sm:py-20 border-b border-palnadu-border">
       <div className="container max-w-4xl space-y-10">
         {/* The Problem */}
-        <div className="p-6 sm:p-8 rounded-xl border border-red-200 bg-red-50/40 space-y-3">
-          <h2 className="text-xs font-mono uppercase tracking-widest text-red-700 font-bold">
+        <div className="p-6 sm:p-8 rounded-xl border border-palnadu-error/30 bg-palnadu-error/5 space-y-3">
+          <h2 className="text-xs font-mono uppercase tracking-widest text-palnadu-error font-bold">
             01. The Problem & Operational Challenge
           </h2>
           <h3 className="text-lg sm:text-xl font-bold text-palnadu-dark">

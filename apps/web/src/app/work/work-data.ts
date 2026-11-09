@@ -1,5 +1,6 @@
 export interface CaseStudyItem {
   title: string;
+  slug: string;
   category: string;
   location: string;
   problem: string;
@@ -17,6 +18,7 @@ export interface EngineeringStandardItem {
 export const caseStudies: CaseStudyItem[] = [
   {
     title: "Grain and Rice Mill Gate-Pass Automation",
+    slug: "grain-and-rice-mill-gate-pass-automation",
     category: "Operations Web Application",
     location: "Sattenapalle, Palnadu",
     problem:
@@ -31,6 +33,7 @@ export const caseStudies: CaseStudyItem[] = [
   },
   {
     title: "Educational Institution Admissions and Fee Portal",
+    slug: "educational-institution-admissions-and-fee-portal",
     category: "Institutional Platform",
     location: "Narasaraopet, Palnadu",
     problem:
@@ -45,6 +48,7 @@ export const caseStudies: CaseStudyItem[] = [
   },
   {
     title: "Multi-Chamber Cold Storage Stock Management",
+    slug: "multi-chamber-cold-storage-stock-management",
     category: "Custom Logistics Platform",
     location: "Chilakaluripet, NH-16 Corridor",
     problem:
@@ -59,6 +63,7 @@ export const caseStudies: CaseStudyItem[] = [
   },
   {
     title: "Hospital Patient Scheduling and Diagnostics Dashboard",
+    slug: "hospital-patient-scheduling-and-diagnostics-dashboard",
     category: "Healthcare Application",
     location: "Guntur, Andhra Pradesh",
     problem:
@@ -70,6 +75,36 @@ export const caseStudies: CaseStudyItem[] = [
     techStack: ["Next.js", "Tailwind CSS", "MongoDB", "Cloud Storage"],
     image:
       "https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?auto=format&fit=crop&w=1200&q=80",
+  },
+  {
+    title: "Cloud Kitchen Order Routing & Multi-Brand POS Platform",
+    slug: "cloud-kitchen-pos",
+    category: "Hospitality & Food Operations",
+    location: "Guntur & Vijayawada",
+    problem:
+      "A multi-brand cloud kitchen struggled with order fragmentation across Swiggy, Zomato, and direct customer calls, leading to missed tickets and kitchen chaos during peak evening hours.",
+    solution:
+      "We engineered a unified kitchen display system (KDS) and centralized dispatch dashboard that reconciles orders from all channels onto a single thermal printer queue with real-time station statuses.",
+    outcome:
+      "Cut ticket preparation lag by 40% and eliminated duplicate kitchen receipts across 4 virtual restaurant brands.",
+    techStack: ["Next.js", "TypeScript", "Node.js", "WebSockets"],
+    image:
+      "https://images.unsplash.com/photo-1556910103-1c02745aae4d?auto=format&fit=crop&w=1200&q=80",
+  },
+  {
+    title: "Regional Agri-Produce & Wholesale Marketplace",
+    slug: "multi-vendor-marketplace",
+    category: "B2B E-Commerce Platform",
+    location: "Palnadu & Coastal Andhra",
+    problem:
+      "Regional wholesale traders and commission merchants relied on fragmented phone calls and middlemen, resulting in price opacity and delayed payment settlements.",
+    solution:
+      "We designed and launched a high-converting, mobile-first marketplace with verified buyer logins, real-time commodity spot pricing, digital escrow milestones, and automated GST invoices.",
+    outcome:
+      "Onboarded 120+ wholesale vendors across the chili, cotton, and grain belts within the first 60 days of launch.",
+    techStack: ["Next.js", "Tailwind CSS", "PostgreSQL", "Razorpay"],
+    image:
+      "https://images.unsplash.com/photo-1472851294608-062f824d29cc?auto=format&fit=crop&w=1200&q=80",
   },
 ];
 

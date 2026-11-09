@@ -1,5 +1,7 @@
 import React from 'react';
+import Link from 'next/link';
 import Image from 'next/image';
+import { ArrowRight } from 'lucide-react';
 import { caseStudies } from './work-data';
 
 export function WorkCaseStudies() {
@@ -74,6 +76,16 @@ export function WorkCaseStudies() {
                       {tech}
                     </span>
                   ))}
+                </div>
+
+                <div className="pt-2 flex items-center justify-between border-t border-palnadu-border/40">
+                  <Link
+                    href={`/work/${study.slug}`}
+                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-palnadu-blue hover:text-palnadu-dark-hover transition-colors group"
+                  >
+                    <span>Read Architecture Breakdown</span>
+                    <ArrowRight className="h-3.5 w-3.5 group-hover:translate-x-0.5 transition-transform" />
+                  </Link>
                 </div>
               </div>
             </article>
