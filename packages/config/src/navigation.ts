@@ -4,6 +4,8 @@ export interface NavItem {
   title: string;
   href: string;
   description?: string;
+  hrefLang?: string;
+  lang?: string;
   children?: NavItem[];
 }
 
@@ -34,8 +36,10 @@ export const footerNavItems = {
   ],
   company: [
     { title: 'About', href: '/about' },
+    { title: 'Industries', href: '/industries' },
     { title: 'Work', href: '/work' },
     { title: 'Blog', href: '/blog' },
+    { title: 'Telugu Blog (తెలుగు)', href: '/te/blog', hrefLang: 'te', lang: 'te' },
     { title: 'Locations', href: '/locations' },
     { title: 'Contact', href: '/contact' },
   ],

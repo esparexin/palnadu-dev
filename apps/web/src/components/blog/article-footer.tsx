@@ -23,7 +23,7 @@ export function ArticleFooter({ post, locale }: ArticleFooterProps) {
               web applications
             </Link>
             ,{' '}
-            <Link href="/services/mobile-app-development" className="text-palnadu-blue underline hover:text-palnadu-dark-hover">
+            <Link href="/services/android-app-development" className="text-palnadu-blue underline hover:text-palnadu-dark-hover">
               mobile apps
             </Link>
             , and{' '}

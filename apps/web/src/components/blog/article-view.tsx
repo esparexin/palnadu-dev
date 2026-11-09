@@ -7,8 +7,8 @@ import {
   type BlogLocale,
 } from '@palnadu/config';
 import { CtaSection } from '@/components/sections/cta-section';
-import { Calendar, User, ArrowLeft, Tag, Clock } from 'lucide-react';
-import { articleBasePath, articleCanonical, articleDateLocale } from '@/lib/blog-post';
+import { Calendar, User, ArrowLeft, Tag, Clock, Languages } from 'lucide-react';
+import { articleBasePath, articleCanonical, articleDateLocale, articleTranslations } from '@/lib/blog-post';
 import { ArticleContent, isOptimizableImageUrl } from './article-content';
 import { ArticleFaq } from './article-faq';
 import { ArticleFooter } from './article-footer';
@@ -24,6 +24,8 @@ export function ArticleView({ post, locale }: ArticleViewProps) {
   const canonicalUrl = articleCanonical({ ...post, language: locale });
   const dateLocale = articleDateLocale(locale);
   const inLanguage = locale === 'te' ? 'te' : 'en';
+  const translations = articleTranslations(post);
+  const alternate = translations.find((t) => t.language !== locale);
 
   const articleSchema = {
     '@context': 'https://schema.org',
@@ -104,8 +106,8 @@ export function ArticleView({ post, locale }: ArticleViewProps) {
           locale={locale}
         />
         <div className="container max-w-3xl">
-          {/* Breadcrumb Navigation */}
-          <div className="mb-6 flex items-center justify-between">
+          {/* Breadcrumb Navigation & Language Alternative */}
+          <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
             <Link
               href={basePath}
               className="inline-flex items-center gap-1.5 text-xs font-mono uppercase tracking-wider text-palnadu-secondary hover:text-palnadu-blue transition-colors"
@@ -114,15 +116,39 @@ export function ArticleView({ post, locale }: ArticleViewProps) {
               <span>Back to Articles</span>
             </Link>
 
-            {post.category?.name && (
-              <Link
-                href={`${basePath}?category=${post.category.slug}`}
-                className="inline-flex items-center gap-1 text-xs font-semibold text-palnadu-teal hover:underline"
-              >
-                <Tag className="h-3 w-3" />
-                <span>{post.category.name}</span>
-              </Link>
-            )}
+            <div className="flex items-center gap-3">
+              {alternate ? (
+                <Link
+                  href={`${articleBasePath(alternate.language)}/${alternate.slug}`}
+                  hrefLang={alternate.language}
+                  lang={alternate.language}
+                  className="inline-flex items-center gap-1 text-xs font-semibold text-palnadu-blue hover:underline"
+                >
+                  <Languages className="h-3.5 w-3.5" />
+                  <span>{alternate.language === 'te' ? 'తెలుగులో చదవండి' : 'Read in English'}</span>
+                </Link>
+              ) : (
+                <Link
+                  href={locale === 'en' ? '/te/blog' : '/blog'}
+                  hrefLang={locale === 'en' ? 'te' : 'en'}
+                  lang={locale === 'en' ? 'te' : 'en'}
+                  className="inline-flex items-center gap-1 text-xs text-palnadu-secondary hover:text-palnadu-blue transition-colors"
+                >
+                  <Languages className="h-3.5 w-3.5" />
+                  <span>{locale === 'en' ? 'తెలుగు బ్లాగ్' : 'English Blog'}</span>
+                </Link>
+              )}
+
+              {post.category?.name && (
+                <Link
+                  href={`${basePath}?category=${post.category.slug}`}
+                  className="inline-flex items-center gap-1 text-xs font-semibold text-palnadu-teal hover:underline"
+                >
+                  <Tag className="h-3 w-3" />
+                  <span>{post.category.name}</span>
+                </Link>
+              )}
+            </div>
           </div>
 
           {/* Article Header */}
