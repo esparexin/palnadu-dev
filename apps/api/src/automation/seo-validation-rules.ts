@@ -56,7 +56,9 @@ export function validate(input: ValidationInput): ValidationOutcome {
   const occurrences = primary ? body.split(primary).length - 1 : 0;
   const density = words > 0 ? occurrences / words : 0;
   const stuffed = primary.length > 0 && density > 0.03;
-  const tooShort = words < 600;
+  const isTelugu = String(input.language) === 'te';
+  const minWords = isTelugu ? 400 : 600;
+  const tooShort = words < minWords;
   const isTemplate = d.isTemplateFallback === true;
   checks.push({
     name: 'content_originality',
@@ -65,7 +67,7 @@ export function validate(input: ValidationInput): ValidationOutcome {
     detail: isTemplate
       ? 'generated from the static fallback template (identical body for every topic) - must not be auto-published'
       : tooShort
-        ? `article too short (${words} words, minimum 600)`
+        ? `article too short (${words} words, minimum ${minWords})`
         : stuffed
           ? `keyword density ${(density * 100).toFixed(2)}% for "${primary}" exceeds 3% (stuffing)`
           : `${words} words, primary keyword density ${(density * 100).toFixed(2)}%`,

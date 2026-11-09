@@ -1,0 +1,9 @@
+# Google Search Console Disavow File for https://www.palnadu.dev/
+# Generated: 2026-11-09
+# Purpose: Neutralize toxic low-quality backlink networks, PBNs, and spam shop domains identified in Moz Link Explorer Audit
+# Documentation: https://support.google.com/webmasters/answer/2648487
+
+# Toxic PBN & Link Broker Domains (.shop spam network)
+domain:white-hat-high-authority-seo.shop
+domain:auto-parts-shop.shop
+domain:quality-manual-link-building.shop
