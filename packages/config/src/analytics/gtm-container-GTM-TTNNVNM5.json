@@ -2,40 +2,60 @@
   "exportFormatVersion": 2,
   "exportTime": "2026-11-09 11:20:00",
   "containerVersion": {
-    "path": "accounts/palnadu/containers/GTM-TTNNVNM5/versions/0",
-    "accountId": "palnadu",
-    "containerId": "GTM-TTNNVNM5",
+    "path": "accounts/1000000000/containers/2000000000/versions/0",
+    "accountId": "1000000000",
+    "containerId": "2000000000",
     "containerVersionId": "0",
     "container": {
-      "path": "accounts/palnadu/containers/GTM-TTNNVNM5",
-      "accountId": "palnadu",
-      "containerId": "GTM-TTNNVNM5",
+      "path": "accounts/1000000000/containers/2000000000",
+      "accountId": "1000000000",
+      "containerId": "2000000000",
       "name": "Palnadu.dev Web Container",
       "publicId": "GTM-TTNNVNM5",
-      "usageContext": ["WEB"]
+      "usageContext": [
+        "WEB"
+      ]
     },
     "tag": [
       {
-        "accountId": "palnadu",
-        "containerId": "GTM-TTNNVNM5",
+        "accountId": "1000000000",
+        "containerId": "2000000000",
         "tagId": "1",
         "name": "Google Tag - GA4 Base Configuration",
         "type": "googtag",
         "parameter": [
-          { "type": "BOOLEAN", "key": "sendPageView", "value": "false" },
-          { "type": "TEMPLATE", "key": "tagId", "value": "G-65H205CD90" }
+          {
+            "type": "BOOLEAN",
+            "key": "sendPageView",
+            "value": "false"
+          },
+          {
+            "type": "TEMPLATE",
+            "key": "tagId",
+            "value": "G-65H205CD90"
+          }
         ],
-        "firingTriggerId": ["2147479553"]
+        "firingTriggerId": [
+          "2147479553"
+        ]
       },
       {
-        "accountId": "palnadu",
-        "containerId": "GTM-TTNNVNM5",
+        "accountId": "1000000000",
+        "containerId": "2000000000",
         "tagId": "2",
         "name": "GA4 Event - Synthetic Page View",
         "type": "gaawe",
         "parameter": [
-          { "type": "TEMPLATE", "key": "eventName", "value": "page_view" },
-          { "type": "TEMPLATE", "key": "measurementId", "value": "G-65H205CD90" },
+          {
+            "type": "TEMPLATE",
+            "key": "eventName",
+            "value": "page_view"
+          },
+          {
+            "type": "TEMPLATE",
+            "key": "measurementId",
+            "value": "G-65H205CD90"
+          },
           {
             "type": "LIST",
             "key": "eventParameters",
@@ -43,45 +63,87 @@
               {
                 "type": "MAP",
                 "map": [
-                  { "type": "TEMPLATE", "key": "name", "value": "page_title" },
-                  { "type": "TEMPLATE", "key": "value", "value": "{{dlv - page_title}}" }
+                  {
+                    "type": "TEMPLATE",
+                    "key": "name",
+                    "value": "page_title"
+                  },
+                  {
+                    "type": "TEMPLATE",
+                    "key": "value",
+                    "value": "{{dlv - page_title}}"
+                  }
                 ]
               },
               {
                 "type": "MAP",
                 "map": [
-                  { "type": "TEMPLATE", "key": "name", "value": "page_location" },
-                  { "type": "TEMPLATE", "key": "value", "value": "{{dlv - page_location}}" }
+                  {
+                    "type": "TEMPLATE",
+                    "key": "name",
+                    "value": "page_location"
+                  },
+                  {
+                    "type": "TEMPLATE",
+                    "key": "value",
+                    "value": "{{dlv - page_location}}"
+                  }
                 ]
               },
               {
                 "type": "MAP",
                 "map": [
-                  { "type": "TEMPLATE", "key": "name", "value": "page_path" },
-                  { "type": "TEMPLATE", "key": "value", "value": "{{dlv - page_path}}" }
+                  {
+                    "type": "TEMPLATE",
+                    "key": "name",
+                    "value": "page_path"
+                  },
+                  {
+                    "type": "TEMPLATE",
+                    "key": "value",
+                    "value": "{{dlv - page_path}}"
+                  }
                 ]
               },
               {
                 "type": "MAP",
                 "map": [
-                  { "type": "TEMPLATE", "key": "name", "value": "page_locale" },
-                  { "type": "TEMPLATE", "key": "value", "value": "{{dlv - page_locale}}" }
+                  {
+                    "type": "TEMPLATE",
+                    "key": "name",
+                    "value": "page_locale"
+                  },
+                  {
+                    "type": "TEMPLATE",
+                    "key": "value",
+                    "value": "{{dlv - page_locale}}"
+                  }
                 ]
               }
             ]
           }
         ],
-        "firingTriggerId": ["101"]
+        "firingTriggerId": [
+          "101"
+        ]
       },
       {
-        "accountId": "palnadu",
-        "containerId": "GTM-TTNNVNM5",
+        "accountId": "1000000000",
+        "containerId": "2000000000",
         "tagId": "3",
         "name": "GA4 Event - Primary Conversion (generate_lead)",
         "type": "gaawe",
         "parameter": [
-          { "type": "TEMPLATE", "key": "eventName", "value": "generate_lead" },
-          { "type": "TEMPLATE", "key": "measurementId", "value": "G-65H205CD90" },
+          {
+            "type": "TEMPLATE",
+            "key": "eventName",
+            "value": "generate_lead"
+          },
+          {
+            "type": "TEMPLATE",
+            "key": "measurementId",
+            "value": "G-65H205CD90"
+          },
           {
             "type": "LIST",
             "key": "eventParameters",
@@ -89,45 +151,87 @@
               {
                 "type": "MAP",
                 "map": [
-                  { "type": "TEMPLATE", "key": "name", "value": "lead_id" },
-                  { "type": "TEMPLATE", "key": "value", "value": "{{dlv - lead_id}}" }
+                  {
+                    "type": "TEMPLATE",
+                    "key": "name",
+                    "value": "lead_id"
+                  },
+                  {
+                    "type": "TEMPLATE",
+                    "key": "value",
+                    "value": "{{dlv - lead_id}}"
+                  }
                 ]
               },
               {
                 "type": "MAP",
                 "map": [
-                  { "type": "TEMPLATE", "key": "name", "value": "form_id" },
-                  { "type": "TEMPLATE", "key": "value", "value": "{{dlv - form_id}}" }
+                  {
+                    "type": "TEMPLATE",
+                    "key": "name",
+                    "value": "form_id"
+                  },
+                  {
+                    "type": "TEMPLATE",
+                    "key": "value",
+                    "value": "{{dlv - form_id}}"
+                  }
                 ]
               },
               {
                 "type": "MAP",
                 "map": [
-                  { "type": "TEMPLATE", "key": "name", "value": "lead_category" },
-                  { "type": "TEMPLATE", "key": "value", "value": "{{dlv - lead_category}}" }
+                  {
+                    "type": "TEMPLATE",
+                    "key": "name",
+                    "value": "lead_category"
+                  },
+                  {
+                    "type": "TEMPLATE",
+                    "key": "value",
+                    "value": "{{dlv - lead_category}}"
+                  }
                 ]
               },
               {
                 "type": "MAP",
                 "map": [
-                  { "type": "TEMPLATE", "key": "name", "value": "project_stage" },
-                  { "type": "TEMPLATE", "key": "value", "value": "{{dlv - project_stage}}" }
+                  {
+                    "type": "TEMPLATE",
+                    "key": "name",
+                    "value": "project_stage"
+                  },
+                  {
+                    "type": "TEMPLATE",
+                    "key": "value",
+                    "value": "{{dlv - project_stage}}"
+                  }
                 ]
               }
             ]
           }
         ],
-        "firingTriggerId": ["102"]
+        "firingTriggerId": [
+          "102"
+        ]
       },
       {
-        "accountId": "palnadu",
-        "containerId": "GTM-TTNNVNM5",
+        "accountId": "1000000000",
+        "containerId": "2000000000",
         "tagId": "4",
         "name": "GA4 Event - Contact Channel Click (whatsapp, phone, email)",
         "type": "gaawe",
         "parameter": [
-          { "type": "TEMPLATE", "key": "eventName", "value": "contact_channel_click" },
-          { "type": "TEMPLATE", "key": "measurementId", "value": "G-65H205CD90" },
+          {
+            "type": "TEMPLATE",
+            "key": "eventName",
+            "value": "contact_channel_click"
+          },
+          {
+            "type": "TEMPLATE",
+            "key": "measurementId",
+            "value": "G-65H205CD90"
+          },
           {
             "type": "LIST",
             "key": "eventParameters",
@@ -135,38 +239,72 @@
               {
                 "type": "MAP",
                 "map": [
-                  { "type": "TEMPLATE", "key": "name", "value": "channel" },
-                  { "type": "TEMPLATE", "key": "value", "value": "{{dlv - channel}}" }
+                  {
+                    "type": "TEMPLATE",
+                    "key": "name",
+                    "value": "channel"
+                  },
+                  {
+                    "type": "TEMPLATE",
+                    "key": "value",
+                    "value": "{{dlv - channel}}"
+                  }
                 ]
               },
               {
                 "type": "MAP",
                 "map": [
-                  { "type": "TEMPLATE", "key": "name", "value": "destination" },
-                  { "type": "TEMPLATE", "key": "value", "value": "{{dlv - destination}}" }
+                  {
+                    "type": "TEMPLATE",
+                    "key": "name",
+                    "value": "destination"
+                  },
+                  {
+                    "type": "TEMPLATE",
+                    "key": "value",
+                    "value": "{{dlv - destination}}"
+                  }
                 ]
               },
               {
                 "type": "MAP",
                 "map": [
-                  { "type": "TEMPLATE", "key": "name", "value": "source_section" },
-                  { "type": "TEMPLATE", "key": "value", "value": "{{dlv - source_section}}" }
+                  {
+                    "type": "TEMPLATE",
+                    "key": "name",
+                    "value": "source_section"
+                  },
+                  {
+                    "type": "TEMPLATE",
+                    "key": "value",
+                    "value": "{{dlv - source_section}}"
+                  }
                 ]
               }
             ]
           }
         ],
-        "firingTriggerId": ["103"]
+        "firingTriggerId": [
+          "103"
+        ]
       },
       {
-        "accountId": "palnadu",
-        "containerId": "GTM-TTNNVNM5",
+        "accountId": "1000000000",
+        "containerId": "2000000000",
         "tagId": "5",
         "name": "GA4 Event - Consultation Request CTA",
         "type": "gaawe",
         "parameter": [
-          { "type": "TEMPLATE", "key": "eventName", "value": "consultation_request" },
-          { "type": "TEMPLATE", "key": "measurementId", "value": "G-65H205CD90" },
+          {
+            "type": "TEMPLATE",
+            "key": "eventName",
+            "value": "consultation_request"
+          },
+          {
+            "type": "TEMPLATE",
+            "key": "measurementId",
+            "value": "G-65H205CD90"
+          },
           {
             "type": "LIST",
             "key": "eventParameters",
@@ -174,31 +312,57 @@
               {
                 "type": "MAP",
                 "map": [
-                  { "type": "TEMPLATE", "key": "name", "value": "cta_label" },
-                  { "type": "TEMPLATE", "key": "value", "value": "{{dlv - cta_label}}" }
+                  {
+                    "type": "TEMPLATE",
+                    "key": "name",
+                    "value": "cta_label"
+                  },
+                  {
+                    "type": "TEMPLATE",
+                    "key": "value",
+                    "value": "{{dlv - cta_label}}"
+                  }
                 ]
               },
               {
                 "type": "MAP",
                 "map": [
-                  { "type": "TEMPLATE", "key": "name", "value": "source_section" },
-                  { "type": "TEMPLATE", "key": "value", "value": "{{dlv - source_section}}" }
+                  {
+                    "type": "TEMPLATE",
+                    "key": "name",
+                    "value": "source_section"
+                  },
+                  {
+                    "type": "TEMPLATE",
+                    "key": "value",
+                    "value": "{{dlv - source_section}}"
+                  }
                 ]
               }
             ]
           }
         ],
-        "firingTriggerId": ["104"]
+        "firingTriggerId": [
+          "104"
+        ]
       },
       {
-        "accountId": "palnadu",
-        "containerId": "GTM-TTNNVNM5",
+        "accountId": "1000000000",
+        "containerId": "2000000000",
         "tagId": "6",
         "name": "GA4 Event - Service Page Engagement",
         "type": "gaawe",
         "parameter": [
-          { "type": "TEMPLATE", "key": "eventName", "value": "service_engagement" },
-          { "type": "TEMPLATE", "key": "measurementId", "value": "G-65H205CD90" },
+          {
+            "type": "TEMPLATE",
+            "key": "eventName",
+            "value": "service_engagement"
+          },
+          {
+            "type": "TEMPLATE",
+            "key": "measurementId",
+            "value": "G-65H205CD90"
+          },
           {
             "type": "LIST",
             "key": "eventParameters",
@@ -206,31 +370,57 @@
               {
                 "type": "MAP",
                 "map": [
-                  { "type": "TEMPLATE", "key": "name", "value": "service_slug" },
-                  { "type": "TEMPLATE", "key": "value", "value": "{{dlv - service_slug}}" }
+                  {
+                    "type": "TEMPLATE",
+                    "key": "name",
+                    "value": "service_slug"
+                  },
+                  {
+                    "type": "TEMPLATE",
+                    "key": "value",
+                    "value": "{{dlv - service_slug}}"
+                  }
                 ]
               },
               {
                 "type": "MAP",
                 "map": [
-                  { "type": "TEMPLATE", "key": "name", "value": "engagement_type" },
-                  { "type": "TEMPLATE", "key": "value", "value": "{{dlv - engagement_type}}" }
+                  {
+                    "type": "TEMPLATE",
+                    "key": "name",
+                    "value": "engagement_type"
+                  },
+                  {
+                    "type": "TEMPLATE",
+                    "key": "value",
+                    "value": "{{dlv - engagement_type}}"
+                  }
                 ]
               }
             ]
           }
         ],
-        "firingTriggerId": ["105"]
+        "firingTriggerId": [
+          "105"
+        ]
       },
       {
-        "accountId": "palnadu",
-        "containerId": "GTM-TTNNVNM5",
+        "accountId": "1000000000",
+        "containerId": "2000000000",
         "tagId": "7",
         "name": "GA4 Event - Blog Scroll Depth & Read Engagement",
         "type": "gaawe",
         "parameter": [
-          { "type": "TEMPLATE", "key": "eventName", "value": "blog_engagement" },
-          { "type": "TEMPLATE", "key": "measurementId", "value": "G-65H205CD90" },
+          {
+            "type": "TEMPLATE",
+            "key": "eventName",
+            "value": "blog_engagement"
+          },
+          {
+            "type": "TEMPLATE",
+            "key": "measurementId",
+            "value": "G-65H205CD90"
+          },
           {
             "type": "LIST",
             "key": "eventParameters",
@@ -238,27 +428,45 @@
               {
                 "type": "MAP",
                 "map": [
-                  { "type": "TEMPLATE", "key": "name", "value": "article_slug" },
-                  { "type": "TEMPLATE", "key": "value", "value": "{{dlv - article_slug}}" }
+                  {
+                    "type": "TEMPLATE",
+                    "key": "name",
+                    "value": "article_slug"
+                  },
+                  {
+                    "type": "TEMPLATE",
+                    "key": "value",
+                    "value": "{{dlv - article_slug}}"
+                  }
                 ]
               },
               {
                 "type": "MAP",
                 "map": [
-                  { "type": "TEMPLATE", "key": "name", "value": "scroll_depth_threshold" },
-                  { "type": "TEMPLATE", "key": "value", "value": "{{dlv - scroll_depth_threshold}}" }
+                  {
+                    "type": "TEMPLATE",
+                    "key": "name",
+                    "value": "scroll_depth_threshold"
+                  },
+                  {
+                    "type": "TEMPLATE",
+                    "key": "value",
+                    "value": "{{dlv - scroll_depth_threshold}}"
+                  }
                 ]
               }
             ]
           }
         ],
-        "firingTriggerId": ["106"]
+        "firingTriggerId": [
+          "106"
+        ]
       }
     ],
     "trigger": [
       {
-        "accountId": "palnadu",
-        "containerId": "GTM-TTNNVNM5",
+        "accountId": "1000000000",
+        "containerId": "2000000000",
         "triggerId": "101",
         "name": "Custom - page_view",
         "type": "CUSTOM_EVENT",
@@ -266,15 +474,23 @@
           {
             "type": "EQUALS",
             "parameter": [
-              { "type": "TEMPLATE", "key": "arg0", "value": "{{_event}}" },
-              { "type": "TEMPLATE", "key": "arg1", "value": "page_view" }
+              {
+                "type": "TEMPLATE",
+                "key": "arg0",
+                "value": "{{_event}}"
+              },
+              {
+                "type": "TEMPLATE",
+                "key": "arg1",
+                "value": "page_view"
+              }
             ]
           }
         ]
       },
       {
-        "accountId": "palnadu",
-        "containerId": "GTM-TTNNVNM5",
+        "accountId": "1000000000",
+        "containerId": "2000000000",
         "triggerId": "102",
         "name": "Custom - generate_lead",
         "type": "CUSTOM_EVENT",
@@ -282,15 +498,23 @@
           {
             "type": "EQUALS",
             "parameter": [
-              { "type": "TEMPLATE", "key": "arg0", "value": "{{_event}}" },
-              { "type": "TEMPLATE", "key": "arg1", "value": "generate_lead" }
+              {
+                "type": "TEMPLATE",
+                "key": "arg0",
+                "value": "{{_event}}"
+              },
+              {
+                "type": "TEMPLATE",
+                "key": "arg1",
+                "value": "generate_lead"
+              }
             ]
           }
         ]
       },
       {
-        "accountId": "palnadu",
-        "containerId": "GTM-TTNNVNM5",
+        "accountId": "1000000000",
+        "containerId": "2000000000",
         "triggerId": "103",
         "name": "Custom - contact_channel_click",
         "type": "CUSTOM_EVENT",
@@ -298,15 +522,23 @@
           {
             "type": "EQUALS",
             "parameter": [
-              { "type": "TEMPLATE", "key": "arg0", "value": "{{_event}}" },
-              { "type": "TEMPLATE", "key": "arg1", "value": "contact_channel_click" }
+              {
+                "type": "TEMPLATE",
+                "key": "arg0",
+                "value": "{{_event}}"
+              },
+              {
+                "type": "TEMPLATE",
+                "key": "arg1",
+                "value": "contact_channel_click"
+              }
             ]
           }
         ]
       },
       {
-        "accountId": "palnadu",
-        "containerId": "GTM-TTNNVNM5",
+        "accountId": "1000000000",
+        "containerId": "2000000000",
         "triggerId": "104",
         "name": "Custom - consultation_request",
         "type": "CUSTOM_EVENT",
@@ -314,15 +546,23 @@
           {
             "type": "EQUALS",
             "parameter": [
-              { "type": "TEMPLATE", "key": "arg0", "value": "{{_event}}" },
-              { "type": "TEMPLATE", "key": "arg1", "value": "consultation_request" }
+              {
+                "type": "TEMPLATE",
+                "key": "arg0",
+                "value": "{{_event}}"
+              },
+              {
+                "type": "TEMPLATE",
+                "key": "arg1",
+                "value": "consultation_request"
+              }
             ]
           }
         ]
       },
       {
-        "accountId": "palnadu",
-        "containerId": "GTM-TTNNVNM5",
+        "accountId": "1000000000",
+        "containerId": "2000000000",
         "triggerId": "105",
         "name": "Custom - service_engagement",
         "type": "CUSTOM_EVENT",
@@ -330,15 +570,23 @@
           {
             "type": "EQUALS",
             "parameter": [
-              { "type": "TEMPLATE", "key": "arg0", "value": "{{_event}}" },
-              { "type": "TEMPLATE", "key": "arg1", "value": "service_engagement" }
+              {
+                "type": "TEMPLATE",
+                "key": "arg0",
+                "value": "{{_event}}"
+              },
+              {
+                "type": "TEMPLATE",
+                "key": "arg1",
+                "value": "service_engagement"
+              }
             ]
           }
         ]
       },
       {
-        "accountId": "palnadu",
-        "containerId": "GTM-TTNNVNM5",
+        "accountId": "1000000000",
+        "containerId": "2000000000",
         "triggerId": "106",
         "name": "Custom - blog_engagement",
         "type": "CUSTOM_EVENT",
@@ -346,8 +594,16 @@
           {
             "type": "EQUALS",
             "parameter": [
-              { "type": "TEMPLATE", "key": "arg0", "value": "{{_event}}" },
-              { "type": "TEMPLATE", "key": "arg1", "value": "blog_engagement" }
+              {
+                "type": "TEMPLATE",
+                "key": "arg0",
+                "value": "{{_event}}"
+              },
+              {
+                "type": "TEMPLATE",
+                "key": "arg1",
+                "value": "blog_engagement"
+              }
             ]
           }
         ]
@@ -355,182 +611,309 @@
     ],
     "variable": [
       {
-        "accountId": "palnadu",
-        "containerId": "GTM-TTNNVNM5",
+        "accountId": "1000000000",
+        "containerId": "2000000000",
         "variableId": "201",
         "name": "dlv - page_title",
         "type": "v",
         "parameter": [
-          { "type": "INTEGER", "key": "dataLayerVersion", "value": "2" },
-          { "type": "TEMPLATE", "key": "name", "value": "page_title" }
+          {
+            "type": "INTEGER",
+            "key": "dataLayerVersion",
+            "value": "2"
+          },
+          {
+            "type": "TEMPLATE",
+            "key": "name",
+            "value": "page_title"
+          }
         ]
       },
       {
-        "accountId": "palnadu",
-        "containerId": "GTM-TTNNVNM5",
+        "accountId": "1000000000",
+        "containerId": "2000000000",
         "variableId": "202",
         "name": "dlv - page_location",
         "type": "v",
         "parameter": [
-          { "type": "INTEGER", "key": "dataLayerVersion", "value": "2" },
-          { "type": "TEMPLATE", "key": "name", "value": "page_location" }
+          {
+            "type": "INTEGER",
+            "key": "dataLayerVersion",
+            "value": "2"
+          },
+          {
+            "type": "TEMPLATE",
+            "key": "name",
+            "value": "page_location"
+          }
         ]
       },
       {
-        "accountId": "palnadu",
-        "containerId": "GTM-TTNNVNM5",
+        "accountId": "1000000000",
+        "containerId": "2000000000",
         "variableId": "203",
         "name": "dlv - page_path",
         "type": "v",
         "parameter": [
-          { "type": "INTEGER", "key": "dataLayerVersion", "value": "2" },
-          { "type": "TEMPLATE", "key": "name", "value": "page_path" }
+          {
+            "type": "INTEGER",
+            "key": "dataLayerVersion",
+            "value": "2"
+          },
+          {
+            "type": "TEMPLATE",
+            "key": "name",
+            "value": "page_path"
+          }
         ]
       },
       {
-        "accountId": "palnadu",
-        "containerId": "GTM-TTNNVNM5",
+        "accountId": "1000000000",
+        "containerId": "2000000000",
         "variableId": "204",
         "name": "dlv - page_locale",
         "type": "v",
         "parameter": [
-          { "type": "INTEGER", "key": "dataLayerVersion", "value": "2" },
-          { "type": "TEMPLATE", "key": "name", "value": "page_locale" }
+          {
+            "type": "INTEGER",
+            "key": "dataLayerVersion",
+            "value": "2"
+          },
+          {
+            "type": "TEMPLATE",
+            "key": "name",
+            "value": "page_locale"
+          }
         ]
       },
       {
-        "accountId": "palnadu",
-        "containerId": "GTM-TTNNVNM5",
+        "accountId": "1000000000",
+        "containerId": "2000000000",
         "variableId": "205",
         "name": "dlv - lead_id",
         "type": "v",
         "parameter": [
-          { "type": "INTEGER", "key": "dataLayerVersion", "value": "2" },
-          { "type": "TEMPLATE", "key": "name", "value": "lead_id" }
+          {
+            "type": "INTEGER",
+            "key": "dataLayerVersion",
+            "value": "2"
+          },
+          {
+            "type": "TEMPLATE",
+            "key": "name",
+            "value": "lead_id"
+          }
         ]
       },
       {
-        "accountId": "palnadu",
-        "containerId": "GTM-TTNNVNM5",
+        "accountId": "1000000000",
+        "containerId": "2000000000",
         "variableId": "206",
         "name": "dlv - form_id",
         "type": "v",
         "parameter": [
-          { "type": "INTEGER", "key": "dataLayerVersion", "value": "2" },
-          { "type": "TEMPLATE", "key": "name", "value": "form_id" }
+          {
+            "type": "INTEGER",
+            "key": "dataLayerVersion",
+            "value": "2"
+          },
+          {
+            "type": "TEMPLATE",
+            "key": "name",
+            "value": "form_id"
+          }
         ]
       },
       {
-        "accountId": "palnadu",
-        "containerId": "GTM-TTNNVNM5",
+        "accountId": "1000000000",
+        "containerId": "2000000000",
         "variableId": "207",
         "name": "dlv - lead_category",
         "type": "v",
         "parameter": [
-          { "type": "INTEGER", "key": "dataLayerVersion", "value": "2" },
-          { "type": "TEMPLATE", "key": "name", "value": "lead_category" }
+          {
+            "type": "INTEGER",
+            "key": "dataLayerVersion",
+            "value": "2"
+          },
+          {
+            "type": "TEMPLATE",
+            "key": "name",
+            "value": "lead_category"
+          }
         ]
       },
       {
-        "accountId": "palnadu",
-        "containerId": "GTM-TTNNVNM5",
+        "accountId": "1000000000",
+        "containerId": "2000000000",
         "variableId": "208",
         "name": "dlv - project_stage",
         "type": "v",
         "parameter": [
-          { "type": "INTEGER", "key": "dataLayerVersion", "value": "2" },
-          { "type": "TEMPLATE", "key": "name", "value": "project_stage" }
+          {
+            "type": "INTEGER",
+            "key": "dataLayerVersion",
+            "value": "2"
+          },
+          {
+            "type": "TEMPLATE",
+            "key": "name",
+            "value": "project_stage"
+          }
         ]
       },
       {
-        "accountId": "palnadu",
-        "containerId": "GTM-TTNNVNM5",
+        "accountId": "1000000000",
+        "containerId": "2000000000",
         "variableId": "209",
         "name": "dlv - channel",
         "type": "v",
         "parameter": [
-          { "type": "INTEGER", "key": "dataLayerVersion", "value": "2" },
-          { "type": "TEMPLATE", "key": "name", "value": "channel" }
+          {
+            "type": "INTEGER",
+            "key": "dataLayerVersion",
+            "value": "2"
+          },
+          {
+            "type": "TEMPLATE",
+            "key": "name",
+            "value": "channel"
+          }
         ]
       },
       {
-        "accountId": "palnadu",
-        "containerId": "GTM-TTNNVNM5",
+        "accountId": "1000000000",
+        "containerId": "2000000000",
         "variableId": "210",
         "name": "dlv - destination",
         "type": "v",
         "parameter": [
-          { "type": "INTEGER", "key": "dataLayerVersion", "value": "2" },
-          { "type": "TEMPLATE", "key": "name", "value": "destination" }
+          {
+            "type": "INTEGER",
+            "key": "dataLayerVersion",
+            "value": "2"
+          },
+          {
+            "type": "TEMPLATE",
+            "key": "name",
+            "value": "destination"
+          }
         ]
       },
       {
-        "accountId": "palnadu",
-        "containerId": "GTM-TTNNVNM5",
+        "accountId": "1000000000",
+        "containerId": "2000000000",
         "variableId": "211",
         "name": "dlv - source_section",
         "type": "v",
         "parameter": [
-          { "type": "INTEGER", "key": "dataLayerVersion", "value": "2" },
-          { "type": "TEMPLATE", "key": "name", "value": "source_section" }
+          {
+            "type": "INTEGER",
+            "key": "dataLayerVersion",
+            "value": "2"
+          },
+          {
+            "type": "TEMPLATE",
+            "key": "name",
+            "value": "source_section"
+          }
         ]
       },
       {
-        "accountId": "palnadu",
-        "containerId": "GTM-TTNNVNM5",
+        "accountId": "1000000000",
+        "containerId": "2000000000",
         "variableId": "212",
         "name": "dlv - service_slug",
         "type": "v",
         "parameter": [
-          { "type": "INTEGER", "key": "dataLayerVersion", "value": "2" },
-          { "type": "TEMPLATE", "key": "name", "value": "service_slug" }
+          {
+            "type": "INTEGER",
+            "key": "dataLayerVersion",
+            "value": "2"
+          },
+          {
+            "type": "TEMPLATE",
+            "key": "name",
+            "value": "service_slug"
+          }
         ]
       },
       {
-        "accountId": "palnadu",
-        "containerId": "GTM-TTNNVNM5",
+        "accountId": "1000000000",
+        "containerId": "2000000000",
         "variableId": "213",
         "name": "dlv - engagement_type",
         "type": "v",
         "parameter": [
-          { "type": "INTEGER", "key": "dataLayerVersion", "value": "2" },
-          { "type": "TEMPLATE", "key": "name", "value": "engagement_type" }
+          {
+            "type": "INTEGER",
+            "key": "dataLayerVersion",
+            "value": "2"
+          },
+          {
+            "type": "TEMPLATE",
+            "key": "name",
+            "value": "engagement_type"
+          }
         ]
       },
       {
-        "accountId": "palnadu",
-        "containerId": "GTM-TTNNVNM5",
+        "accountId": "1000000000",
+        "containerId": "2000000000",
         "variableId": "214",
         "name": "dlv - article_slug",
         "type": "v",
         "parameter": [
-          { "type": "INTEGER", "key": "dataLayerVersion", "value": "2" },
-          { "type": "TEMPLATE", "key": "name", "value": "article_slug" }
+          {
+            "type": "INTEGER",
+            "key": "dataLayerVersion",
+            "value": "2"
+          },
+          {
+            "type": "TEMPLATE",
+            "key": "name",
+            "value": "article_slug"
+          }
         ]
       },
       {
-        "accountId": "palnadu",
-        "containerId": "GTM-TTNNVNM5",
+        "accountId": "1000000000",
+        "containerId": "2000000000",
         "variableId": "215",
         "name": "dlv - scroll_depth_threshold",
         "type": "v",
         "parameter": [
-          { "type": "INTEGER", "key": "dataLayerVersion", "value": "2" },
-          { "type": "TEMPLATE", "key": "name", "value": "scroll_depth_threshold" }
+          {
+            "type": "INTEGER",
+            "key": "dataLayerVersion",
+            "value": "2"
+          },
+          {
+            "type": "TEMPLATE",
+            "key": "name",
+            "value": "scroll_depth_threshold"
+          }
         ]
       },
       {
-        "accountId": "palnadu",
-        "containerId": "GTM-TTNNVNM5",
+        "accountId": "1000000000",
+        "containerId": "2000000000",
         "variableId": "216",
         "name": "dlv - cta_label",
         "type": "v",
         "parameter": [
-          { "type": "INTEGER", "key": "dataLayerVersion", "value": "2" },
-          { "type": "TEMPLATE", "key": "name", "value": "cta_label" }
+          {
+            "type": "INTEGER",
+            "key": "dataLayerVersion",
+            "value": "2"
+          },
+          {
+            "type": "TEMPLATE",
+            "key": "name",
+            "value": "cta_label"
+          }
         ]
       }
     ]
   }
 }
-

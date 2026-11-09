@@ -12,6 +12,8 @@ assert.ok(fs.existsSync(gtmFile), 'GTM container export file must exist');
 
 const gtmData = JSON.parse(fs.readFileSync(gtmFile, 'utf8'));
 assert.equal(gtmData.containerVersion.container.publicId, 'GTM-TTNNVNM5', 'Public container ID must match GTM-TTNNVNM5');
+assert.match(gtmData.containerVersion.accountId, /^\d+$/, 'accountId must be a numeric base-10 string');
+assert.match(gtmData.containerVersion.containerId, /^\d+$/, 'containerId must be a numeric base-10 string');
 
 const tags = gtmData.containerVersion.tag || [];
 const triggers = gtmData.containerVersion.trigger || [];
