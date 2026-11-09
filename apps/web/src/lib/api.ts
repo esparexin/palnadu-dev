@@ -3,18 +3,31 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
 interface FetchOptions extends RequestInit {
   params?: Record<string, string>;
   next?: { revalidate?: number; tags?: string[] };
+  timeoutMs?: number;
 }
 
 export async function apiClient<T>(
   endpoint: string,
   options: FetchOptions = {},
 ): Promise<T> {
-  const { params, next, ...fetchOptions } = options;
+  const { params, next, timeoutMs = 15000, signal: callerSignal, ...fetchOptions } = options;
 
   let url = `${API_URL}${endpoint}`;
   if (params) {
     const searchParams = new URLSearchParams(params);
     url += `?${searchParams.toString()}`;
+  }
+
+  // Active timeout signal to prevent long or indefinite network hanging
+  let signal: AbortSignal;
+  if (callerSignal) {
+    if (typeof AbortSignal.any === 'function') {
+      signal = AbortSignal.any([callerSignal, AbortSignal.timeout(timeoutMs)]);
+    } else {
+      signal = callerSignal;
+    }
+  } else {
+    signal = AbortSignal.timeout(timeoutMs);
   }
 
   let response: Response;
@@ -25,9 +38,15 @@ export async function apiClient<T>(
         ...fetchOptions.headers,
       },
       ...fetchOptions,
+      signal,
       ...(next ? { next } : {}),
     });
-  } catch {
+  } catch (err: any) {
+    if (err?.name === 'TimeoutError' || err?.name === 'AbortError') {
+      throw new Error(
+        'Request timed out while connecting to Palnadu.dev services. Please check your internet connection and try again.',
+      );
+    }
     throw new Error(
       'Unable to connect to Palnadu.dev services. Please check your internet connection and try again.',
     );
@@ -58,8 +77,8 @@ export async function apiClient<T>(
 // Public API calls
 export const api = {
   leads: {
-    create: (data: unknown) =>
-      apiClient('/api/leads', { method: 'POST', body: JSON.stringify(data) }),
+    create: (data: unknown, timeoutMs = 15000) =>
+      apiClient('/api/leads', { method: 'POST', body: JSON.stringify(data), timeoutMs }),
   },
   services: {
     list: () => apiClient('/api/services', { next: { revalidate: 300 } }),

@@ -64,12 +64,12 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
           </nav>
         )}
 
-        {/* Mobile Header (Concise & Compact — replaced banned text-[11px] with text-xs) */}
+        {/* Mobile Header */}
         <div className="lg:hidden text-center space-y-1.5 my-2 max-w-sm">
           <p className="text-xs font-mono uppercase tracking-widest text-palnadu-light-blue font-bold">
             Start With The Problem
           </p>
-          <h1 className="text-2xl sm:text-2xl font-black text-white leading-tight drop-shadow-sm">
+          <h1 className="text-2xl font-extrabold text-white leading-tight drop-shadow-sm">
             {title}
           </h1>
         </div>
@@ -80,7 +80,7 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
             <p className="text-xs font-mono uppercase tracking-widest text-palnadu-light-blue font-bold">
               Start With The Problem
             </p>
-            <h1 className="text-3xl lg:text-4xl xl:text-5xl font-black text-white leading-tight drop-shadow-md">
+            <h1 className="text-3xl lg:text-4xl xl:text-5xl font-extrabold text-white leading-tight drop-shadow-md">
               {title}
             </h1>
             <p className="text-sm text-palnadu-light-blue/90 leading-relaxed max-w-md">
