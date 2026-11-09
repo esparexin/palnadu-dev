@@ -2,33 +2,16 @@ import { BlogLanguage } from '@prisma/client';
 import { toTopicKey } from '../topic-identity';
 import { CURATED_TOPIC_QUEUE, DYNAMIC_LOCATIONS, DYNAMIC_SERVICES, QueueCandidate } from './types';
 
-export function matrixCandidates(generatedKeys: Set<string>): QueueCandidate[] {
-  const out: QueueCandidate[] = [];
-  const seen = new Set<string>();
-
-  for (const s of DYNAMIC_SERVICES) {
-    for (const loc of DYNAMIC_LOCATIONS) {
-      const verb = s.service.endsWith('s') ? 'Modernize' : 'Modernizes';
-      const topic = `How ${s.service} ${verb} Growing Businesses in ${loc}`;
-      const topicKey = toTopicKey(topic);
-      if (generatedKeys.has(`${topicKey}::${BlogLanguage.en}`) || seen.has(topicKey)) continue;
-      seen.add(topicKey);
-      out.push({
-        categorySlug: s.category,
-        topic,
-        targetLocation: `${loc}, Andhra Pradesh`,
-        source: 'matrix',
-      });
-    }
-  }
-  return out;
+/**
+ * Programmatic location-service matrix generator.
+ * Disabled by default to comply with Google Helpful Content & Scaled Spam policies (anti-doorway safeguards).
+ */
+export function matrixCandidates(_generatedKeys: Set<string>): QueueCandidate[] {
+  return [];
 }
 
-export function getAllInitialSeeds(generatedKeys: Set<string>): QueueCandidate[] {
-  return [
-    ...CURATED_TOPIC_QUEUE.map((t): QueueCandidate => ({ ...t, source: 'curated-rotation' })),
-    ...matrixCandidates(generatedKeys),
-  ];
+export function getAllInitialSeeds(_generatedKeys: Set<string>): QueueCandidate[] {
+  return CURATED_TOPIC_QUEUE.map((t): QueueCandidate => ({ ...t, source: 'curated-rotation' }));
 }
 
 export function inferCategoryFromTopic(phrase: string, primaryKeyword = ''): string {

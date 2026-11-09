@@ -43,6 +43,12 @@ const nextConfig = {
         destination: 'https://www.palnadu.dev/:path*',
         permanent: true,
       },
+      // 301 Permanent Redirect: /digital-marketing -> /grow
+      {
+        source: '/digital-marketing',
+        destination: '/grow',
+        permanent: true,
+      },
     ];
   },
   async headers() {

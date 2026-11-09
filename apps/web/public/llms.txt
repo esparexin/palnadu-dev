@@ -1,0 +1,37 @@
+# Palnadu.dev
+
+> Problem-first software engineering studio and digital technology partner based in Palnadu, Andhra Pradesh.
+
+Palnadu.dev builds web applications, Android & iOS mobile applications, startup Minimum Viable Products (MVPs), and custom business automation systems for regional enterprises and startups across Andhra Pradesh and worldwide.
+
+## Core Capabilities & Services
+- [Website Development](https://www.palnadu.dev/services/website-development): High-performance corporate websites and institutional platforms built with Next.js.
+- [Web Applications](https://www.palnadu.dev/services/web-development): Scalable SaaS products, commercial portals, dashboards, and custom web applications.
+- [Mobile Applications](https://www.palnadu.dev/services/mobile-app-development): Production iOS, Android, and cross-platform mobile apps.
+- [Android App Development](https://www.palnadu.dev/services/android-app-development): Native and cross-platform Android mobile applications for regional commerce.
+- [iOS App Development](https://www.palnadu.dev/services/ios-app-development): Premium iOS mobile applications built for iPhone and iPad.
+- [Idea Validation](https://www.palnadu.dev/services/idea-validation): Technical feasibility assessment, customer workflow analysis, and MVP roadmap scoping.
+- [MVP Development](https://www.palnadu.dev/services/mvp-development): Rapid 3-to-6-week minimum viable product launches with 100% source code ownership.
+- [Custom Software](https://www.palnadu.dev/services/custom-software): Tailored software designed around specific business workflows and requirements.
+- [Business Automation](https://www.palnadu.dev/services/business-automation): Elimination of repetitive manual spreadsheets and paper slips through custom portals.
+- [Digital Marketing & SEO](https://www.palnadu.dev/services/digital-marketing): Data-driven technical SEO, Google Search optimization, and local visibility.
+- [Technical Consulting](https://www.palnadu.dev/services/technical-consulting): Architecture reviews, technology selection, and system analysis.
+
+## Key Hubs & Regional Presence
+- [Palnadu District Hub](https://www.palnadu.dev/locations/palnadu)
+- [Macherla Headquarters](https://www.palnadu.dev/locations/macherla)
+- [Narasaraopet](https://www.palnadu.dev/locations/narasaraopet)
+- [Guntur](https://www.palnadu.dev/locations/guntur)
+- [Chilakaluripet](https://www.palnadu.dev/locations/chilakaluripet)
+- [Sattenapalle](https://www.palnadu.dev/locations/sattenapalle)
+- [Vinukonda](https://www.palnadu.dev/locations/vinukonda)
+
+## Verification & Official References
+- Website: https://www.palnadu.dev
+- Headquarters: Main Road, Near Municipal Office, Macherla, Palnadu District, Andhra Pradesh 522426, India
+- Email: hello@palnadu.dev
+- Phone: +91-9030787819
+- GitHub: https://github.com/esparexin
+- LinkedIn: https://linkedin.com/company/palnadudev
+- X / Twitter: https://twitter.com/palnadudev
+

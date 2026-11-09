@@ -5,9 +5,9 @@ import { CtaSection } from '@/components/sections/cta-section';
 import { MapPin, ArrowRight, Globe } from 'lucide-react';
 
 export const metadata: Metadata = {
-  title: 'Locations We Serve in Palnadu, Guntur & Andhra Pradesh',
+  title: 'Web Developers & Software Development Across Palnadu & Guntur | Palnadu.dev',
   description:
-    'Tailored software development, web applications, and website design for enterprises across Palnadu, Guntur, Narasaraopet, Chilakaluripet, and Andhra Pradesh.',
+    'Professional web development, website design, and custom software engineering for enterprises across Palnadu, Guntur, Narasaraopet, Chilakaluripet, and Andhra Pradesh.',
   alternates: {
     canonical: '/locations',
   },
@@ -67,7 +67,7 @@ export default function LocationsPage() {
                 Regional Presence
               </p>
               <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-palnadu-dark">
-                Software Development Across Palnadu & Guntur
+                Web Development & Software Engineering Across Palnadu & Guntur
               </h1>
               <p className="text-sm sm:text-base text-palnadu-body leading-relaxed">
                 Headquartered in Palnadu with senior engineering talent designing custom web platforms, mobile apps, and business automation for regional commerce.

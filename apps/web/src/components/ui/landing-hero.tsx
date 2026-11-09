@@ -8,16 +8,16 @@ export function LandingHero() {
       {/* Left Column (7 cols): Content & Trust Proof */}
       <div className="lg:col-span-7 space-y-4 sm:space-y-5 text-left">
         <p className="text-xs font-mono uppercase tracking-widest text-palnadu-blue font-bold mb-1.5 sm:mb-2">
-          Problem-First Software Studio
+          Web Development & Software Engineering Studio
         </p>
 
         <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-palnadu-dark leading-[1.12]">
-          Start With The Problem.
-          <span className="block text-palnadu-blue mt-1">We Build The Solution.</span>
+          Web Developers In Palnadu.
+          <span className="block text-palnadu-blue mt-1">Start With The Problem.</span>
         </h1>
 
         <p className="text-sm sm:text-base md:text-lg text-palnadu-body leading-relaxed max-w-xl">
-          Palnadu.dev turns real-world business challenges into practical, production-ready software. We validate ideas, eliminate manual business bottlenecks, and engineer what works.
+          Palnadu.dev is a web development and custom software engineering studio in Palnadu. We build high-performance websites, web applications, and mobile apps for growing businesses in Narasaraopet, Guntur, and Andhra Pradesh.
         </p>
 
         {/* Mobile 2-Column Action Buttons | Desktop Wide Action Buttons */}

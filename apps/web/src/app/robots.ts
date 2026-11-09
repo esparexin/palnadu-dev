@@ -6,12 +6,24 @@ export default function robots(): MetadataRoute.Robots {
     rules: [
       {
         userAgent: '*',
-        allow: '/',
-        disallow: ['/admin/', '/api/', '/_next/'],
+        allow: ['/', '/_next/static/', '/_next/image/'],
+        disallow: ['/admin/', '/api/'],
       },
       {
         userAgent: ['Googlebot', 'Bingbot'],
-        allow: '/',
+        allow: ['/', '/_next/static/', '/_next/image/'],
+        disallow: ['/admin/', '/api/'],
+      },
+      {
+        userAgent: [
+          'GPTBot',
+          'ChatGPT-User',
+          'PerplexityBot',
+          'ClaudeBot',
+          'Google-Extended',
+          'Applebot',
+        ],
+        allow: ['/', '/_next/static/', '/_next/image/'],
         disallow: ['/admin/', '/api/'],
       },
     ],

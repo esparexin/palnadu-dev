@@ -3,9 +3,9 @@
 export const siteConfig = {
   name: 'Palnadu.dev',
   brandName: 'Palnadu.dev',
-  title: 'Palnadu.dev — Start with the problem. We build the solution.',
+  title: 'Palnadu.dev — Web Developer & Software Development Studio in Palnadu',
   description:
-    'Palnadu.dev helps startups, businesses, and individuals turn real-world problems and ideas into practical digital solutions.',
+    'Palnadu.dev is a web development and custom software engineering studio in Palnadu. We build high-performance websites, web applications, and mobile apps for regional businesses in Narasaraopet, Guntur, and Andhra Pradesh.',
   url: 'https://www.palnadu.dev',
   ogImage: 'https://www.palnadu.dev/og.png',
   creator: 'Palnadu.dev',
@@ -71,17 +71,17 @@ export const processSteps = [
 
 export const services = [
   {
-    title: 'Website Development',
+    title: 'Website Development & Design',
     slug: 'website-development',
     shortDescription:
-      'High-performance corporate websites, school platforms, and institutional portals engineered with Next.js.',
+      'High-performance corporate websites, modern web design, school platforms, and institutional portals engineered with Next.js.',
     icon: 'Globe',
   },
   {
-    title: 'Web Applications',
+    title: 'Web Applications & Full-Stack Development',
     slug: 'web-development',
     shortDescription:
-      'Build business platforms, SaaS products, portals, dashboards, and custom web applications.',
+      'Build scalable web applications, full-stack portals, SaaS platforms, and custom business dashboards.',
     icon: 'Globe',
   },
   {
