@@ -82,7 +82,7 @@ export default function ContactPage() {
             </div>
 
             <div className="p-5 rounded-xl border border-palnadu-border bg-white shadow-sm space-y-2">
-              <div className="h-9 w-9 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center">
+              <div className="h-9 w-9 rounded-lg bg-palnadu-teal/10 text-palnadu-teal flex items-center justify-center">
                 <ShieldCheck className="h-4 w-4" />
               </div>
               <h3 className="text-sm font-bold text-palnadu-dark">100% Code Ownership</h3>
@@ -92,7 +92,7 @@ export default function ContactPage() {
             </div>
 
             <div className="p-5 rounded-xl border border-palnadu-border bg-white shadow-sm space-y-2">
-              <div className="h-9 w-9 rounded-lg bg-purple-50 text-purple-700 flex items-center justify-center">
+              <div className="h-9 w-9 rounded-lg bg-palnadu-blue/10 text-palnadu-blue flex items-center justify-center">
                 <Users className="h-4 w-4" />
               </div>
               <h3 className="text-sm font-bold text-palnadu-dark">Direct Engineer Access</h3>

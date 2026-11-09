@@ -26,8 +26,12 @@ export function LocationServices({ location }: LocationServicesProps) {
             const lower = serviceName.toLowerCase();
             const targetSlug =
               lower.includes('website') ? 'website-development' :
+              lower.includes('seo') || lower.includes('google') || lower.includes('aeo') ? 'seo-aeo-geo' :
+              lower.includes('marketing') ? 'digital-marketing' :
+              lower.includes('test') || lower.includes('qa') ? 'software-testing-qa' :
+              lower.includes('train') || lower.includes('course') ? 'practical-training' :
               lower.includes('erp') || lower.includes('custom') || lower.includes('inventory') ? 'custom-software' :
-              lower.includes('automation') || lower.includes('mandi') ? 'business-automation' :
+              lower.includes('automation') || lower.includes('mandi') || lower.includes('whatsapp') ? 'business-automation' :
               lower.includes('mobile') || lower.includes('android') ? 'android-app-development' :
               'web-development';
 

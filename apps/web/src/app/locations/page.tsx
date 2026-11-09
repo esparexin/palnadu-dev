@@ -5,9 +5,9 @@ import { CtaSection } from '@/components/sections/cta-section';
 import { MapPin, ArrowRight, Globe } from 'lucide-react';
 
 export const metadata: Metadata = {
-  title: 'Web Developers & Software Development Across Palnadu & Guntur | Palnadu.dev',
+  title: 'Web Development, Software Engineering & Digital Solutions Across Palnadu & Guntur | Palnadu.dev',
   description:
-    'Professional web development, website design, and custom software engineering for enterprises across Palnadu, Guntur, Narasaraopet, Chilakaluripet, and Andhra Pradesh.',
+    'Professional web development, website design, custom software engineering, and digital growth solutions for enterprises across Palnadu, Guntur, Narasaraopet, Chilakaluripet, and Andhra Pradesh.',
   alternates: {
     canonical: '/locations',
   },
@@ -67,10 +67,10 @@ export default function LocationsPage() {
                 Regional Presence
               </p>
               <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-palnadu-dark">
-                Web Development & Software Engineering Across Palnadu & Guntur
+                Web Development, Software Engineering &amp; Digital Solutions Across Palnadu &amp; Guntur
               </h1>
               <p className="text-sm sm:text-base text-palnadu-body leading-relaxed">
-                Headquartered in Palnadu with senior engineering talent designing custom web platforms, mobile apps, and business automation for regional commerce.
+                Headquartered in Palnadu with senior engineering talent designing custom web platforms, mobile apps, software testing, and digital growth strategies for regional commerce.
               </p>
             </div>
 
@@ -105,7 +105,7 @@ export default function LocationsPage() {
                       {loc.keyIndustries.slice(0, 3).map((ind, i) => (
                         <span
                           key={i}
-                          className="text-[10px] px-2 py-0.5 rounded-md bg-palnadu-off-white text-palnadu-body font-medium border border-palnadu-border/60 truncate max-w-full"
+                          className="text-xs px-2 py-0.5 rounded-md bg-palnadu-off-white text-palnadu-body font-medium border border-palnadu-border/60 truncate max-w-full"
                         >
                           {ind}
                         </span>
