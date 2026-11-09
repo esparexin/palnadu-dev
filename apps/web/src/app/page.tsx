@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { ScrollGlobe } from '@/components/ui/landing-page';
 import { siteConfig, getOrganizationSchema, getWebsiteSchema } from '@palnadu/config';
 import { DiwaliIntro } from '@/components/homepage/diwali-intro';
+import { HOMEPAGE_FAQS } from '@/components/ui/landing-faq';
 
 // Default Homepage OpenGraph & Canonical Metadata (SSOT for Social Sharing & WhatsApp)
 export const metadata: Metadata = {
@@ -105,24 +106,14 @@ function JsonLd() {
     '@context': 'https://schema.org',
     '@type': 'FAQPage',
     '@id': `${siteConfig.url}/#faq`,
-    mainEntity: [
-      {
-        '@type': 'Question',
-        name: 'What does Palnadu.dev specialize in?',
-        acceptedAnswer: {
-          '@type': 'Answer',
-          text: 'Palnadu.dev is a problem-first software studio specializing in web applications, mobile apps, custom business software, startup MVP development, business automation, and technical consulting.',
-        },
+    mainEntity: HOMEPAGE_FAQS.map((item) => ({
+      '@type': 'Question',
+      name: item.question,
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: item.answer,
       },
-      {
-        '@type': 'Question',
-        name: 'What does "Start with the problem" mean?',
-        acceptedAnswer: {
-          '@type': 'Answer',
-          text: 'Instead of pushing unnecessary frameworks or features, we diagnose what is broken in your workflow or idea first. We evaluate feasibility, limitations, and future costs before writing any code.',
-        },
-      },
-    ],
+    })),
   };
 
   return (

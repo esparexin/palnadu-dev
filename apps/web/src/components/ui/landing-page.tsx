@@ -5,12 +5,14 @@ import Globe from "@/components/ui/globe";
 import { cn } from "@/lib/utils";
 import { LandingHero } from "./landing-hero";
 import { LandingStandards, LandingMethodology } from "./landing-standards";
+import { LandingFaq } from "./landing-faq";
 import { LandingCta } from "./landing-cta";
 
 const DESKTOP_POSITIONS = [
   { top: 50, left: 75, scale: 1.25, opacity: 0.95 },
   { top: 50, left: 75, scale: 1.10, opacity: 0.90 },
   { top: 50, left: 75, scale: 1.15, opacity: 0.90 },
+  { top: 50, left: 75, scale: 1.05, opacity: 0.85 },
   { top: 52, left: 50, scale: 1.45, opacity: 0.16 },
 ];
 
@@ -18,6 +20,7 @@ const MOBILE_POSITIONS = [
   { top: 78, left: 50, scale: 0.72, opacity: 0.90 },
   { top: 50, left: 82, scale: 0.60, opacity: 0.25 },
   { top: 50, left: 80, scale: 0.62, opacity: 0.28 },
+  { top: 50, left: 80, scale: 0.60, opacity: 0.25 },
   { top: 52, left: 50, scale: 1.05, opacity: 0.14 },
 ];
 
@@ -100,7 +103,7 @@ export function ScrollGlobe() {
     };
   }, [updateGlobePosition]);
 
-  const navLabels = ["Overview", "Standards", "Process", "Get Started"];
+  const navLabels = ["Overview", "Standards", "Process", "FAQ", "Get Started"];
 
   return (
     <div className="relative w-full max-w-full overflow-x-hidden bg-white text-palnadu-dark">
@@ -191,9 +194,17 @@ export function ScrollGlobe() {
         <LandingMethodology />
       </section>
 
-      {/* Section 3: Consultation CTA */}
+      {/* Section 3: FAQ */}
       <section
         ref={(el) => { sectionRefs.current[3] = el; }}
+        className="relative z-20 px-4 sm:px-8 md:px-12 lg:px-16 py-7 sm:py-14 lg:py-20 border-b border-palnadu-border/60 overflow-hidden w-full bg-transparent"
+      >
+        <LandingFaq />
+      </section>
+
+      {/* Section 4: Consultation CTA */}
+      <section
+        ref={(el) => { sectionRefs.current[4] = el; }}
         className="relative z-20 px-4 sm:px-8 md:px-12 lg:px-16 py-8 sm:py-14 lg:py-24 overflow-hidden w-full bg-transparent"
       >
         <LandingCta />
