@@ -12,6 +12,7 @@ import { articleBasePath, articleCanonical, articleDateLocale } from '@/lib/blog
 import { ArticleContent, isOptimizableImageUrl } from './article-content';
 import { ArticleFaq } from './article-faq';
 import { ArticleFooter } from './article-footer';
+import { ArticleEngagementTracker } from './article-engagement-tracker';
 
 type ArticleViewProps = {
   post: any;
@@ -96,6 +97,12 @@ export function ArticleView({ post, locale }: ArticleViewProps) {
       />
 
       <article className="bg-white py-12 sm:py-16">
+        <ArticleEngagementTracker
+          slug={post.slug}
+          title={post.title}
+          category={post.category?.name}
+          locale={locale}
+        />
         <div className="container max-w-3xl">
           {/* Breadcrumb Navigation */}
           <div className="mb-6 flex items-center justify-between">

@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { siteConfig, footerNavItems } from '@palnadu/config';
 import { Separator } from '@/components/ui/separator';
 import { BrandLogo } from '@/components/ui/brand-logo';
+import { trackContactChannelClick } from '@/lib/analytics';
 import { ArrowUpRight } from 'lucide-react';
 
 interface FooterProps {
@@ -30,6 +31,14 @@ export function Footer({ initialLogoUrl }: FooterProps = {}) {
               <p>
                 <a
                   href={`mailto:${siteConfig.contact.email}`}
+                  onClick={() =>
+                    trackContactChannelClick({
+                      channel: 'email',
+                      destination: siteConfig.contact.email,
+                      source_section: 'footer',
+                      source_page: typeof window !== 'undefined' ? window.location.pathname : '/',
+                    })
+                  }
                   className="text-palnadu-light-blue hover:text-white transition-colors font-mono inline-flex items-center gap-1 underline"
                 >
                   <span>{siteConfig.contact.email}</span>
@@ -40,6 +49,14 @@ export function Footer({ initialLogoUrl }: FooterProps = {}) {
                 <p>
                   <a
                     href={`tel:${siteConfig.contact.phone}`}
+                    onClick={() =>
+                      trackContactChannelClick({
+                        channel: 'phone',
+                        destination: siteConfig.contact.phone,
+                        source_section: 'footer',
+                        source_page: typeof window !== 'undefined' ? window.location.pathname : '/',
+                      })
+                    }
                     className="text-palnadu-light-blue hover:text-white transition-colors font-mono inline-flex items-center gap-1 underline"
                   >
                     <span>{siteConfig.contact.phone}</span>
@@ -130,7 +147,7 @@ export function Footer({ initialLogoUrl }: FooterProps = {}) {
         {/* Regional Hubs Directory Links */}
         {footerNavItems.locations && footerNavItems.locations.length > 0 && (
           <div className="pt-6 border-t border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs text-palnadu-light-blue/80">
-            <div className="flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-wider text-palnadu-teal font-semibold shrink-0">
+            <div className="flex items-center gap-1.5 font-mono text-xs uppercase tracking-wider text-palnadu-teal font-semibold shrink-0">
               <span>Regional Hubs:</span>
             </div>
             <div className="flex flex-wrap gap-x-4 gap-y-1.5 text-xs">

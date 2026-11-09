@@ -1,6 +1,10 @@
+'use client';
+
+import { useEffect } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { CheckCircle2, HelpCircle, ArrowLeft } from 'lucide-react';
+import { trackServiceEngagement, trackConsultationRequest } from '@/lib/analytics';
 import type { ServiceDetailData } from './service-data';
 
 interface ServiceDetailContentProps {
@@ -9,6 +13,15 @@ interface ServiceDetailContentProps {
 }
 
 export function ServiceDetailContent({ service, content }: ServiceDetailContentProps) {
+  useEffect(() => {
+    if (service?.slug) {
+      trackServiceEngagement({
+        service_slug: service.slug,
+        service_title: service.title || service.slug,
+        engagement_type: 'view_detail',
+      });
+    }
+  }, [service?.slug, service?.title]);
   return (
     <section className="py-12 sm:py-16 relative bg-white">
       <div className="container relative z-10">
@@ -132,7 +145,23 @@ export function ServiceDetailContent({ service, content }: ServiceDetailContentP
             </p>
             <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
               <Button asChild className="bg-palnadu-blue text-white hover:bg-palnadu-dark-hover font-semibold text-sm h-11 px-7 shadow-sm">
-                <Link href="/contact">
+                <Link
+                  href="/contact"
+                  onClick={() => {
+                    trackConsultationRequest({
+                      cta_label: 'Discuss Your Requirements →',
+                      source_section: 'service_detail_bottom_cta',
+                      source_page: `/services/${service.slug}`,
+                      destination_url: '/contact',
+                    });
+                    trackServiceEngagement({
+                      service_slug: service.slug,
+                      service_title: service.title || service.slug,
+                      engagement_type: 'cta_click',
+                      destination_url: '/contact',
+                    });
+                  }}
+                >
                   Discuss Your Requirements →
                 </Link>
               </Button>

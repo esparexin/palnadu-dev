@@ -1,11 +1,14 @@
+import { Suspense } from 'react';
 import type { Metadata, Viewport } from 'next';
-import Script from 'next/script';
 import { Plus_Jakarta_Sans, JetBrains_Mono } from 'next/font/google';
 import { siteConfig } from '@palnadu/config';
 import { Navbar } from '@/components/layout/navbar';
 import { Footer } from '@/components/layout/footer';
 import { MobileStickyCta } from '@/components/layout/mobile-sticky-cta';
 import { SmoothScrollProvider } from '@/components/providers/smooth-scroll-provider';
+import { GtmScripts, GtmNoscript } from '@/components/analytics/gtm-scripts';
+import { AnalyticsRouteTracker } from '@/components/analytics/route-tracker';
+import { CookieConsentBanner } from '@/components/analytics/cookie-consent-banner';
 import './globals.css';
 
 const fontSans = Plus_Jakarta_Sans({
@@ -31,7 +34,6 @@ export const viewport: Viewport = {
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
 const GTM_ID = process.env.NEXT_PUBLIC_GTM_ID || 'GTM-TTNNVNM5';
-const GA_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID || 'G-65H205CD90';
 
 interface ActiveBranding {
   faviconUrl: string;
@@ -152,31 +154,11 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       suppressHydrationWarning
     >
       <body className="min-h-screen font-sans antialiased bg-white text-palnadu-body selection:bg-palnadu-light-blue selection:text-palnadu-blue">
-        {(GA_ID || GTM_ID) && (
-          <>
-            {GTM_ID && (
-              <Script
-                src={`https://www.googletagmanager.com/gtm.js?id=${GTM_ID}`}
-                strategy="afterInteractive"
-              />
-            )}
-            {GA_ID && (
-              <Script
-                src={`https://www.googletagmanager.com/gtag/js?id=${GA_ID}`}
-                strategy="afterInteractive"
-              />
-            )}
-            <Script id="google-tags" strategy="afterInteractive">
-              {`
-                window.dataLayer = window.dataLayer || [];
-                ${GTM_ID ? `window.dataLayer.push({'gtm.start': new Date().getTime(), event:'gtm.js'});` : ''}
-                function gtag(){dataLayer.push(arguments);}
-                gtag('js', new Date());
-                ${GA_ID ? `gtag('config', '${GA_ID}');` : ''}
-              `}
-            </Script>
-          </>
-        )}
+        <GtmNoscript gtmId={GTM_ID} />
+        <GtmScripts gtmId={GTM_ID} />
+        <Suspense fallback={null}>
+          <AnalyticsRouteTracker />
+        </Suspense>
         <SmoothScrollProvider>
           <div className="relative flex min-h-screen flex-col bg-white">
             <Navbar initialLogoUrl={branding.headerLogoUrl} />
@@ -185,6 +167,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             <MobileStickyCta />
           </div>
         </SmoothScrollProvider>
+        <CookieConsentBanner />
       </body>
     </html>
   );

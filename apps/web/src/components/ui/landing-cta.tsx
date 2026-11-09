@@ -1,5 +1,8 @@
+'use client';
+
 import React from 'react';
 import Link from 'next/link';
+import { trackConsultationRequest } from '@/lib/analytics';
 
 export function LandingCta() {
   return (
@@ -19,12 +22,28 @@ export function LandingCta() {
       <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-1">
         <Link
           href="/contact"
+          onClick={() =>
+            trackConsultationRequest({
+              cta_label: 'Tell Us What You Want To Build →',
+              source_section: 'landing_cta',
+              source_page: '/',
+              destination_url: '/contact',
+            })
+          }
           className="w-full sm:w-auto px-7 py-3 rounded-md font-semibold text-sm bg-palnadu-teal text-white hover:bg-palnadu-teal-dark shadow-sm transition-colors"
         >
           Tell Us What You Want To Build →
         </Link>
         <Link
           href="/services"
+          onClick={() =>
+            trackConsultationRequest({
+              cta_label: 'Explore All Services',
+              source_section: 'landing_cta',
+              source_page: '/',
+              destination_url: '/services',
+            })
+          }
           className="w-full sm:w-auto px-7 py-3 rounded-md font-semibold text-sm border border-palnadu-blue text-palnadu-blue bg-white hover:bg-palnadu-light-blue transition-colors"
         >
           Explore All Services
