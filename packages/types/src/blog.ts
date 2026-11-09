@@ -40,6 +40,7 @@ export interface BlogPost {
   topicKey?: string;
   translationGroupId?: string;
   translations?: BlogPostTranslation[];
+  faqData?: Array<{ q: string; a: string }> | null;
   createdAt: string;
   updatedAt: string;
 }

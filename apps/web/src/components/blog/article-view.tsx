@@ -10,6 +10,7 @@ import { CtaSection } from '@/components/sections/cta-section';
 import { Calendar, User, ArrowLeft, Tag, Clock } from 'lucide-react';
 import { articleBasePath, articleCanonical, articleDateLocale } from '@/lib/blog-post';
 import { ArticleContent, isOptimizableImageUrl } from './article-content';
+import { ArticleFaq } from './article-faq';
 import { ArticleFooter } from './article-footer';
 
 type ArticleViewProps = {
@@ -55,6 +56,24 @@ export function ArticleView({ post, locale }: ArticleViewProps) {
     { name: post.title, path: `${basePath}/${post.slug}` },
   ]);
 
+  const faqItems: Array<{ q: string; a: string }> = Array.isArray(post.faqData)
+    ? post.faqData.filter((item: any) => item && typeof item.q === 'string' && typeof item.a === 'string')
+    : [];
+
+  const faqSchema = faqItems.length > 0 ? {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    '@id': `${canonicalUrl}/#faq`,
+    mainEntity: faqItems.map((item) => ({
+      '@type': 'Question',
+      name: item.q,
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: item.a,
+      },
+    })),
+  } : null;
+
   const words = post.content ? post.content.split(/\s+/).length : 0;
   const readMinutes = Math.max(1, Math.ceil(words / 220));
   const paragraphs = post.content ? post.content.split('\n\n').filter(Boolean) : [];
@@ -65,6 +84,12 @@ export function ArticleView({ post, locale }: ArticleViewProps) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(articleSchema) }}
       />
+      {faqSchema && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
+        />
+      )}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
@@ -155,6 +180,9 @@ export function ArticleView({ post, locale }: ArticleViewProps) {
 
           {/* Article Body Content */}
           <ArticleContent paragraphs={paragraphs} postTitle={post.title} />
+
+          {/* Article FAQs */}
+          <ArticleFaq faqItems={faqItems} locale={locale} />
 
           {/* Author Bio & Related Posts */}
           <ArticleFooter post={post} locale={locale} />
