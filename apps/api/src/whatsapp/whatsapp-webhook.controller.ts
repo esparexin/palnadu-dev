@@ -4,15 +4,15 @@ import {
   Post,
   Query,
   Req,
+  Res,
   Headers,
   HttpCode,
   HttpStatus,
-  Header,
   UnauthorizedException,
   Logger,
   type RawBodyRequest,
 } from '@nestjs/common';
-import type { Request } from 'express';
+import type { Request, Response } from 'express';
 import { WhatsAppWebhookService } from './whatsapp-webhook.service';
 import { META_SIGNATURE_HEADER } from './whatsapp.constants';
 import type { WhatsAppWebhookPayload } from '@palnadu/types';
@@ -26,18 +26,25 @@ export class WhatsAppWebhookController {
   /**
    * Meta Webhook Verification Handshake.
    * Responds to Meta's GET challenge when configuring webhook subscriptions.
+   * Dynamically sets Content-Type to text/plain only on verified handshake to prevent
+   * ExpressAdapter warnings when handling rejected verification exceptions.
    */
   @Get()
-  @Header('Content-Type', 'text/plain')
   @HttpCode(HttpStatus.OK)
-  verifyWebhook(@Query() query: Record<string, unknown>): string {
-    return this.webhookService.verifyHandshake(query);
+  verifyWebhook(
+    @Query() query: Record<string, unknown>,
+    @Res({ passthrough: true }) res?: Response,
+  ): string {
+    const challenge = this.webhookService.verifyHandshake(query);
+    res?.setHeader('Content-Type', 'text/plain');
+    return challenge;
   }
 
   /**
    * Meta Incoming Webhook Receiver.
    * Handles incoming WhatsApp messages and status events.
-   * Cryptographically validates the X-Hub-Signature-256 header before processing.
+   * Cryptographically validates the X-Hub-Signature-256 header against the authentic raw buffer.
+   * Never re-serializes parsed JSON. Rejects missing, malformed, or unverified signatures.
    */
   @Post()
   @HttpCode(HttpStatus.OK)
@@ -45,14 +52,14 @@ export class WhatsAppWebhookController {
     @Req() req: RawBodyRequest<Request>,
     @Headers(META_SIGNATURE_HEADER) signature?: string,
   ): Promise<{ status: string }> {
-    // Retrieve raw body buffer for authentic HMAC validation
-    const rawBody =
-      req.rawBody ||
-      (req.body
-        ? Buffer.isBuffer(req.body)
-          ? req.body
-          : Buffer.from(typeof req.body === 'string' ? req.body : JSON.stringify(req.body))
-        : undefined);
+    // Preserve and strictly utilize the raw request body Buffer captured by body-parser.
+    // Never fall back to re-serialized JSON, which causes cryptographic desynchronization.
+    const rawBody = req.rawBody;
+
+    if (!rawBody || !Buffer.isBuffer(rawBody) || rawBody.length === 0) {
+      this.logger.warn('Rejected incoming WhatsApp webhook: missing or empty raw body buffer');
+      throw new UnauthorizedException('Missing raw request body for signature verification');
+    }
 
     const isSignatureValid = this.webhookService.validateSignature(rawBody, signature);
     if (!isSignatureValid) {
@@ -66,4 +73,5 @@ export class WhatsAppWebhookController {
     return { status: 'success' };
   }
 }
+
 

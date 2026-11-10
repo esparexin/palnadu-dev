@@ -40,7 +40,7 @@ export class WhatsAppWebhookService {
       'hub.challenge': challenge,
     }: WhatsAppWebhookVerifyInput = parseResult.data;
 
-    const expectedToken = this.config.get<string>(WHATSAPP_CONFIG_KEYS.VERIFY_TOKEN);
+    const expectedToken = this.config.get<string>(WHATSAPP_CONFIG_KEYS.VERIFY_TOKEN)?.trim();
     const isTokenValid = verifyTokenConstantTime(token, expectedToken);
 
     if (mode !== WHATSAPP_WEBHOOK_MODE || !isTokenValid) {
@@ -64,26 +64,23 @@ export class WhatsAppWebhookService {
     payload: WhatsAppWebhookPayload,
     rawBody?: Buffer | string,
   ): Promise<{ processed: boolean; messages: number; statuses: number }> {
-    const payloadHash = crypto
-      .createHash('sha256')
-      .update(rawBody ? (Buffer.isBuffer(rawBody) ? rawBody : Buffer.from(rawBody)) : Buffer.from(JSON.stringify(payload)))
-      .digest('hex');
+    const rawBuffer = Buffer.isBuffer(rawBody)
+      ? rawBody
+      : typeof rawBody === 'string'
+        ? Buffer.from(rawBody, 'utf8')
+        : Buffer.from(JSON.stringify(payload));
+    const payloadHash = crypto.createHash('sha256').update(rawBuffer).digest('hex');
 
-    // Create audit log record
-    let webhookLogId: string | null = null;
-    try {
-      const log = await this.prisma.whatsAppWebhookLog.create({
-        data: {
-          payloadHash,
-          field: 'messages',
-          processed: false,
-        },
-      });
-      webhookLogId = log.id;
-    } catch (logErr: unknown) {
-      const errMessage = logErr instanceof Error ? logErr.message : String(logErr);
-      this.logger.warn(`Failed to create webhook log: ${errMessage}`);
-    }
+    // Durably persist webhook receipt before processing to guarantee auditability.
+    // If persistence fails, do not acknowledge HTTP 200 so Meta will retry delivery.
+    const log = await this.prisma.whatsAppWebhookLog.create({
+      data: {
+        payloadHash,
+        field: 'messages',
+        processed: false,
+      },
+    });
+    const webhookLogId = log.id;
 
     let messageCount = 0;
     let statusCount = 0;
