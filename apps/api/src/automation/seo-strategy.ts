@@ -199,3 +199,16 @@ export function defaultStrategy(
     ],
   };
 }
+
+export function cleanHeadingTitle(raw: string): string {
+  let s = String(raw || '').trim();
+  const leading = new Set(['#', '*', '-', '>', ' ']);
+  let start = 0;
+  while (start < s.length && leading.has(s[start])) start++;
+  s = s.slice(start).trim();
+
+  const trailing = new Set(['#', '*', ' ']);
+  let end = s.length;
+  while (end > 0 && trailing.has(s[end - 1])) end--;
+  return s.slice(0, end).replaceAll('*', '').trim();
+}
