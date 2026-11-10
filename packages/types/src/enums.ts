@@ -52,3 +52,18 @@ export enum RequiredHelp {
   MVP_DEVELOPMENT = 'MVP_DEVELOPMENT',
   NOT_SURE = 'NOT_SURE',
 }
+
+export enum CampaignStatus {
+  DRAFT = 'DRAFT',
+  SCHEDULED = 'SCHEDULED',
+  RUNNING = 'RUNNING',
+  COMPLETED = 'COMPLETED',
+  PAUSED = 'PAUSED',
+  FAILED = 'FAILED',
+}
+
+export enum ContactOptInStatus {
+  OPTED_IN = 'OPTED_IN',
+  UNVERIFIED = 'UNVERIFIED',
+  OPTED_OUT = 'OPTED_OUT',
+}

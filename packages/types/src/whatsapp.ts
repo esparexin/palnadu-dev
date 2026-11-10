@@ -14,6 +14,7 @@ export interface WhatsAppMessage {
   mediaId?: string;
   mimeType?: string;
   contextWamId?: string;
+  campaignId?: string;
   status: WhatsAppDeliveryStatus;
   statusTimestamp?: string;
   errorCode?: string;
@@ -170,6 +171,45 @@ export interface WhatsAppSendTemplateParams {
   templateName: string;
   languageCode: string;
   components?: WhatsAppTemplateComponent[];
+}
+
+export interface MarketingCampaign {
+  id: string;
+  name: string;
+  description?: string;
+  templateName: string;
+  languageCode: string;
+  status: string;
+  targetAudience?: string;
+  scheduledAt?: string;
+  startedAt?: string;
+  completedAt?: string;
+  totalContacts: number;
+  sentCount: number;
+  deliveredCount: number;
+  readCount: number;
+  failedCount: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface MarketingContact {
+  id: string;
+  businessName: string;
+  contactName?: string;
+  phone: string;
+  city?: string;
+  category?: string;
+  hasWebsite: boolean;
+  websiteUrl?: string;
+  optInStatus: string;
+  optOutReason?: string;
+  optOutTimestamp?: string;
+  source?: string;
+  lastContactedAt?: string;
+  notes?: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 

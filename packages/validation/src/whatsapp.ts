@@ -169,6 +169,29 @@ export const whatsAppSendTemplateSchema = z.object({
 
 export type WhatsAppSendTemplateInput = z.infer<typeof whatsAppSendTemplateSchema>;
 
+export const createMarketingCampaignSchema = z.object({
+  name: z.string().min(1, 'Campaign name is required'),
+  description: z.string().optional(),
+  templateName: z.string().min(1, 'Template name is required'),
+  languageCode: z.string().min(2, 'Valid language code is required').default('en_US'),
+  targetAudience: z.string().optional(),
+  scheduledAt: z.string().datetime().optional(),
+});
+
+export const createMarketingContactSchema = z.object({
+  businessName: z.string().min(1, 'Business name is required'),
+  contactName: z.string().optional(),
+  phone: z.string().min(8, 'Valid phone number is required'),
+  city: z.string().optional().default('Palnadu'),
+  category: z.string().optional(),
+  hasWebsite: z.boolean().default(false),
+  websiteUrl: z.string().url().optional().or(z.literal('')),
+  notes: z.string().optional(),
+});
+
+export type CreateMarketingCampaignInput = z.infer<typeof createMarketingCampaignSchema>;
+export type CreateMarketingContactInput = z.infer<typeof createMarketingContactSchema>;
+
 
 
 
