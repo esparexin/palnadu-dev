@@ -28,7 +28,7 @@ export function ContactFormFields({
     <>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
         <div className="space-y-0.5">
-          <Label htmlFor="name" className="text-xs sm:text-sm font-semibold text-palnadu-dark">
+          <Label htmlFor="name" className="text-xs font-semibold text-palnadu-dark">
             Your Name <span className="text-palnadu-error">*</span>
           </Label>
           <Input
@@ -36,7 +36,7 @@ export function ContactFormFields({
             placeholder="e.g. John Doe"
             aria-invalid={!!errors.name}
             className={cn(
-              "bg-white text-palnadu-body text-xs h-8 rounded-md transition-colors",
+              "bg-white text-palnadu-body transition-colors",
               errors.name ? "border-palnadu-error focus-visible:ring-palnadu-error" : "border-palnadu-border focus-visible:ring-palnadu-blue"
             )}
             {...register('name')}
@@ -45,7 +45,7 @@ export function ContactFormFields({
         </div>
 
         <div className="space-y-0.5">
-          <Label htmlFor="email" className="text-xs sm:text-sm font-semibold text-palnadu-dark">
+          <Label htmlFor="email" className="text-xs font-semibold text-palnadu-dark">
             Email Address <span className="text-palnadu-error">*</span>
           </Label>
           <Input
@@ -54,7 +54,7 @@ export function ContactFormFields({
             placeholder="name@example.com"
             aria-invalid={!!errors.email}
             className={cn(
-              "bg-white text-palnadu-body text-xs h-8 rounded-md transition-colors",
+              "bg-white text-palnadu-body transition-colors",
               errors.email ? "border-palnadu-error focus-visible:ring-palnadu-error" : "border-palnadu-border focus-visible:ring-palnadu-blue"
             )}
             {...register('email')}
@@ -65,7 +65,7 @@ export function ContactFormFields({
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
         <div className="space-y-0.5">
-          <Label htmlFor="phone" className="text-xs sm:text-sm font-semibold text-palnadu-dark">
+          <Label htmlFor="phone" className="text-xs font-semibold text-palnadu-dark">
             Phone or WhatsApp
           </Label>
           <Input
@@ -74,7 +74,7 @@ export function ContactFormFields({
             placeholder="+91 98765 43210"
             aria-invalid={!!errors.phone}
             className={cn(
-              "bg-white text-palnadu-body text-xs h-8 rounded-md transition-colors",
+              "bg-white text-palnadu-body transition-colors",
               errors.phone ? "border-palnadu-error focus-visible:ring-palnadu-error" : "border-palnadu-border focus-visible:ring-palnadu-blue"
             )}
             {...register('phone')}
@@ -83,13 +83,13 @@ export function ContactFormFields({
         </div>
 
         <div className="space-y-0.5">
-          <Label htmlFor="company" className="text-xs sm:text-sm font-semibold text-palnadu-dark">
+          <Label htmlFor="company" className="text-xs font-semibold text-palnadu-dark">
             Company or Startup Name
           </Label>
           <Input
             id="company"
             placeholder="e.g. Acme Corp / Stealth"
-            className="bg-white border-palnadu-border text-palnadu-body text-xs h-8 rounded-md focus-visible:ring-palnadu-blue"
+            className="bg-white border-palnadu-border text-palnadu-body focus-visible:ring-palnadu-blue"
             {...register('company')}
           />
         </div>
@@ -97,12 +97,12 @@ export function ContactFormFields({
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
         <div className="space-y-0.5">
-          <Label htmlFor="projectStage" className="text-xs sm:text-sm font-semibold text-palnadu-dark">
+          <Label htmlFor="projectStage" className="text-xs font-semibold text-palnadu-dark">
             Project Stage
           </Label>
           <select
             id="projectStage"
-            className="w-full bg-white border border-palnadu-border text-palnadu-body text-xs h-8 rounded-md px-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-palnadu-blue cursor-pointer"
+            className="w-full bg-white border border-palnadu-border text-palnadu-body text-xs h-9 rounded-md px-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-palnadu-blue cursor-pointer"
             {...register('projectStage')}
           >
             <option value="JUST_AN_IDEA">Just an idea / Concept</option>
@@ -114,12 +114,12 @@ export function ContactFormFields({
         </div>
 
         <div className="space-y-0.5">
-          <Label htmlFor="budget" className="text-xs sm:text-sm font-semibold text-palnadu-dark">
+          <Label htmlFor="budget" className="text-xs font-semibold text-palnadu-dark">
             Estimated Budget
           </Label>
           <select
             id="budget"
-            className="w-full bg-white border border-palnadu-border text-palnadu-body text-xs h-8 rounded-md px-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-palnadu-blue cursor-pointer"
+            className="w-full bg-white border border-palnadu-border text-palnadu-body text-xs h-9 rounded-md px-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-palnadu-blue cursor-pointer"
             {...register('budget')}
           >
             <option value="">Flexible / Exploring options</option>
@@ -132,7 +132,7 @@ export function ContactFormFields({
       </div>
 
       <div className="space-y-0.5">
-        <Label htmlFor="problemDescription" className="text-xs sm:text-sm font-semibold text-palnadu-dark">
+        <Label htmlFor="problemDescription" className="text-xs font-semibold text-palnadu-dark">
           What problem are you trying to solve? <span className="text-palnadu-error">*</span>
         </Label>
         <Textarea

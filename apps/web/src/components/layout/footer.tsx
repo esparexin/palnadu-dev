@@ -16,11 +16,11 @@ export function Footer({ initialLogoUrl }: FooterProps = {}) {
 
   return (
     <footer className="bg-palnadu-dark text-white" role="contentinfo">
-      <div className="container pt-10 pb-24 sm:py-14">
-        {/* Mobile: 2-Column Grid | Tablet: 3-Column | Desktop: 4-Column */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6 sm:gap-8">
-          {/* Brand & Identity — Spans 2 cols on mobile, 3 on tablet, 1 on desktop */}
-          <div className="col-span-2 sm:col-span-3 lg:col-span-1 space-y-3 mb-1 lg:mb-0">
+      <div className="container pt-8 pb-20 sm:pt-10 sm:pb-10">
+        {/* Responsive Grid: Balanced Multi-Column across viewports */}
+        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-12 gap-6 sm:gap-8">
+          {/* Brand & Identity — Spans full width on mobile/tablet, 4 cols on desktop */}
+          <div className="col-span-2 sm:col-span-2 lg:col-span-4 space-y-3 mb-1 lg:mb-0">
             <Link href="/" className="inline-flex items-center group" aria-label="Palnadu.dev Home">
               <BrandLogo customLogoUrl={customFooterLogoUrl} variant="white" size="md" />
             </Link>
@@ -67,12 +67,12 @@ export function Footer({ initialLogoUrl }: FooterProps = {}) {
             </div>
           </div>
 
-          {/* Column 1: Services */}
-          <div className="col-span-1">
-            <h3 className="mb-3 text-xs font-mono uppercase tracking-widest text-white font-bold">
+          {/* Services — Spans 2 cols on mobile/tablet, 5 cols on desktop in a 2-column subgrid */}
+          <div className="col-span-2 sm:col-span-2 lg:col-span-5">
+            <h3 className="mb-2.5 sm:mb-3 text-xs font-mono uppercase tracking-widest text-white font-bold">
               Services
             </h3>
-            <ul className="space-y-1.5 text-xs sm:text-sm">
+            <ul className="grid grid-cols-2 gap-x-4 gap-y-1 sm:gap-y-1.5 text-xs sm:text-sm">
               {footerNavItems.services.map((item) => (
                 <li key={item.href}>
                   <Link
@@ -86,12 +86,12 @@ export function Footer({ initialLogoUrl }: FooterProps = {}) {
             </ul>
           </div>
 
-          {/* Column 2: Company & Legal (On mobile, grouped in 2nd column) */}
-          <div className="col-span-1">
-            <h3 className="mb-3 text-xs font-mono uppercase tracking-widest text-white font-bold">
+          {/* Company — 1 col on mobile, 1 col on tablet, 2 cols on desktop */}
+          <div className="col-span-1 sm:col-span-1 lg:col-span-2">
+            <h3 className="mb-2.5 sm:mb-3 text-xs font-mono uppercase tracking-widest text-white font-bold">
               Company
             </h3>
-            <ul className="space-y-1.5 text-xs sm:text-sm">
+            <ul className="space-y-1 sm:space-y-1.5 text-xs sm:text-sm">
               {footerNavItems.company.map((item) => (
                 <li key={item.href}>
                   <Link
@@ -105,33 +105,14 @@ export function Footer({ initialLogoUrl }: FooterProps = {}) {
                 </li>
               ))}
             </ul>
-
-            {/* Legal Links for Mobile 2-column view */}
-            <div className="mt-5 sm:hidden">
-              <h3 className="mb-2 text-xs font-mono uppercase tracking-widest text-white font-bold">
-                Legal
-              </h3>
-              <ul className="space-y-1.5 text-xs">
-                {footerNavItems.legal.map((item) => (
-                  <li key={item.href}>
-                    <Link
-                      href={item.href}
-                      className="text-palnadu-light-blue/80 hover:text-white transition-colors block py-0.5"
-                    >
-                      {item.title}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
           </div>
 
-          {/* Legal Column (Tablet & Desktop) */}
-          <div className="hidden sm:block col-span-1">
-            <h3 className="mb-3 text-xs font-mono uppercase tracking-widest text-white font-bold">
+          {/* Legal — 1 col on mobile, 1 col on tablet, 1 col on desktop */}
+          <div className="col-span-1 sm:col-span-1 lg:col-span-1">
+            <h3 className="mb-2.5 sm:mb-3 text-xs font-mono uppercase tracking-widest text-white font-bold">
               Legal
             </h3>
-            <ul className="space-y-1.5 text-xs sm:text-sm">
+            <ul className="space-y-1 sm:space-y-1.5 text-xs sm:text-sm">
               {footerNavItems.legal.map((item) => (
                 <li key={item.href}>
                   <Link
@@ -148,11 +129,11 @@ export function Footer({ initialLogoUrl }: FooterProps = {}) {
 
         {/* Regional Hubs Directory Links */}
         {footerNavItems.locations && footerNavItems.locations.length > 0 && (
-          <div className="pt-6 border-t border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs text-palnadu-light-blue/80">
+          <div className="pt-5 mt-6 border-t border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 text-xs text-palnadu-light-blue/80">
             <div className="flex items-center gap-1.5 font-mono text-xs uppercase tracking-wider text-palnadu-teal font-semibold shrink-0">
               <span>Regional Hubs:</span>
             </div>
-            <div className="flex flex-wrap gap-x-4 gap-y-1.5 text-xs">
+            <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs">
               {footerNavItems.locations.map((loc) => (
                 <Link
                   key={loc.href}
@@ -172,9 +153,9 @@ export function Footer({ initialLogoUrl }: FooterProps = {}) {
           </div>
         )}
 
-        <Separator className="my-6 bg-white/10" />
+        <Separator className="my-5 bg-white/10" />
 
-        <div className="flex flex-col items-center justify-between gap-3 sm:flex-row text-xs text-palnadu-light-blue/70">
+        <div className="flex flex-col items-center justify-between gap-2 sm:flex-row text-xs text-palnadu-light-blue/70">
           <p>
             &copy; {new Date().getFullYear()} Palnadu.dev. All rights reserved.
           </p>
