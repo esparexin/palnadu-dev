@@ -58,23 +58,41 @@ export class WhatsAppMessageService {
       ? new Date(Number.parseInt(params.timestamp, 10) * 1000)
       : new Date();
 
-    const created = await this.prisma.whatsAppMessage.create({
-      data: {
-        wamId: params.wamId,
-        direction: WhatsAppMessageDirection.INBOUND,
-        from: params.from,
-        to: params.to,
-        profileName: params.profileName,
-        type: params.type,
-        body: params.body,
-        mediaId: params.mediaId,
-        mimeType: params.mimeType,
-        contextWamId: params.contextWamId,
-        status: WhatsAppDeliveryStatus.RECEIVED,
-        statusTimestamp: eventDate,
-        rawPayload: params.rawPayload as Prisma.InputJsonValue,
-      },
-    });
+    let created: WhatsAppMessage;
+    try {
+      created = await this.prisma.whatsAppMessage.create({
+        data: {
+          wamId: params.wamId,
+          direction: WhatsAppMessageDirection.INBOUND,
+          from: params.from,
+          to: params.to,
+          profileName: params.profileName,
+          type: params.type,
+          body: params.body,
+          mediaId: params.mediaId,
+          mimeType: params.mimeType,
+          contextWamId: params.contextWamId,
+          status: WhatsAppDeliveryStatus.RECEIVED,
+          statusTimestamp: eventDate,
+          rawPayload: params.rawPayload as Prisma.InputJsonValue,
+        },
+      });
+    } catch (createErr: unknown) {
+      // Handle concurrent duplicate deliveries gracefully
+      if (
+        createErr &&
+        typeof createErr === 'object' &&
+        'code' in createErr &&
+        (createErr as { code: string }).code === 'P2002'
+      ) {
+        this.logger.warn(`Duplicate inbound WhatsApp message race condition detected for wamId: ${params.wamId}`);
+        const concurrent = await this.prisma.whatsAppMessage.findUnique({
+          where: { wamId: params.wamId },
+        });
+        if (concurrent) return concurrent;
+      }
+      throw createErr;
+    }
 
     try {
       await this.notifications.create({
@@ -120,19 +138,34 @@ export class WhatsAppMessageService {
       this.logger.log(
         `Received status "${params.status}" for untracked outbound message ${params.wamId}. Creating record.`,
       );
-      return this.prisma.whatsAppMessage.create({
-        data: {
-          wamId: params.wamId,
-          direction: WhatsAppMessageDirection.OUTBOUND,
-          from: 'palnadu_business',
-          to: params.recipientId,
-          type: 'text',
-          status: targetStatus,
-          statusTimestamp: eventDate,
-          errorCode: params.errorCode,
-          errorMessage: params.errorMessage,
-        },
-      });
+      try {
+        return await this.prisma.whatsAppMessage.create({
+          data: {
+            wamId: params.wamId,
+            direction: WhatsAppMessageDirection.OUTBOUND,
+            from: 'palnadu_business',
+            to: params.recipientId,
+            type: 'text',
+            status: targetStatus,
+            statusTimestamp: eventDate,
+            errorCode: params.errorCode,
+            errorMessage: params.errorMessage,
+          },
+        });
+      } catch (createErr: unknown) {
+        if (
+          createErr &&
+          typeof createErr === 'object' &&
+          'code' in createErr &&
+          (createErr as { code: string }).code === 'P2002'
+        ) {
+          const concurrent = await this.prisma.whatsAppMessage.findUnique({
+            where: { wamId: params.wamId },
+          });
+          if (concurrent) return concurrent;
+        }
+        throw createErr;
+      }
     }
 
     const isEstablishedDelivery =

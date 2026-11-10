@@ -67,16 +67,27 @@ describe('WhatsApp Signature & Token Cryptographic Validation', () => {
     assert.equal(verifyMetaWebhookSignature(rawBody, header, undefined), false);
   });
 
-  it('rejects null or undefined raw body', () => {
-    const header = 'sha256=abcdef1234567890';
+  it('rejects null, undefined, or empty raw body', () => {
+    const hash = crypto.createHmac('sha256', secret).update(rawBody).digest('hex');
+    const header = `sha256=${hash}`;
     assert.equal(verifyMetaWebhookSignature(undefined, header, secret), false);
     assert.equal(verifyMetaWebhookSignature(null, header, secret), false);
+    assert.equal(verifyMetaWebhookSignature(Buffer.from(''), header, secret), false);
+  });
+
+  it('rejects signature with malformed hex or non-64 hex length', () => {
+    assert.equal(verifyMetaWebhookSignature(rawBody, 'sha256=abcdef', secret), false);
+    assert.equal(verifyMetaWebhookSignature(rawBody, 'sha256=' + 'a'.repeat(63), secret), false);
+    assert.equal(verifyMetaWebhookSignature(rawBody, 'sha256=' + 'a'.repeat(65), secret), false);
+    assert.equal(verifyMetaWebhookSignature(rawBody, 'sha256=' + 'z'.repeat(64), secret), false);
   });
 
   it('validates verification token using constant-time check', () => {
     const token = 'palnadu_verify_token_2026';
     assert.equal(verifyTokenConstantTime(token, token), true);
+    assert.equal(verifyTokenConstantTime(token, ` ${token} \n`), true); // handles trimmed config token
     assert.equal(verifyTokenConstantTime('wrong_token', token), false);
+    assert.equal(verifyTokenConstantTime('different_length_token', token), false);
     assert.equal(verifyTokenConstantTime(token, 'wrong_token'), false);
     assert.equal(verifyTokenConstantTime('', token), false);
     assert.equal(verifyTokenConstantTime(undefined, token), false);
