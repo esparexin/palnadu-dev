@@ -11,7 +11,7 @@ import { BlogPublisherService } from './blog/blog-publisher.service';
 import { BlogBilingualService } from './blog/blog-bilingual.service';
 import { BlogStatusService } from './blog/blog-status.service';
 import { BlogBatchService } from './blog/blog-batch.service';
-import { inferCategoryFromTopic } from './blog/blog-seeds';
+import { inferCategoryFromTopic, resolveOrEnsureCategory } from './blog/blog-seeds';
 import { ClaimedTopic, GenerationResult, QueueCandidate, RejectedTopic } from './blog/types';
 
 export * from './blog/types';
@@ -104,12 +104,7 @@ export class BlogAutomationService {
     forcePublish = false,
     workerId = `manual:${process.pid}:${Date.now()}`,
   ): Promise<{ results: GenerationResult[]; rejected: RejectedTopic[] }> {
-    return this.batchService.generateBatch(
-      count,
-      forcePublish,
-      workerId,
-      (topic, force, wid) => this.generateForTopic(topic, force, wid),
-    );
+    return this.batchService.generateBatch(count, forcePublish, workerId, (t, f, w) => this.generateForTopic(t, f, w));
   }
 
   async generateBilingualBatch(
@@ -117,12 +112,7 @@ export class BlogAutomationService {
     forcePublish = false,
     workerId = `manual:${process.pid}:${Date.now()}`,
   ): Promise<{ results: GenerationResult[]; rejected: RejectedTopic[] }> {
-    return this.batchService.generateBilingualBatch(
-      quota,
-      forcePublish,
-      workerId,
-      (topic, force, wid) => this.generateForTopic(topic, force, wid),
-    );
+    return this.batchService.generateBilingualBatch(quota, forcePublish, workerId, (t, f, w) => this.generateForTopic(t, f, w));
   }
 
   async generateSingleArticle(
@@ -191,10 +181,13 @@ export class BlogAutomationService {
     const { topicKey, topic, categorySlug, language } = topicRow;
     this.logger.log(`Generating ${language} article for topicKey="${topicKey}" [${categorySlug}]`);
 
-    const category = await this.prisma.blogCategory.findUnique({ where: { slug: categorySlug } });
+    const category = await resolveOrEnsureCategory(this.prisma, categorySlug);
     if (!category) throw new Error(`no_category: no blog category "${categorySlug}".`);
 
-    const author = await this.prisma.user.findFirst({ where: { role: 'SUPER_ADMIN' } });
+    const author = await this.prisma.user.findFirst({
+      where: { role: { in: ['SUPER_ADMIN', 'ADMIN'] } },
+      orderBy: { createdAt: 'asc' },
+    });
     if (!author) throw new Error('No admin author found in database for blog generation.');
 
     const [existingSlugs, existingTitles, sameTopicSameLang] = await Promise.all([
@@ -212,7 +205,12 @@ export class BlogAutomationService {
     );
 
     if (!composed.validation.passed) {
-      throw new Error(`validation: ${composed.validation.failures.map((f: { name: string }) => f.name).join(', ')}`);
+      const isTemplateOnly =
+        composed.validation.forceDraft &&
+        composed.validation.failures.every((f: { name: string }) => f.name === 'content_originality');
+      if (!isTemplateOnly) {
+        throw new Error(`validation: ${composed.validation.failures.map((f: { name: string }) => f.name).join(', ')}`);
+      }
     }
 
     const publishStatus = await this.publisherService.decidePublishStatus(forcePublish, composed.validation);

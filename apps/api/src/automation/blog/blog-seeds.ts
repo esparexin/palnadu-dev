@@ -22,3 +22,57 @@ export function inferCategoryFromTopic(phrase: string, primaryKeyword = ''): str
   if (/saas|mvp|startup|idea to/.test(p)) return 'startups';
   return 'website-development';
 }
+
+export interface CanonicalCategoryDefinition {
+  name: string;
+  slug: string;
+  description: string;
+}
+
+export const CANONICAL_BLOG_CATEGORIES: readonly CanonicalCategoryDefinition[] = [
+  {
+    name: 'Website Development',
+    slug: 'website-development',
+    description: 'Modern corporate websites, web applications, and digital platforms.',
+  },
+  {
+    name: 'App Development',
+    slug: 'app-development',
+    description: 'Android, iOS, and progressive web application development guides.',
+  },
+  {
+    name: 'School Websites',
+    slug: 'school-websites',
+    description: 'Digital admissions, fee portals, and academic institution technology.',
+  },
+  {
+    name: 'Startups & MVPs',
+    slug: 'startups',
+    description: 'MVP development, software architecture, and product launch strategy.',
+  },
+  {
+    name: 'Local SEO & Business',
+    slug: 'local-seo-business',
+    description: 'Local Google search optimization, business automation, and digital presence.',
+  },
+] as const;
+
+export async function resolveOrEnsureCategory(
+  prisma: { blogCategory: any },
+  categorySlug: string,
+): Promise<{ id: string; name: string; slug: string } | null> {
+  const existing = await prisma.blogCategory.findUnique({ where: { slug: categorySlug } });
+  if (existing) return existing;
+
+  const canonical = CANONICAL_BLOG_CATEGORIES.find((c) => c.slug === categorySlug);
+  if (canonical) {
+    return prisma.blogCategory.upsert({
+      where: { slug: canonical.slug },
+      update: {},
+      create: { name: canonical.name, slug: canonical.slug, description: canonical.description },
+    });
+  }
+
+  return null;
+}
+

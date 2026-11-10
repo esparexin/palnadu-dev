@@ -36,7 +36,8 @@ export function useBlogKeywords(
     try {
       const res = await api.automation.generate({ topic: kw, targetLocation: keywordLocation });
       if (res.success) {
-        toast.success(`Draft generated: "${res.data.title.slice(0, 30)}..." Review below!`);
+        const title = res.data?.title || res.data?.results?.[0]?.title || kw;
+        toast.success(`Draft generated: "${title.slice(0, 30)}..." Review below!`);
         setKeywordModalOpen(false);
         onSuccessDraft();
       }

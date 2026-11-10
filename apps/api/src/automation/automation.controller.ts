@@ -114,9 +114,11 @@ export class AutomationController {
       };
     }
 
-    // No explicit topic: take the next pending item from the durable queue.
+    // No explicit topic: take the next pending item from the durable queue matching language.
     const queue = await this.automationService.getPendingQueueItems();
-    const pending = queue.find((i) => !i.isGenerated && i.status === 'PENDING');
+    const pending =
+      queue.find((i) => !i.isGenerated && i.status === 'PENDING' && i.language === language) ||
+      queue.find((i) => !i.isGenerated && i.status === 'PENDING');
     const topic = body.topic || pending?.topic || 'How Digital Transformation and Modern Web Apps Accelerate Growth for Regional Enterprises';
     const categorySlug = body.categorySlug || pending?.categorySlug || 'website-development';
     const targetLocation = body.targetLocation || pending?.targetLocation || undefined;
