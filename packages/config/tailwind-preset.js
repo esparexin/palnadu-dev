@@ -131,6 +131,15 @@ module.exports = {
           '0%, 70%': { opacity: '1', transform: 'translateX(0) scale(1)' },
           '100%': { opacity: '0', transform: 'translateX(0.5rem) scale(0.95)' },
         },
+        'success-pop': {
+          '0%': { transform: 'scale(0.6)', opacity: '0' },
+          '70%': { transform: 'scale(1.12)', opacity: '1' },
+          '100%': { transform: 'scale(1)', opacity: '1' },
+        },
+        'success-ring': {
+          '0%': { transform: 'scale(0.8)', opacity: '0.8' },
+          '100%': { transform: 'scale(1.45)', opacity: '0' },
+        },
       },
       animation: {
         'fade-in': 'fade-in 0.5s ease-out forwards',
@@ -141,6 +150,8 @@ module.exports = {
         shimmer: 'shimmer 2.5s linear infinite',
         float: 'float 5s ease-in-out infinite',
         fadeOut: 'fadeOut 2s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+        'success-pop': 'success-pop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards',
+        'success-ring': 'success-ring 0.6s ease-out 0.1s forwards',
       },
     },
   },
