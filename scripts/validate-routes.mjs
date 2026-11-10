@@ -28,6 +28,9 @@ if (!fs.existsSync(webManifestPath)) {
     '/locations/narasaraopet',
     '/services/website-development',
     '/services/mobile-app-development',
+    '/privacy',
+    '/terms',
+    '/data-deletion',
   ];
 
   for (const route of requiredWebRoutes) {

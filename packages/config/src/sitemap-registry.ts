@@ -33,6 +33,7 @@ export const sitemapPages: SitemapPage[] = [
   { path: '/locations/vinukonda',      changeFrequency: 'monthly', priority: 0.7 },
   { path: '/locations/macherla',       changeFrequency: 'weekly',  priority: 0.9 },
   // ── Legal ──
-  { path: '/privacy',    changeFrequency: 'yearly',  priority: 0.3 },
-  { path: '/terms',      changeFrequency: 'yearly',  priority: 0.3 },
+  { path: '/privacy',       changeFrequency: 'yearly',  priority: 0.3 },
+  { path: '/terms',         changeFrequency: 'yearly',  priority: 0.3 },
+  { path: '/data-deletion', changeFrequency: 'yearly',  priority: 0.3 },
 ];
