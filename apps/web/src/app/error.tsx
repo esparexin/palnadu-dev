@@ -20,7 +20,7 @@ export default function ErrorBoundary({ error, reset }: ErrorProps) {
     <div className="bg-white min-h-[65vh] flex flex-col items-center justify-center px-4 py-16">
       <div className="max-w-md w-full text-center space-y-5">
         {/* Error Icon */}
-        <div className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-red-50 text-red-600 border border-red-200 mx-auto">
+        <div className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-palnadu-error/10 text-palnadu-error border border-palnadu-error/30 mx-auto">
           <AlertCircle className="h-6 w-6" />
         </div>
 
