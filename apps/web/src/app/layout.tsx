@@ -11,6 +11,7 @@ import { AnalyticsRouteTracker } from '@/components/analytics/route-tracker';
 import { CookieConsentBanner } from '@/components/analytics/cookie-consent-banner';
 import './globals.css';
 
+// Primary font definitions adhering to palnadu-ui-ux SSOT
 const fontSans = Plus_Jakarta_Sans({
   subsets: ['latin'],
   variable: '--font-sans',
