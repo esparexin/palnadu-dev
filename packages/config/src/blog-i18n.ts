@@ -161,14 +161,24 @@ export function cleanBlogTitle(rawTitle: string): string {
   if (!rawTitle) return '';
   let title = String(rawTitle).trim();
 
-  // 1. Strip leading markdown heading symbols (#, ##, ###, *, -, >)
-  title = title.replace(/^[#*\-\s>]+/, '').trim();
+  // 1. Strip leading markdown heading symbols (#, *, -, >) and whitespace without regex ReDoS
+  const leadingChars = new Set(['#', '*', '-', '>', ' ']);
+  let start = 0;
+  while (start < title.length && leadingChars.has(title[start])) {
+    start++;
+  }
+  title = title.slice(start).trim();
 
-  // 2. Strip trailing markdown hashes or asterisks
-  title = title.replace(/[#*]+$/, '').trim();
+  // 2. Strip trailing markdown hashes, asterisks and whitespace without regex ReDoS
+  const trailingChars = new Set(['#', '*', ' ']);
+  let end = title.length;
+  while (end > 0 && trailingChars.has(title[end - 1])) {
+    end--;
+  }
+  title = title.slice(0, end).trim();
 
   // 3. Strip bold/italic asterisks
-  title = title.replace(/\*+/g, '').trim();
+  title = title.replaceAll('*', '').trim();
 
   // 4. Sanitize lowercase keyword stubs (<= 4 words and all lowercase)
   if (title === title.toLowerCase() && title.split(/\s+/).length <= 4) {
