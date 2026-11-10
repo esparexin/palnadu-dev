@@ -1,4 +1,13 @@
-import { Controller, Get, Post, Patch, Body, Query, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Body,
+  Query,
+  UseGuards,
+  BadRequestException,
+} from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
@@ -6,6 +15,7 @@ import { UserRole, BlogLanguage } from '@prisma/client';
 import { BlogAutomationService } from './blog-automation.service';
 import { TopicDiscoveryService } from './topic-discovery.service';
 import { PrismaService } from '../prisma.service';
+import { inferCategoryFromTopic } from './blog/blog-seeds';
 import { ZodValidationPipe } from '../common/pipes/zod-validation.pipe';
 import {
   automationGenerateSchema,
@@ -120,22 +130,30 @@ export class AutomationController {
       queue.find((i) => !i.isGenerated && i.status === 'PENDING' && i.language === language) ||
       queue.find((i) => !i.isGenerated && i.status === 'PENDING');
     const topic = body.topic || pending?.topic || 'How Digital Transformation and Modern Web Apps Accelerate Growth for Regional Enterprises';
-    const categorySlug = body.categorySlug || pending?.categorySlug || 'website-development';
+    const categorySlug =
+      body.categorySlug ||
+      (body.topic ? inferCategoryFromTopic(body.topic) : pending?.categorySlug) ||
+      'website-development';
     const targetLocation = body.targetLocation || pending?.targetLocation || undefined;
 
-    const result = await this.automationService.generateSingleArticle(
-      topic,
-      categorySlug,
-      targetLocation,
-      Boolean(body.forcePublish),
-      language,
-    );
+    try {
+      const result = await this.automationService.generateSingleArticle(
+        topic,
+        categorySlug,
+        targetLocation,
+        Boolean(body.forcePublish),
+        language,
+      );
 
-    return {
-      success: true,
-      message: `Article generated successfully (${result.wordCount} words, ${result.imagesCount} licensed images).`,
-      data: result,
-    };
+      return {
+        success: true,
+        message: `Article generated successfully (${result.wordCount} words, ${result.imagesCount} licensed images).`,
+        data: result,
+      };
+    } catch (err: any) {
+      const msg = err instanceof Error ? err.message : String(err);
+      throw new BadRequestException(msg || 'Failed to generate article.');
+    }
   }
 
   /**

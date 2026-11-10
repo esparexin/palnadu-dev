@@ -62,6 +62,13 @@ export const SYNONYMS: Record<string, string> = {
  * Service/entity head terms.
  */
 export const SERVICE_HINTS = [
+  'startup website development', 'startup web application development',
+  'startup software development', 'startup technology solutions',
+  'startup mvp development', 'startup application development',
+  'startup development', 'startup support', 'new startup support',
+  'new business website', 'business website development',
+  'entrepreneur digital solutions', 'business launch support',
+  'digital solutions for new businesses', 'small business technology solutions',
   'website development', 'web development', 'web design', 'app development',
   'android app development', 'ios app development', 'mobile app development',
   'ecommerce', 'e commerce', 'erp', 'crm', 'pos software', 'billing software',
@@ -70,6 +77,7 @@ export const SERVICE_HINTS = [
   'digital marketing', 'local seo', 'seo', 'cloud software', 'saas', 'custom software',
   'progressive web app', 'pwa', 'automation', 'gate pass software', 'weighbridge software',
   'cold storage software', 'loan accounting software', 'property portal',
+  'new business', 'startup', 'entrepreneur',
 ];
 
 /**
@@ -80,6 +88,7 @@ export const SERVICE_WORDS = new Set([
   'mobile', 'software', 'system', 'systems', 'platform', 'tool', 'solution',
   'solutions', 'portal', 'management', 'erp', 'crm', 'saas', 'pwa', 'automation',
   'store', 'ecommerce', 'service', 'services', 'company', 'companies', 'agency',
+  'startup', 'startups', 'entrepreneur', 'entrepreneurs',
 ]);
 
 /** Stable FNV-1a hash, used only when no usable tokens could be derived. */

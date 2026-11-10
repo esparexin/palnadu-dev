@@ -15,7 +15,7 @@ import {
 import { toAsciiSlug } from './script-utils';
 import { BlogLanguage } from '@prisma/client';
 import { GeneratedBlogDraft } from './content-research/types';
-import { generateStructuredFallback } from './content-research/structured-fallback';
+import { generateStructuredFallback, buildFallbackTitle } from './content-research/structured-fallback';
 import { callLlmProvider, getGeminiModelsToTry } from './content-research/llm-provider';
 
 export * from './content-research/types';
@@ -184,7 +184,11 @@ Return strictly a valid JSON object with title, slug, excerpt, content, h1, meta
       const cleanContent = (llmDraft.content || '').replace(/\*\*([^*]+)\*\*/g, '$1').replace(/\*([^*\n]+)\*/g, '$1').replace(/\*\*/g, '');
       const words = cleanContent.split(/\s+/).length;
       const rawTitle = str(llmDraft.title) || topicTitle;
-      const title = cleanHeadingTitle(rawTitle);
+      const parsedTitle = cleanHeadingTitle(rawTitle);
+      const title =
+        parsedTitle.length < 15
+          ? buildFallbackTitle(parsedTitle, locationContext)
+          : parsedTitle.slice(0, 120);
       let slug = writeTelugu ? toAsciiSlug(str(llmDraft.slug) || topicTitle) : normaliseSlug(llmDraft.slug || topicTitle);
       if (/^\d+$/.test(slug)) {
         slug = `${categorySlug}-${slug}`;

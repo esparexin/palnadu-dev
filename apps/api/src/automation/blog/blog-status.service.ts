@@ -13,7 +13,7 @@ export class BlogStatusService {
   async getStatus() {
     const [
       totalPosts, draftPosts, publishedPosts, archivedPosts,
-      failedTopics, claimedTopics, pendingTopics, completedTopics, queueRows,
+      failedTopics, claimedTopics, pendingTopics, completedTopics, activeQueue,
     ] = await Promise.all([
       this.prisma.blogPost.count(),
       this.prisma.blogPost.count({ where: { status: 'DRAFT' } }),
@@ -23,8 +23,17 @@ export class BlogStatusService {
       this.prisma.blogTopic.count({ where: { status: TopicStatus.CLAIMED } }),
       this.prisma.blogTopic.count({ where: { status: TopicStatus.PENDING } }),
       this.prisma.blogTopic.count({ where: { status: TopicStatus.COMPLETED } }),
-      this.prisma.blogTopic.findMany({ orderBy: { createdAt: 'asc' }, take: 50 }),
+      this.prisma.blogTopic.findMany({
+        where: { status: { not: TopicStatus.COMPLETED } },
+        orderBy: { createdAt: 'asc' },
+        take: 50,
+      }),
     ]);
+
+    const queueRows =
+      activeQueue.length > 0
+        ? activeQueue
+        : await this.prisma.blogTopic.findMany({ orderBy: { createdAt: 'desc' }, take: 15 });
 
     const autoPublishSetting = await this.prisma.siteSetting.findUnique({ where: { key: 'auto_publish_blogs' } });
     const coverage = await this.discoveryService.coverageReport();
