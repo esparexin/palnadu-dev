@@ -13,6 +13,20 @@ export const WHATSAPP_CONFIG_KEYS = {
 
 export const DEFAULT_GRAPH_API_VERSION = 'v22.0';
 
+export const META_GRAPH_API_BASE_URL = 'https://graph.facebook.com';
+
+export const DEFAULT_OUTBOUND_TIMEOUT_MS = 10000;
+
+export const DEFAULT_MAX_RETRIES = 2;
+
+export const DEFAULT_RETRY_DELAY_MS = 500;
+
+export const AUTO_REPLY_COOLDOWN_HOURS = 24;
+
+export const DEFAULT_ACK_MESSAGE =
+  'Thank you for reaching out to Palnadu! We have received your message and our team will get back to you shortly.';
+
+
 /**
  * Progression rank to prevent status regression when webhooks arrive out-of-order.
  * Higher rank indicates later state in the lifecycle.

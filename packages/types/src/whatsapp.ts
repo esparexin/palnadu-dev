@@ -111,3 +111,39 @@ export interface WhatsAppWebhookPayload {
   entry: WhatsAppWebhookEntry[];
 }
 
+export interface WhatsAppSendTextMessageParams {
+  to: string;
+  text: string;
+  previewUrl?: boolean;
+  replyToWamId?: string;
+}
+
+export interface WhatsAppSendResponseContact {
+  input: string;
+  wa_id: string;
+}
+
+export interface WhatsAppSendResponseMessage {
+  id: string;
+  message_status?: string;
+}
+
+export interface WhatsAppSendResponse {
+  messaging_product: string;
+  contacts: WhatsAppSendResponseContact[];
+  messages: WhatsAppSendResponseMessage[];
+}
+
+export interface WhatsAppApiErrorDetail {
+  message: string;
+  type: string;
+  code: number;
+  error_subcode?: number;
+  fbtrace_id?: string;
+}
+
+export interface WhatsAppApiErrorResponse {
+  error: WhatsAppApiErrorDetail;
+}
+
+
