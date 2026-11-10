@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type {
   WhatsAppSendTextMessageParams,
+  WhatsAppSendTemplateParams,
   WhatsAppSendResponse,
   WhatsAppApiErrorResponse,
 } from '@palnadu/types';
@@ -70,21 +71,11 @@ export class WhatsAppApiClient {
   async sendTextMessage(
     params: WhatsAppSendTextMessageParams,
   ): Promise<WhatsAppSendResponse> {
-    const accessToken = this.config.get<string>(WHATSAPP_CONFIG_KEYS.ACCESS_TOKEN)?.trim();
-    const phoneNumberId = this.getPhoneNumberId();
-    const version = this.getApiVersion();
-
-    if (!accessToken || !phoneNumberId) {
-      this.logger.error('WhatsApp API credentials missing (WHATSAPP_ACCESS_TOKEN or WHATSAPP_PHONE_NUMBER_ID)');
-      throw new WhatsAppApiException('WhatsApp API credentials are not configured');
-    }
-
     const cleanRecipient = this.sanitizePhoneNumber(params.to);
     if (!cleanRecipient) {
       throw new WhatsAppApiException('Invalid recipient phone number');
     }
 
-    const url = `${META_GRAPH_API_BASE_URL}/${version}/${phoneNumberId}/messages`;
     const payload: Record<string, unknown> = {
       messaging_product: 'whatsapp',
       recipient_type: 'individual',
@@ -100,8 +91,66 @@ export class WhatsAppApiClient {
       payload.context = { message_id: params.replyToWamId };
     }
 
+    return this.dispatchMessage(cleanRecipient, payload, `text message (length: ${params.text.length})`);
+  }
+
+  async sendTemplateMessage(
+    params: WhatsAppSendTemplateParams,
+  ): Promise<WhatsAppSendResponse> {
+    const cleanRecipient = this.sanitizePhoneNumber(params.to);
+    if (!cleanRecipient) {
+      throw new WhatsAppApiException('Invalid recipient phone number');
+    }
+
+    if (!params.templateName?.trim()) {
+      throw new WhatsAppApiException('Template name is required');
+    }
+
+    if (!params.languageCode?.trim()) {
+      throw new WhatsAppApiException('Template language code is required');
+    }
+
+    const templateObj: Record<string, unknown> = {
+      name: params.templateName.trim(),
+      language: { code: params.languageCode.trim() },
+    };
+
+    if (params.components && params.components.length > 0) {
+      templateObj.components = params.components;
+    }
+
+    const payload: Record<string, unknown> = {
+      messaging_product: 'whatsapp',
+      recipient_type: 'individual',
+      to: cleanRecipient,
+      type: 'template',
+      template: templateObj,
+    };
+
+    return this.dispatchMessage(
+      cleanRecipient,
+      payload,
+      `template "${params.templateName}" (${params.languageCode})`,
+    );
+  }
+
+  private async dispatchMessage(
+    cleanRecipient: string,
+    payload: Record<string, unknown>,
+    logDescription: string,
+  ): Promise<WhatsAppSendResponse> {
+    const accessToken = this.config.get<string>(WHATSAPP_CONFIG_KEYS.ACCESS_TOKEN)?.trim();
+    const phoneNumberId = this.getPhoneNumberId();
+    const version = this.getApiVersion();
+
+    if (!accessToken || !phoneNumberId) {
+      this.logger.error('WhatsApp API credentials missing (WHATSAPP_ACCESS_TOKEN or WHATSAPP_PHONE_NUMBER_ID)');
+      throw new WhatsAppApiException('WhatsApp API credentials are not configured');
+    }
+
+    const url = `${META_GRAPH_API_BASE_URL}/${version}/${phoneNumberId}/messages`;
     const maskedTo = this.maskPhone(cleanRecipient);
-    this.logger.log(`Dispatching outbound WhatsApp text message to ${maskedTo} (length: ${params.text.length})`);
+    this.logger.log(`Dispatching outbound WhatsApp ${logDescription} to ${maskedTo}`);
 
     let lastError: Error | null = null;
     for (let attempt = 0; attempt <= this.maxRetries; attempt++) {

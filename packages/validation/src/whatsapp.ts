@@ -135,6 +135,40 @@ export const whatsAppWebhookPayloadSchema: z.ZodType<Record<string, unknown>> = 
 
 export type WhatsAppWebhookPayloadValidated = z.infer<typeof whatsAppWebhookPayloadSchema>;
 
+export const whatsAppTemplateParameterSchema = z
+  .object({
+    type: z.enum(['text', 'currency', 'date_time', 'image', 'document', 'video']),
+    text: z.string().optional(),
+    image: z.object({ id: z.string().optional(), link: z.string().optional() }).optional(),
+    document: z
+      .object({ id: z.string().optional(), link: z.string().optional(), filename: z.string().optional() })
+      .optional(),
+    video: z.object({ id: z.string().optional(), link: z.string().optional() }).optional(),
+    currency: z
+      .object({ fallback_value: z.string(), code: z.string(), amount_1000: z.number() })
+      .optional(),
+    date_time: z.object({ fallback_value: z.string() }).optional(),
+  })
+  .passthrough();
+
+export const whatsAppTemplateComponentSchema = z
+  .object({
+    type: z.enum(['header', 'body', 'button']),
+    sub_type: z.enum(['url', 'quick_reply']).optional(),
+    index: z.string().optional(),
+    parameters: z.array(whatsAppTemplateParameterSchema).default([]),
+  })
+  .passthrough();
+
+export const whatsAppSendTemplateSchema = z.object({
+  to: z.string().min(1, 'Recipient phone number is required'),
+  templateName: z.string().min(1, 'Template name is required'),
+  languageCode: z.string().min(2, 'Valid language code is required'),
+  components: z.array(whatsAppTemplateComponentSchema).optional(),
+});
+
+export type WhatsAppSendTemplateInput = z.infer<typeof whatsAppSendTemplateSchema>;
+
 
 
 

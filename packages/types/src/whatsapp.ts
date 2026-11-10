@@ -146,4 +146,30 @@ export interface WhatsAppApiErrorResponse {
   error: WhatsAppApiErrorDetail;
 }
 
+export type WhatsAppTemplateComponentType = 'header' | 'body' | 'button';
+
+export interface WhatsAppTemplateParameter {
+  type: 'text' | 'currency' | 'date_time' | 'image' | 'document' | 'video';
+  text?: string;
+  image?: { id?: string; link?: string };
+  document?: { id?: string; link?: string; filename?: string };
+  video?: { id?: string; link?: string };
+  currency?: { fallback_value: string; code: string; amount_1000: number };
+  date_time?: { fallback_value: string };
+}
+
+export interface WhatsAppTemplateComponent {
+  type: WhatsAppTemplateComponentType;
+  sub_type?: 'url' | 'quick_reply';
+  index?: string;
+  parameters: WhatsAppTemplateParameter[];
+}
+
+export interface WhatsAppSendTemplateParams {
+  to: string;
+  templateName: string;
+  languageCode: string;
+  components?: WhatsAppTemplateComponent[];
+}
+
 

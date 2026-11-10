@@ -185,4 +185,44 @@ describe('WhatsAppApiClient - Meta Cloud API Outbound Client', () => {
       /aborted due to timeout/,
     );
   });
+
+  it('formats template message payload with parameters and succeeds on 200 OK', async () => {
+    let capturedBody = null;
+    const mockFetch = async (_url, init) => {
+      capturedBody = JSON.parse(init.body);
+      return {
+        ok: true, status: 200,
+        json: async () => ({
+          messaging_product: 'whatsapp',
+          contacts: [{ input: '919876543210', wa_id: '919876543210' }],
+          messages: [{ id: 'wamid.TEMPLATE_001' }],
+        }),
+      };
+    };
+    const client = new WhatsAppApiClient(createMockConfig(), { fetchFn: mockFetch });
+    const response = await client.sendTemplateMessage({
+      to: '+91 (98765) 43210',
+      templateName: 'b2b_website_outreach_v1',
+      languageCode: 'en_US',
+      components: [{ type: 'body', parameters: [{ type: 'text', text: 'Sri Lakshmi Rice Mill' }] }],
+    });
+    assert.equal(capturedBody.to, '919876543210');
+    assert.equal(capturedBody.type, 'template');
+    assert.equal(capturedBody.template.name, 'b2b_website_outreach_v1');
+    assert.equal(capturedBody.template.language.code, 'en_US');
+    assert.equal(capturedBody.template.components[0].parameters[0].text, 'Sri Lakshmi Rice Mill');
+    assert.equal(response.messages[0].id, 'wamid.TEMPLATE_001');
+  });
+
+  it('rejects template message when template name or language is missing', async () => {
+    const client = new WhatsAppApiClient(createMockConfig());
+    await assert.rejects(
+      async () => client.sendTemplateMessage({ to: '919876543210', templateName: '', languageCode: 'en' }),
+      /Template name is required/,
+    );
+    await assert.rejects(
+      async () => client.sendTemplateMessage({ to: '919876543210', templateName: 'valid', languageCode: '' }),
+      /Template language code is required/,
+    );
+  });
 });
