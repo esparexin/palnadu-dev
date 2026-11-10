@@ -37,13 +37,8 @@ export class BlogAutomationService {
     private readonly discoveryService: TopicDiscoveryService,
   ) {}
 
-  async getPendingQueueItems() {
-    return this.queueService.getPendingQueueItems();
-  }
-
-  async enqueueTopic(candidate: QueueCandidate) {
-    return this.queueService.enqueueTopic(candidate);
-  }
+  async getPendingQueueItems() { return this.queueService.getPendingQueueItems(); }
+  async enqueueTopic(candidate: QueueCandidate) { return this.queueService.enqueueTopic(candidate); }
 
   async discoverAndEnqueue(limit = 40): Promise<{ discovered: number; enqueued: number; rejected: string[] }> {
     const candidates = await this.discoveryService.discover(limit);
@@ -149,19 +144,9 @@ export class BlogAutomationService {
           topicKey,
         };
       }
-      if (enqueued.reason === 'already queued') {
-        const queued = await this.prisma.blogTopic.findUnique({
-          where: { topicKey_language: { topicKey, language } },
-        });
-        if (queued) {
-          return this.generateForTopic(
-            { ...queued, categorySlug: categorySlug || queued.categorySlug, targetLocation: targetLocation ?? queued.targetLocation },
-            forcePublish,
-            `manual:${process.pid}:${Date.now()}`,
-          );
-        }
+      if (enqueued.reason !== 'already queued') {
+        throw new Error(`Topic refused: ${enqueued.reason}.`);
       }
-      throw new Error(`Topic refused: ${enqueued.reason}.`);
     }
 
     const queued = await this.prisma.blogTopic.findUnique({
@@ -169,7 +154,22 @@ export class BlogAutomationService {
     });
     if (!queued) throw new Error(`Topic ${topicKey} could not be queued.`);
 
-    return this.generateForTopic(queued, forcePublish, `manual:${process.pid}:${Date.now()}`);
+    const target = {
+      ...queued,
+      categorySlug: categorySlug || queued.categorySlug,
+      targetLocation: targetLocation ?? queued.targetLocation,
+    };
+
+    try {
+      return await this.generateForTopic(target, forcePublish, `manual:${process.pid}:${Date.now()}`);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      await this.prisma.blogTopic.update({
+        where: { topicKey_language: { topicKey, language } },
+        data: { attempts: { increment: 1 }, lastError: msg.slice(0, 500) },
+      }).catch(() => {});
+      throw err;
+    }
   }
 
   async generateForTopic(

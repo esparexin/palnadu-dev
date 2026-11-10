@@ -2,14 +2,29 @@ import { SeoStrategy, extractHeadings } from '../seo-strategy';
 import { GeneratedBlogDraft } from './types';
 
 /**
+ * Ensures title is an editorial-grade, compliant headline between 15 and 120 characters.
+ */
+export function buildFallbackTitle(topicTitle: string, locationContext: string): string {
+  const clean = topicTitle.trim().replace(/\s+/g, ' ');
+  if (clean.length >= 15 && clean.length <= 120) return clean;
+  if (clean.length < 15) {
+    const loc = locationContext.split(',')[0]?.trim() || locationContext;
+    const capitalized = clean.charAt(0).toUpperCase() + clean.slice(1);
+    return `How ${capitalized} Drives Growth for Modern Businesses in ${loc}`.slice(0, 120);
+  }
+  return clean.slice(0, 120);
+}
+
+/**
  * Generates a deep, original, long-form technical article using our problem-first framework
  */
 export function generateStructuredFallback(
-  topicTitle: string,
+  rawTopicTitle: string,
   categorySlug: string,
   locationContext: string,
   s: SeoStrategy,
 ): GeneratedBlogDraft {
+  const topicTitle = buildFallbackTitle(rawTopicTitle, locationContext);
   const slug = topicTitle
     .toLowerCase()
     .trim()
@@ -17,7 +32,8 @@ export function generateStructuredFallback(
     .replace(/[\s_]+/g, '-')
     .replace(/-+/g, '-')
     .replace(/^-/, '')
-    .replace(/-$/, '');
+    .replace(/-$/, '')
+    .slice(0, 80);
 
   const content = `# ${topicTitle}
 
