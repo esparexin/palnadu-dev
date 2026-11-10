@@ -11,6 +11,7 @@ import {
   STATUS_PROGRESSION_RANK,
   NOTIFICATION_TYPE_WHATSAPP_MESSAGE,
 } from './whatsapp.constants';
+import { updateCampaignMetricsForStatus } from './whatsapp-campaign-metrics.util';
 
 export interface InboundMessageParams {
   wamId: string;
@@ -201,7 +202,7 @@ export class WhatsAppMessageService {
       return existing;
     }
 
-    return this.prisma.whatsAppMessage.update({
+    const updated = await this.prisma.whatsAppMessage.update({
       where: { wamId: params.wamId },
       data: {
         status: targetStatus,
@@ -210,6 +211,17 @@ export class WhatsAppMessageService {
         ...(params.errorMessage ? { errorMessage: params.errorMessage } : {}),
       },
     });
+
+    if (existing.campaignId) {
+      await updateCampaignMetricsForStatus(
+        this.prisma,
+        existing.campaignId,
+        targetStatus,
+        existing.status,
+      );
+    }
+
+    return updated;
   }
 
   async findByWamId(wamId: string): Promise<WhatsAppMessage | null> {

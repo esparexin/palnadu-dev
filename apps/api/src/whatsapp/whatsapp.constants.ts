@@ -45,3 +45,22 @@ export const STATUS_PROGRESSION_RANK: Record<string, number> = {
 
 export const NOTIFICATION_TYPE_WHATSAPP_MESSAGE = 'WHATSAPP_MESSAGE';
 
+export const DEFAULT_CAMPAIGN_BATCH_SIZE = 50;
+export const DEFAULT_CAMPAIGN_DELAY_MS = 100;
+
+export const MARKETING_OPT_OUT_KEYWORDS = [
+  'stop',
+  'unsubscribe',
+  'cancel',
+  'quit',
+  'optout',
+  'opt-out',
+  'end',
+  'revoke',
+  'వద్దు',
+  'ఆపండి',
+] as const;
+
+export const OPT_OUT_REASON_INBOUND_STOP = 'INBOUND_KEYWORD_STOP';
+
+

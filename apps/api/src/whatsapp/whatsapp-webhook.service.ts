@@ -4,6 +4,7 @@ import * as crypto from 'node:crypto';
 import { PrismaService } from '../prisma.service';
 import { WhatsAppMessageService } from './whatsapp-message.service';
 import { WhatsAppAutoReplyService } from './whatsapp-auto-reply.service';
+import { WhatsAppOptOutService } from './whatsapp-opt-out.service';
 import {
   verifyMetaWebhookSignature,
   verifyTokenConstantTime,
@@ -27,6 +28,7 @@ export class WhatsAppWebhookService {
     private readonly messageService: WhatsAppMessageService,
     private readonly prisma: PrismaService,
     private readonly autoReplyService?: WhatsAppAutoReplyService,
+    private readonly optOutService?: WhatsAppOptOutService,
   ) {}
 
   verifyHandshake(rawQuery: Record<string, unknown>): string {
@@ -132,6 +134,10 @@ export class WhatsAppWebhookService {
                   timestamp: msg.timestamp,
                 });
                 messageCount++;
+
+                if (this.optOutService && bodyText) {
+                  await this.optOutService.handleInboundOptOut(msg.from, bodyText);
+                }
 
                 if (this.autoReplyService) {
                   await this.autoReplyService.handleAutoReply(saved);
