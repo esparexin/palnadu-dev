@@ -56,6 +56,7 @@ const CORE_CRAWL_ROUTES = [
   '/locations/vinukonda',
   '/privacy',
   '/terms',
+  '/data-deletion',
 ];
 
 @Injectable()

@@ -55,6 +55,7 @@ export const footerNavItems = {
   legal: [
     { title: 'Privacy Policy', href: '/privacy' },
     { title: 'Terms of Service', href: '/terms' },
+    { title: 'Data Deletion', href: '/data-deletion' },
   ],
 };
 

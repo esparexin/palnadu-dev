@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import { siteConfig, getBreadcrumbSchema } from '@palnadu/config';
 
 export const metadata: Metadata = {
@@ -96,6 +97,13 @@ export default function PrivacyPage() {
             <h2>6. Client Rights & Data Management</h2>
             <p>
               You maintain full authority over your personal information. You have the right to request access to the data we maintain about you, request corrections to inaccurate records, or request complete deletion of your contact dossier upon conclusion of our technical consultation or service engagement.
+            </p>
+            <p>
+              For detailed instructions on submitting a deletion request (including inquiries regarding communications via our Meta WhatsApp integration), please consult our dedicated{' '}
+              <Link href="/data-deletion" className="font-semibold underline">
+                User Data Deletion Request
+              </Link>{' '}
+              instructions page.
             </p>
 
             <h2>7. Contact & Grievance Officer</h2>
