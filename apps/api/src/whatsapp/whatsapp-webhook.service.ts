@@ -75,9 +75,11 @@ export class WhatsAppWebhookService {
 
     // Durably persist webhook receipt before processing to guarantee auditability.
     // If persistence fails, do not acknowledge HTTP 200 so Meta will retry delivery.
+    const initialEventId = payload.entry?.[0]?.id;
     const log = await this.prisma.whatsAppWebhookLog.create({
       data: {
         payloadHash,
+        eventId: initialEventId,
         field: 'messages',
         processed: false,
       },
@@ -86,6 +88,7 @@ export class WhatsAppWebhookService {
 
     let messageCount = 0;
     let statusCount = 0;
+    let primaryWamId: string | undefined;
 
     try {
       if (payload.object === 'whatsapp_business_account' && Array.isArray(payload.entry)) {
@@ -112,13 +115,16 @@ export class WhatsAppWebhookService {
             if (Array.isArray(value.messages)) {
               for (const msg of value.messages) {
                 if (!msg.id || !msg.from) continue;
+                if (!primaryWamId) primaryWamId = msg.id;
+
+                const bodyText = this.extractMessageBody(msg as unknown as Record<string, unknown>);
                 const saved = await this.messageService.saveInboundMessage({
                   wamId: msg.id,
                   from: msg.from,
                   to: businessNumber,
                   profileName: contactMap.get(msg.from),
                   type: msg.type || 'text',
-                  body: msg.text?.body || msg.image?.caption || msg.document?.caption,
+                  body: bodyText,
                   mediaId: msg.image?.id || msg.document?.id || msg.audio?.id || msg.video?.id,
                   mimeType: msg.image?.mime_type || msg.document?.mime_type || msg.audio?.mime_type,
                   contextWamId: msg.context?.id,
@@ -137,6 +143,8 @@ export class WhatsAppWebhookService {
             if (Array.isArray(value.statuses)) {
               for (const st of value.statuses) {
                 if (!st.id || !st.status) continue;
+                if (!primaryWamId) primaryWamId = st.id;
+
                 const firstError = st.errors?.[0];
                 await this.messageService.updateMessageStatus({
                   wamId: st.id,
@@ -156,7 +164,10 @@ export class WhatsAppWebhookService {
       if (webhookLogId) {
         await this.prisma.whatsAppWebhookLog.update({
           where: { id: webhookLogId },
-          data: { processed: true },
+          data: {
+            processed: true,
+            ...(primaryWamId ? { eventId: primaryWamId } : {}),
+          },
         });
       }
 
@@ -174,4 +185,37 @@ export class WhatsAppWebhookService {
       throw err;
     }
   }
+
+  private extractMessageBody(msg: Record<string, unknown>): string | undefined {
+    const textObj = msg.text as { body?: string } | undefined;
+    if (textObj?.body) return textObj.body;
+
+    const mediaObj = (msg.image || msg.document || msg.video) as { caption?: string } | undefined;
+    if (mediaObj?.caption) return mediaObj.caption;
+
+    const interactive = msg.interactive as
+      | { button_reply?: { title: string }; list_reply?: { title: string } }
+      | undefined;
+    if (interactive?.button_reply?.title) return `[Button: ${interactive.button_reply.title}]`;
+    if (interactive?.list_reply?.title) return `[Selected: ${interactive.list_reply.title}]`;
+
+    const button = msg.button as { text?: string } | undefined;
+    if (button?.text) return `[Button: ${button.text}]`;
+
+    const loc = msg.location as { name?: string; address?: string; latitude?: number; longitude?: number } | undefined;
+    if (loc) {
+      const parts = [loc.name, loc.address, loc.latitude && loc.longitude ? `(${loc.latitude}, ${loc.longitude})` : null].filter(Boolean);
+      return parts.length > 0 ? `[Location: ${parts.join(', ')}]` : '[Location]';
+    }
+
+    const reaction = msg.reaction as { emoji?: string } | undefined;
+    if (reaction?.emoji) return `[Reaction: ${reaction.emoji}]`;
+
+    if (msg.type === 'audio') return '[Audio Message]';
+    if (msg.type === 'video') return '[Video Message]';
+    if (msg.type === 'sticker') return '[Sticker]';
+
+    return undefined;
+  }
 }
+
