@@ -63,11 +63,12 @@ export function useBlogPosts() {
   const quickPublish = async (post: any) => {
     if (publishingId) return;
     setPublishingId(post.id);
-    setPosts((prev) => prev.map((p) => (p.id === post.id ? { ...p, status: PublishStatus.PUBLISHED, publishDate: new Date().toISOString() } : p)));
+    const publishDate = post.publishDate || new Date().toISOString();
+    setPosts((prev) => prev.map((p) => (p.id === post.id ? { ...p, status: PublishStatus.PUBLISHED, publishDate } : p)));
     setDraftCount((c) => Math.max(0, c - 1));
     setPublishedCount((c) => c + 1);
     try {
-      await api.blog.update(post.id, { status: PublishStatus.PUBLISHED, publishDate: new Date().toISOString() });
+      await api.blog.update(post.id, { status: PublishStatus.PUBLISHED, publishDate });
       toast.success(`"${post.title.slice(0, 40)}..." is live on Google!`);
       fetchCounts();
     } catch (err) {

@@ -12,7 +12,7 @@ import {
   Loader2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { siteConfig } from '@palnadu/config';
+import { siteConfig, formatBlogDate } from '@palnadu/config';
 import { cn } from '@/lib/utils';
 import { BlogPagination } from './blog-pagination';
 
@@ -56,7 +56,7 @@ export function BlogTable({
               <th className="px-4 py-3 bg-palnadu-off-white">Category</th>
               <th className="px-4 py-3 bg-palnadu-off-white">SEO Health</th>
               <th className="px-4 py-3 bg-palnadu-off-white">Status</th>
-              <th className="px-4 py-3 bg-palnadu-off-white">Updated Date</th>
+              <th className="px-4 py-3 bg-palnadu-off-white">Date / Status</th>
               <th className="px-4 py-3 text-right bg-palnadu-off-white">Actions</th>
             </tr>
           </thead>
@@ -137,8 +137,23 @@ export function BlogTable({
                       {post.status}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-palnadu-secondary whitespace-nowrap">
-                    {new Date(post.updatedAt).toLocaleDateString()}
+                  <td className="px-4 py-3 whitespace-nowrap text-xs font-mono" title={post.publishDate ? `Published: ${post.publishDate}` : `Created: ${post.createdAt}`}>
+                    {post.status === 'PUBLISHED' ? (
+                      <div>
+                        <span className="font-semibold text-palnadu-teal-dark mr-1">Pub:</span>
+                        <span className="text-palnadu-dark">{formatBlogDate(post.publishDate || post.createdAt)}</span>
+                      </div>
+                    ) : post.status === 'ARCHIVED' ? (
+                      <div>
+                        <span className="text-palnadu-secondary mr-1">Archived:</span>
+                        <span className="text-palnadu-secondary">{formatBlogDate(post.publishDate || post.createdAt)}</span>
+                      </div>
+                    ) : (
+                      <div>
+                        <span className="text-palnadu-warning font-semibold mr-1">Draft:</span>
+                        <span className="text-palnadu-secondary">{formatBlogDate(post.createdAt)}</span>
+                      </div>
+                    )}
                   </td>
                   <td className="px-4 py-3 text-right whitespace-nowrap space-x-1">
                     {post.status === 'DRAFT' && (

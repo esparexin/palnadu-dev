@@ -5,11 +5,13 @@ import {
   imagePresets,
   getBreadcrumbSchema,
   cleanBlogTitle,
+  formatBlogDate,
+  toIsoBlogDate,
   type BlogLocale,
 } from '@palnadu/config';
 import { CtaSection } from '@/components/sections/cta-section';
 import { Calendar, User, ArrowLeft, Tag, Clock, Languages } from 'lucide-react';
-import { articleBasePath, articleCanonical, articleDateLocale, articleTranslations } from '@/lib/blog-post';
+import { articleBasePath, articleCanonical, articleTranslations } from '@/lib/blog-post';
 import { ArticleContent, isOptimizableImageUrl } from './article-content';
 import { ArticleFaq } from './article-faq';
 import { ArticleFooter } from './article-footer';
@@ -23,7 +25,6 @@ type ArticleViewProps = {
 export function ArticleView({ post, locale }: ArticleViewProps) {
   const basePath = articleBasePath(locale);
   const canonicalUrl = articleCanonical({ ...post, language: locale });
-  const dateLocale = articleDateLocale(locale);
   const inLanguage = locale === 'te' ? 'te' : 'en';
   const translations = articleTranslations(post);
   const alternate = translations.find((t) => t.language !== locale);
@@ -36,8 +37,8 @@ export function ArticleView({ post, locale }: ArticleViewProps) {
     headline: title,
     description: post.seoDescription || post.excerpt,
     image: post.coverImage || `${siteConfig.url}/og.png`,
-    datePublished: post.publishDate || post.createdAt,
-    dateModified: post.updatedAt,
+    datePublished: toIsoBlogDate(post.publishDate || post.createdAt),
+    dateModified: toIsoBlogDate(post.updatedAt),
     inLanguage,
     author: {
       '@type': 'Person',
@@ -173,11 +174,9 @@ export function ArticleView({ post, locale }: ArticleViewProps) {
               <span>•</span>
               <span className="flex items-center gap-1.5 font-mono">
                 <Calendar className="h-3.5 w-3.5 text-palnadu-secondary/80" />
-                <time dateTime={post.publishDate || post.createdAt}>
-                  {new Date(post.publishDate || post.createdAt).toLocaleDateString(dateLocale, {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric',
+                <time dateTime={toIsoBlogDate(post.publishDate || post.createdAt) ?? ''}>
+                  {formatBlogDate(post.publishDate || post.createdAt, locale, {
+                    monthFormat: 'long',
                   })}
                 </time>
               </span>

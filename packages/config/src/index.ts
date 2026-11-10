@@ -3,6 +3,7 @@ export * from './colors';
 export * from './media';
 export * from './schema';
 export * from './blog-i18n';
+export * from './blog-date';
 
 // ─── Modular SSOT Configurations ─────────────────────────────────
 export * from './site-config';

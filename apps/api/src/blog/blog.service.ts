@@ -32,29 +32,27 @@ export class BlogService {
       await assertCanJoinGroup(this.prisma, translationGroupId, { id: '', language });
     }
 
+    const publishDate =
+      rest.status === PublishStatus.PUBLISHED && rest.publishDate === undefined
+        ? new Date()
+        : rest.publishDate;
+
     return this.prisma.blogPost.create({
-      data: { ...rest, language, translationGroupId: translationGroupId ?? undefined },
+      data: { ...rest, publishDate, language, translationGroupId: translationGroupId ?? undefined },
       include: { author: { select: { id: true, name: true, avatar: true } }, category: true },
     });
   }
 
   async findPublished(params: {
-    page?: number;
-    limit?: number;
-    categorySlug?: string;
-    search?: string;
-    status?: PublishStatus;
-    includeArchived?: boolean;
-    language?: BlogLanguage;
+    page?: number; limit?: number; categorySlug?: string;
+    search?: string; status?: PublishStatus; includeArchived?: boolean; language?: BlogLanguage;
   } = {}) {
     const { page = 1, limit = 12, categorySlug, search, status, includeArchived, language } = params;
     const skip = (page - 1) * limit;
 
     const allowedStatuses = status
       ? [status]
-      : includeArchived
-      ? [PublishStatus.PUBLISHED, PublishStatus.ARCHIVED]
-      : [PublishStatus.PUBLISHED];
+      : includeArchived ? [PublishStatus.PUBLISHED, PublishStatus.ARCHIVED] : [PublishStatus.PUBLISHED];
 
     const where: Prisma.BlogPostWhereInput = {
       status: allowedStatuses.length === 1 ? allowedStatuses[0] : { in: allowedStatuses },
@@ -144,12 +142,8 @@ export class BlogService {
   }
 
   async findAllAdmin(params: {
-    page?: number;
-    limit?: number;
-    status?: PublishStatus;
-    categorySlug?: string;
-    search?: string;
-    language?: BlogLanguage;
+    page?: number; limit?: number; status?: PublishStatus;
+    categorySlug?: string; search?: string; language?: BlogLanguage;
   } = {}) {
     const { page = 1, limit = 20, status, categorySlug, search, language } = params;
     const skip = (page - 1) * limit;
@@ -170,7 +164,7 @@ export class BlogService {
         where,
         skip,
         take: limit,
-        orderBy: { createdAt: 'desc' },
+        orderBy: [{ publishDate: 'desc' }, { createdAt: 'desc' }],
         include: {
           author: { select: { id: true, name: true } },
           category: { select: { id: true, name: true, slug: true } },
@@ -217,9 +211,14 @@ export class BlogService {
       await assertCanJoinGroup(this.prisma, nextGroup, { id, language: nextLanguage });
     }
 
+    let nextPublishDate = rest.publishDate;
+    if (rest.status === PublishStatus.PUBLISHED && !existing.publishDate && nextPublishDate === undefined) {
+      nextPublishDate = new Date();
+    }
+
     return this.prisma.blogPost.update({
       where: { id },
-      data: { ...rest, translationGroupId: nextGroup ?? undefined },
+      data: { ...rest, publishDate: nextPublishDate, translationGroupId: nextGroup ?? undefined },
     });
   }
 
