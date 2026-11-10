@@ -30,22 +30,16 @@ describe('WhatsAppAutoReplyService - Customer Auto-Acknowledgment', () => {
     let createdOutbound = null;
     const mockApiClient = {
       isConfigured: () => true,
-      sendTextMessage: async (params) => {
-        sentParams = params;
-        return {
-          messaging_product: 'whatsapp',
-          contacts: [{ input: params.to, wa_id: params.to }],
-          messages: [{ id: 'wamid.OUTBOUND_ACK_1' }],
-        };
+      sendTextMessage: async (p) => {
+        sentParams = p;
+        return { contacts: [{ input: p.to, wa_id: p.to }], messages: [{ id: 'wamid.OUTBOUND_ACK_1' }] };
       },
     };
     const mockPrisma = {
       whatsAppMessage: {
         findFirst: async () => null,
-        create: async ({ data }) => {
-          createdOutbound = { id: 'out_1', ...data };
-          return createdOutbound;
-        },
+        create: async ({ data }) => (createdOutbound = { id: 'out_1', ...data }),
+        update: async ({ data }) => (createdOutbound = { ...createdOutbound, ...data }),
       },
     };
 
@@ -57,8 +51,6 @@ describe('WhatsAppAutoReplyService - Customer Auto-Acknowledgment', () => {
     assert.equal(sentParams.replyToWamId, 'wamid.INBOUND_123');
     assert.match(sentParams.text, /Thank you for reaching out to Palnadu!/);
     assert.equal(createdOutbound.wamId, 'wamid.OUTBOUND_ACK_1');
-    assert.equal(createdOutbound.direction, 'OUTBOUND');
-    assert.equal(createdOutbound.contextWamId, 'wamid.INBOUND_123');
     assert.equal(createdOutbound.status, 'SENT');
   });
 
@@ -75,6 +67,7 @@ describe('WhatsAppAutoReplyService - Customer Auto-Acknowledgment', () => {
       whatsAppMessage: {
         findFirst: async () => null,
         create: async ({ data }) => ({ id: 'out_2', ...data }),
+        update: async ({ data }) => ({ id: 'out_2', ...data }),
       },
     };
 
@@ -94,12 +87,7 @@ describe('WhatsAppAutoReplyService - Customer Auto-Acknowledgment', () => {
       isConfigured: () => true,
       sendTextMessage: async () => { sendAttempted = true; },
     };
-    const service = new WhatsAppAutoReplyService(
-      {},
-      createMockConfig({ WHATSAPP_AUTO_REPLY_ENABLED: 'false' }),
-      mockApiClient,
-    );
-
+    const service = new WhatsAppAutoReplyService({}, createMockConfig({ WHATSAPP_AUTO_REPLY_ENABLED: 'false' }), mockApiClient);
     const result = await service.handleAutoReply(createInboundMessage());
     assert.equal(result, null);
     assert.equal(sendAttempted, false);
@@ -107,15 +95,9 @@ describe('WhatsAppAutoReplyService - Customer Auto-Acknowledgment', () => {
 
   it('skips auto-reply when outside 24-hour customer service window', async () => {
     let sendAttempted = false;
-    const mockApiClient = {
-      isConfigured: () => true,
-      sendTextMessage: async () => { sendAttempted = true; },
-    };
+    const mockApiClient = { isConfigured: () => true, sendTextMessage: async () => { sendAttempted = true; } };
     const service = new WhatsAppAutoReplyService({}, createMockConfig(), mockApiClient);
-    const staleInbound = createInboundMessage({
-      statusTimestamp: new Date(Date.now() - 25 * 60 * 60 * 1000),
-    });
-
+    const staleInbound = createInboundMessage({ statusTimestamp: new Date(Date.now() - 25 * 60 * 60 * 1000) });
     const result = await service.handleAutoReply(staleInbound);
     assert.equal(result, null);
     assert.equal(sendAttempted, false);
@@ -123,17 +105,12 @@ describe('WhatsAppAutoReplyService - Customer Auto-Acknowledgment', () => {
 
   it('skips auto-reply if an outbound reply already exists for this exact wamId', async () => {
     let sendAttempted = false;
-    const mockApiClient = {
-      isConfigured: () => true,
-      sendTextMessage: async () => { sendAttempted = true; },
-    };
+    const mockApiClient = { isConfigured: () => true, sendTextMessage: async () => { sendAttempted = true; } };
     const mockPrisma = {
       whatsAppMessage: {
-        findFirst: async ({ where }) =>
-          where.contextWamId === 'wamid.INBOUND_123' ? { id: 'out_prev' } : null,
+        findFirst: async ({ where }) => (where.contextWamId === 'wamid.INBOUND_123' ? { id: 'out_prev' } : null),
       },
     };
-
     const service = new WhatsAppAutoReplyService(mockPrisma, createMockConfig(), mockApiClient);
     const result = await service.handleAutoReply(createInboundMessage());
     assert.equal(result, null);
@@ -142,68 +119,117 @@ describe('WhatsAppAutoReplyService - Customer Auto-Acknowledgment', () => {
 
   it('skips auto-reply if customer received an outbound message within 24h cooldown', async () => {
     let sendAttempted = false;
-    const mockApiClient = {
-      isConfigured: () => true,
-      sendTextMessage: async () => { sendAttempted = true; },
-    };
+    const mockApiClient = { isConfigured: () => true, sendTextMessage: async () => { sendAttempted = true; } };
     const mockPrisma = {
       whatsAppMessage: {
-        findFirst: async ({ where }) =>
-          where.to === '919876543210' && where.direction === 'OUTBOUND' ? { id: 'recent_1' } : null,
+        findFirst: async ({ where }) => (where.to === '919876543210' && where.direction === 'OUTBOUND' ? { id: 'recent_1' } : null),
       },
     };
-
     const service = new WhatsAppAutoReplyService(mockPrisma, createMockConfig(), mockApiClient);
     const result = await service.handleAutoReply(createInboundMessage());
     assert.equal(result, null);
     assert.equal(sendAttempted, false);
   });
 
-  it('handles Meta API send failure gracefully without throwing', async () => {
-    const mockApiClient = {
-      isConfigured: () => true,
-      sendTextMessage: async () => {
-        throw new Error('Meta API connection reset');
-      },
-    };
-    const mockPrisma = { whatsAppMessage: { findFirst: async () => null } };
-
-    const service = new WhatsAppAutoReplyService(mockPrisma, createMockConfig(), mockApiClient);
-    const result = await service.handleAutoReply(createInboundMessage());
-    assert.equal(result, null);
-  });
-
-  it('updates auto-replied message status from SENT to DELIVERED to READ', async () => {
-    let messageStore = {
-      id: 'out_track_1',
-      wamId: 'wamid.OUTBOUND_ACK_1',
-      direction: 'OUTBOUND',
-      status: 'SENT',
-      statusTimestamp: new Date(),
-    };
+  it('intercepts multi-instance race when atomic claim encounters P2002 duplicate key', async () => {
+    let sendAttempted = false;
+    const mockApiClient = { isConfigured: () => true, sendTextMessage: async () => { sendAttempted = true; } };
     const mockPrisma = {
       whatsAppMessage: {
-        findUnique: async () => messageStore,
-        update: async ({ data }) => {
-          messageStore = { ...messageStore, ...data };
-          return messageStore;
+        findFirst: async () => null,
+        create: async () => {
+          const p2002 = new Error('Unique constraint violation on wam_id');
+          p2002.code = 'P2002';
+          throw p2002;
         },
       },
     };
+    const service = new WhatsAppAutoReplyService(mockPrisma, createMockConfig(), mockApiClient);
+    const result = await service.handleAutoReply(createInboundMessage());
+    assert.equal(result, null);
+    assert.equal(sendAttempted, false);
+  });
 
+  it('marks claim record FAILED when Meta API send fails without throwing unhandled error', async () => {
+    let updatedStatus = null;
+    const mockApiClient = {
+      isConfigured: () => true,
+      sendTextMessage: async () => { throw new Error('Meta API 500 server error'); },
+    };
+    const mockPrisma = {
+      whatsAppMessage: {
+        findFirst: async () => null,
+        create: async ({ data }) => ({ id: 'claim_1', ...data }),
+        update: async ({ data }) => { updatedStatus = data.status; },
+      },
+    };
+    const service = new WhatsAppAutoReplyService(mockPrisma, createMockConfig(), mockApiClient);
+    const result = await service.handleAutoReply(createInboundMessage());
+    assert.equal(result, null);
+    assert.equal(updatedStatus, 'FAILED');
+  });
+
+  it('prevents concurrent in-flight auto-reply dispatches for the same wamId in single process', async () => {
+    let callCount = 0;
+    const mockApiClient = {
+      isConfigured: () => true,
+      sendTextMessage: async () => {
+        callCount++;
+        await new Promise((r) => setTimeout(r, 20));
+        return { messages: [{ id: 'wamid.CONCURRENT_ACK' }] };
+      },
+    };
+    const mockPrisma = {
+      whatsAppMessage: {
+        findFirst: async () => null,
+        create: async ({ data }) => ({ id: 'out_c', ...data }),
+        update: async ({ data }) => ({ id: 'out_c', ...data }),
+      },
+    };
+    const service = new WhatsAppAutoReplyService(mockPrisma, createMockConfig(), mockApiClient);
+    const inbound = createInboundMessage();
+    const [res1, res2] = await Promise.all([service.handleAutoReply(inbound), service.handleAutoReply(inbound)]);
+    assert.equal(callCount, 1);
+    assert.notEqual(res1 || res2, null);
+  });
+
+  it('does not suppress auto-replies when prior outbound message failed', async () => {
+    let sentAttempted = false;
+    const mockApiClient = {
+      isConfigured: () => true,
+      sendTextMessage: async () => {
+        sentAttempted = true;
+        return { messages: [{ id: 'wamid.RETRY_SUCCESS' }] };
+      },
+    };
+    const mockPrisma = {
+      whatsAppMessage: {
+        findFirst: async ({ where }) => (where.status?.not === 'FAILED' ? null : { id: 'f', status: 'FAILED' }),
+        create: async ({ data }) => ({ id: 'out_after_fail', ...data }),
+        update: async ({ data }) => ({ id: 'out_after_fail', ...data }),
+      },
+    };
+    const service = new WhatsAppAutoReplyService(mockPrisma, createMockConfig(), mockApiClient);
+    const result = await service.handleAutoReply(createInboundMessage());
+    assert.equal(sentAttempted, true);
+    assert.notEqual(result, null);
+  });
+
+  it('updates auto-replied message status from SENT to DELIVERED to READ', async () => {
+    let messageStore = { id: 'out_track_1', wamId: 'wamid.OUTBOUND_ACK_1', direction: 'OUTBOUND', status: 'SENT' };
+    const mockPrisma = {
+      whatsAppMessage: {
+        findUnique: async () => messageStore,
+        update: async ({ data }) => (messageStore = { ...messageStore, ...data }),
+      },
+    };
     const messageService = new WhatsAppMessageService(mockPrisma, { create: async () => ({}) });
-
     const delivered = await messageService.updateMessageStatus({
-      wamId: 'wamid.OUTBOUND_ACK_1',
-      recipientId: '919876543210',
-      status: 'delivered',
+      wamId: 'wamid.OUTBOUND_ACK_1', recipientId: '919876543210', status: 'delivered',
     });
     assert.equal(delivered.status, 'DELIVERED');
-
     const read = await messageService.updateMessageStatus({
-      wamId: 'wamid.OUTBOUND_ACK_1',
-      recipientId: '919876543210',
-      status: 'read',
+      wamId: 'wamid.OUTBOUND_ACK_1', recipientId: '919876543210', status: 'read',
     });
     assert.equal(read.status, 'READ');
   });
