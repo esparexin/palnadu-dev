@@ -21,6 +21,12 @@ import {
   type CreateMarketingCampaignInput,
 } from '@palnadu/validation';
 import { CampaignStatus, ContactOptInStatus } from '@prisma/client';
+import {
+  MIN_CAMPAIGN_BATCH_SIZE,
+  MAX_CAMPAIGN_BATCH_SIZE,
+  MIN_CAMPAIGN_DELAY_MS,
+  MAX_CAMPAIGN_DELAY_MS,
+} from './whatsapp.constants';
 
 @Controller('admin/whatsapp')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -67,7 +73,19 @@ export class WhatsAppAdminController {
     @Param('id') id: string,
     @Body() body?: { batchSize?: number; delayMs?: number },
   ) {
-    const result = await this.campaignService.dispatchCampaign(id, body);
+    const safeBatchSize =
+      typeof body?.batchSize === 'number' && Number.isFinite(body.batchSize)
+        ? Math.max(MIN_CAMPAIGN_BATCH_SIZE, Math.min(MAX_CAMPAIGN_BATCH_SIZE, Math.trunc(body.batchSize)))
+        : undefined;
+    const safeDelayMs =
+      typeof body?.delayMs === 'number' && Number.isFinite(body.delayMs)
+        ? Math.max(MIN_CAMPAIGN_DELAY_MS, Math.min(MAX_CAMPAIGN_DELAY_MS, Math.trunc(body.delayMs)))
+        : undefined;
+
+    const result = await this.campaignService.dispatchCampaign(id, {
+      batchSize: safeBatchSize,
+      delayMs: safeDelayMs,
+    });
     return { success: true, data: result };
   }
 
@@ -138,3 +156,4 @@ export class WhatsAppAdminController {
     };
   }
 }
+

@@ -16,6 +16,10 @@ import {
   WHATSAPP_CONFIG_KEYS,
   DEFAULT_CAMPAIGN_BATCH_SIZE,
   DEFAULT_CAMPAIGN_DELAY_MS,
+  MIN_CAMPAIGN_BATCH_SIZE,
+  MAX_CAMPAIGN_BATCH_SIZE,
+  MIN_CAMPAIGN_DELAY_MS,
+  MAX_CAMPAIGN_DELAY_MS,
 } from './whatsapp.constants';
 
 export interface DispatchCampaignOptions {
@@ -44,7 +48,12 @@ export class WhatsAppCampaignService {
   ) {}
 
   private sleep(ms: number): Promise<void> {
-    return new Promise((resolve) => setTimeout(resolve, ms));
+    const safeMs = Math.max(
+      MIN_CAMPAIGN_DELAY_MS,
+      Math.min(MAX_CAMPAIGN_DELAY_MS, Number.isFinite(ms) ? Math.trunc(ms) : DEFAULT_CAMPAIGN_DELAY_MS),
+    );
+    if (safeMs <= 0) return Promise.resolve();
+    return new Promise((resolve) => setTimeout(resolve, safeMs));
   }
 
   async createCampaign(data: CreateMarketingCampaignInput): Promise<MarketingCampaign> {
@@ -110,8 +119,15 @@ export class WhatsAppCampaignService {
       data: { status: CampaignStatus.RUNNING, startedAt: campaign.startedAt || new Date() },
     });
 
-    const batchLimit = options?.batchSize ?? DEFAULT_CAMPAIGN_BATCH_SIZE;
-    const delay = options?.delayMs ?? DEFAULT_CAMPAIGN_DELAY_MS;
+    const reqBatch = options?.batchSize;
+    const batchLimit = typeof reqBatch === 'number' && Number.isFinite(reqBatch)
+      ? Math.max(MIN_CAMPAIGN_BATCH_SIZE, Math.min(MAX_CAMPAIGN_BATCH_SIZE, Math.trunc(reqBatch)))
+      : DEFAULT_CAMPAIGN_BATCH_SIZE;
+
+    const reqDelay = options?.delayMs;
+    const delay = typeof reqDelay === 'number' && Number.isFinite(reqDelay)
+      ? Math.max(MIN_CAMPAIGN_DELAY_MS, Math.min(MAX_CAMPAIGN_DELAY_MS, Math.trunc(reqDelay)))
+      : DEFAULT_CAMPAIGN_DELAY_MS;
     const contacts = await this.fetchEligibleContacts(campaign, batchLimit);
     const existing = await this.prisma.whatsAppMessage.findMany({ where: { campaignId }, select: { to: true } });
     const alreadyMessaged = new Set(existing.map((m) => m.to));
