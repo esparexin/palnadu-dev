@@ -6,6 +6,8 @@ import { BlogLanguage, TopicStatus } from '@prisma/client';
 import { ClaimedTopic, QueueCandidate } from './types';
 import { getAllInitialSeeds } from './blog-seeds';
 
+export const STALE_CLAIM_MS = 5 * 60 * 1000;
+
 @Injectable()
 export class BlogQueueService {
   private readonly logger = new Logger(BlogQueueService.name);
@@ -23,10 +25,6 @@ export class BlogQueueService {
         (p) => `${p.topicKey}::${p.language}`,
       ),
     );
-
-    for (const seed of getAllInitialSeeds(generatedKeys)) {
-      await this.enqueueTopic(seed);
-    }
 
     const rows = await this.prisma.blogTopic.findMany({ orderBy: { createdAt: 'asc' } });
 
@@ -109,7 +107,7 @@ export class BlogQueueService {
 
   async claimNextTopic(workerId: string, maxAttempts: number): Promise<ClaimedTopic | null> {
     const now = new Date();
-    const staleBefore = new Date(now.getTime() - 30 * 60 * 1000);
+    const staleBefore = new Date(now.getTime() - STALE_CLAIM_MS);
 
     const candidate = await this.prisma.blogTopic.findFirst({
       where: {
@@ -140,7 +138,7 @@ export class BlogQueueService {
     maxAttempts: number,
   ): Promise<ClaimedTopic | null> {
     const now = new Date();
-    const staleBefore = new Date(now.getTime() - 30 * 60 * 1000);
+    const staleBefore = new Date(now.getTime() - STALE_CLAIM_MS);
 
     const candidate = await this.prisma.blogTopic.findFirst({
       where: {

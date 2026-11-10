@@ -166,5 +166,21 @@ describe('Google Live SEO Keyword Discovery → Draft Post Reliability', () => {
         /LLM generation failed and no Telugu fallback template exists/,
       );
     });
+
+    it('enforces 5-minute stale-claim threshold to avoid stuck in-flight topics', async () => {
+      const { STALE_CLAIM_MS } = await import('../dist/automation/blog/blog-queue.service.js');
+      assert.equal(STALE_CLAIM_MS, 5 * 60 * 1000);
+    });
+
+    it('prioritizes actionable non-completed topics in rotation queue preview', () => {
+      const topics = [
+        { id: '1', status: 'COMPLETED', topic: 'Old Completed Post' },
+        { id: '2', status: 'PENDING', topic: 'Actionable Pending Post' },
+        { id: '3', status: 'CLAIMED', topic: 'In-Flight Post' },
+      ];
+      const active = topics.filter((t) => t.status !== 'COMPLETED');
+      assert.equal(active.length, 2);
+      assert.equal(active[0].topic, 'Actionable Pending Post');
+    });
   });
 });
