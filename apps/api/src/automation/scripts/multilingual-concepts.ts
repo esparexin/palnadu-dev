@@ -15,7 +15,7 @@ export const CONCEPT_LEXICON: ConceptEntry[] = [
   { id: 'subject:healthcare', en: ['hospital management', 'clinic management', 'diagnostic', 'patient appointment'], te: ['హాస్పిటల్ మేనేజ్‌మెంట్', 'క్లినిక్ మేనేజ్‌మెంట్', 'పేషెంట్ అపాయింట్‌మెంట్'] },
   { id: 'subject:seo', en: ['seo', 'local seo', 'google maps seo', 'search engine optimisation', 'search engine optimization'], te: ['ఎస్‌ఇ‌ఓ', 'లోకల్ ఎస్‌ఇ‌ఓ', 'సెర్చ్ ఇంజిన్ ఆప్టిమైజేషన్'] },
   { id: 'subject:digital-marketing', en: ['digital marketing', 'google ads', 'social media marketing', 'ppc'], te: ['డిజిటల్ మార్కెటింగ్', 'గూగుల్ యాడ్స్', 'సోషల్ మీడియా మార్కెటింగ్'] },
-  { id: 'subject:saas', en: ['saas', 'mvp', 'minimum viable product', 'startup'], te: ['సాస్', 'ఎమ్‌వీ‌పీ', 'మినిమమ్ వయిబుల్ ప్రొడక్ట్', 'స్టార్టప్'] },
+  { id: 'subject:saas', en: ['saas', 'mvp', 'minimum viable product', 'startup', 'startups', 'entrepreneur', 'entrepreneurs', 'startup support', 'new business', 'new startup support', 'startup development', 'business launch'], te: ['సాస్', 'ఎమ్‌వీ‌పీ', 'మినిమమ్ వయిబుల్ ప్రొడక్ట్', 'స్టార్టప్', 'ఎంట్రప్రెన్యూర్', 'కొత్త వ్యాపారం', 'స్టార్టప్ సపోర్ట్'] },
   { id: 'aspect:cost', en: ['cost', 'costs', 'price', 'pricing', 'rates', 'fees', 'charges', 'budget', 'quote'], te: ['ఖర్చు', 'ఖర్చులు', 'ధర', 'ధరలు', 'రేట్లు', 'ఫీలు', 'బడ్జెట్'] },
   { id: 'aspect:time', en: ['time', 'timeline', 'duration', 'how long', 'days', 'weeks'], te: ['సమయం', 'వ్యవధి', 'ఎంత సమయం'] },
   { id: 'aspect:howto', en: ['how to', 'how do', 'steps', 'guide', 'process'], te: ['ఎలా', 'ఎట్టి', 'క్రమం', 'గైడ్', 'ప్రాసెస్'] },

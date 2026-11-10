@@ -35,6 +35,10 @@ export class TopicDiscoveryService {
     'erp software palnadu',
     'ecommerce website cost',
     'custom software development andhra pradesh',
+    'startup website development andhra pradesh',
+    'entrepreneur digital solutions guntur',
+    'new business website palnadu',
+    'startup mvp development andhra pradesh',
   ];
 
   constructor(

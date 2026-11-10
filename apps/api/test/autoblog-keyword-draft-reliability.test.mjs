@@ -183,4 +183,23 @@ describe('Google Live SEO Keyword Discovery → Draft Post Reliability', () => {
       assert.equal(active[0].topic, 'Actionable Pending Post');
     });
   });
+
+  describe('Startup & Entrepreneur Search Intent and Queue Deduplication', () => {
+    it('infers "startups" category for entrepreneur and new business search intents', () => {
+      assert.equal(inferCategoryFromTopic('entrepreneur digital solutions'), 'startups');
+      assert.equal(inferCategoryFromTopic('startup support services'), 'startups');
+      assert.equal(inferCategoryFromTopic('new business website development'), 'startups');
+      assert.equal(inferCategoryFromTopic('business launch support'), 'startups');
+      assert.equal(inferCategoryFromTopic('new startup support in guntur'), 'startups');
+    });
+
+    it('ensures CURATED_TOPIC_QUEUE has unique topics without duplicate titles', async () => {
+      const { CURATED_TOPIC_QUEUE } = await import('../dist/automation/blog/types.js');
+      const titles = CURATED_TOPIC_QUEUE.map((t) => t.topic.toLowerCase());
+      const unique = new Set(titles);
+      assert.equal(titles.length, unique.size, 'Curated queue must not contain duplicate topic titles');
+      const startupTopics = CURATED_TOPIC_QUEUE.filter((t) => t.categorySlug === 'startups');
+      assert.ok(startupTopics.length >= 4, 'Must have diverse startup & entrepreneur topics');
+    });
+  });
 });

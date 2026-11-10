@@ -99,9 +99,9 @@ export const CURATED_TOPIC_QUEUE = [
     targetLocation: 'Andhra Pradesh',
   },
   {
-    categorySlug: 'school-websites',
-    topic: 'How School Management Software and Digital Fee Portals Save 20+ Hours in Narasaraopet',
-    targetLocation: 'Narasaraopet and Palnadu District',
+    categorySlug: 'startups',
+    topic: 'Startup MVP and Web Application Development: Essential Guide for New Businesses in Andhra Pradesh',
+    targetLocation: 'Andhra Pradesh',
   },
   {
     categorySlug: 'website-development',
@@ -138,34 +138,9 @@ export const CURATED_TOPIC_QUEUE = [
     topic: 'Why Medical Shops and Pharmacies in Palnadu Are Upgrading to Cloud Billing Software in 2026',
     targetLocation: 'Palnadu and Narasaraopet',
   },
-];
-
-export const DYNAMIC_SERVICES = [
-  { service: 'Cloud ERP and Billing Software', category: 'website-development' },
-  { service: 'E-Commerce Portals and Online Ordering Apps', category: 'app-development' },
-  { service: 'Digital Admissions and School Management Platforms', category: 'school-websites' },
-  { service: 'Clinic and Diagnostic Lab Management Systems', category: 'website-development' },
-  { service: 'Rice Mill Gate-Pass and Inventory Software', category: 'website-development' },
-  { service: 'Cotton Ginning Dispatch and Weighbridge Automation', category: 'website-development' },
-  { service: 'Mobile Field Sales and Delivery Tracking Apps', category: 'app-development' },
-  { service: 'Local Google Maps SEO and Search Authority', category: 'local-seo-business' },
-  { service: 'Cold Storage Stock and Dispatch Systems', category: 'website-development' },
-  { service: 'Automobile Service and Spare Parts Billing POS', category: 'website-development' },
-  { service: 'Real Estate Property Portals and Inflow Systems', category: 'website-development' },
-  { service: 'Microfinance and Loan Accounting Software', category: 'startups' },
-];
-
-export const DYNAMIC_LOCATIONS = [
-  'Narasaraopet',
-  'Guntur',
-  'Chilakaluripet',
-  'Vinukonda',
-  'Sattenapalli',
-  'Macherla',
-  'Piduguralla',
-  'Tenali',
-  'Mangalagiri',
-  'Bapatla',
-  'Palnadu District',
-  'Andhra Pradesh',
+  {
+    categorySlug: 'startups',
+    topic: 'Digital Solutions for New Businesses: How Entrepreneurs in Palnadu Launch Modern Tech Platforms',
+    targetLocation: 'Palnadu and Guntur',
+  },
 ];
