@@ -162,10 +162,10 @@ export function cleanBlogTitle(rawTitle: string): string {
   let title = String(rawTitle).trim();
 
   // 1. Strip leading markdown heading symbols (#, ##, ###, *, -, >)
-  title = title.replace(/^[#\*\-\s>]+/, '').trim();
+  title = title.replace(/^[#*>\s-]+/, '').trim();
 
   // 2. Strip trailing markdown hashes or asterisks
-  title = title.replace(/[#\*]+$/, '').trim();
+  title = title.replace(/[#*]+$/, '').trim();
 
   // 3. Strip bold/italic asterisks
   title = title.replace(/\*+/g, '').trim();

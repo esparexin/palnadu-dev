@@ -181,7 +181,7 @@ Return strictly a valid JSON object with title, slug, excerpt, content, h1, meta
       const cleanContent = (llmDraft.content || '').replace(/\*\*([^*]+)\*\*/g, '$1').replace(/\*([^*\n]+)\*/g, '$1').replace(/\*\*/g, '');
       const words = cleanContent.split(/\s+/).length;
       const rawTitle = str(llmDraft.title) || topicTitle;
-      const title = rawTitle.replace(/^[#\*\-\s>]+/, '').replace(/[#\*]+$/, '').replace(/\*+/g, '').trim();
+      const title = rawTitle.replace(/^[#*>\s-]+/, '').replace(/[#*]+$/, '').replace(/\*+/g, '').trim();
       let slug = writeTelugu ? toAsciiSlug(str(llmDraft.slug) || topicTitle) : normaliseSlug(llmDraft.slug || topicTitle);
       if (/^\d+$/.test(slug)) {
         slug = `${categorySlug}-${slug}`;
@@ -194,7 +194,7 @@ Return strictly a valid JSON object with title, slug, excerpt, content, h1, meta
         isTemplateFallback: false,
         title,
         slug,
-        h1: str(llmDraft.h1) ? str(llmDraft.h1).replace(/^[#\*\-\s>]+/, '').replace(/[#\*]+$/, '').replace(/\*+/g, '').trim() : title,
+        h1: str(llmDraft.h1) ? str(llmDraft.h1).replace(/^[#*>\s-]+/, '').replace(/[#*]+$/, '').replace(/\*+/g, '').trim() : title,
         excerpt: str(llmDraft.excerpt) || '',
         content: cleanContent,
         metaTitle: metaTitle.slice(0, 70),
