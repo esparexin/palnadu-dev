@@ -73,6 +73,19 @@ enum RequiredHelp {
   NOT_SURE
 }
 
+enum WhatsAppMessageDirection {
+  INBOUND
+  OUTBOUND
+}
+
+enum WhatsAppDeliveryStatus {
+  RECEIVED
+  SENT
+  DELIVERED
+  READ
+  FAILED
+}
+
 // ─── Models ───────────────────────────────────────────────────
 
 model User {
@@ -524,4 +537,46 @@ model LocalCitation {
   @@unique([directoryName, location])
   @@map("local_citations")
 }
+
+// ─── WhatsApp Cloud API Models ───────────────────────────────
+
+model WhatsAppMessage {
+  id              String                   @id @default(auto()) @map("_id") @db.ObjectId
+  wamId           String                   @unique @map("wam_id")
+  direction       WhatsAppMessageDirection @default(INBOUND)
+  from            String
+  to              String
+  profileName     String?                  @map("profile_name")
+  type            String                   @default("text")
+  body            String?
+  mediaId         String?                  @map("media_id")
+  mimeType        String?                  @map("mime_type")
+  contextWamId    String?                  @map("context_wam_id")
+  status          WhatsAppDeliveryStatus   @default(RECEIVED)
+  statusTimestamp DateTime?                @map("status_timestamp")
+  errorCode       String?                  @map("error_code")
+  errorMessage    String?                  @map("error_message")
+  rawPayload      Json?                    @map("raw_payload")
+  createdAt       DateTime                 @default(now())
+  updatedAt       DateTime                 @updatedAt
+
+  @@index([from, createdAt(sort: Desc)])
+  @@index([status])
+  @@map("whatsapp_messages")
+}
+
+model WhatsAppWebhookLog {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  eventId     String?  @map("event_id")
+  field       String   @default("messages")
+  payloadHash String   @map("payload_hash")
+  processed   Boolean  @default(false)
+  error       String?
+  createdAt   DateTime @default(now())
+
+  @@index([payloadHash])
+  @@index([createdAt(sort: Desc)])
+  @@map("whatsapp_webhook_logs")
+}
+
 
