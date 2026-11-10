@@ -132,7 +132,9 @@ export function validate(input: ValidationInput): ValidationOutcome {
 
   // 8. Internal links
   const internalLinks = d.internalLinks ?? [];
-  const badLinks = internalLinks.filter((l) => !l.url.startsWith('/'));
+  const badLinks = internalLinks.filter(
+    (l) => !l.url || !l.url.startsWith('/') || l.url === `/blog/${d.slug}` || l.url === `/te/blog/${d.slug}`
+  );
   checks.push({
     name: 'internal_links',
     passed: internalLinks.length > 0 && badLinks.length === 0,
@@ -141,8 +143,8 @@ export function validate(input: ValidationInput): ValidationOutcome {
       internalLinks.length === 0
         ? 'no internal links'
         : badLinks.length > 0
-          ? `${badLinks.length} internal link(s) are not site-relative paths`
-          : `${internalLinks.length} internal link(s), all site-relative`,
+          ? `${badLinks.length} internal link(s) are non-site-relative or self-referencing`
+          : `${internalLinks.length} internal link(s), all site-relative and valid`,
   });
 
   // 9. SEO metadata completeness

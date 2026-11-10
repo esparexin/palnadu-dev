@@ -47,6 +47,29 @@ export function ArticleFooter({ post, locale }: ArticleFooterProps) {
         </div>
       </div>
 
+      {/* Target Internal Links & Resources */}
+      {Array.isArray(post.internalLinks) && post.internalLinks.length > 0 && (
+        <div className="mt-10 rounded-xl border border-palnadu-border/80 bg-palnadu-off-white/40 p-5 sm:p-6">
+          <h4 className="text-xs font-mono font-bold uppercase tracking-wider text-palnadu-teal mb-3.5">
+            {locale === 'te' ? 'సంబంధిత సేవలు & వనరులు' : 'Related Services & Resources'}
+          </h4>
+          <div className="flex flex-wrap gap-2.5">
+            {post.internalLinks
+              .filter((link: any) => link && typeof link.url === 'string' && typeof link.anchor === 'string')
+              .map((link: { anchor: string; url: string }, idx: number) => (
+                <Link
+                  key={idx}
+                  href={link.url}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-palnadu-border bg-white text-xs font-medium text-palnadu-dark hover:border-palnadu-blue hover:text-palnadu-blue transition-colors shadow-sm"
+                >
+                  <span>{link.anchor}</span>
+                  <ArrowRight className="h-3 w-3 text-palnadu-secondary" />
+                </Link>
+              ))}
+          </div>
+        </div>
+      )}
+
       {/* Related Articles */}
       {post.relatedPosts && post.relatedPosts.length > 0 && (
         <div className="mt-14 pt-10 border-t border-palnadu-border">

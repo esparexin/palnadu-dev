@@ -156,7 +156,8 @@ Core engineering principles:
 6. Formatting: Write clean, readable paragraphs. Use bullet points or comparison tables only where structurally necessary for technical specifications or checklists.
 7. Zero plagiarism: Formulate 100% original sentence structures and real practical examples from ${locationContext}.
 8. SEO Keywords: Weave target keywords naturally into the title, the first 100 words, at least one H2 heading, and 2-3 body paragraphs without keyword stuffing.
-9. Length & Depth Requirement: The "content" body must be at least 750 words (aim for 850-1100 words) with deep, practical operational advice across at least 5 distinct sections with H2 headings (## Heading).`;
+9. Length & Depth Requirement: The "content" body must be at least 750 words (aim for 850-1100 words) with deep, practical operational advice across at least 5 distinct sections with H2 headings (## Heading).
+10. Contextual Links: Naturally incorporate provided internal links into body prose as markdown links [Anchor Text](url) within relevant sentences.`;
 
     const intentGuidance = INTENT_GUIDANCE[s.searchIntent] ?? INTENT_GUIDANCE.INFORMATIONAL;
     const languageDirective = writeTelugu
@@ -169,7 +170,7 @@ Regional Context: ${locationContext}
 Research background:\n${researchContext}
 SEARCH INTENT: ${s.searchIntent}\n${intentGuidance}
 KEYWORD STRATEGY: Primary: ${s.primaryKeyword}; Secondary: ${s.secondaryKeywords.join(', ')}; Related: ${s.relatedKeywords.join(', ')}; LongTail: ${s.longTailKeywords.join(', ')}; Tags: ${s.tags.join(', ')}
-INTERNAL LINKS: ${s.internalLinks.map((l) => `${l.url} ("${l.anchor}")`).join(', ') || 'none'}
+INTERNAL LINKS (weave contextually into markdown): ${s.internalLinks.map((l) => `${l.url} ("${l.anchor}")`).join(', ') || 'none'}
 EXTERNAL REFERENCES: ${s.externalReferences.map((r) => `${r.title} (${r.url})`).join(', ') || 'none'}
 IMAGE SUGGESTIONS: ${s.imageSuggestions.map((i) => `"${i.alt}"`).join(', ') || 'none'}
 FAQ: ${s.faqOpportunities.join(', ') || 'none'}
@@ -191,6 +192,9 @@ Return strictly a valid JSON object with title, slug, excerpt, content, h1, meta
       const primaryKeyword = str(llmDraft.primaryKeyword) || s.primaryKeyword;
       const secondaryKeywords = arr(llmDraft.secondaryKeywords).length ? arr(llmDraft.secondaryKeywords) : s.secondaryKeywords;
       const metaTitle = str(llmDraft.metaTitle) || str(llmDraft.seoTitle) || `${primaryKeyword} | Palnadu.dev`;
+      const parsedLinks = objArr<{ anchor: string; url: string }>(llmDraft.internalLinks, ['anchor', 'url']);
+      const validLinks = parsedLinks.filter((l) => l.url.startsWith('/') && !l.url.endsWith(`/${slug}`));
+      const internalLinks = validLinks.length > 0 ? validLinks : s.internalLinks;
 
       return {
         isTemplateFallback: false,
@@ -212,7 +216,7 @@ Return strictly a valid JSON object with title, slug, excerpt, content, h1, meta
         searchIntent: str(llmDraft.searchIntent) || s.searchIntent,
         h2Headings: arr(llmDraft.h2Headings).length ? arr(llmDraft.h2Headings) : extractHeadings(cleanContent, 2),
         h3Headings: arr(llmDraft.h3Headings).length ? arr(llmDraft.h3Headings) : extractHeadings(cleanContent, 3),
-        internalLinks: objArr<{ anchor: string; url: string }>(llmDraft.internalLinks, ['anchor', 'url']).length ? objArr<{ anchor: string; url: string }>(llmDraft.internalLinks, ['anchor', 'url']) : s.internalLinks,
+        internalLinks,
         externalReferences: objArr<{ title: string; url: string }>(llmDraft.externalReferences, ['title', 'url']),
         imageSuggestions: objArr<{ alt: string; caption: string }>(llmDraft.imageSuggestions, ['alt', 'caption']),
         faq: objArr<{ q: string; a: string }>(llmDraft.faq, ['q', 'a']),

@@ -76,3 +76,84 @@ export async function resolveOrEnsureCategory(
   return null;
 }
 
+export interface CategoryInternalLink {
+  anchor: string;
+  url: string;
+}
+
+export const CANONICAL_CATEGORY_INTERNAL_LINKS: Record<
+  string,
+  { en: CategoryInternalLink[]; te: CategoryInternalLink[] }
+> = {
+  'app-development': {
+    en: [
+      { anchor: 'Android App Development', url: '/services/android-app-development' },
+      { anchor: 'Mobile Applications Services', url: '/services/mobile-app-development' },
+      { anchor: 'Contact Us', url: '/contact' },
+    ],
+    te: [
+      { anchor: 'ఆండ్రాయిడ్ యాప్ డెవలప్‌మెంట్', url: '/services/android-app-development' },
+      { anchor: 'మొబైల్ అప్లికేషన్ల సేవలు', url: '/services/mobile-app-development' },
+      { anchor: 'మమ్మల్ని సంప్రదించండి', url: '/contact' },
+    ],
+  },
+  'school-websites': {
+    en: [
+      { anchor: 'Website Development Services', url: '/services/website-development' },
+      { anchor: 'Business Automation Systems', url: '/services/business-automation' },
+      { anchor: 'Contact Us', url: '/contact' },
+    ],
+    te: [
+      { anchor: 'వెబ్‌సైట్ డెవలప్‌మెంట్ సేవలు', url: '/services/website-development' },
+      { anchor: 'బిజినెస్ ఆటోమేషన్ సిస్టమ్స్', url: '/services/business-automation' },
+      { anchor: 'మమ్మల్ని సంప్రదించండి', url: '/contact' },
+    ],
+  },
+  startups: {
+    en: [
+      { anchor: 'MVP Development Services', url: '/services/mvp-development' },
+      { anchor: 'Idea Validation Services', url: '/services/idea-validation' },
+      { anchor: 'Contact Us', url: '/contact' },
+    ],
+    te: [
+      { anchor: 'MVP డెవలప్‌మెంట్ సేవలు', url: '/services/mvp-development' },
+      { anchor: 'ఐడియా వాలిడేషన్', url: '/services/idea-validation' },
+      { anchor: 'మమ్మల్ని సంప్రదించండి', url: '/contact' },
+    ],
+  },
+  'local-seo-business': {
+    en: [
+      { anchor: 'Technical SEO, AEO & GEO', url: '/services/seo-aeo-geo' },
+      { anchor: 'Digital Marketing Services', url: '/services/digital-marketing' },
+      { anchor: 'Contact Us', url: '/contact' },
+    ],
+    te: [
+      { anchor: 'టెక్నికల్ SEO మరియు లోకల్ సెర్చ్', url: '/services/seo-aeo-geo' },
+      { anchor: 'డిజిటల్ మార్కెటింగ్ సేవలు', url: '/services/digital-marketing' },
+      { anchor: 'మమ్మల్ని సంప్రదించండి', url: '/contact' },
+    ],
+  },
+  'website-development': {
+    en: [
+      { anchor: 'Website Development & UI/UX', url: '/services/website-development' },
+      { anchor: 'Web Applications & Full-Stack', url: '/services/web-development' },
+      { anchor: 'Contact Us', url: '/contact' },
+    ],
+    te: [
+      { anchor: 'వెబ్‌సైట్ డెవలప్‌మెంట్ సేవలు', url: '/services/website-development' },
+      { anchor: 'వెబ్ అప్లికేషన్ల డెవలప్‌మెంట్', url: '/services/web-development' },
+      { anchor: 'మమ్మల్ని సంప్రదించండి', url: '/contact' },
+    ],
+  },
+};
+
+export function getCategoryInternalLinks(
+  categorySlug: string,
+  language: 'en' | 'te' = 'en',
+): CategoryInternalLink[] {
+  const mapping =
+    CANONICAL_CATEGORY_INTERNAL_LINKS[categorySlug] ??
+    CANONICAL_CATEGORY_INTERNAL_LINKS['website-development'];
+  return language === 'te' ? mapping.te : mapping.en;
+}
+
