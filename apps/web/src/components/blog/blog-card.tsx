@@ -1,16 +1,16 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { Calendar, ArrowRight, Tag, Clock } from 'lucide-react';
-import { imagePresets, blogPostPath, cleanBlogTitle, type BlogLocale } from '@palnadu/config';
+import { imagePresets, blogPostPath, cleanBlogTitle, formatBlogDate, toIsoBlogDate, type BlogLocale } from '@palnadu/config';
 
 interface BlogCardProps {
   post: any;
   locale: BlogLocale;
-  dateLocale: string;
+  dateLocale?: string;
   copy: any;
 }
 
-export function BlogCard({ post, locale, dateLocale, copy }: BlogCardProps) {
+export function BlogCard({ post, locale, dateLocale: _dateLocale, copy }: BlogCardProps) {
   const words = post.content ? post.content.split(/\s+/).length : 0;
   const readMinutes = Math.max(1, Math.ceil(words / 220));
   const isPostArchived = post.status === 'ARCHIVED';
@@ -87,11 +87,9 @@ export function BlogCard({ post, locale, dateLocale, copy }: BlogCardProps) {
       <div className="pt-3 mt-4 border-t border-palnadu-border/40 flex items-center justify-between text-xs">
         <div className="flex items-center gap-1 text-xs text-palnadu-secondary font-mono">
           <Calendar className="h-3 w-3 text-palnadu-secondary/80" />
-          <time dateTime={post.publishDate || post.createdAt}>
-            {new Date(post.publishDate || post.createdAt).toLocaleDateString(dateLocale, {
-              year: 'numeric',
-              month: 'short',
-              day: 'numeric',
+          <time dateTime={toIsoBlogDate(post.publishDate || post.createdAt) ?? ''}>
+            {formatBlogDate(post.publishDate || post.createdAt, (post.language ?? locale) as BlogLocale, {
+              monthFormat: 'short',
             })}
           </time>
         </div>

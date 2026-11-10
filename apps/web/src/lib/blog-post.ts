@@ -5,6 +5,7 @@ import {
   blogCanonicalUrl,
   buildHreflangAlternates,
   cleanBlogTitle,
+  toIsoBlogDate,
   type BlogLocale,
 } from '@palnadu/config';
 import type { BlogPost } from '@palnadu/types';
@@ -86,7 +87,7 @@ export function buildArticleMetadata(post: BlogPost, locale: BlogLocale): Metada
       description,
       url: canonical,
       type: 'article',
-      publishedTime: post.publishDate || post.createdAt,
+      publishedTime: toIsoBlogDate(post.publishDate || post.createdAt),
       images: [{ url: ogImage, width: 1200, height: 630, alt: post.title }],
     },
     twitter: {
