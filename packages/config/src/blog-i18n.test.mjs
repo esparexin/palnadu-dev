@@ -5,6 +5,7 @@ import {
   blogCanonicalUrl,
   buildHreflangAlternates,
   buildBlogSitemapEntries,
+  cleanBlogTitle,
 } from '../dist/index.js';
 
 const BASE = 'https://www.palnadu.dev';
@@ -126,5 +127,34 @@ describe('sitemap entries', () => {
       { slug: 'old', language: 'en', status: 'ARCHIVED' },
     ]);
     assert.equal(entries[0].priority, 0.5);
+  });
+});
+
+describe('cleanBlogTitle', () => {
+  it('strips leading markdown heading hashes (#, ##, ###)', () => {
+    assert.equal(
+      cleanBlogTitle('# సుభాష్ చంద్ర ₹22,000 కోట్ల కేసు'),
+      'సుభాష్ చంద్ర ₹22,000 కోట్ల కేసు'
+    );
+    assert.equal(
+      cleanBlogTitle('### UPIపై MDR ఛార్జీలు ఎందుకు?'),
+      'UPIపై MDR ఛార్జీలు ఎందుకు?'
+    );
+  });
+
+  it('strips bold and italic markdown asterisks', () => {
+    assert.equal(cleanBlogTitle('**Practical** *Engineering* Guide'), 'Practical Engineering Guide');
+  });
+
+  it('capitalizes short lowercase keyword stubs', () => {
+    assert.equal(cleanBlogTitle('billing software'), 'Billing Software');
+    assert.equal(cleanBlogTitle('school website design'), 'School Website Design');
+  });
+
+  it('preserves already well-formed titles', () => {
+    assert.equal(
+      cleanBlogTitle('Why Next.js Is the Best Choice for School Websites'),
+      'Why Next.js Is the Best Choice for School Websites'
+    );
   });
 });

@@ -49,6 +49,17 @@ const nextConfig = {
         destination: '/grow',
         permanent: true,
       },
+      // 301 Permanent Redirect: legacy mobile service paths -> canonical /services/android-app-development
+      {
+        source: '/services/mobile-app-development',
+        destination: '/services/android-app-development',
+        permanent: true,
+      },
+      {
+        source: '/services/mobile-apps',
+        destination: '/services/android-app-development',
+        permanent: true,
+      },
     ];
   },
   async headers() {

@@ -64,26 +64,16 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
           </nav>
         )}
 
-        {/* Mobile Header */}
-        <div className="lg:hidden text-center space-y-1.5 my-2 max-w-sm">
-          <p className="text-xs font-mono uppercase tracking-widest text-palnadu-light-blue font-bold">
-            Start With The Problem
-          </p>
-          <h1 className="text-2xl font-extrabold text-white leading-tight drop-shadow-sm">
-            {title}
-          </h1>
-        </div>
-
         {/* Main Grid: Desktop 2-Column (Left Headline, Right Form) | Mobile Form-First */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-10 w-full max-w-6xl pb-8" id="contact-card">
-          <div className="hidden lg:flex lg:col-span-5 flex-col justify-center p-4 lg:p-6 space-y-4">
+          <div className="lg:col-span-5 flex flex-col justify-center text-center lg:text-left space-y-2 lg:space-y-4 p-2 sm:p-4 lg:p-6 max-w-sm sm:max-w-md lg:max-w-none mx-auto lg:mx-0">
             <p className="text-xs font-mono uppercase tracking-widest text-palnadu-light-blue font-bold">
               Start With The Problem
             </p>
-            <h1 className="text-3xl lg:text-4xl xl:text-5xl font-extrabold text-white leading-tight drop-shadow-md">
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-extrabold text-white leading-tight drop-shadow-sm lg:drop-shadow-md">
               {title}
             </h1>
-            <p className="text-sm text-palnadu-light-blue/90 leading-relaxed max-w-md">
+            <p className="text-xs sm:text-sm text-palnadu-light-blue/90 leading-relaxed max-w-md">
               Have an idea, or need to automate a manual process? Talk directly with the software engineers building your solution.
             </p>
           </div>

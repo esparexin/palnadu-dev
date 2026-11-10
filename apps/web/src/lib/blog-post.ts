@@ -4,6 +4,7 @@ import {
   siteConfig,
   blogCanonicalUrl,
   buildHreflangAlternates,
+  cleanBlogTitle,
   type BlogLocale,
 } from '@palnadu/config';
 import type { BlogPost } from '@palnadu/types';
@@ -32,8 +33,16 @@ export async function getLocalizedPost(slug: string, locale: BlogLocale): Promis
   if (!post || (post.language ?? 'en') !== locale) {
     notFound();
   }
+
+  // Sanitize title, seoTitle, and excerpt
+  if (post.title) post.title = cleanBlogTitle(post.title);
+  if (post.seoTitle) post.seoTitle = cleanBlogTitle(post.seoTitle);
+  if (post.excerpt) post.excerpt = cleanBlogTitle(post.excerpt);
+
   return post;
 }
+
+export { cleanBlogTitle };
 
 /** Absolute self-referencing canonical for a post. */
 export function articleCanonical(post: { slug: string; language?: string }): string {

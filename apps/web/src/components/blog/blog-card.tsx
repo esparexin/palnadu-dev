@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { Calendar, ArrowRight, Tag, Clock } from 'lucide-react';
-import { imagePresets, blogPostPath, type BlogLocale } from '@palnadu/config';
+import { imagePresets, blogPostPath, cleanBlogTitle, type BlogLocale } from '@palnadu/config';
 
 interface BlogCardProps {
   post: any;
@@ -25,7 +25,7 @@ export function BlogCard({ post, locale, dateLocale, copy }: BlogCardProps) {
           <div className="rounded-lg overflow-hidden h-44 border border-palnadu-border/60 bg-palnadu-off-white relative">
             <Image
               src={imagePresets.blogCard(post.coverImage)}
-              alt={post.title}
+              alt={cleanBlogTitle(post.title)}
               fill
               sizes="(max-width: 768px) 100vw, 400px"
               className="object-cover group-hover:scale-105 transition-transform duration-500"
@@ -52,7 +52,7 @@ export function BlogCard({ post, locale, dateLocale, copy }: BlogCardProps) {
             </div>
             <div className="space-y-1">
               <p className="text-xs font-mono text-palnadu-light-blue/80">Palnadu.dev Publication</p>
-              <p className="text-sm font-bold text-white line-clamp-2">{post.title}</p>
+              <p className="text-sm font-bold text-white line-clamp-2">{cleanBlogTitle(post.title)}</p>
             </div>
           </div>
         )}
@@ -74,7 +74,7 @@ export function BlogCard({ post, locale, dateLocale, copy }: BlogCardProps) {
         </div>
 
         <h2 className="text-base font-bold text-palnadu-dark group-hover:text-palnadu-blue transition-colors leading-snug line-clamp-2">
-          {post.title}
+          {cleanBlogTitle(post.title)}
         </h2>
 
         {post.excerpt && (

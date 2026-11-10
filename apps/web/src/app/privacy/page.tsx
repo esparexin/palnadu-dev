@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { siteConfig } from '@palnadu/config';
+import { siteConfig, getBreadcrumbSchema } from '@palnadu/config';
 
 export const metadata: Metadata = {
   title: 'Privacy Policy',
@@ -10,15 +10,44 @@ export const metadata: Metadata = {
 };
 
 export default function PrivacyPage() {
+  const webPageJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'WebPage',
+    '@id': `${siteConfig.url}/privacy/#webpage`,
+    url: `${siteConfig.url}/privacy`,
+    name: 'Privacy Policy | Palnadu.dev',
+    description: 'Privacy policy and data protection standards for Palnadu.dev software engineering studio.',
+    isPartOf: {
+      '@type': 'WebSite',
+      '@id': `${siteConfig.url}/#website`,
+      name: siteConfig.name,
+      url: siteConfig.url,
+    },
+  };
+
+  const breadcrumbJsonLd = getBreadcrumbSchema([
+    { name: 'Home', path: '' },
+    { name: 'Privacy Policy', path: '/privacy' },
+  ]);
+
   return (
-    <div className="bg-white">
-      <section className="py-14 sm:py-20">
-        <div className="container">
-          <div className="mx-auto max-w-3xl prose prose-slate prose-headings:text-palnadu-dark prose-p:text-palnadu-body prose-a:text-palnadu-blue">
-            <h1 className="text-3xl sm:text-4xl font-extrabold text-palnadu-dark">Privacy Policy</h1>
-            <p className="text-xs font-mono text-palnadu-secondary">
-              Effective Date: {new Date().toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' })}
-            </p>
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(webPageJsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
+      />
+      <div className="bg-white">
+        <section className="py-14 sm:py-20">
+          <div className="container">
+            <div className="mx-auto max-w-3xl prose prose-slate prose-headings:text-palnadu-dark prose-p:text-palnadu-body prose-a:text-palnadu-blue">
+              <h1 className="text-3xl sm:text-4xl font-extrabold text-palnadu-dark">Privacy Policy</h1>
+              <p className="text-xs font-mono text-palnadu-secondary">
+                Effective Date: November 1, 2026
+              </p>
 
             <p className="lead">
               At Palnadu.dev (&quot;we,&quot; &quot;our,&quot; or &quot;us&quot;), we respect your privacy and are committed to protecting the confidential business information and personal data you share with us. This Privacy Policy outlines our transparent practices regarding data collection, usage, storage, and customer rights under the Information Technology Act, 2000 (India) and international privacy frameworks.
@@ -91,5 +120,6 @@ export default function PrivacyPage() {
         </div>
       </section>
     </div>
+    </>
   );
 }

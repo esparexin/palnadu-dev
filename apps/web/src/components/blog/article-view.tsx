@@ -4,11 +4,12 @@ import {
   siteConfig,
   imagePresets,
   getBreadcrumbSchema,
+  cleanBlogTitle,
   type BlogLocale,
 } from '@palnadu/config';
 import { CtaSection } from '@/components/sections/cta-section';
-import { Calendar, User, ArrowLeft, Tag, Clock } from 'lucide-react';
-import { articleBasePath, articleCanonical, articleDateLocale } from '@/lib/blog-post';
+import { Calendar, User, ArrowLeft, Tag, Clock, Languages } from 'lucide-react';
+import { articleBasePath, articleCanonical, articleDateLocale, articleTranslations } from '@/lib/blog-post';
 import { ArticleContent, isOptimizableImageUrl } from './article-content';
 import { ArticleFaq } from './article-faq';
 import { ArticleFooter } from './article-footer';
@@ -24,12 +25,15 @@ export function ArticleView({ post, locale }: ArticleViewProps) {
   const canonicalUrl = articleCanonical({ ...post, language: locale });
   const dateLocale = articleDateLocale(locale);
   const inLanguage = locale === 'te' ? 'te' : 'en';
+  const translations = articleTranslations(post);
+  const alternate = translations.find((t) => t.language !== locale);
+  const title = cleanBlogTitle(post.title);
 
   const articleSchema = {
     '@context': 'https://schema.org',
     '@type': 'BlogPosting',
     '@id': `${canonicalUrl}/#article`,
-    headline: post.title,
+    headline: title,
     description: post.seoDescription || post.excerpt,
     image: post.coverImage || `${siteConfig.url}/og.png`,
     datePublished: post.publishDate || post.createdAt,
@@ -54,7 +58,7 @@ export function ArticleView({ post, locale }: ArticleViewProps) {
   const breadcrumbJsonLd = getBreadcrumbSchema([
     { name: 'Home', path: '' },
     { name: 'Blog', path: basePath },
-    { name: post.title, path: `${basePath}/${post.slug}` },
+    { name: title, path: `${basePath}/${post.slug}` },
   ]);
 
   const faqItems: Array<{ q: string; a: string }> = Array.isArray(post.faqData)
@@ -104,8 +108,8 @@ export function ArticleView({ post, locale }: ArticleViewProps) {
           locale={locale}
         />
         <div className="container max-w-3xl">
-          {/* Breadcrumb Navigation */}
-          <div className="mb-6 flex items-center justify-between">
+          {/* Breadcrumb Navigation & Language Alternative */}
+          <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
             <Link
               href={basePath}
               className="inline-flex items-center gap-1.5 text-xs font-mono uppercase tracking-wider text-palnadu-secondary hover:text-palnadu-blue transition-colors"
@@ -114,21 +118,45 @@ export function ArticleView({ post, locale }: ArticleViewProps) {
               <span>Back to Articles</span>
             </Link>
 
-            {post.category?.name && (
-              <Link
-                href={`${basePath}?category=${post.category.slug}`}
-                className="inline-flex items-center gap-1 text-xs font-semibold text-palnadu-teal hover:underline"
-              >
-                <Tag className="h-3 w-3" />
-                <span>{post.category.name}</span>
-              </Link>
-            )}
+            <div className="flex items-center gap-3">
+              {alternate ? (
+                <Link
+                  href={`${articleBasePath(alternate.language)}/${alternate.slug}`}
+                  hrefLang={alternate.language}
+                  lang={alternate.language}
+                  className="inline-flex items-center gap-1 text-xs font-semibold text-palnadu-blue hover:underline"
+                >
+                  <Languages className="h-3.5 w-3.5" />
+                  <span>{alternate.language === 'te' ? 'తెలుగులో చదవండి' : 'Read in English'}</span>
+                </Link>
+              ) : (
+                <Link
+                  href={locale === 'en' ? '/te/blog' : '/blog'}
+                  hrefLang={locale === 'en' ? 'te' : 'en'}
+                  lang={locale === 'en' ? 'te' : 'en'}
+                  className="inline-flex items-center gap-1 text-xs text-palnadu-secondary hover:text-palnadu-blue transition-colors"
+                >
+                  <Languages className="h-3.5 w-3.5" />
+                  <span>{locale === 'en' ? 'తెలుగు బ్లాగ్' : 'English Blog'}</span>
+                </Link>
+              )}
+
+              {post.category?.name && (
+                <Link
+                  href={`${basePath}?category=${post.category.slug}`}
+                  className="inline-flex items-center gap-1 text-xs font-semibold text-palnadu-teal hover:underline"
+                >
+                  <Tag className="h-3 w-3" />
+                  <span>{post.category.name}</span>
+                </Link>
+              )}
+            </div>
           </div>
 
           {/* Article Header */}
           <header className="space-y-4 pb-8 border-b border-palnadu-border/60">
             <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-palnadu-dark leading-[1.15]">
-              {post.title}
+              {title}
             </h1>
 
             {post.excerpt && (
@@ -166,7 +194,7 @@ export function ArticleView({ post, locale }: ArticleViewProps) {
             <div className="relative aspect-[16/9] max-h-[480px] my-8 rounded-xl overflow-hidden border border-palnadu-border shadow-sm bg-palnadu-off-white">
               <Image
                 src={imagePresets.blogHero(post.coverImage)}
-                alt={post.title}
+                alt={title}
                 fill
                 priority
                 sizes="(max-width: 1024px) 100vw, 800px"
@@ -180,13 +208,13 @@ export function ArticleView({ post, locale }: ArticleViewProps) {
                 {post.category?.name || 'Engineering Insight'}
               </span>
               <h2 className="text-2xl sm:text-3xl font-extrabold text-white leading-tight">
-                {post.title}
+                {title}
               </h2>
             </div>
           )}
 
           {/* Article Body Content */}
-          <ArticleContent paragraphs={paragraphs} postTitle={post.title} />
+          <ArticleContent paragraphs={paragraphs} postTitle={title} />
 
           {/* Article FAQs */}
           <ArticleFaq faqItems={faqItems} locale={locale} />

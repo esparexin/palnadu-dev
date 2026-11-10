@@ -96,6 +96,8 @@ export function Footer({ initialLogoUrl }: FooterProps = {}) {
                 <li key={item.href}>
                   <Link
                     href={item.href}
+                    {...(item.hrefLang ? { hrefLang: item.hrefLang } : {})}
+                    {...(item.lang ? { lang: item.lang } : {})}
                     className="text-palnadu-light-blue/80 hover:text-white transition-colors block py-0.5"
                   >
                     {item.title}

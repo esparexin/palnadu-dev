@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { CtaSection } from '@/components/sections/cta-section';
 import { siteConfig, getBreadcrumbSchema, getOrganizationRef } from '@palnadu/config';
-import { Search, Archive } from 'lucide-react';
+import { Search, Archive, Languages } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { articleBasePath, articleDateLocale } from '@/lib/blog-post';
 import { INDEX_COPY, type BlogIndexViewProps } from './blog-index-copy';
@@ -66,6 +66,40 @@ export function BlogIndexView({
                 {isArchiveView ? copy.subtitleArchive : copy.subtitle}
               </p>
             </div>
+
+            {/* Accessible Language Switcher */}
+            <nav aria-label="Blog Language Selection" className="flex items-center justify-center pt-3">
+              <div className="inline-flex items-center gap-1 p-1 rounded-lg border border-palnadu-border bg-palnadu-off-white/80 text-xs">
+                <Languages className="h-3.5 w-3.5 text-palnadu-secondary ml-1 mr-0.5" aria-hidden="true" />
+                <Link
+                  href="/blog"
+                  hrefLang="en"
+                  aria-current={locale === 'en' ? 'page' : undefined}
+                  className={cn(
+                    'px-2.5 py-1 rounded-md text-xs font-semibold transition-colors',
+                    locale === 'en'
+                      ? 'bg-white text-palnadu-blue shadow-sm border border-palnadu-border/60'
+                      : 'text-palnadu-body hover:text-palnadu-dark'
+                  )}
+                >
+                  English
+                </Link>
+                <Link
+                  href="/te/blog"
+                  hrefLang="te"
+                  lang="te"
+                  aria-current={locale === 'te' ? 'page' : undefined}
+                  className={cn(
+                    'px-2.5 py-1 rounded-md text-xs font-semibold transition-colors',
+                    locale === 'te'
+                      ? 'bg-white text-palnadu-blue shadow-sm border border-palnadu-border/60'
+                      : 'text-palnadu-body hover:text-palnadu-dark'
+                  )}
+                >
+                  తెలుగు
+                </Link>
+              </div>
+            </nav>
 
             {/* Search & Category Filter Bar */}
             <div className="mt-10 space-y-4">

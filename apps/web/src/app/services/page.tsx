@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { ArrowRight } from 'lucide-react';
 import { services, siteConfig, getBreadcrumbSchema, getOrganizationRef } from '@palnadu/config';
 import { HeroParallax } from '@/components/blocks/hero-parallax';
 import { CtaSection } from '@/components/sections/cta-section';
@@ -114,6 +115,32 @@ export default function ServicesPage() {
                   </article>
                 );
               })}
+            </div>
+          </div>
+        </section>
+
+        {/* Industry Sector Solutions Contextual Section */}
+        <section className="py-12 bg-palnadu-off-white/60 border-t border-palnadu-border">
+          <div className="container max-w-4xl mx-auto px-4 sm:px-6">
+            <div className="rounded-xl border border-palnadu-border bg-white p-6 sm:p-8 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
+              <div className="space-y-2 max-w-xl">
+                <span className="text-xs font-mono font-bold uppercase tracking-widest text-palnadu-blue">
+                  Specialized Industry Solutions
+                </span>
+                <h3 className="text-lg sm:text-xl font-bold text-palnadu-dark leading-snug">
+                  Software Engineering Tailored to Your Sector
+                </h3>
+                <p className="text-xs sm:text-sm text-palnadu-body leading-relaxed">
+                  We engineer purpose-built software architectures for Wholesale & Cold Storages, Healthcare Clinics, Junior Colleges, and Early-Stage Startups in Andhra Pradesh.
+                </p>
+              </div>
+              <Link
+                href="/industries"
+                className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-md bg-palnadu-blue text-white text-xs sm:text-sm font-semibold hover:bg-palnadu-dark-hover transition-colors shadow-sm shrink-0"
+              >
+                <span>Explore Industries</span>
+                <ArrowRight className="h-4 w-4" />
+              </Link>
             </div>
           </div>
         </section>

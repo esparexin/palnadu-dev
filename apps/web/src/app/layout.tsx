@@ -90,9 +90,6 @@ export async function generateMetadata(): Promise<Metadata> {
     description: siteConfig.description,
     authors: [{ name: siteConfig.creator }],
     creator: siteConfig.creator,
-    alternates: {
-      canonical: siteConfig.url,
-    },
     icons: {
       icon: [
         { url: faviconUrl || '/favicon.ico', sizes: 'any' },
