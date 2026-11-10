@@ -17,7 +17,7 @@ const DESKTOP_POSITIONS = [
 ];
 
 const MOBILE_POSITIONS = [
-  { top: 78, left: 50, scale: 0.72, opacity: 0.90 },
+  { top: 78, left: 50, scale: 0.70, opacity: 0.22 },
   { top: 50, left: 82, scale: 0.60, opacity: 0.25 },
   { top: 50, left: 80, scale: 0.62, opacity: 0.28 },
   { top: 50, left: 80, scale: 0.60, opacity: 0.25 },

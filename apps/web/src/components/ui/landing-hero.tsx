@@ -60,9 +60,6 @@ export function LandingHero() {
 
       {/* Desktop Right Column: Reserves space for the scrolling globe */}
       <div className="hidden lg:block lg:col-span-5 h-[380px]" aria-hidden="true" />
-
-      {/* Mobile Reserved Height for Globe in Hero */}
-      <div className="lg:hidden h-[200px]" aria-hidden="true" />
     </div>
   );
 }

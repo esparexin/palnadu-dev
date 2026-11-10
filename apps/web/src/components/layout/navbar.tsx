@@ -68,9 +68,9 @@ export function Navbar({ initialLogoUrl }: NavbarProps = {}) {
 
   return (
     <>
-      {/* 1. Header — fixed on mobile, sticky on desktop */}
+      {/* 1. Header — sticky across viewports in document flow */}
       <header
-        className="fixed top-0 z-[60] w-full border-b border-palnadu-border bg-white/95 backdrop-blur-md supports-[backdrop-filter]:bg-white/80 md:sticky md:relative"
+        className="sticky top-0 z-50 w-full border-b border-palnadu-border bg-white/95 backdrop-blur-md supports-[backdrop-filter]:bg-white/80"
         style={{ height: 'var(--header-height)' }}
       >
         {/* Accent top line */}

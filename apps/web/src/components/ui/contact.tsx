@@ -25,7 +25,7 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
   className,
 }) => {
   return (
-    <section className={cn("relative min-h-[90vh] w-full overflow-hidden bg-white text-palnadu-dark", className)}>
+    <section className={cn("relative w-full overflow-hidden bg-white text-palnadu-dark py-8 sm:py-12 lg:py-16", className)}>
       {/* Background Image with Palnadu Primary Dark overlay */}
       <div
         className="absolute inset-0 bg-cover bg-center transition-all duration-500 ease-in-out"
@@ -54,7 +54,7 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
       </div>
 
       {/* Main Content Container — Top-aligned, responsive padding */}
-      <div className="relative z-10 flex flex-col items-center justify-start w-full h-full px-3 py-3 sm:px-6 sm:py-6 md:px-8 lg:px-12">
+      <div className="relative z-10 flex flex-col items-center justify-start w-full px-4 sm:px-6 md:px-8 lg:px-12">
         {showNav && (
           <nav className="w-full max-w-6xl flex items-center justify-between p-3.5 bg-white/90 backdrop-blur-md rounded-xl border border-palnadu-border shadow-md mb-4">
             <span className="font-extrabold text-lg text-palnadu-dark">Palnadu<span className="text-palnadu-blue">.dev</span></span>
@@ -65,7 +65,7 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
         )}
 
         {/* Main Grid: Desktop 2-Column (Left Headline, Right Form) | Mobile Form-First */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-10 w-full max-w-6xl pb-8" id="contact-card">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-10 w-full max-w-6xl" id="contact-card">
           <div className="lg:col-span-5 flex flex-col justify-center text-center lg:text-left space-y-2 lg:space-y-4 p-2 sm:p-4 lg:p-6 max-w-sm sm:max-w-md lg:max-w-none mx-auto lg:mx-0">
             <p className="text-xs font-mono uppercase tracking-widest text-palnadu-light-blue font-bold">
               Start With The Problem
