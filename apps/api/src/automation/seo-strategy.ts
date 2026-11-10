@@ -10,6 +10,7 @@ import {
   extractHeadings,
   parseLooseJson,
 } from './seo-parsing';
+import { getCategoryInternalLinks } from './blog/blog-seeds';
 
 export { str, arr, objArr, normaliseSlug, extractHeadings, parseLooseJson };
 
@@ -129,11 +130,7 @@ export function defaultStrategy(
       longTailKeywords: [`${primaryKeyword} ఎంత ఖర్చు అవుతుంది`],
       searchIntent: 'INFORMATIONAL',
       tags: [categorySlug, loc.toLowerCase()],
-      internalLinks: [
-        { anchor: 'Web Development Services', url: '/services/web-development' },
-        { anchor: 'Custom Software', url: '/services/custom-software' },
-        { anchor: 'Contact Page', url: '/contact' },
-      ],
+      internalLinks: getCategoryInternalLinks(categorySlug, 'te'),
       externalReferences: [],
       imageSuggestions: [{ alt: primaryKeyword, caption: 'ఆచరణాత్మక అమలు' }],
       faqOpportunities: [
@@ -165,11 +162,7 @@ export function defaultStrategy(
     longTailKeywords: [`how much does ${primaryKeyword} cost in ${loc}`],
     searchIntent: 'INFORMATIONAL',
     tags: [categorySlug, loc.toLowerCase()],
-    internalLinks: [
-      { anchor: 'Web Development Services', url: '/services/web-development' },
-      { anchor: 'Custom Software', url: '/services/custom-software' },
-      { anchor: 'Contact Page', url: '/contact' },
-    ],
+    internalLinks: getCategoryInternalLinks(categorySlug, 'en'),
     externalReferences: [],
     imageSuggestions: [{ alt: `${primaryKeyword} in practice`, caption: 'Practical implementation' }],
     faqOpportunities: [
