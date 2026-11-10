@@ -17,6 +17,7 @@ import { DashboardModule } from './dashboard/dashboard.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { SettingsModule } from './settings/settings.module';
 import { AutomationModule } from './automation/automation.module';
+import { WhatsAppModule } from './whatsapp/whatsapp.module';
 
 @Module({
   imports: [
@@ -36,6 +37,7 @@ import { AutomationModule } from './automation/automation.module';
     NotificationsModule,
     SettingsModule,
     AutomationModule,
+    WhatsAppModule,
   ],
   controllers: [HealthController],
   providers: [
