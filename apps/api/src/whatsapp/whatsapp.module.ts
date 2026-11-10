@@ -5,13 +5,25 @@ import { WhatsAppWebhookController } from './whatsapp-webhook.controller';
 import { WhatsAppWebhookService } from './whatsapp-webhook.service';
 import { WhatsAppMessageService } from './whatsapp-message.service';
 import { WhatsAppApiClient } from './whatsapp-api.client';
+import { WhatsAppAutoReplyService } from './whatsapp-auto-reply.service';
 
 @Module({
   imports: [PrismaModule, NotificationsModule],
   controllers: [WhatsAppWebhookController],
-  providers: [WhatsAppWebhookService, WhatsAppMessageService, WhatsAppApiClient],
-  exports: [WhatsAppWebhookService, WhatsAppMessageService, WhatsAppApiClient],
+  providers: [
+    WhatsAppWebhookService,
+    WhatsAppMessageService,
+    WhatsAppApiClient,
+    WhatsAppAutoReplyService,
+  ],
+  exports: [
+    WhatsAppWebhookService,
+    WhatsAppMessageService,
+    WhatsAppApiClient,
+    WhatsAppAutoReplyService,
+  ],
 })
 export class WhatsAppModule {}
+
 
 

@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import * as crypto from 'node:crypto';
 import { PrismaService } from '../prisma.service';
 import { WhatsAppMessageService } from './whatsapp-message.service';
+import { WhatsAppAutoReplyService } from './whatsapp-auto-reply.service';
 import {
   verifyMetaWebhookSignature,
   verifyTokenConstantTime,
@@ -25,6 +26,7 @@ export class WhatsAppWebhookService {
     private readonly config: ConfigService,
     private readonly messageService: WhatsAppMessageService,
     private readonly prisma: PrismaService,
+    private readonly autoReplyService?: WhatsAppAutoReplyService,
   ) {}
 
   verifyHandshake(rawQuery: Record<string, unknown>): string {
@@ -110,7 +112,7 @@ export class WhatsAppWebhookService {
             if (Array.isArray(value.messages)) {
               for (const msg of value.messages) {
                 if (!msg.id || !msg.from) continue;
-                await this.messageService.saveInboundMessage({
+                const saved = await this.messageService.saveInboundMessage({
                   wamId: msg.id,
                   from: msg.from,
                   to: businessNumber,
@@ -124,6 +126,10 @@ export class WhatsAppWebhookService {
                   timestamp: msg.timestamp,
                 });
                 messageCount++;
+
+                if (this.autoReplyService) {
+                  await this.autoReplyService.handleAutoReply(saved);
+                }
               }
             }
 
