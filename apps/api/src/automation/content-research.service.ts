@@ -16,7 +16,7 @@ import { toAsciiSlug } from './script-utils';
 import { BlogLanguage } from '@prisma/client';
 import { GeneratedBlogDraft } from './content-research/types';
 import { generateStructuredFallback } from './content-research/structured-fallback';
-import { callLlmProvider } from './content-research/llm-provider';
+import { callLlmProvider, getGeminiModelsToTry } from './content-research/llm-provider';
 
 export * from './content-research/types';
 export * from './content-research/structured-fallback';
@@ -109,8 +109,9 @@ Provide 4 direct, candid sections without fluff or emojis:
 3. Cost Realities & Timelines: Honest budget ranges and implementation milestones.
 4. Core Owner Questions: What business owners must verify before signing a development contract.`;
 
+        const model = getGeminiModelsToTry()[0];
         const res = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent?key=${this.geminiApiKey}`,
+          `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${this.geminiApiKey}`,
           {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },

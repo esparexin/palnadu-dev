@@ -1,5 +1,6 @@
 import { PrismaClient, UserRole, PublishStatus } from '@prisma/client';
 import * as bcrypt from 'bcryptjs';
+import { CANONICAL_BLOG_CATEGORIES } from '../src/automation/blog/blog-seeds';
 
 const prisma = new PrismaClient();
 
@@ -192,7 +193,7 @@ async function main() {
   ];
 
   for (const setting of defaultSettings) {
-    await prisma.setting.upsert({
+    await prisma.siteSetting.upsert({
       where: { key: setting.key },
       update: {},
       create: setting,
@@ -218,6 +219,15 @@ async function main() {
     });
   }
   console.log('Created default case studies');
+
+  for (const cat of CANONICAL_BLOG_CATEGORIES) {
+    await prisma.blogCategory.upsert({
+      where: { slug: cat.slug },
+      update: {},
+      create: cat,
+    });
+  }
+  console.log('Created default blog categories');
 
   console.log('Created default settings');
   console.log('Seeding complete!');

@@ -5,6 +5,18 @@ export interface LlmApiKeys {
   geminiApiKey?: string;
   anthropicApiKey?: string;
   openaiApiKey?: string;
+  geminiModel?: string;
+}
+
+export const DEFAULT_GEMINI_MODELS = [
+  'gemini-2.5-flash',
+  'gemini-2.0-flash',
+  'gemini-1.5-flash',
+] as const;
+
+export function getGeminiModelsToTry(preferredModel?: string): string[] {
+  const models = [preferredModel, process.env.GEMINI_MODEL, ...DEFAULT_GEMINI_MODELS];
+  return Array.from(new Set(models.filter((m): m is string => typeof m === 'string' && m.trim().length > 0)));
 }
 
 export async function callLlmProvider(
@@ -14,11 +26,11 @@ export async function callLlmProvider(
   keys: LlmApiKeys,
   logger: Logger,
 ): Promise<{ draft: any; provider: string } | null> {
-  const { geminiApiKey, anthropicApiKey, openaiApiKey } = keys;
+  const { geminiApiKey, anthropicApiKey, openaiApiKey, geminiModel } = keys;
 
   // 1. Try Google Gemini if configured (with automatic model resilience fallback)
   if (geminiApiKey) {
-    const geminiModels = ['gemini-3.1-flash-lite', 'gemini-3-flash-preview'];
+    const geminiModels = getGeminiModelsToTry(geminiModel);
     for (const model of geminiModels) {
       try {
         const res = await fetch(

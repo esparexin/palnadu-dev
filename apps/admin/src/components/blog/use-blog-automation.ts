@@ -98,7 +98,11 @@ export function useBlogAutomation(
         language: topicItem.language,
       });
       if (res.success) {
-        toast.success(`Draft generated: "${res.data.title.slice(0, 30)}..." Review below!`);
+        const title = res.data?.title || res.data?.results?.[0]?.title;
+        const msg = title
+          ? `Draft generated: "${title.slice(0, 30)}..." Review below!`
+          : res.message || 'Draft generated! Review below!';
+        toast.success(msg);
         setQueueModalOpen(false);
         onSuccessDraft();
         fetchCounts();
@@ -116,7 +120,11 @@ export function useBlogAutomation(
     try {
       const res = await api.automation.generate();
       if (res.success) {
-        toast.success(`Draft generated: "${res.data.title.slice(0, 30)}..." Review below!`);
+        const title = res.data?.title || res.data?.results?.[0]?.title;
+        const msg = title
+          ? `Draft generated: "${title.slice(0, 30)}..." Review below!`
+          : res.message || 'Draft generated! Review below!';
+        toast.success(msg);
         onSuccessDraft();
       }
     } catch (err) {
