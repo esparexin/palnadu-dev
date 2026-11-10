@@ -12,6 +12,7 @@ import {
   PenSquare,
   Globe,
   Image as ImageIcon,
+  MessageSquare,
   Settings,
   LogOut,
   Menu,
@@ -26,6 +27,7 @@ import { cn } from '@/lib/utils';
 const sidebarItems = [
   { title: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, roles: ['SUPER_ADMIN', 'ADMIN', 'PROJECT_MANAGER', 'EDITOR', 'DEVELOPER'] },
   { title: 'Leads', href: '/leads', icon: UserPlus, roles: ['SUPER_ADMIN', 'ADMIN', 'PROJECT_MANAGER'] },
+  { title: 'WhatsApp', href: '/campaigns', icon: MessageSquare, roles: ['SUPER_ADMIN', 'ADMIN', 'PROJECT_MANAGER'] },
   { title: 'Clients', href: '/clients', icon: Users, roles: ['SUPER_ADMIN', 'ADMIN', 'PROJECT_MANAGER'] },
   { title: 'Projects', href: '/projects', icon: FolderKanban, roles: ['SUPER_ADMIN', 'ADMIN', 'PROJECT_MANAGER', 'DEVELOPER'] },
   { title: 'Services', href: '/services', icon: Briefcase, roles: ['SUPER_ADMIN', 'ADMIN'] },

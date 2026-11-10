@@ -2,16 +2,18 @@ import { Module } from '@nestjs/common';
 import { PrismaModule } from '../prisma.module';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { WhatsAppWebhookController } from './whatsapp-webhook.controller';
+import { WhatsAppAdminController } from './whatsapp-admin.controller';
 import { WhatsAppWebhookService } from './whatsapp-webhook.service';
 import { WhatsAppMessageService } from './whatsapp-message.service';
 import { WhatsAppApiClient } from './whatsapp-api.client';
 import { WhatsAppAutoReplyService } from './whatsapp-auto-reply.service';
 import { WhatsAppOptOutService } from './whatsapp-opt-out.service';
 import { WhatsAppCampaignService } from './whatsapp-campaign.service';
+import { WhatsAppContactService } from './whatsapp-contact.service';
 
 @Module({
   imports: [PrismaModule, NotificationsModule],
-  controllers: [WhatsAppWebhookController],
+  controllers: [WhatsAppWebhookController, WhatsAppAdminController],
   providers: [
     WhatsAppWebhookService,
     WhatsAppMessageService,
@@ -19,6 +21,7 @@ import { WhatsAppCampaignService } from './whatsapp-campaign.service';
     WhatsAppAutoReplyService,
     WhatsAppOptOutService,
     WhatsAppCampaignService,
+    WhatsAppContactService,
   ],
   exports: [
     WhatsAppWebhookService,
@@ -27,6 +30,7 @@ import { WhatsAppCampaignService } from './whatsapp-campaign.service';
     WhatsAppAutoReplyService,
     WhatsAppOptOutService,
     WhatsAppCampaignService,
+    WhatsAppContactService,
   ],
 })
 export class WhatsAppModule {}
