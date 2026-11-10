@@ -18,13 +18,10 @@ import {
   DEFAULT_CAMPAIGN_DELAY_MS,
   MIN_CAMPAIGN_BATCH_SIZE,
   MAX_CAMPAIGN_BATCH_SIZE,
-  MIN_CAMPAIGN_DELAY_MS,
-  MAX_CAMPAIGN_DELAY_MS,
 } from './whatsapp.constants';
 
 export interface DispatchCampaignOptions {
   batchSize?: number;
-  delayMs?: number;
 }
 
 export interface DispatchResult {
@@ -47,13 +44,8 @@ export class WhatsAppCampaignService {
     private readonly optOutService?: WhatsAppOptOutService,
   ) {}
 
-  private sleep(ms: number): Promise<void> {
-    const safeMs = Math.max(
-      MIN_CAMPAIGN_DELAY_MS,
-      Math.min(MAX_CAMPAIGN_DELAY_MS, Number.isFinite(ms) ? Math.trunc(ms) : DEFAULT_CAMPAIGN_DELAY_MS),
-    );
-    if (safeMs <= 0) return Promise.resolve();
-    return new Promise((resolve) => setTimeout(resolve, safeMs));
+  private sleep(): Promise<void> {
+    return new Promise((resolve) => setTimeout(resolve, DEFAULT_CAMPAIGN_DELAY_MS));
   }
 
   async createCampaign(data: CreateMarketingCampaignInput): Promise<MarketingCampaign> {
@@ -120,14 +112,11 @@ export class WhatsAppCampaignService {
     });
 
     const reqBatch = options?.batchSize;
-    const batchLimit = typeof reqBatch === 'number' && Number.isFinite(reqBatch)
-      ? Math.max(MIN_CAMPAIGN_BATCH_SIZE, Math.min(MAX_CAMPAIGN_BATCH_SIZE, Math.trunc(reqBatch)))
-      : DEFAULT_CAMPAIGN_BATCH_SIZE;
+    const batchLimit =
+      typeof reqBatch === 'number' && Number.isFinite(reqBatch)
+        ? Math.max(MIN_CAMPAIGN_BATCH_SIZE, Math.min(MAX_CAMPAIGN_BATCH_SIZE, Math.trunc(reqBatch)))
+        : DEFAULT_CAMPAIGN_BATCH_SIZE;
 
-    const reqDelay = options?.delayMs;
-    const delay = typeof reqDelay === 'number' && Number.isFinite(reqDelay)
-      ? Math.max(MIN_CAMPAIGN_DELAY_MS, Math.min(MAX_CAMPAIGN_DELAY_MS, Math.trunc(reqDelay)))
-      : DEFAULT_CAMPAIGN_DELAY_MS;
     const contacts = await this.fetchEligibleContacts(campaign, batchLimit);
     const existing = await this.prisma.whatsAppMessage.findMany({ where: { campaignId }, select: { to: true } });
     const alreadyMessaged = new Set(existing.map((m) => m.to));
@@ -137,7 +126,11 @@ export class WhatsAppCampaignService {
     let skipped = 0;
 
     for (const contact of contacts) {
-      if (alreadyMessaged.has(contact.phone) || contact.optInStatus === ContactOptInStatus.OPTED_OUT || (this.optOutService && (await this.optOutService.isSuppressed(contact.phone)))) {
+      if (
+        alreadyMessaged.has(contact.phone) ||
+        contact.optInStatus === ContactOptInStatus.OPTED_OUT ||
+        (this.optOutService && (await this.optOutService.isSuppressed(contact.phone)))
+      ) {
         skipped++;
         continue;
       }
@@ -149,7 +142,7 @@ export class WhatsAppCampaignService {
       } else {
         failed++;
       }
-      if (delay > 0) await this.sleep(delay);
+      await this.sleep();
     }
 
     const finalStatus = contacts.length === 0 || sent + skipped >= contacts.length ? CampaignStatus.COMPLETED : CampaignStatus.RUNNING;

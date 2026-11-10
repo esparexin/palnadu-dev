@@ -49,8 +49,6 @@ export const DEFAULT_CAMPAIGN_BATCH_SIZE = 50;
 export const DEFAULT_CAMPAIGN_DELAY_MS = 100;
 export const MIN_CAMPAIGN_BATCH_SIZE = 1;
 export const MAX_CAMPAIGN_BATCH_SIZE = 100;
-export const MIN_CAMPAIGN_DELAY_MS = 0;
-export const MAX_CAMPAIGN_DELAY_MS = 2000;
 
 export const MARKETING_OPT_OUT_KEYWORDS = [
   'stop',

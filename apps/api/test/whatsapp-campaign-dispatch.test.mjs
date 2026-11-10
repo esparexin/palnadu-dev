@@ -88,7 +88,7 @@ describe('WhatsApp Paced Campaign Dispatcher', () => {
     };
 
     const service = new WhatsAppCampaignService(mockPrisma, mockConfig, mockApiClient);
-    const result = await service.dispatchCampaign('camp_001', { delayMs: 1 });
+    const result = await service.dispatchCampaign('camp_001');
 
     assert.equal(result.sentCount, 2);
     assert.equal(result.failedCount, 0);
@@ -165,7 +165,7 @@ describe('WhatsApp Paced Campaign Dispatcher', () => {
 
     const mockConfig = { get: () => 'test_id' };
     const service = new WhatsAppCampaignService(mockPrisma, mockConfig, mockApiClient);
-    const result = await service.dispatchCampaign('camp_002', { delayMs: 1 });
+    const result = await service.dispatchCampaign('camp_002');
 
     assert.equal(result.sentCount, 1);
     assert.equal(result.skippedCount, 1);

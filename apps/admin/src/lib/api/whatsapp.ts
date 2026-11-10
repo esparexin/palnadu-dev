@@ -60,7 +60,7 @@ export const whatsappApi = {
         method: 'POST',
         body: JSON.stringify(data),
       }),
-    dispatch: (id: string, options?: { batchSize?: number; delayMs?: number }) =>
+    dispatch: (id: string, options?: { batchSize?: number }) =>
       adminApi<{ success: boolean; data: unknown }>(`/api/admin/whatsapp/campaigns/${id}/dispatch`, {
         method: 'POST',
         body: JSON.stringify(options || {}),
