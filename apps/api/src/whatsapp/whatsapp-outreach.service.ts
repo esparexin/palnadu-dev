@@ -61,13 +61,13 @@ export class WhatsAppOutreachService {
     validateTemplateAgainstMeta(input.templateName, input.languageCode, approvedTemplates);
 
     const idempKey = input.idempotencyKey || `auto-${cleanPhone}-${Date.now()}`;
-    await enforceDistributedRateLimits(this.prisma, admin.id, cleanPhone);
-
     const claimKey = `resv:idemp:${idempKey}`;
     const claim = await acquireIdempotencyReservation(this.prisma, claimKey, cleanPhone, admin.id);
     if (claim.deduplicated) {
       return claim.result!;
     }
+
+    await enforceDistributedRateLimits(this.prisma, admin.id, cleanPhone);
 
     const businessPhone =
       this.config.get<string>(WHATSAPP_CONFIG_KEYS.BUSINESS_PHONE)?.trim() || 'palnadu_business';
