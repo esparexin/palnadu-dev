@@ -145,7 +145,7 @@ export class WhatsAppMessageService {
             wamId: params.wamId,
             direction: WhatsAppMessageDirection.OUTBOUND,
             from: 'palnadu_business',
-            to: params.recipientId,
+            to: params.recipientId || 'unknown_recipient',
             type: 'text',
             status: targetStatus,
             statusTimestamp: eventDate,

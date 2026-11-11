@@ -106,6 +106,7 @@ export class WhatsAppAutoReplyService {
           where: {
             to: recipientPhone,
             direction: WhatsAppMessageDirection.OUTBOUND,
+            campaignId: null,
             status: { not: WhatsAppDeliveryStatus.FAILED },
             createdAt: { gte: cooldownThreshold },
           },
@@ -132,7 +133,7 @@ export class WhatsAppAutoReplyService {
             to: recipientPhone,
             type: 'text',
             contextWamId: inboundMessage.wamId,
-            status: WhatsAppDeliveryStatus.SENT,
+            status: WhatsAppDeliveryStatus.RECEIVED,
             statusTimestamp: new Date(),
           },
         });
@@ -176,14 +177,38 @@ export class WhatsAppAutoReplyService {
         throw new Error('Meta API response did not contain an assigned message ID');
       }
 
-      const createdOutbound = await this.prisma.whatsAppMessage.update({
-        where: { id: claimRecord.id },
-        data: {
-          wamId: assignedWamId,
-          body: ackText,
-          rawPayload: sendResult as unknown as Prisma.InputJsonValue,
-        },
-      });
+      let createdOutbound: WhatsAppMessage;
+      try {
+        createdOutbound = await this.prisma.whatsAppMessage.update({
+          where: { id: claimRecord.id },
+          data: {
+            wamId: assignedWamId,
+            status: WhatsAppDeliveryStatus.SENT,
+            body: ackText,
+            rawPayload: sendResult as unknown as Prisma.InputJsonValue,
+          },
+        });
+      } catch (updateErr: unknown) {
+        if (
+          updateErr &&
+          typeof updateErr === 'object' &&
+          'code' in updateErr &&
+          (updateErr as { code: string }).code === 'P2002'
+        ) {
+          this.logger.warn(`Delivery status webhook arrived before claim update for ${assignedWamId}, reconciling.`);
+          createdOutbound = await this.prisma.whatsAppMessage.update({
+            where: { wamId: assignedWamId },
+            data: {
+              body: ackText,
+              contextWamId: inboundMessage.wamId,
+              rawPayload: sendResult as unknown as Prisma.InputJsonValue,
+            },
+          });
+          await this.prisma.whatsAppMessage.delete({ where: { id: claimRecord.id } }).catch(() => null);
+        } else {
+          throw updateErr;
+        }
+      }
 
       this.logger.log(
         `Automated acknowledgment persisted for ${maskedPhone} (outbound wamId: ${assignedWamId}, in reply to: ${inboundMessage.wamId})`,

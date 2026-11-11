@@ -193,6 +193,7 @@ test('CsrfGuard - Origin, Header & Double-Submit Protection', async (t) => {
     assert.equal(guard.canActivate(mockContext({ method: 'POST', url: '/api/auth/login' })), true);
     assert.equal(guard.canActivate(mockContext({ method: 'POST', url: '/api/auth/logout' })), true);
     assert.equal(guard.canActivate(mockContext({ method: 'POST', url: '/api/whatsapp/webhook' })), true);
+    assert.equal(guard.canActivate(mockContext({ method: 'POST', url: '/api/webhooks/whatsapp' })), true);
   });
 
   await t.test('exempts Bearer token API requests when no session cookie exists', () => {
