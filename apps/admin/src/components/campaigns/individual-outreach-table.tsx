@@ -8,7 +8,7 @@ interface IndividualOutreachTableProps {
   messages: IndividualOutreachMessageItem[];
   loading: boolean;
   onOpenOutreachModal: () => void;
-  onReconcileMessage?: (id: string, confirmedStatus: 'DELIVERED' | 'FAILED') => Promise<void>;
+  onReconcileMessage?: (_id: string, _confirmedStatus: 'DELIVERED' | 'FAILED') => Promise<void>;
 }
 
 export function IndividualOutreachTable({
@@ -47,8 +47,8 @@ export function IndividualOutreachTable({
     );
   }
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
+  const getStatusBadge = (m: IndividualOutreachMessageItem) => {
+    switch (m.status) {
       case 'READ':
         return (
           <span className="inline-flex items-center gap-1 rounded-full bg-palnadu-light-blue px-2 py-0.5 text-xs font-semibold text-palnadu-blue">
@@ -57,8 +57,22 @@ export function IndividualOutreachTable({
           </span>
         );
       case 'DELIVERED':
+        if (m.isReconciled) {
+          return (
+            <span
+              className="inline-flex items-center gap-1 rounded-full bg-palnadu-teal/15 px-2 py-0.5 text-xs font-semibold text-palnadu-teal-dark cursor-help"
+              title={`Manually confirmed by admin (${m.reconciledBy || 'Admin'})${m.reconciledAt ? ` at ${new Date(m.reconciledAt).toLocaleString()}` : ''}${m.reconciliationNotes ? `: ${m.reconciliationNotes}` : ''}`}
+            >
+              <CheckCircle2 className="h-3 w-3" />
+              <span>Delivered (Manual)</span>
+            </span>
+          );
+        }
         return (
-          <span className="inline-flex items-center gap-1 rounded-full bg-palnadu-off-white px-2 py-0.5 text-xs font-semibold text-palnadu-teal">
+          <span
+            className="inline-flex items-center gap-1 rounded-full bg-palnadu-off-white px-2 py-0.5 text-xs font-semibold text-palnadu-teal"
+            title="Confirmed delivered by Meta WhatsApp webhook"
+          >
             <CheckCircle2 className="h-3 w-3" />
             <span>Delivered</span>
           </span>
@@ -67,10 +81,21 @@ export function IndividualOutreachTable({
         return (
           <span className="inline-flex items-center gap-1 rounded-full bg-palnadu-off-white px-2 py-0.5 text-xs font-semibold text-palnadu-warning">
             <Clock className="h-3 w-3" />
-            <span>Reconciliation</span>
+            <span>Needs Reconciliation</span>
           </span>
         );
       case 'FAILED':
+        if (m.isReconciled) {
+          return (
+            <span
+              className="inline-flex items-center gap-1 rounded-full bg-palnadu-error/15 px-2 py-0.5 text-xs font-semibold text-palnadu-error cursor-help"
+              title={`Manually marked failed by admin (${m.reconciledBy || 'Admin'})${m.reconciledAt ? ` at ${new Date(m.reconciledAt).toLocaleString()}` : ''}`}
+            >
+              <AlertCircle className="h-3 w-3" />
+              <span>Failed (Manual)</span>
+            </span>
+          );
+        }
         return (
           <span className="inline-flex items-center gap-1 rounded-full bg-palnadu-error/10 px-2 py-0.5 text-xs font-semibold text-palnadu-error">
             <AlertCircle className="h-3 w-3" />
@@ -121,7 +146,7 @@ export function IndividualOutreachTable({
                   )}
                 </td>
                 <td className="px-4 py-3">
-                  <div>{getStatusBadge(m.status)}</div>
+                  <div>{getStatusBadge(m)}</div>
                   {m.status === 'RECONCILIATION_PENDING' && onReconcileMessage && (
                     <div className="mt-1.5 flex items-center gap-1.5">
                       <button

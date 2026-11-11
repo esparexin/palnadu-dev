@@ -72,7 +72,7 @@ export function OutreachGuideCard() {
             <div className="flex items-center gap-2 text-xs font-medium text-palnadu-blue">
               <CheckCircle2 className="h-4 w-4 shrink-0" />
               <span>
-                <strong>Inbound Lead Conversion:</strong> When a business owner replies, an instant notification is dispatched to the Palnadu.dev team, and an automated polite response acknowledges their inquiry within the active 24-hour service window.
+                <strong>Inbound Lead Conversion & Human Handover:</strong> When a business owner replies, an instant notification is dispatched to the Palnadu.dev team, and an automated polite response acknowledges their inquiry (24-hour cooldown per sender). Live two-way conversations are handled directly in Meta Business Suite or WhatsApp Web, while the Palnadu dashboard handles campaigns, verified 1:1 template outreach, and directory contacts.
               </span>
             </div>
           </div>
