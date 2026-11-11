@@ -1,8 +1,18 @@
-import { Injectable, Logger, Optional, NotFoundException } from '@nestjs/common';
+import {
+  BadGatewayException,
+  BadRequestException,
+  HttpException,
+  Injectable,
+  Logger,
+  NotFoundException,
+  Optional,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../prisma.service';
 import { WhatsAppApiClient } from './whatsapp-api.client';
+import { WhatsAppApiException } from './whatsapp-api.util';
 import { WhatsAppOptOutService } from './whatsapp-opt-out.service';
+import type { WhatsAppMetaTemplate } from '@palnadu/types';
 import type { CreateMarketingCampaignInput } from '@palnadu/validation';
 import {
   CampaignStatus,
@@ -60,13 +70,43 @@ export class WhatsAppCampaignService {
     return new Promise((resolve) => setTimeout(resolve, this.getPacingDelayMs()));
   }
 
+  private toCampaignHttpException(err: unknown): HttpException {
+    if (err instanceof HttpException) return err;
+    if (err instanceof WhatsAppApiException) {
+      return err.statusCode === 400
+        ? new BadRequestException(err.message)
+        : new BadGatewayException(err.message);
+    }
+    const msg = err instanceof Error ? err.message : String(err);
+    return new BadGatewayException(msg || 'Meta template verification failed.');
+  }
+
+  private async verifyApprovedTemplate(
+    templateName: string,
+    languageCode: string,
+  ): Promise<WhatsAppMetaTemplate> {
+    try {
+      return await resolveApprovedCampaignTemplate(this.apiClient, templateName, languageCode);
+    } catch (err: unknown) {
+      throw this.toCampaignHttpException(err);
+    }
+  }
+
   async createCampaign(data: CreateMarketingCampaignInput): Promise<MarketingCampaign> {
+    const cleanTemplate = data.templateName?.trim();
+    const cleanLanguage = data.languageCode?.trim();
+    if (!cleanTemplate || !cleanLanguage) {
+      throw new BadRequestException('Campaign template name and language code are required.');
+    }
+
+    const matchedTemplate = await this.verifyApprovedTemplate(cleanTemplate, cleanLanguage);
+
     return this.prisma.marketingCampaign.create({
       data: {
         name: data.name.trim(),
         description: data.description?.trim(),
-        templateName: data.templateName.trim(),
-        languageCode: data.languageCode || 'en_US',
+        templateName: matchedTemplate.name,
+        languageCode: matchedTemplate.language,
         targetAudience: data.targetAudience?.trim(),
         scheduledAt: data.scheduledAt ? new Date(data.scheduledAt) : null,
         status: CampaignStatus.DRAFT,
@@ -113,6 +153,21 @@ export class WhatsAppCampaignService {
   async dispatchCampaign(campaignId: string, options?: DispatchCampaignOptions): Promise<DispatchResult> {
     const campaign = await claimCampaignAtomically(this.prisma, campaignId);
 
+    let matchedTemplate: WhatsAppMetaTemplate;
+    try {
+      matchedTemplate = await this.verifyApprovedTemplate(
+        campaign.templateName,
+        campaign.languageCode,
+      );
+    } catch (err: unknown) {
+      const failureStatus =
+        err instanceof BadRequestException ? CampaignStatus.FAILED : CampaignStatus.PAUSED;
+      await this.prisma.marketingCampaign
+        .update({ where: { id: campaignId }, data: { status: failureStatus } })
+        .catch(() => null);
+      throw err;
+    }
+
     const reqBatch = options?.batchSize;
     const batchLimit =
       typeof reqBatch === 'number' && Number.isFinite(reqBatch)
@@ -122,11 +177,6 @@ export class WhatsAppCampaignService {
     const contacts = await this.fetchEligibleContacts(campaign, batchLimit);
     const existing = await this.prisma.whatsAppMessage.findMany({ where: { campaignId }, select: { to: true } });
     const alreadyMessaged = new Set(existing.map((m) => m.to));
-    const matchedTemplate = await resolveApprovedCampaignTemplate(
-      this.apiClient,
-      campaign.templateName,
-      campaign.languageCode,
-    );
 
     let sent = 0;
     let failed = 0;

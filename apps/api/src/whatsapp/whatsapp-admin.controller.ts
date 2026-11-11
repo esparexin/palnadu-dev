@@ -1,6 +1,8 @@
 import {
+  BadGatewayException,
   Controller,
   Get,
+  HttpException,
   Post,
   Body,
   Param,
@@ -11,6 +13,7 @@ import {
   HttpCode,
   HttpStatus,
   NotFoundException,
+  ServiceUnavailableException,
   Logger,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
@@ -34,7 +37,6 @@ import { CampaignStatus, ContactOptInStatus } from '@prisma/client';
 import {
   MIN_CAMPAIGN_BATCH_SIZE,
   MAX_CAMPAIGN_BATCH_SIZE,
-  APPROVED_WHATSAPP_TEMPLATES,
 } from './whatsapp.constants';
 
 @Controller('admin/whatsapp')
@@ -93,16 +95,20 @@ export class WhatsAppAdminController {
 
   @Get('templates')
   async getApprovedTemplates() {
-    if (this.apiClient) {
-      try {
-        const liveTemplates = await this.apiClient.fetchApprovedTemplates();
-        return { success: true, data: mapMetaTemplatesToDefinitions(liveTemplates) };
-      } catch (err: unknown) {
-        const msg = err instanceof Error ? err.message : String(err);
-        this.logger.warn(`Live Meta template verification unavailable (${msg}). Using baseline catalog.`);
-      }
+    if (!this.apiClient) {
+      throw new ServiceUnavailableException(
+        'Meta WhatsApp API client is unavailable. Cannot verify approved templates.',
+      );
     }
-    return { success: true, data: APPROVED_WHATSAPP_TEMPLATES };
+    try {
+      const liveTemplates = await this.apiClient.fetchApprovedTemplates();
+      return { success: true, data: mapMetaTemplatesToDefinitions(liveTemplates) };
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      this.logger.error(`Live Meta template verification failed: ${msg}`);
+      if (err instanceof HttpException) throw err;
+      throw new BadGatewayException(msg || 'Failed to verify approved templates with Meta.');
+    }
   }
 
   @Post('campaigns')

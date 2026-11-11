@@ -29,8 +29,8 @@ export interface CreateCampaignFormData {
 export const initialCampaignFormData: CreateCampaignFormData = {
   name: '',
   description: '',
-  templateName: 'b2b_website_outreach_v1',
-  languageCode: 'en_US',
+  templateName: '',
+  languageCode: '',
   targetAudience: 'NO_WEBSITE',
 };
 
@@ -54,8 +54,8 @@ export const initialOutreachFormData: IndividualOutreachFormData = {
   phone: '+91 ',
   businessName: '',
   contactName: '',
-  templateName: 'b2b_website_outreach_v1',
-  languageCode: 'en_US',
+  templateName: '',
+  languageCode: '',
   parameters: {},
   consentType: 'WEBSITE_LEAD_FORM',
   consentEvidenceRef: '',

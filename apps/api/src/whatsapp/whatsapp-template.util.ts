@@ -8,7 +8,6 @@ import {
   WHATSAPP_CONFIG_KEYS,
   DEFAULT_GRAPH_API_VERSION,
   META_GRAPH_API_BASE_URL,
-  APPROVED_WHATSAPP_TEMPLATES,
   WHATSAPP_TEMPLATE_PARAMETER_SPECS,
   TEMPLATE_CACHE_TTL_MS,
 } from './whatsapp.constants';
@@ -20,21 +19,6 @@ const logger = new Logger('WhatsAppTemplateUtil');
 let cachedTemplates: WhatsAppMetaTemplate[] | null = null;
 let cacheExpiry = 0;
 
-export function getMockTemplatesForTesting(): WhatsAppMetaTemplate[] {
-  return APPROVED_WHATSAPP_TEMPLATES.map((tmpl) => ({
-    name: tmpl.name,
-    status: 'APPROVED' as const,
-    language: tmpl.languageCode,
-    category: tmpl.category as 'MARKETING' | 'UTILITY',
-    components: [
-      {
-        type: 'BODY' as const,
-        text: tmpl.sampleText,
-      },
-    ],
-  }));
-}
-
 export function resetTemplateCacheForTesting(): void {
   cachedTemplates = null;
   cacheExpiry = 0;
@@ -44,7 +28,6 @@ export async function fetchMetaApprovedTemplates(
   config: ConfigService,
   fetchFn: typeof fetch = globalThis.fetch,
 ): Promise<WhatsAppMetaTemplate[]> {
-  const isTestEnv = process.env.NODE_ENV === 'test';
   const now = Date.now();
 
   if (cachedTemplates && now < cacheExpiry) {
@@ -65,15 +48,9 @@ export async function fetchMetaApprovedTemplates(
     DEFAULT_GRAPH_API_VERSION;
 
   if (!token || !businessAccountId) {
-    if (isTestEnv) {
-      logger.warn('Meta credentials unconfigured in test environment. Using verified test catalog.');
-      cachedTemplates = getMockTemplatesForTesting();
-      cacheExpiry = now + TEMPLATE_CACHE_TTL_MS;
-      return cachedTemplates;
-    }
     throw new WhatsAppApiException(
-      'Meta Business Account credentials missing. Live template verification is required in production.',
-      500,
+      'Meta Business Account credentials missing. Live template verification is required.',
+      502,
     );
   }
 
@@ -91,12 +68,6 @@ export async function fetchMetaApprovedTemplates(
     if (!response.ok) {
       const errorBody = await safeJson<{ error?: { message?: string; code?: number } }>(response);
       const msg = errorBody?.error?.message || `HTTP ${response.status}: Failed to fetch Meta templates`;
-      if (isTestEnv) {
-        logger.warn(`Meta template fetch failed in test (${msg}). Falling back to test catalog.`);
-        cachedTemplates = getMockTemplatesForTesting();
-        cacheExpiry = now + TEMPLATE_CACHE_TTL_MS;
-        return cachedTemplates;
-      }
       throw new WhatsAppApiException(msg, response.status, errorBody?.error as never);
     }
 
@@ -110,12 +81,6 @@ export async function fetchMetaApprovedTemplates(
     return approved;
   } catch (err: unknown) {
     if (err instanceof WhatsAppApiException) throw err;
-    if (isTestEnv) {
-      logger.warn(`Network error fetching Meta templates in test. Falling back to test catalog.`);
-      cachedTemplates = getMockTemplatesForTesting();
-      cacheExpiry = now + TEMPLATE_CACHE_TTL_MS;
-      return cachedTemplates;
-    }
     const msg = err instanceof Error ? err.message : String(err);
     throw new WhatsAppApiException(`Failed to verify approved templates with Meta: ${msg}`, 502);
   }

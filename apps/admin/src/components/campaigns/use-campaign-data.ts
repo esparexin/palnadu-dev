@@ -18,6 +18,7 @@ export function useCampaignData(search: string, onlyNoWebsite: boolean) {
   const [contacts, setContacts] = useState<MarketingContactItem[]>([]);
   const [outreachMessages, setOutreachMessages] = useState<IndividualOutreachMessageItem[]>([]);
   const [templates, setTemplates] = useState<WhatsAppTemplateDefinition[]>([]);
+  const [templatesError, setTemplatesError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
 
@@ -28,7 +29,7 @@ export function useCampaignData(search: string, onlyNoWebsite: boolean) {
       if (search) contactParams.search = search;
       if (onlyNoWebsite) contactParams.hasWebsite = 'false';
 
-      const [statsRes, campaignsRes, contactsRes, outreachRes, templatesRes] = await Promise.all([
+      const [statsRes, campaignsRes, contactsRes, outreachRes, templatesRes] = await Promise.allSettled([
         api.whatsapp.stats(),
         api.whatsapp.campaigns.list(),
         api.whatsapp.contacts.list(contactParams),
@@ -36,11 +37,32 @@ export function useCampaignData(search: string, onlyNoWebsite: boolean) {
         api.whatsapp.templates.list(),
       ]);
 
-      if (statsRes.success) setStats(statsRes.data);
-      if (campaignsRes.success) setCampaigns(campaignsRes.data);
-      if (contactsRes.success) setContacts(contactsRes.data);
-      if (outreachRes.success) setOutreachMessages(outreachRes.data);
-      if (templatesRes.success) setTemplates(templatesRes.data);
+      if (statsRes.status === 'fulfilled' && statsRes.value.success) setStats(statsRes.value.data);
+      if (campaignsRes.status === 'fulfilled' && campaignsRes.value.success) setCampaigns(campaignsRes.value.data);
+      if (contactsRes.status === 'fulfilled' && contactsRes.value.success) setContacts(contactsRes.value.data);
+      if (outreachRes.status === 'fulfilled' && outreachRes.value.success) setOutreachMessages(outreachRes.value.data);
+
+      if (templatesRes.status === 'fulfilled' && templatesRes.value.success) {
+        setTemplates(templatesRes.value.data);
+        setTemplatesError(null);
+      } else {
+        setTemplates([]);
+        const reason = templatesRes.status === 'rejected' ? templatesRes.reason : null;
+        setTemplatesError(
+          reason instanceof Error
+            ? reason.message
+            : 'Unable to verify Meta-approved templates.',
+        );
+      }
+
+      if (
+        statsRes.status === 'rejected' ||
+        campaignsRes.status === 'rejected' ||
+        contactsRes.status === 'rejected' ||
+        outreachRes.status === 'rejected'
+      ) {
+        toast.error('Failed to load WhatsApp data.');
+      }
     } catch {
       toast.error('Failed to load WhatsApp data.');
     } finally {
@@ -80,8 +102,9 @@ export function useCampaignData(search: string, onlyNoWebsite: boolean) {
         toast.success(`Batch dispatch completed for "${campaign.name}".`);
         loadData();
       }
-    } catch {
-      toast.error('Failed to dispatch campaign.');
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'Failed to dispatch campaign.');
+      loadData();
     } finally {
       setActionLoadingId(null);
     }
@@ -128,6 +151,7 @@ export function useCampaignData(search: string, onlyNoWebsite: boolean) {
     contacts,
     outreachMessages,
     templates,
+    templatesError,
     loading,
     actionLoadingId,
     handleCreateCampaign,

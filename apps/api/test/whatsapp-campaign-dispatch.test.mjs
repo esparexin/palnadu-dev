@@ -69,7 +69,13 @@ describe('WhatsApp Paced Campaign Dispatcher', () => {
     const messagesStore = [];
     const mockPrisma = createCampaignMockPrisma({ campaign, contacts, messagesStore });
     const sentPayloads = [];
+    const approvedTemplates = [
+      { name: 'b2b_website_outreach_v1', status: 'APPROVED', language: 'te', category: 'MARKETING', components: [{ type: 'BODY', text: 'Hello {{1}}' }] },
+      { name: 'b2b_website_outreach_v1', status: 'APPROVED', language: 'en_US', category: 'MARKETING', components: [{ type: 'BODY', text: 'Hello {{1}}' }] },
+      { name: 'b2b_promo_v1', status: 'APPROVED', language: 'en_US', category: 'MARKETING', components: [{ type: 'BODY', text: 'Hello {{1}}' }] },
+    ];
     const mockApiClient = {
+      fetchApprovedTemplates: async () => approvedTemplates,
       sendTemplateMessage: async (payload) => {
         sentPayloads.push(payload);
         return {
@@ -119,6 +125,7 @@ describe('WhatsApp Paced Campaign Dispatcher', () => {
     const sent = [];
     const mockPrisma = createCampaignMockPrisma({ campaign, contacts, messagesStore });
     const mockApiClient = {
+      fetchApprovedTemplates: async () => [{ name: 'b2b_promo_v1', status: 'APPROVED', language: 'en_US', category: 'MARKETING', components: [{ type: 'BODY', text: 'Hello {{1}}' }] }],
       sendTemplateMessage: async (payload) => {
         sent.push(payload);
         return { messages: [{ id: `wamid_${payload.to}` }] };
@@ -161,6 +168,7 @@ describe('WhatsApp Paced Campaign Dispatcher', () => {
     ];
     let callCount = 0;
     const mockApiClient = {
+      fetchApprovedTemplates: async () => [{ name: 'b2b_website_outreach_v1', status: 'APPROVED', language: 'en_US', category: 'MARKETING', components: [{ type: 'BODY', text: 'Hello {{1}}' }] }],
       sendTemplateMessage: async () => {
         callCount++;
         const { WhatsAppApiException } = require('../dist/whatsapp/whatsapp-api.util.js');
