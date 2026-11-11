@@ -1,22 +1,16 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Optional } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
-  SeoStrategy,
-  INTENT_GUIDANCE,
-  defaultStrategy,
-  str,
-  arr,
-  objArr,
-  normaliseSlug,
-  extractHeadings,
+  SeoStrategy, INTENT_GUIDANCE, defaultStrategy, str, arr,
+  objArr, normaliseSlug, extractHeadings, cleanHeadingTitle,
   TELUGU_STYLE_GUIDANCE,
-  cleanHeadingTitle,
 } from './seo-strategy';
 import { toAsciiSlug } from './script-utils';
 import { BlogLanguage } from '@prisma/client';
 import { GeneratedBlogDraft } from './content-research/types';
 import { generateStructuredFallback, buildFallbackTitle } from './content-research/structured-fallback';
 import { callLlmProvider, getGeminiModelsToTry } from './content-research/llm-provider';
+import { GeminiKeyStoreService } from './gemini-verification/gemini-key-store.service';
 
 export * from './content-research/types';
 export * from './content-research/structured-fallback';
@@ -30,11 +24,22 @@ export class ContentResearchService {
   private readonly openaiApiKey: string | undefined;
   private readonly tavilyApiKey: string | undefined;
 
-  constructor(private configService: ConfigService) {
+  constructor(
+    private configService: ConfigService,
+    @Optional() private geminiKeyStore?: GeminiKeyStoreService,
+  ) {
     this.geminiApiKey = this.configService.get<string>('GEMINI_API_KEY');
     this.anthropicApiKey = this.configService.get<string>('ANTHROPIC_API_KEY');
     this.openaiApiKey = this.configService.get<string>('OPENAI_API_KEY');
     this.tavilyApiKey = this.configService.get<string>('TAVILY_API_KEY');
+  }
+
+  private async resolveGeminiKey(): Promise<string | undefined> {
+    return (await this.geminiKeyStore?.getDecryptedActiveKey()) || this.geminiApiKey;
+  }
+
+  private async resolveGeminiModel(): Promise<string | undefined> {
+    return (await this.geminiKeyStore?.getActiveModel()) || process.env.GEMINI_MODEL;
   }
 
   async conductResearch(topic: string, locationContext?: string): Promise<string> {
@@ -95,11 +100,12 @@ export class ContentResearchService {
   }
 
   async performAiSourceAnalysis(topic: string, location: string, queries: string[]): Promise<string> {
-    if (!this.geminiApiKey && !this.anthropicApiKey && !this.openaiApiKey) {
+    const geminiKey = await this.resolveGeminiKey();
+    if (!geminiKey && !this.anthropicApiKey && !this.openaiApiKey) {
       return `Foundational Analysis for: "${topic}" in ${location}.\nFocus on operational workflows, real data architectures, and practical business impact for growing regional enterprises.`;
     }
     try {
-      if (this.geminiApiKey) {
+      if (geminiKey) {
         const prompt = `As a principal software architect, provide a factual technical and business briefing for an article about: "${topic}" in "${location}".
 Real search queries identified: ${queries.slice(0, 4).join(', ') || 'N/A'}.
 
@@ -111,7 +117,7 @@ Provide 4 direct, candid sections without fluff or emojis:
 
         const model = getGeminiModelsToTry()[0];
         const res = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${this.geminiApiKey}`,
+          `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${geminiKey}`,
           {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -177,7 +183,9 @@ FAQ: ${s.faqOpportunities.join(', ') || 'none'}
 LENGTH MANDATE: The "content" field must contain at least 750 words (comprehensive in-depth technical guide with at least 4 to 6 H2 sections). Do not shorten or truncate.
 Return strictly a valid JSON object with title, slug, excerpt, content, h1, metaTitle, metaDescription, seoTitle, seoDescription, primaryKeyword, secondaryKeywords, relatedKeywords, longTailKeywords, searchIntent, h2Headings, h3Headings, internalLinks, externalReferences, imageSuggestions, faq, tags.`;
 
-    const keys = { geminiApiKey: this.geminiApiKey, anthropicApiKey: this.anthropicApiKey, openaiApiKey: this.openaiApiKey };
+    const geminiApiKey = await this.resolveGeminiKey();
+    const geminiModel = await this.resolveGeminiModel();
+    const keys = { geminiApiKey, anthropicApiKey: this.anthropicApiKey, openaiApiKey: this.openaiApiKey, geminiModel };
     const llmResult = await callLlmProvider(systemPrompt, userPrompt, s, keys, this.logger);
     if (llmResult) {
       const { draft: llmDraft, provider } = llmResult;

@@ -13,23 +13,24 @@ import {
 
 describe('Phase 1 Auto-Blogging Backend Reliability', () => {
   describe('Gemini Model Selection SSOT', () => {
-    it('provides valid Gemini model IDs and excludes invalid 3.x strings', () => {
+    it('provides valid Gemini model IDs and includes active 3.x generation models', () => {
       assert.deepEqual(DEFAULT_GEMINI_MODELS, [
-        'gemini-2.5-flash',
-        'gemini-2.0-flash',
-        'gemini-1.5-flash',
+        'gemini-3.8-flash',
+        'gemini-3.6-flash',
+        'gemini-3.5-flash',
+        'gemini-3.1-flash-lite',
       ]);
-      assert.ok(!DEFAULT_GEMINI_MODELS.includes('gemini-3.1-flash-lite'));
-      assert.ok(!DEFAULT_GEMINI_MODELS.includes('gemini-3-flash-preview'));
+      assert.ok(DEFAULT_GEMINI_MODELS.includes('gemini-3.8-flash'));
+      assert.ok(DEFAULT_GEMINI_MODELS.includes('gemini-3.1-flash-lite'));
     });
 
     it('getGeminiModelsToTry respects preferred model and defaults', () => {
       const models = getGeminiModelsToTry();
-      assert.equal(models[0], 'gemini-2.5-flash');
+      assert.equal(models[0], 'gemini-3.8-flash');
 
       const custom = getGeminiModelsToTry('custom-gemini-model');
       assert.equal(custom[0], 'custom-gemini-model');
-      assert.ok(custom.includes('gemini-2.5-flash'));
+      assert.ok(custom.includes('gemini-3.8-flash'));
     });
 
     it('getGeminiModelsToTry respects GEMINI_MODEL env override', () => {

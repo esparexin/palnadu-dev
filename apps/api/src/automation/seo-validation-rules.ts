@@ -14,6 +14,7 @@ import {
   checkKeywordRelevance,
   checkTeluguScriptCoverage,
 } from './seo-validation-content';
+import { validateArticleBacklinks } from './blog/backlink-policy';
 
 export type { CheckName, CheckResult, ValidationOutcome, ValidationInput };
 
@@ -130,21 +131,24 @@ export function validate(input: ValidationInput): ValidationOutcome {
       : 'no substantial overlap with existing content',
   });
 
-  // 8. Internal links
-  const internalLinks = d.internalLinks ?? [];
-  const badLinks = internalLinks.filter(
-    (l) => !l.url || !l.url.startsWith('/') || l.url === `/blog/${d.slug}` || l.url === `/te/blog/${d.slug}`
+  // 8. Internal links (Mandatory Policy: verified in-body backlinks)
+  const declaredEmpty = Array.isArray(d.internalLinks) && d.internalLinks.length === 0;
+  const backlinkOutcome = validateArticleBacklinks(
+    d.content,
+    d.slug,
+    input.language === 'te' ? 'te' : 'en',
   );
+  if (backlinkOutcome.validLinks.length > 0 && !declaredEmpty) {
+    d.internalLinks = backlinkOutcome.validLinks;
+  }
+  const linksPassed = !declaredEmpty && backlinkOutcome.passed;
   checks.push({
     name: 'internal_links',
-    passed: internalLinks.length > 0 && badLinks.length === 0,
+    passed: linksPassed,
     blocking: true,
-    detail:
-      internalLinks.length === 0
-        ? 'no internal links'
-        : badLinks.length > 0
-          ? `${badLinks.length} internal link(s) are non-site-relative or self-referencing`
-          : `${internalLinks.length} internal link(s), all site-relative and valid`,
+    detail: declaredEmpty
+      ? 'Backlink policy violation: Missing mandatory internal backlink (declared internalLinks is empty)'
+      : backlinkOutcome.detail,
   });
 
   // 9. SEO metadata completeness
