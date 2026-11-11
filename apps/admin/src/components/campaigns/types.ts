@@ -44,6 +44,7 @@ export interface IndividualOutreachFormData {
   contactName: string;
   templateName: string;
   languageCode: string;
+  parameters: Record<string, string>;
   consentType: WhatsAppConsentType;
   consentEvidenceRef: string;
   saveContact: boolean;
@@ -55,6 +56,7 @@ export const initialOutreachFormData: IndividualOutreachFormData = {
   contactName: '',
   templateName: 'b2b_website_outreach_v1',
   languageCode: 'en_US',
+  parameters: {},
   consentType: 'WEBSITE_LEAD_FORM',
   consentEvidenceRef: '',
   saveContact: false,
