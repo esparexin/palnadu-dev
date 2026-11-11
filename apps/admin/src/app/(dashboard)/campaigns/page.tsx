@@ -1,9 +1,7 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
-import { Plus, UploadCloud, Search } from 'lucide-react';
-import { api } from '@/lib/api';
-import { useToast } from '@/components/ui/toast';
+import { useState } from 'react';
+import { Plus, UploadCloud, Search, Send } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { CampaignKpiCards } from '@/components/campaigns/campaign-kpi-cards';
@@ -11,135 +9,83 @@ import { CampaignTable } from '@/components/campaigns/campaign-table';
 import { ContactTable } from '@/components/campaigns/contact-table';
 import { CampaignModal } from '@/components/campaigns/campaign-modal';
 import { ContactImportModal } from '@/components/campaigns/contact-import-modal';
-import type {
-  CampaignSummary,
-  MarketingContactItem,
-  WhatsAppStats,
-  CreateCampaignFormData,
-} from '@/components/campaigns/types';
+import { OutreachGuideCard } from '@/components/campaigns/outreach-guide-card';
+import { IndividualOutreachModal } from '@/components/campaigns/individual-outreach-modal';
+import { IndividualOutreachTable } from '@/components/campaigns/individual-outreach-table';
+import { useCampaignData } from '@/components/campaigns/use-campaign-data';
 
 export default function CampaignsPage() {
-  const { toast } = useToast();
-  const [activeTab, setActiveTab] = useState<'campaigns' | 'contacts'>('campaigns');
-  const [stats, setStats] = useState<WhatsAppStats | null>(null);
-  const [campaigns, setCampaigns] = useState<CampaignSummary[]>([]);
-  const [contacts, setContacts] = useState<MarketingContactItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<'outreach' | 'campaigns' | 'contacts'>('outreach');
   const [search, setSearch] = useState('');
   const [onlyNoWebsite, setOnlyNoWebsite] = useState(false);
 
   const [campaignModalOpen, setCampaignModalOpen] = useState(false);
   const [importModalOpen, setImportModalOpen] = useState(false);
-  const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
+  const [outreachModalOpen, setOutreachModalOpen] = useState(false);
 
-  const loadData = useCallback(async () => {
-    setLoading(true);
-    try {
-      const contactParams: Record<string, string> = {};
-      if (search) contactParams.search = search;
-      if (onlyNoWebsite) contactParams.hasWebsite = 'false';
-
-      const [statsRes, campaignsRes, contactsRes] = await Promise.all([
-        api.whatsapp.stats(),
-        api.whatsapp.campaigns.list(),
-        api.whatsapp.contacts.list(contactParams),
-      ]);
-
-      if (statsRes.success) setStats(statsRes.data);
-      if (campaignsRes.success) setCampaigns(campaignsRes.data);
-      if (contactsRes.success) setContacts(contactsRes.data);
-    } catch {
-      toast.error('Failed to load WhatsApp campaign data.');
-    } finally {
-      setLoading(false);
-    }
-  }, [search, onlyNoWebsite, toast]);
-
-  useEffect(() => {
-    loadData();
-  }, [loadData]);
-
-  const handleCreateCampaign = async (formData: CreateCampaignFormData) => {
-    const res = await api.whatsapp.campaigns.create(formData);
-    if (res.success) {
-      toast.success('Campaign created in Draft status.');
-      loadData();
-    }
-  };
-
-  const handleDispatch = async (campaign: CampaignSummary) => {
-    setActionLoadingId(campaign.id);
-    try {
-      const res = await api.whatsapp.campaigns.dispatch(campaign.id);
-      if (res.success) {
-        toast.success(`Batch dispatch completed for "${campaign.name}".`);
-        loadData();
-      }
-    } catch {
-      toast.error('Failed to dispatch campaign.');
-    } finally {
-      setActionLoadingId(null);
-    }
-  };
-
-  const handlePause = async (campaign: CampaignSummary) => {
-    setActionLoadingId(campaign.id);
-    try {
-      const res = await api.whatsapp.campaigns.pause(campaign.id);
-      if (res.success) {
-        toast.info(`Campaign "${campaign.name}" paused.`);
-        loadData();
-      }
-    } catch {
-      toast.error('Failed to pause campaign.');
-    } finally {
-      setActionLoadingId(null);
-    }
-  };
-
-  const handleImportContacts = async (newContacts: Parameters<typeof api.whatsapp.contacts.import>[0]) => {
-    const res = await api.whatsapp.contacts.import(newContacts);
-    if (res.success) {
-      toast.success(`Imported ${res.data.imported} contacts (${res.data.duplicates} duplicates skipped).`);
-      loadData();
-    }
-  };
+  const {
+    stats,
+    campaigns,
+    contacts,
+    outreachMessages,
+    templates,
+    loading,
+    actionLoadingId,
+    handleCreateCampaign,
+    handleSendIndividualOutreach,
+    handleDispatch,
+    handlePause,
+    handleImportContacts,
+  } = useCampaignData(search, onlyNoWebsite);
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-lg font-bold text-palnadu-dark">WhatsApp Marketing & Outreach</h1>
-          <p className="text-xs text-palnadu-secondary">Paced outreach and campaign tracking for regional businesses without websites.</p>
+          <h1 className="text-2xl font-extrabold tracking-tight text-palnadu-dark">WhatsApp Marketing & Outreach</h1>
+          <p className="text-xs text-palnadu-secondary">Individual outreach and bulk campaigns for regional businesses without websites.</p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={() => setImportModalOpen(true)} className="h-9 gap-1.5 text-xs">
+          <Button variant="outline" size="sm" onClick={() => setImportModalOpen(true)} className="h-9 gap-1.5 text-xs cursor-pointer">
             <UploadCloud className="h-4 w-4 text-palnadu-teal" />
             <span>Import Contacts</span>
           </Button>
-          <Button size="sm" onClick={() => setCampaignModalOpen(true)} className="h-9 gap-1.5 bg-palnadu-teal hover:bg-palnadu-teal-dark text-white text-xs">
-            <Plus className="h-4 w-4" />
+          <Button variant="outline" size="sm" onClick={() => setCampaignModalOpen(true)} className="h-9 gap-1.5 text-xs cursor-pointer">
+            <Plus className="h-4 w-4 text-palnadu-blue" />
             <span>Create Campaign</span>
+          </Button>
+          <Button size="sm" onClick={() => setOutreachModalOpen(true)} className="h-9 gap-1.5 bg-palnadu-teal hover:bg-palnadu-teal-dark text-white text-xs cursor-pointer">
+            <Send className="h-4 w-4" />
+            <span>Send Direct Message</span>
           </Button>
         </div>
       </div>
 
+      <OutreachGuideCard />
       <CampaignKpiCards stats={stats} />
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex rounded-md border border-palnadu-border bg-palnadu-off-white p-1">
           <button
-            onClick={() => setActiveTab('campaigns')}
-            className={`rounded px-3 py-1 text-xs font-medium transition-colors ${
-              activeTab === 'campaigns' ? 'bg-palnadu-white text-palnadu-dark shadow-xs' : 'text-palnadu-secondary hover:text-palnadu-dark'
+            onClick={() => setActiveTab('outreach')}
+            className={`rounded px-3 py-1 text-xs font-semibold transition-colors cursor-pointer ${
+              activeTab === 'outreach' ? 'bg-palnadu-white text-palnadu-dark shadow-sm' : 'text-palnadu-secondary hover:text-palnadu-dark'
             }`}
           >
-            Campaigns ({campaigns.length})
+            Individual Outreach ({outreachMessages.length})
+          </button>
+          <button
+            onClick={() => setActiveTab('campaigns')}
+            className={`rounded px-3 py-1 text-xs font-semibold transition-colors cursor-pointer ${
+              activeTab === 'campaigns' ? 'bg-palnadu-white text-palnadu-dark shadow-sm' : 'text-palnadu-secondary hover:text-palnadu-dark'
+            }`}
+          >
+            Bulk Campaigns ({campaigns.length})
           </button>
           <button
             onClick={() => setActiveTab('contacts')}
-            className={`rounded px-3 py-1 text-xs font-medium transition-colors ${
-              activeTab === 'contacts' ? 'bg-palnadu-white text-palnadu-dark shadow-xs' : 'text-palnadu-secondary hover:text-palnadu-dark'
+            className={`rounded px-3 py-1 text-xs font-semibold transition-colors cursor-pointer ${
+              activeTab === 'contacts' ? 'bg-palnadu-white text-palnadu-dark shadow-sm' : 'text-palnadu-secondary hover:text-palnadu-dark'
             }`}
           >
             Business Contacts ({contacts.length})
@@ -161,7 +107,7 @@ export default function CampaignsPage() {
               variant={onlyNoWebsite ? 'default' : 'outline'}
               size="sm"
               onClick={() => setOnlyNoWebsite(!onlyNoWebsite)}
-              className="h-9 text-xs"
+              className="h-9 text-xs cursor-pointer"
             >
               No Website Only
             </Button>
@@ -169,7 +115,15 @@ export default function CampaignsPage() {
         )}
       </div>
 
-      {activeTab === 'campaigns' ? (
+      {activeTab === 'outreach' && (
+        <IndividualOutreachTable
+          messages={outreachMessages}
+          loading={loading}
+          onOpenOutreachModal={() => setOutreachModalOpen(true)}
+        />
+      )}
+
+      {activeTab === 'campaigns' && (
         <CampaignTable
           campaigns={campaigns}
           loading={loading}
@@ -177,9 +131,18 @@ export default function CampaignsPage() {
           onPause={handlePause}
           actionLoadingId={actionLoadingId}
         />
-      ) : (
+      )}
+
+      {activeTab === 'contacts' && (
         <ContactTable contacts={contacts} loading={loading} />
       )}
+
+      <IndividualOutreachModal
+        open={outreachModalOpen}
+        onClose={() => setOutreachModalOpen(false)}
+        onSubmit={handleSendIndividualOutreach}
+        templates={templates}
+      />
 
       <CampaignModal
         open={campaignModalOpen}
