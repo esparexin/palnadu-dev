@@ -1,18 +1,22 @@
-import { adminApi, getToken, API_URL } from './api/client';
+import { adminApi, getToken, getCsrfToken, API_URL } from './api/client';
 import { automationApi } from './api/automation';
 import { settingsApi } from './api/settings';
 import { whatsappApi } from './api/whatsapp';
 
-export { adminApi, getToken, API_URL, whatsappApi };
+export { adminApi, getToken, getCsrfToken, API_URL, whatsappApi };
 
 export const api = {
   auth: {
     login: (data: { email: string; password: string }) =>
-      adminApi<{ data: { user: unknown; accessToken: string } }>('/api/auth/login', {
+      adminApi<{ data: { user: unknown; accessToken?: string } }>('/api/auth/login', {
         method: 'POST',
         body: JSON.stringify(data),
       }),
-    me: () => adminApi('/api/auth/me'),
+    logout: () =>
+      adminApi<{ success: boolean; message: string }>('/api/auth/logout', {
+        method: 'POST',
+      }),
+    me: () => adminApi<{ success: boolean; data: unknown }>('/api/auth/me'),
   },
   leads: {
     list: (params?: Record<string, string>) => adminApi('/api/admin/leads', { params }),
@@ -72,11 +76,16 @@ export const api = {
     list: (params?: Record<string, string>) => adminApi('/api/admin/media', { params }),
     upload: async (file: File) => {
       const token = getToken();
+      const csrfToken = getCsrfToken();
       const formData = new FormData();
       formData.append('file', file);
       const response = await fetch(`${API_URL}/api/admin/media/upload`, {
         method: 'POST',
-        headers: { ...(token && { Authorization: `Bearer ${token}` }) },
+        credentials: 'include',
+        headers: {
+          ...(token && { Authorization: `Bearer ${token}` }),
+          ...(csrfToken && { 'X-CSRF-Token': csrfToken }),
+        },
         body: formData,
       });
       if (!response.ok) throw new Error('Upload failed');
