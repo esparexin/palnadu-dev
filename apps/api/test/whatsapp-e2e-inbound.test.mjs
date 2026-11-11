@@ -105,8 +105,10 @@ describe('WhatsApp E2E Inbound Message Lifecycle & Retries', () => {
     const res = await controller.handleIncomingWebhook({ body: payload, rawBody }, signature);
     assert.equal(res.status, 'success');
 
-    // Wait 20ms for asynchronous microtask auto-reply to complete
-    await new Promise((resolve) => setTimeout(resolve, 20));
+    // Poll for asynchronous microtask auto-reply to complete without CPU load races
+    for (let i = 0; i < 20 && !outboundSent; i++) {
+      await new Promise((resolve) => setTimeout(resolve, 15));
+    }
 
     assert.equal(outboundSent, true);
     assert.equal(outboundPayload.to, '919876543210');

@@ -165,7 +165,7 @@ describe('WhatsAppApiClient - Meta Cloud API Outbound Client', () => {
     assert.equal(response.messages[0].id, 'wamid.RECOVERED_002');
   });
 
-  it('aborts and throws when fetch exceeds timeout', async () => {
+  it('aborts and throws when fetch exceeds timeout with ambiguous flag', async () => {
     const mockFetch = async (_url, init) => {
       return new Promise((resolve, reject) => {
         init.signal.addEventListener('abort', () => {
@@ -173,17 +173,25 @@ describe('WhatsAppApiClient - Meta Cloud API Outbound Client', () => {
         });
       });
     };
-
-    const client = new WhatsAppApiClient(createMockConfig(), {
-      fetchFn: mockFetch,
-      timeoutMs: 15,
-      maxRetries: 0,
-    });
-
+    const client = new WhatsAppApiClient(createMockConfig(), { fetchFn: mockFetch, timeoutMs: 15, maxRetries: 0 });
     await assert.rejects(
       async () => client.sendTextMessage({ to: '919876543210', text: 'Timeout test' }),
-      /aborted due to timeout/,
+      (err) => err instanceof WhatsAppApiException && err.isAmbiguous === true && err.statusCode === 504,
     );
+  });
+
+  it('fails immediately without retrying on ambiguous 504 Gateway Timeout', async () => {
+    let callCount = 0;
+    const mockFetch = async () => {
+      callCount++;
+      return { ok: false, status: 504, statusText: 'Gateway Timeout', json: async () => ({}) };
+    };
+    const client = new WhatsAppApiClient(createMockConfig(), { fetchFn: mockFetch, maxRetries: 3, retryDelayMs: 5 });
+    await assert.rejects(
+      async () => client.sendTextMessage({ to: '919876543210', text: '504 test' }),
+      (err) => err instanceof WhatsAppApiException && err.isAmbiguous === true,
+    );
+    assert.equal(callCount, 1, 'Ambiguous 504 must never be retried automatically');
   });
 
   it('formats template message payload with parameters and succeeds on 200 OK', async () => {

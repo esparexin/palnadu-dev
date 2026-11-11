@@ -27,7 +27,7 @@ describe('WhatsApp Paced Campaign Dispatcher', () => {
         businessName: 'Sri Lakshmi Textiles',
         phone: '919876543210',
         hasWebsite: false,
-        optInStatus: ContactOptInStatus.UNVERIFIED,
+        optInStatus: ContactOptInStatus.OPTED_IN,
       },
       {
         id: 'c2',
@@ -41,7 +41,14 @@ describe('WhatsApp Paced Campaign Dispatcher', () => {
         businessName: 'Venkateswara Rice Mill',
         phone: '919876543212',
         hasWebsite: false,
-        optInStatus: ContactOptInStatus.UNVERIFIED,
+        optInStatus: ContactOptInStatus.OPTED_IN,
+      },
+      {
+        id: 'c4',
+        businessName: 'Unverified Shop',
+        phone: '919876543213',
+        hasWebsite: false,
+        optInStatus: ContactOptInStatus.UNVERIFIED, // must be excluded from campaigns
       },
     ];
 
@@ -59,7 +66,11 @@ describe('WhatsApp Paced Campaign Dispatcher', () => {
         },
       },
       marketingContact: {
-        findMany: async () => contacts.filter((c) => c.optInStatus !== ContactOptInStatus.OPTED_OUT),
+        findMany: async ({ where }) =>
+          contacts.filter((c) => {
+            if (where?.optInStatus && c.optInStatus !== where.optInStatus) return false;
+            return c.optInStatus === ContactOptInStatus.OPTED_IN;
+          }),
       },
       whatsAppMessage: {
         findMany: async () => messagesStore.filter((m) => m.campaignId === campaign.id),
@@ -126,13 +137,13 @@ describe('WhatsApp Paced Campaign Dispatcher', () => {
         id: 'c1',
         businessName: 'Already Messaged Biz',
         phone: '919876543210',
-        optInStatus: ContactOptInStatus.UNVERIFIED,
+        optInStatus: ContactOptInStatus.OPTED_IN,
       },
       {
         id: 'c2',
         businessName: 'Fresh Biz',
         phone: '919876543211',
-        optInStatus: ContactOptInStatus.UNVERIFIED,
+        optInStatus: ContactOptInStatus.OPTED_IN,
       },
     ];
 
@@ -198,7 +209,7 @@ describe('WhatsApp Paced Campaign Dispatcher', () => {
       delayMs: 1,
     };
     const contacts = [
-      { id: 'c1', businessName: 'Test Business', phone: '919876543210', optInStatus: ContactOptInStatus.UNVERIFIED },
+      { id: 'c1', businessName: 'Test Business', phone: '919876543210', optInStatus: ContactOptInStatus.OPTED_IN },
     ];
     let callCount = 0;
     const mockApiClient = {

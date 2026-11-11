@@ -190,6 +190,12 @@ describe('WhatsApp Outreach - Stored Document Consent, Safe Reconciliation & Cle
     assert.equal(updated.status, WhatsAppDeliveryStatus.DELIVERED);
     assert.equal(updated.rawPayload.requiresReconciliation, false);
     assert.equal(updated.rawPayload.reconciledBy, 'admin_audit');
+
+    const list = await service.listIndividualOutreachMessages();
+    const item = list.data.find((m) => m.id === ambiguousMsg.id || m.wamId === 'wamid.HBgL_CONFIRMED_123');
+    assert.equal(item?.isReconciled, true);
+    assert.equal(item?.reconciledBy, 'admin_audit');
+    assert.equal(item?.reconciliationNotes, 'Verified via Meta Business Suite');
   });
 
   it('reservation cleanup deletes ONLY expired resv: records and NEVER deletes real messages or active reservations', async () => {

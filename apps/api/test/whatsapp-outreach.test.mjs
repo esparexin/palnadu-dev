@@ -34,12 +34,7 @@ describe('WhatsApp Outreach Service - Verifiable Consent, Idempotency & Rate Lim
         findFirst: async ({ where }) => {
           for (const item of mediaStore.values()) {
             if (where.filename === item.filename || where.id === item.id) return item;
-            if (where.OR) {
-              for (const orCond of where.OR) {
-                if (orCond.filename && item.filename === orCond.filename) return item;
-                if (orCond.originalName && item.originalName === orCond.originalName) return item;
-              }
-            }
+            if (where.OR?.some((o) => (o.filename && item.filename === o.filename) || (o.originalName && item.originalName === o.originalName))) return item;
           }
           return null;
         },
@@ -57,13 +52,7 @@ describe('WhatsApp Outreach Service - Verifiable Consent, Idempotency & Rate Lim
         },
         findUnique: async ({ where }) => messagesStore.get(where.wamId) || null,
         update: async ({ where, data }) => {
-          let target = null;
-          for (const msg of messagesStore.values()) {
-            if (msg.id === where.id || msg.wamId === where.wamId) {
-              target = msg;
-              break;
-            }
-          }
+          const target = Array.from(messagesStore.values()).find((m) => m.id === where.id || m.wamId === where.wamId);
           if (target) {
             Object.assign(target, data);
             if (data.rawPayload) target.rawPayload = { ...target.rawPayload, ...data.rawPayload };
@@ -99,7 +88,8 @@ describe('WhatsApp Outreach Service - Verifiable Consent, Idempotency & Rate Lim
 
     mockApiClient = {
       fetchApprovedTemplates: async () => [
-        { name: 'b2b_website_outreach_v1', language: 'en_US', status: 'APPROVED', components: [] },
+        { name: 'b2b_website_outreach_v1', category: 'MARKETING', language: 'en_US', status: 'APPROVED', components: [] },
+        { name: 'service_inquiry_reply_v1', category: 'UTILITY', language: 'en_US', status: 'APPROVED', components: [] },
       ],
       sendTemplateMessage: async (payload) => ({
         messaging_product: 'whatsapp',
@@ -206,24 +196,32 @@ describe('WhatsApp Outreach Service - Verifiable Consent, Idempotency & Rate Lim
     assert.equal(res.requiresReconciliation, true);
   });
 
-  it('validates INBOUND_WHATSAPP_INQUIRY against database inbound message', async () => {
-    messagesStore.set('wamid.INBOUND_PROOF_1', {
-      wamId: 'wamid.INBOUND_PROOF_1',
-      direction: WhatsAppMessageDirection.INBOUND,
-      from: '919876500003',
-    });
-    const input = {
-      ...baseInput,
-      phone: '+919876500003',
-      consentEvidence: {
-        consentType: 'INBOUND_WHATSAPP_INQUIRY',
-        consentEvidenceRef: 'wamid.INBOUND_PROOF_1',
-        consentTimestamp: new Date().toISOString(),
-        recipientPhone: '+919876500003',
-      },
-    };
-    const res = await service.sendOutreach(input, { id: 'admin1' });
+  const makeInboundInput = (wamId, templateName) => ({
+    ...baseInput,
+    phone: '+919876500003',
+    templateName,
+    consentEvidence: {
+      consentType: 'INBOUND_WHATSAPP_INQUIRY',
+      consentEvidenceRef: wamId,
+      consentTimestamp: new Date().toISOString(),
+      recipientPhone: '+919876500003',
+    },
+  });
+
+  it('rejects INBOUND_WHATSAPP_INQUIRY for MARKETING templates', async () => {
+    messagesStore.set('wamid.INBOUND_PROOF_1', { wamId: 'wamid.INBOUND_PROOF_1', direction: WhatsAppMessageDirection.INBOUND, from: '919876500003', createdAt: new Date() });
+    await assert.rejects(() => service.sendOutreach(makeInboundInput('wamid.INBOUND_PROOF_1', 'b2b_website_outreach_v1'), { id: 'admin1' }), /authorizes customer service response only/);
+  });
+
+  it('validates INBOUND_WHATSAPP_INQUIRY for UTILITY template within 24h', async () => {
+    messagesStore.set('wamid.INBOUND_PROOF_2', { wamId: 'wamid.INBOUND_PROOF_2', direction: WhatsAppMessageDirection.INBOUND, from: '919876500003', createdAt: new Date() });
+    const res = await service.sendOutreach(makeInboundInput('wamid.INBOUND_PROOF_2', 'service_inquiry_reply_v1'), { id: 'admin1' });
     assert.equal(res.success, true);
+  });
+
+  it('rejects INBOUND_WHATSAPP_INQUIRY older than 24 hours', async () => {
+    messagesStore.set('wamid.INBOUND_PROOF_3', { wamId: 'wamid.INBOUND_PROOF_3', direction: WhatsAppMessageDirection.INBOUND, from: '919876500003', createdAt: new Date(Date.now() - 25 * 60 * 60 * 1000) });
+    await assert.rejects(() => service.sendOutreach(makeInboundInput('wamid.INBOUND_PROOF_3', 'service_inquiry_reply_v1'), { id: 'admin1' }), /outside Meta’s applicable 24-hour/);
   });
 
   it('rejects stale consent older than 180 days', async () => {
