@@ -146,7 +146,12 @@ export class WhatsAppWebhookService {
                 }
 
                 if (this.autoReplyService) {
-                  await this.autoReplyService.handleAutoReply(saved);
+                  setImmediate(() => {
+                    this.autoReplyService?.handleAutoReply(saved).catch((err: unknown) => {
+                      const msg = err instanceof Error ? err.message : String(err);
+                      this.logger.error(`Background auto-reply failed for ${saved.wamId}: ${msg}`);
+                    });
+                  });
                 }
               }
             }
