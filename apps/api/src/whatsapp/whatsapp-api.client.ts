@@ -14,24 +14,16 @@ import {
   DEFAULT_MAX_RETRIES,
   DEFAULT_RETRY_DELAY_MS,
 } from './whatsapp.constants';
+import {
+  WhatsAppApiException,
+  type OutboundClientOptions,
+  sanitizePhoneNumber,
+  maskPhone,
+  delay,
+  safeJson,
+} from './whatsapp-api.util';
 
-export class WhatsAppApiException extends Error {
-  constructor(
-    message: string,
-    public readonly statusCode?: number,
-    public readonly metaError?: WhatsAppApiErrorResponse['error'],
-  ) {
-    super(message);
-    this.name = 'WhatsAppApiException';
-  }
-}
-
-export interface OutboundClientOptions {
-  timeoutMs?: number;
-  maxRetries?: number;
-  retryDelayMs?: number;
-  fetchFn?: typeof fetch;
-}
+export { WhatsAppApiException, type OutboundClientOptions };
 
 @Injectable()
 export class WhatsAppApiClient {
@@ -52,13 +44,19 @@ export class WhatsAppApiClient {
   }
 
   isConfigured(): boolean {
-    const token = this.config.get<string>(WHATSAPP_CONFIG_KEYS.ACCESS_TOKEN)?.trim();
-    const phoneId = this.config.get<string>(WHATSAPP_CONFIG_KEYS.PHONE_NUMBER_ID)?.trim();
+    const token = (
+      this.config.get<string>(WHATSAPP_CONFIG_KEYS.ACCESS_TOKEN) ||
+      this.config.get<string>(WHATSAPP_CONFIG_KEYS.ACCESS_TOKEN_FALLBACK)
+    )?.trim();
+    const phoneId = this.getPhoneNumberId();
     return Boolean(token && phoneId);
   }
 
   getPhoneNumberId(): string | undefined {
-    return this.config.get<string>(WHATSAPP_CONFIG_KEYS.PHONE_NUMBER_ID)?.trim();
+    const raw = this.config.get<string>(WHATSAPP_CONFIG_KEYS.PHONE_NUMBER_ID)?.trim();
+    if (!raw) return undefined;
+    const clean = raw.replace(/[^0-9]/g, '');
+    return clean || undefined;
   }
 
   getApiVersion(): string {
@@ -71,7 +69,7 @@ export class WhatsAppApiClient {
   async sendTextMessage(
     params: WhatsAppSendTextMessageParams,
   ): Promise<WhatsAppSendResponse> {
-    const cleanRecipient = this.sanitizePhoneNumber(params.to);
+    const cleanRecipient = sanitizePhoneNumber(params.to);
     if (!cleanRecipient) {
       throw new WhatsAppApiException('Invalid recipient phone number');
     }
@@ -97,7 +95,7 @@ export class WhatsAppApiClient {
   async sendTemplateMessage(
     params: WhatsAppSendTemplateParams,
   ): Promise<WhatsAppSendResponse> {
-    const cleanRecipient = this.sanitizePhoneNumber(params.to);
+    const cleanRecipient = sanitizePhoneNumber(params.to);
     if (!cleanRecipient) {
       throw new WhatsAppApiException('Invalid recipient phone number');
     }
@@ -139,7 +137,10 @@ export class WhatsAppApiClient {
     payload: Record<string, unknown>,
     logDescription: string,
   ): Promise<WhatsAppSendResponse> {
-    const accessToken = this.config.get<string>(WHATSAPP_CONFIG_KEYS.ACCESS_TOKEN)?.trim();
+    const accessToken = (
+      this.config.get<string>(WHATSAPP_CONFIG_KEYS.ACCESS_TOKEN) ||
+      this.config.get<string>(WHATSAPP_CONFIG_KEYS.ACCESS_TOKEN_FALLBACK)
+    )?.trim();
     const phoneNumberId = this.getPhoneNumberId();
     const version = this.getApiVersion();
 
@@ -149,7 +150,7 @@ export class WhatsAppApiClient {
     }
 
     const url = `${META_GRAPH_API_BASE_URL}/${version}/${phoneNumberId}/messages`;
-    const maskedTo = this.maskPhone(cleanRecipient);
+    const maskedTo = maskPhone(cleanRecipient);
     this.logger.log(`Dispatching outbound WhatsApp ${logDescription} to ${maskedTo}`);
 
     let lastError: Error | null = null;
@@ -157,7 +158,7 @@ export class WhatsAppApiClient {
       if (attempt > 0) {
         const backoff = this.retryDelayMs * Math.pow(2, attempt - 1);
         this.logger.warn(`Retrying WhatsApp dispatch to ${maskedTo} (attempt ${attempt + 1}/${this.maxRetries + 1}) after ${backoff}ms`);
-        await this.delay(backoff);
+        await delay(backoff);
       }
 
       try {
@@ -170,7 +171,7 @@ export class WhatsAppApiClient {
         }
 
         const isRetryable = response.status >= 500 || response.status === 429;
-        const errorBody = await this.safeJson<WhatsAppApiErrorResponse>(response);
+        const errorBody = await safeJson<WhatsAppApiErrorResponse>(response);
         const metaError = errorBody?.error;
         const errMessage = metaError?.message || `Meta API HTTP ${response.status}: ${response.statusText}`;
 
@@ -214,27 +215,6 @@ export class WhatsAppApiClient {
       });
     } finally {
       clearTimeout(timer);
-    }
-  }
-
-  private sanitizePhoneNumber(phone: string): string {
-    return phone.replace(/[^0-9]/g, '');
-  }
-
-  private maskPhone(phone: string): string {
-    if (phone.length <= 4) return '****';
-    return phone.slice(0, 2) + '******' + phone.slice(-2);
-  }
-
-  private delay(ms: number): Promise<void> {
-    return new Promise((resolve) => setTimeout(resolve, ms));
-  }
-
-  private async safeJson<T>(response: Response): Promise<T | null> {
-    try {
-      return (await response.json()) as T;
-    } catch {
-      return null;
     }
   }
 }

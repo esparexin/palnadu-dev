@@ -1,9 +1,10 @@
 import { Injectable, Logger, BadRequestException, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../prisma.service';
-import { WhatsAppApiClient } from './whatsapp-api.client';
+import { WhatsAppApiClient, WhatsAppApiException } from './whatsapp-api.client';
 import { WhatsAppOptOutService } from './whatsapp-opt-out.service';
 import type { CreateMarketingCampaignInput } from '@palnadu/validation';
+import type { WhatsAppTemplateComponent } from '@palnadu/types';
 import {
   CampaignStatus,
   ContactOptInStatus,
@@ -167,14 +168,37 @@ export class WhatsAppCampaignService {
   }
 
   private async sendToContact(campaign: MarketingCampaign, contact: MarketingContact): Promise<boolean> {
-    const businessPhone = this.config.get<string>(WHATSAPP_CONFIG_KEYS.PHONE_NUMBER_ID) || 'palnadu_business';
+    const businessPhone =
+      this.config.get<string>(WHATSAPP_CONFIG_KEYS.BUSINESS_PHONE)?.trim() ||
+      'palnadu_business';
+    const components: WhatsAppTemplateComponent[] = contact.businessName?.trim()
+      ? [{ type: 'body', parameters: [{ type: 'text', text: contact.businessName.trim() }] }]
+      : [];
+
     try {
-      const response = await this.apiClient.sendTemplateMessage({
-        to: contact.phone,
-        templateName: campaign.templateName,
-        languageCode: campaign.languageCode,
-        components: [{ type: 'body', parameters: [{ type: 'text', text: contact.businessName }] }],
-      });
+      let response;
+      try {
+        response = await this.apiClient.sendTemplateMessage({
+          to: contact.phone,
+          templateName: campaign.templateName,
+          languageCode: campaign.languageCode,
+          ...(components.length > 0 ? { components } : {}),
+        });
+      } catch (sendErr: unknown) {
+        if (
+          components.length > 0 &&
+          sendErr instanceof WhatsAppApiException &&
+          sendErr.metaError?.code === 132000
+        ) {
+          response = await this.apiClient.sendTemplateMessage({
+            to: contact.phone,
+            templateName: campaign.templateName,
+            languageCode: campaign.languageCode,
+          });
+        } else {
+          throw sendErr;
+        }
+      }
 
       const wamId = response.messages[0]?.id;
       if (!wamId) throw new Error('Meta API response missing message id');
