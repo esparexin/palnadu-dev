@@ -1,4 +1,4 @@
-import { Injectable, Logger, ForbiddenException } from '@nestjs/common';
+import { Injectable, Logger, Optional, ForbiddenException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as crypto from 'node:crypto';
 import { PrismaService } from '../prisma.service';
@@ -27,8 +27,8 @@ export class WhatsAppWebhookService {
     private readonly config: ConfigService,
     private readonly messageService: WhatsAppMessageService,
     private readonly prisma: PrismaService,
-    private readonly autoReplyService?: WhatsAppAutoReplyService,
-    private readonly optOutService?: WhatsAppOptOutService,
+    @Optional() private readonly autoReplyService?: WhatsAppAutoReplyService,
+    @Optional() private readonly optOutService?: WhatsAppOptOutService,
   ) {}
 
   verifyHandshake(rawQuery: Record<string, unknown>): string {

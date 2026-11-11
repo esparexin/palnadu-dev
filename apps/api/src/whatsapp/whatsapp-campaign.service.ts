@@ -1,4 +1,4 @@
-import { Injectable, Logger, BadRequestException, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, Optional, BadRequestException, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../prisma.service';
 import { WhatsAppApiClient, WhatsAppApiException } from './whatsapp-api.client';
@@ -42,7 +42,7 @@ export class WhatsAppCampaignService {
     private readonly prisma: PrismaService,
     private readonly config: ConfigService,
     private readonly apiClient: WhatsAppApiClient,
-    private readonly optOutService?: WhatsAppOptOutService,
+    @Optional() private readonly optOutService?: WhatsAppOptOutService,
   ) {}
 
   private sleep(): Promise<void> {

@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Optional } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type {
   WhatsAppSendTextMessageParams,
@@ -35,7 +35,7 @@ export class WhatsAppApiClient {
 
   constructor(
     private readonly config: ConfigService,
-    options?: OutboundClientOptions,
+    @Optional() options?: OutboundClientOptions,
   ) {
     this.timeoutMs = options?.timeoutMs ?? DEFAULT_OUTBOUND_TIMEOUT_MS;
     this.maxRetries = options?.maxRetries ?? DEFAULT_MAX_RETRIES;
