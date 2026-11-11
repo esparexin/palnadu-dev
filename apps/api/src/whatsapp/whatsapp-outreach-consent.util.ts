@@ -23,6 +23,12 @@ export async function verifyConsentEvidence(
 
   const isMarketing = templateCategory.toUpperCase() === 'MARKETING';
 
+  if (isMarketing && evidence.consentPurpose === 'CUSTOMER_SERVICE') {
+    throw new BadRequestException(
+      'Customer-service consent evidence cannot be used for promotional marketing templates.',
+    );
+  }
+
   if (evidence.consentType === 'INBOUND_WHATSAPP_INQUIRY') {
     if (isMarketing) {
       throw new BadRequestException(
@@ -50,7 +56,10 @@ export async function verifyConsentEvidence(
     const lead = await prisma.lead.findUnique({ where: { id: evidence.consentEvidenceRef } });
     if (!lead) throw new BadRequestException('Referenced consent lead record not found.');
     const leadDigits = sanitizePhoneNumber(lead.phone || '');
-    if (leadDigits && leadDigits !== phone && !phone.endsWith(leadDigits) && !leadDigits.endsWith(phone)) {
+    if (!leadDigits) {
+      throw new BadRequestException('Consent lead record does not contain a valid phone number.');
+    }
+    if (leadDigits !== phone && !phone.endsWith(leadDigits) && !leadDigits.endsWith(phone)) {
       throw new BadRequestException('Consent lead record phone does not match recipient.');
     }
   } else if (evidence.consentType === 'SIGNED_AGREEMENT') {

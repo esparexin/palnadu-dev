@@ -4,7 +4,6 @@ import { PrismaService } from '../prisma.service';
 import { WhatsAppApiClient } from './whatsapp-api.client';
 import { WhatsAppOptOutService } from './whatsapp-opt-out.service';
 import type { CreateMarketingCampaignInput } from '@palnadu/validation';
-import type { WhatsAppTemplateComponent } from '@palnadu/types';
 import {
   CampaignStatus,
   ContactOptInStatus,
@@ -12,17 +11,15 @@ import {
   type MarketingContact,
 } from '@prisma/client';
 import {
-  WHATSAPP_CONFIG_KEYS,
   DEFAULT_CAMPAIGN_BATCH_SIZE,
   MIN_CAMPAIGN_BATCH_SIZE,
   MAX_CAMPAIGN_BATCH_SIZE,
 } from './whatsapp.constants';
+import { claimCampaignAtomically } from './whatsapp-campaign-dispatch.util';
 import {
-  claimCampaignAtomically,
-  acquireCampaignRecipientReservation,
-  recordCampaignDispatchSuccess,
-  recordCampaignDispatchFailure,
-} from './whatsapp-campaign-dispatch.util';
+  resolveApprovedCampaignTemplate,
+  dispatchCampaignContact,
+} from './whatsapp-campaign-sender.util';
 
 export interface DispatchCampaignOptions {
   batchSize?: number;
@@ -125,6 +122,11 @@ export class WhatsAppCampaignService {
     const contacts = await this.fetchEligibleContacts(campaign, batchLimit);
     const existing = await this.prisma.whatsAppMessage.findMany({ where: { campaignId }, select: { to: true } });
     const alreadyMessaged = new Set(existing.map((m) => m.to));
+    const matchedTemplate = await resolveApprovedCampaignTemplate(
+      this.apiClient,
+      campaign.templateName,
+      campaign.languageCode,
+    );
 
     let sent = 0;
     let failed = 0;
@@ -140,7 +142,15 @@ export class WhatsAppCampaignService {
         continue;
       }
 
-      const success = await this.sendToContact(campaign, contact);
+      const success = await dispatchCampaignContact(
+        this.prisma,
+        this.config,
+        this.apiClient,
+        this.logger,
+        campaign,
+        contact,
+        matchedTemplate,
+      );
       if (success) {
         sent++;
         alreadyMessaged.add(contact.phone);
@@ -169,54 +179,5 @@ export class WhatsAppCampaignService {
     const where: Record<string, unknown> = { optInStatus: ContactOptInStatus.OPTED_IN };
     if (campaign.targetAudience === 'NO_WEBSITE') where.hasWebsite = false;
     return this.prisma.marketingContact.findMany({ where, take: limit, orderBy: { createdAt: 'asc' } });
-  }
-
-  private async sendToContact(campaign: MarketingCampaign, contact: MarketingContact): Promise<boolean> {
-    const businessPhone =
-      this.config.get<string>(WHATSAPP_CONFIG_KEYS.BUSINESS_PHONE)?.trim() ||
-      'palnadu_business';
-    const components: WhatsAppTemplateComponent[] = contact.businessName?.trim()
-      ? [{ type: 'body', parameters: [{ type: 'text', text: contact.businessName.trim() }] }]
-      : [];
-
-    const reserved = await acquireCampaignRecipientReservation(this.prisma, campaign.id, contact.phone);
-    if (!reserved) {
-      this.logger.warn(`Skipping recipient ${contact.phone}: reservation already claimed`);
-      return false;
-    }
-
-    try {
-      const response = await this.apiClient.sendTemplateMessage({
-        to: contact.phone,
-        templateName: campaign.templateName,
-        languageCode: campaign.languageCode,
-        ...(components.length > 0 ? { components } : {}),
-      });
-
-      const wamId = response.messages[0]?.id;
-      if (!wamId) throw new Error('Meta API response missing message id');
-
-      await recordCampaignDispatchSuccess(
-        this.prisma,
-        campaign.id,
-        contact.phone,
-        wamId,
-        businessPhone,
-        campaign.templateName,
-      );
-      return true;
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : String(err);
-      this.logger.error(`Campaign dispatch error for ${contact.phone}: ${msg}`);
-      await recordCampaignDispatchFailure(
-        this.prisma,
-        campaign.id,
-        contact.phone,
-        businessPhone,
-        campaign.templateName,
-        err,
-      );
-      return false;
-    }
   }
 }

@@ -1,14 +1,19 @@
 import { Logger } from '@nestjs/common';
 import type { ConfigService } from '@nestjs/config';
-import type { WhatsAppMetaTemplate, WhatsAppMetaTemplateComponent } from '@palnadu/types';
+import type {
+  WhatsAppMetaTemplate,
+  WhatsAppTemplateDefinition,
+} from '@palnadu/types';
 import {
   WHATSAPP_CONFIG_KEYS,
   DEFAULT_GRAPH_API_VERSION,
   META_GRAPH_API_BASE_URL,
   APPROVED_WHATSAPP_TEMPLATES,
+  WHATSAPP_TEMPLATE_PARAMETER_SPECS,
   TEMPLATE_CACHE_TTL_MS,
 } from './whatsapp.constants';
 import { WhatsAppApiException, safeJson } from './whatsapp-api.util';
+import { inspectTemplateBodyVariables } from './whatsapp-template-params.util';
 
 const logger = new Logger('WhatsAppTemplateUtil');
 
@@ -133,5 +138,42 @@ export function validateTemplateAgainstMeta(
   }
 
   return match;
+}
+
+export function mapMetaTemplatesToDefinitions(
+  approvedTemplates: WhatsAppMetaTemplate[],
+): WhatsAppTemplateDefinition[] {
+  return approvedTemplates
+    .filter((t) => t.status === 'APPROVED')
+    .map((tmpl) => {
+      const spec = WHATSAPP_TEMPLATE_PARAMETER_SPECS[tmpl.name];
+      const bodyText = tmpl.components?.find((c) => c.type === 'BODY')?.text || '';
+      const inspected = inspectTemplateBodyVariables(tmpl);
+      const requiredParameters =
+        inspected && inspected.variables.length > 0
+          ? inspected.variables.map((v) => {
+              const matchedSpecParam = spec?.requiredParameters.find(
+                (p) => (v.named ? p.key === v.key : p.index === v.index),
+              );
+              const key = v.named ? v.key : matchedSpecParam?.key || v.key;
+              return {
+                index: v.index,
+                key,
+                label: matchedSpecParam?.label || key,
+                placeholder: matchedSpecParam?.placeholder || `Enter ${key}`,
+              };
+            })
+          : spec?.requiredParameters || [];
+
+      return {
+        name: tmpl.name,
+        displayTitle: spec?.displayTitle || tmpl.name,
+        languageCode: tmpl.language,
+        category: tmpl.category,
+        description: spec?.description || `Meta-approved ${tmpl.category} template`,
+        sampleText: bodyText,
+        requiredParameters,
+      };
+    });
 }
 

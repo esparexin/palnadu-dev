@@ -25,43 +25,64 @@ export const whatsAppConsentEvidenceSchema = z.object({
   consentPurpose: z.enum(['MARKETING', 'CUSTOMER_SERVICE']).optional(),
 });
 
-export const sendIndividualOutreachSchema = z.object({
-  phone: z
-    .string()
-    .trim()
-    .min(8, 'Phone number must be at least 8 digits')
-    .max(20, 'Phone number must not exceed 20 characters')
-    .regex(/^\+?[0-9\s\-()]+$/, 'Phone number contains invalid characters'),
-  businessName: z
-    .string()
-    .trim()
-    .min(1, 'Business name is required')
-    .max(100, 'Business name must not exceed 100 characters'),
-  contactName: z
-    .string()
-    .trim()
-    .max(100, 'Contact name must not exceed 100 characters')
-    .optional(),
-  templateName: z
-    .string()
-    .trim()
-    .min(1, 'Template name is required')
-    .max(100, 'Template name must not exceed 100 characters'),
-  languageCode: z
-    .string()
-    .trim()
-    .min(2, 'Language code must be at least 2 characters')
-    .max(10, 'Language code must not exceed 10 characters'),
-  parameters: z.record(z.string()).optional(),
-  consentEvidence: whatsAppConsentEvidenceSchema,
-  idempotencyKey: z
-    .string()
-    .trim()
-    .min(8, 'Idempotency key must be at least 8 characters')
-    .max(64, 'Idempotency key must not exceed 64 characters')
-    .optional(),
-  saveContact: z.boolean().default(false),
-});
+export const PALNADU_CUSTOMER_ACKNOWLEDGEMENT_TEMPLATE = 'palnadu_customer_acknowledgement';
+
+export const sendIndividualOutreachSchema = z
+  .object({
+    phone: z
+      .string()
+      .trim()
+      .min(8, 'Phone number must be at least 8 digits')
+      .max(20, 'Phone number must not exceed 20 characters')
+      .regex(/^\+?[0-9\s\-()]+$/, 'Phone number contains invalid characters'),
+    businessName: z
+      .string()
+      .trim()
+      .min(1, 'Business name is required')
+      .max(100, 'Business name must not exceed 100 characters'),
+    contactName: z
+      .string()
+      .trim()
+      .max(100, 'Contact name must not exceed 100 characters')
+      .optional(),
+    templateName: z
+      .string()
+      .trim()
+      .min(1, 'Template name is required')
+      .max(100, 'Template name must not exceed 100 characters'),
+    languageCode: z
+      .string()
+      .trim()
+      .min(2, 'Language code must be at least 2 characters')
+      .max(10, 'Language code must not exceed 10 characters'),
+    parameters: z.record(z.string().trim()).optional(),
+    consentEvidence: whatsAppConsentEvidenceSchema,
+    idempotencyKey: z
+      .string()
+      .trim()
+      .min(8, 'Idempotency key must be at least 8 characters')
+      .max(64, 'Idempotency key must not exceed 64 characters')
+      .optional(),
+    saveContact: z.boolean().default(false),
+  })
+  .superRefine((data, ctx) => {
+    if (data.templateName === PALNADU_CUSTOMER_ACKNOWLEDGEMENT_TEMPLATE) {
+      const customerName = data.parameters?.customer_name?.trim();
+      if (!customerName) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['parameters', 'customer_name'],
+          message: 'Customer name parameter (customer_name) is required and cannot be blank',
+        });
+      } else if (customerName.length > 100) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['parameters', 'customer_name'],
+          message: 'Customer name must not exceed 100 characters',
+        });
+      }
+    }
+  });
 
 export const reconcileOutreachSchema = z.object({
   confirmedStatus: z.enum(['SENT', 'DELIVERED', 'FAILED']),

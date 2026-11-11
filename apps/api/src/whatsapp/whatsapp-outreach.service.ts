@@ -2,14 +2,14 @@ import {
   Injectable,
   Logger,
   BadRequestException,
-  HttpException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../prisma.service';
-import { WhatsAppApiClient, WhatsAppApiException } from './whatsapp-api.client';
+import { WhatsAppApiClient } from './whatsapp-api.client';
 import { WhatsAppOptOutService } from './whatsapp-opt-out.service';
 import { sanitizePhoneNumber, maskPhone } from './whatsapp-api.util';
 import { validateTemplateAgainstMeta } from './whatsapp-template.util';
+import { buildTemplateComponents } from './whatsapp-template-params.util';
 import { verifyConsentEvidence } from './whatsapp-outreach-consent.util';
 import {
   enforceDistributedRateLimits,
@@ -19,13 +19,14 @@ import {
   upsertOutreachContact,
   recordOutboundMessage,
   reconcileOutreachMessage,
+  formatOutreachHistoryItem,
 } from './whatsapp-outreach-persistence.util';
+import { handleOutreachDispatchFailure } from './whatsapp-outreach-reconciliation.util';
 import { WHATSAPP_CONFIG_KEYS } from './whatsapp.constants';
 import type {
   SendIndividualOutreachInput,
   IndividualOutreachDispatchResult,
   IndividualOutreachMessageItem,
-  WhatsAppTemplateComponent,
 } from '@palnadu/types';
 import {
   WhatsAppDeliveryStatus,
@@ -57,9 +58,21 @@ export class WhatsAppOutreachService {
     }
 
     const approvedTemplates = await this.apiClient.fetchApprovedTemplates();
-    const matchedTemplate = validateTemplateAgainstMeta(input.templateName, input.languageCode, approvedTemplates);
+    const matchedTemplate = validateTemplateAgainstMeta(
+      input.templateName,
+      input.languageCode,
+      approvedTemplates,
+    );
+    const templateCategory = matchedTemplate.category || 'MARKETING';
 
-    await verifyConsentEvidence(this.prisma, cleanPhone, input.consentEvidence, matchedTemplate.category);
+    await verifyConsentEvidence(this.prisma, cleanPhone, input.consentEvidence, templateCategory);
+
+    const { components, resolvedParameters } = buildTemplateComponents({
+      templateName: matchedTemplate.name,
+      matchedTemplate,
+      parameters: input.parameters,
+      fallbackBusinessName: input.businessName,
+    });
 
     const idempKey = input.idempotencyKey || `auto-${cleanPhone}-${Date.now()}`;
     const claimKey = `resv:idemp:${idempKey}`;
@@ -72,25 +85,44 @@ export class WhatsAppOutreachService {
 
     const businessPhone =
       this.config.get<string>(WHATSAPP_CONFIG_KEYS.BUSINESS_PHONE)?.trim() || 'palnadu_business';
-    const components = this.buildComponents(input);
 
     let metaWamId: string;
     try {
       const response = await this.apiClient.sendTemplateMessage({
         to: cleanPhone,
-        templateName: input.templateName,
-        languageCode: input.languageCode,
+        templateName: matchedTemplate.name,
+        languageCode: matchedTemplate.language,
         ...(components.length > 0 ? { components } : {}),
       });
-      metaWamId = response.messages[0]?.id;
+      metaWamId = response.messages?.[0]?.id?.trim();
       if (!metaWamId) throw new Error('Meta API returned response without message ID');
     } catch (err: unknown) {
-      return this.handleDispatchFailure(err, claim.reservationId!, cleanPhone, admin);
+      const msg = err instanceof Error ? err.message : String(err);
+      this.logger.error(`Outbound dispatch error for ${maskPhone(cleanPhone)}: ${msg}`);
+      return handleOutreachDispatchFailure(
+        this.prisma,
+        err,
+        claim.reservationId!,
+        cleanPhone,
+        admin,
+        input,
+        matchedTemplate,
+      );
     }
 
     let contactId: string | undefined;
     if (input.saveContact) {
-      contactId = await upsertOutreachContact(this.prisma, cleanPhone, input.businessName, input.contactName);
+      const hasVerifiedMarketingConsent =
+        templateCategory === 'MARKETING' &&
+        input.consentEvidence.consentType !== 'INBOUND_WHATSAPP_INQUIRY' &&
+        input.consentEvidence.consentPurpose !== 'CUSTOMER_SERVICE';
+      contactId = await upsertOutreachContact(
+        this.prisma,
+        cleanPhone,
+        input.businessName,
+        input.contactName,
+        hasVerifiedMarketingConsent,
+      );
     }
 
     await recordOutboundMessage(
@@ -101,7 +133,12 @@ export class WhatsAppOutreachService {
       businessPhone,
       input,
       admin,
-      matchedTemplate.category,
+      {
+        templateName: matchedTemplate.name,
+        languageCode: matchedTemplate.language,
+        templateCategory,
+        resolvedParameters,
+      },
     );
 
     return {
@@ -113,51 +150,6 @@ export class WhatsAppOutreachService {
       contactId,
       timestamp: new Date().toISOString(),
     };
-  }
-
-  private buildComponents(input: SendIndividualOutreachInput): WhatsAppTemplateComponent[] {
-    const textParam = input.parameters?.business_name || input.businessName;
-    return textParam ? [{ type: 'body', parameters: [{ type: 'text', text: textParam.trim() }] }] : [];
-  }
-
-  private async handleDispatchFailure(
-    err: unknown,
-    resId: string,
-    phone: string,
-    admin: { id: string },
-  ): Promise<IndividualOutreachDispatchResult> {
-    const isAmbiguous = err instanceof WhatsAppApiException && Boolean(err.isAmbiguous);
-    const msg = err instanceof Error ? err.message : String(err);
-    this.logger.error(`Outbound dispatch error for ${maskPhone(phone)}: ${msg}`);
-
-    const ambiguousWamId = `ambiguous:${resId}`;
-    await this.prisma.whatsAppMessage.update({
-      where: { id: resId },
-      data: {
-        wamId: isAmbiguous ? ambiguousWamId : undefined,
-        status: isAmbiguous ? WhatsAppDeliveryStatus.RECEIVED : WhatsAppDeliveryStatus.FAILED,
-        errorMessage: msg,
-        rawPayload: {
-          failedAt: new Date().toISOString(),
-          requiresReconciliation: isAmbiguous,
-          error: msg,
-          adminId: admin.id,
-          to: phone,
-        },
-      },
-    });
-
-    if (isAmbiguous) {
-      return {
-        success: false,
-        wamId: ambiguousWamId,
-        recipientPhone: phone,
-        status: 'RECONCILIATION_PENDING',
-        requiresReconciliation: true,
-        timestamp: new Date().toISOString(),
-      };
-    }
-    throw err instanceof HttpException ? err : new BadRequestException(`Meta WhatsApp dispatch failed: ${msg}`);
   }
 
   async listIndividualOutreachMessages(params: { page?: number; limit?: number } = {}) {
@@ -193,30 +185,7 @@ export class WhatsAppOutreachService {
       this.prisma.whatsAppMessage.count({ where }),
     ]);
 
-    const formatted: IndividualOutreachMessageItem[] = data.map((m) => {
-      const payload = (m.rawPayload as Record<string, unknown>) || {};
-      const consent = (payload.consentEvidence as Record<string, unknown>) || {};
-      const status = payload.requiresReconciliation ? 'RECONCILIATION_PENDING' : m.status;
-      return {
-        id: m.id,
-        wamId: m.wamId,
-        to: m.to,
-        templateName: m.body?.split('|')[0]?.replace('Template:', '').trim() || 'template',
-        languageCode: 'en_US',
-        status,
-        statusTimestamp: m.statusTimestamp?.toISOString(),
-        errorCode: m.errorCode || undefined,
-        errorMessage: m.errorMessage || undefined,
-        createdAt: m.createdAt.toISOString(),
-        consentType: (consent.consentType as never) || undefined,
-        consentEvidenceRef: (consent.consentEvidenceRef as string) || undefined,
-        isReconciled: Boolean(payload.reconciledAt),
-        reconciledAt: (payload.reconciledAt as string) || undefined,
-        reconciledBy: (payload.reconciledBy as string) || undefined,
-        reconciliationNotes: (payload.reconciliationNotes as string) || undefined,
-      };
-    });
-
+    const formatted: IndividualOutreachMessageItem[] = data.map(formatOutreachHistoryItem);
     return { data: formatted, total, page, totalPages: Math.ceil(total / limit) || 1 };
   }
 

@@ -5,17 +5,36 @@ import {
   Prisma,
   WhatsAppDeliveryStatus,
   WhatsAppMessageDirection,
-  ContactOptInStatus,
 } from '@prisma/client';
+import { STATUS_PROGRESSION_RANK } from './whatsapp.constants';
+import { isPrismaP2002 } from './whatsapp-outreach-reservation.util';
+
+export {
+  reconcileOutreachMessage,
+  formatOutreachHistoryItem,
+} from './whatsapp-outreach-reconciliation.util';
+
+export interface OutboundTemplateRecordMeta {
+  templateName: string;
+  languageCode: string;
+  templateCategory?: string;
+  resolvedParameters?: Record<string, string>;
+}
 
 export async function upsertOutreachContact(
   prisma: PrismaService,
   phone: string,
   businessName: string,
   contactName?: string,
+  hasVerifiedMarketingConsent = false,
 ): Promise<string> {
   const existing = await prisma.marketingContact.findUnique({ where: { phone } });
   if (existing) {
+    if (existing.optInStatus === 'OPTED_OUT') {
+      throw new BadRequestException(
+        'Recipient has opted out and cannot be marked as active outreach contact.',
+      );
+    }
     const updated = await prisma.marketingContact.update({
       where: { phone },
       data: {
@@ -33,7 +52,7 @@ export async function upsertOutreachContact(
       contactName: contactName?.trim(),
       phone,
       source: 'individual_outreach',
-      optInStatus: ContactOptInStatus.OPTED_IN,
+      optInStatus: hasVerifiedMarketingConsent ? 'OPTED_IN' : 'UNVERIFIED',
       lastContactedAt: new Date(),
     },
   });
@@ -48,68 +67,81 @@ export async function recordOutboundMessage(
   businessPhone: string,
   input: SendIndividualOutreachInput,
   admin: { id: string; email: string },
-  templateCategory = 'MARKETING',
+  templateCategoryOrMeta: string | OutboundTemplateRecordMeta = 'MARKETING',
 ): Promise<void> {
-  await prisma.whatsAppMessage.create({
-    data: {
-      wamId: metaWamId,
-      direction: WhatsAppMessageDirection.OUTBOUND,
-      from: businessPhone,
-      to: phone,
-      type: 'template',
-      status: WhatsAppDeliveryStatus.SENT,
-      statusTimestamp: new Date(),
-      body: `Template: ${input.templateName} (${input.languageCode}) | Business: ${input.businessName}`,
-      rawPayload: {
-        consentEvidence: input.consentEvidence as unknown as Prisma.InputJsonValue,
-        consentPurpose: templateCategory,
-        evidenceSource: input.consentEvidence.consentType,
-        adminId: admin.id,
-        adminEmail: admin.email,
+  const meta: OutboundTemplateRecordMeta =
+    typeof templateCategoryOrMeta === 'string'
+      ? {
+          templateName: input.templateName,
+          languageCode: input.languageCode,
+          templateCategory: templateCategoryOrMeta,
+        }
+      : templateCategoryOrMeta;
+
+  const templateCategory = meta.templateCategory || 'MARKETING';
+  const customerName = meta.resolvedParameters?.customer_name;
+  const targetLabel = customerName
+    ? `Customer: ${customerName}`
+    : `Business: ${input.businessName}`;
+  const body = `Template: ${meta.templateName} (${meta.languageCode}) | ${targetLabel}`;
+
+  const auditPayload: Record<string, unknown> = {
+    templateName: meta.templateName,
+    languageCode: meta.languageCode,
+    templateCategory,
+    ...(meta.resolvedParameters && Object.keys(meta.resolvedParameters).length > 0
+      ? { templateParameters: meta.resolvedParameters }
+      : {}),
+    businessName: input.businessName,
+    consentEvidence: input.consentEvidence,
+    consentPurpose: templateCategory,
+    evidenceSource: input.consentEvidence.consentType,
+    adminId: admin.id,
+    adminEmail: admin.email,
+  };
+
+  try {
+    await prisma.whatsAppMessage.create({
+      data: {
+        wamId: metaWamId,
+        direction: WhatsAppMessageDirection.OUTBOUND,
+        from: businessPhone,
+        to: phone,
+        type: 'template',
+        status: WhatsAppDeliveryStatus.SENT,
+        statusTimestamp: new Date(),
+        body,
+        rawPayload: auditPayload as unknown as Prisma.InputJsonValue,
       },
-    },
-  });
+    });
+  } catch (err: unknown) {
+    if (!isPrismaP2002(err)) throw err;
+
+    const existing = await prisma.whatsAppMessage.findUnique({ where: { wamId: metaWamId } });
+    const existingRank = existing ? (STATUS_PROGRESSION_RANK[existing.status] ?? 0) : 0;
+    const sentRank = STATUS_PROGRESSION_RANK[WhatsAppDeliveryStatus.SENT] ?? 10;
+    const existingPayload = (existing?.rawPayload as Record<string, unknown>) || {};
+
+    await prisma.whatsAppMessage.update({
+      where: { wamId: metaWamId },
+      data: {
+        from: businessPhone,
+        to: phone,
+        type: 'template',
+        body,
+        ...(existingRank < sentRank
+          ? { status: WhatsAppDeliveryStatus.SENT, statusTimestamp: new Date() }
+          : {}),
+        rawPayload: {
+          ...existingPayload,
+          ...auditPayload,
+        } as unknown as Prisma.InputJsonValue,
+      },
+    });
+  }
 
   await prisma.whatsAppMessage.update({
     where: { id: resId },
     data: { rawPayload: { dispatchedWamId: metaWamId, completedAt: new Date().toISOString() } },
-  });
-}
-
-export async function reconcileOutreachMessage(
-  prisma: PrismaService,
-  id: string,
-  confirmedStatus: WhatsAppDeliveryStatus,
-  admin: { id: string },
-  metaWamId?: string,
-  notes?: string,
-): Promise<void> {
-  const msg = await prisma.whatsAppMessage.findUnique({ where: { id } });
-  if (!msg) {
-    throw new BadRequestException('Outreach message not found for reconciliation.');
-  }
-
-  const payload = (msg.rawPayload as Record<string, unknown>) || {};
-  const isAmbiguous = payload.requiresReconciliation === true || msg.wamId.startsWith('ambiguous:');
-  if (!isAmbiguous && msg.status !== WhatsAppDeliveryStatus.RECEIVED) {
-    throw new BadRequestException('Message does not require reconciliation.');
-  }
-
-  const updatedPayload = {
-    ...payload,
-    requiresReconciliation: false,
-    reconciledAt: new Date().toISOString(),
-    reconciledBy: admin.id,
-    reconciliationNotes: notes || 'Confirmed by administrator without duplicate dispatch',
-  };
-
-  await prisma.whatsAppMessage.update({
-    where: { id },
-    data: {
-      status: confirmedStatus,
-      statusTimestamp: new Date(),
-      ...(metaWamId ? { wamId: metaWamId.trim() } : {}),
-      rawPayload: updatedPayload as unknown as Prisma.InputJsonValue,
-    },
   });
 }
