@@ -184,4 +184,43 @@ describe('WhatsApp Outreach Service - Verifiable Consent, Idempotency & Rate Lim
     assert.equal(res.status, 'RECONCILIATION_PENDING');
     assert.equal(res.requiresReconciliation, true);
   });
+
+  it('validates INBOUND_WHATSAPP_INQUIRY against database inbound message', async () => {
+    messagesStore.set('wamid.INBOUND_PROOF_1', {
+      wamId: 'wamid.INBOUND_PROOF_1',
+      direction: WhatsAppMessageDirection.INBOUND,
+      from: '919876500003',
+    });
+    const input = {
+      ...baseInput,
+      phone: '+919876500003',
+      consentEvidence: {
+        consentType: 'INBOUND_WHATSAPP_INQUIRY',
+        consentEvidenceRef: 'wamid.INBOUND_PROOF_1',
+        consentTimestamp: new Date().toISOString(),
+        recipientPhone: '+919876500003',
+      },
+    };
+    const res = await service.sendOutreach(input, { id: 'admin1' });
+    assert.equal(res.success, true);
+  });
+
+  it('rejects stale consent older than 180 days', async () => {
+    const twoHundredDaysAgo = new Date(Date.now() - 200 * 24 * 60 * 60 * 1000).toISOString();
+    const input = {
+      ...baseInput,
+      phone: '+919876500004',
+      consentEvidence: { ...baseInput.consentEvidence, consentTimestamp: twoHundredDaysAgo, recipientPhone: '+919876500004' },
+    };
+    await assert.rejects(() => service.sendOutreach(input, { id: 'admin1' }), /older than 180 days/);
+  });
+
+  it('verifies reservations use isolated resv: prefix and do not pollute messages list', async () => {
+    const input = { ...baseInput, phone: '+919876500005', consentEvidence: { ...baseInput.consentEvidence, recipientPhone: '+919876500005' } };
+    await service.sendOutreach(input, { id: 'admin1' });
+    const listRes = await service.listIndividualOutreachMessages();
+    for (const msg of listRes.data) {
+      assert.equal(msg.wamId.startsWith('resv:'), false, 'Reservation tokens must never appear in message history');
+    }
+  });
 });
