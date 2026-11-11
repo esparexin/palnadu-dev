@@ -12,13 +12,15 @@ import {
   Logger,
   type RawBodyRequest,
 } from '@nestjs/common';
+import { SkipThrottle } from '@nestjs/throttler';
 import type { Request, Response } from 'express';
 import { WhatsAppWebhookService } from './whatsapp-webhook.service';
 import { META_SIGNATURE_HEADER } from './whatsapp.constants';
 import { whatsAppWebhookPayloadSchema } from '@palnadu/validation';
 import type { WhatsAppWebhookPayload } from '@palnadu/types';
 
-@Controller('webhooks/whatsapp')
+@SkipThrottle()
+@Controller(['webhooks/whatsapp', 'whatsapp/webhook'])
 export class WhatsAppWebhookController {
   private readonly logger = new Logger(WhatsAppWebhookController.name);
 

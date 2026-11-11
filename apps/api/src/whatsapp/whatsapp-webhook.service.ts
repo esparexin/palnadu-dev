@@ -44,7 +44,10 @@ export class WhatsAppWebhookService {
       'hub.challenge': challenge,
     }: WhatsAppWebhookVerifyInput = parseResult.data;
 
-    const expectedToken = this.config.get<string>(WHATSAPP_CONFIG_KEYS.VERIFY_TOKEN)?.trim();
+    const expectedToken = (
+      this.config.get<string>(WHATSAPP_CONFIG_KEYS.VERIFY_TOKEN) ||
+      this.config.get<string>(WHATSAPP_CONFIG_KEYS.VERIFY_TOKEN_FALLBACK)
+    )?.trim();
     const isTokenValid = verifyTokenConstantTime(token, expectedToken);
 
     if (mode !== WHATSAPP_WEBHOOK_MODE || !isTokenValid) {
@@ -60,7 +63,10 @@ export class WhatsAppWebhookService {
     rawBody: Buffer | string | undefined,
     signatureHeader: string | undefined,
   ): boolean {
-    const appSecret = this.config.get<string>(WHATSAPP_CONFIG_KEYS.APP_SECRET);
+    const appSecret = (
+      this.config.get<string>(WHATSAPP_CONFIG_KEYS.APP_SECRET) ||
+      this.config.get<string>(WHATSAPP_CONFIG_KEYS.APP_SECRET_FALLBACK)
+    )?.trim();
     return verifyMetaWebhookSignature(rawBody, signatureHeader, appSecret);
   }
 

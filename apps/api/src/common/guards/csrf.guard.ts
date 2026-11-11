@@ -28,6 +28,7 @@ export class CsrfGuard implements CanActivate {
       path.includes('/auth/login') ||
       path.includes('/auth/logout') ||
       path.includes('/whatsapp/webhook') ||
+      path.includes('/webhooks/whatsapp') ||
       (path.includes('/leads') && method === 'POST' && !req.headers.cookie?.includes(ADMIN_SESSION_COOKIE))
     ) {
       return true;
