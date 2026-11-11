@@ -3,7 +3,7 @@ import { getAutomationModules } from './blog-automation-helper.mjs';
 export function validDraft(overrides = {}) {
   const keyword = 'website development cost guntur';
   const content = [
-    `If you are searching ${keyword} this guide covers it.`,
+    `If you are searching ${keyword} this guide covers it. Explore our [Website Development](/services/website-development) services.`,
     Array.from({ length: 700 }, (_, i) => `filler${i}`).join(' '),
   ].join(' ');
   return {
@@ -21,7 +21,7 @@ export function validDraft(overrides = {}) {
     secondaryKeywords: ['web design price guntur'],
     searchIntent: 'COMMERCIAL_INVESTIGATION',
     h2Headings: ['What drives cost', 'How to compare quotes'],
-    internalLinks: [{ anchor: 'Services', url: '/services/web-development' }],
+    internalLinks: [{ anchor: 'Website Development', url: '/services/website-development' }],
     faq: [],
     ...overrides,
   };

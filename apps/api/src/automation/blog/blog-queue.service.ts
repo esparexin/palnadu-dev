@@ -111,9 +111,11 @@ export class BlogQueueService {
 
     const candidate = await this.prisma.blogTopic.findFirst({
       where: {
-        status: TopicStatus.PENDING,
         attempts: { lt: maxAttempts },
-        OR: [{ nextRetryAt: null }, { nextRetryAt: { isSet: false } as any }, { nextRetryAt: { lte: now } }],
+        OR: [
+          { status: TopicStatus.PENDING, OR: [{ nextRetryAt: null }, { nextRetryAt: { isSet: false } as any }, { nextRetryAt: { lte: now } }] },
+          { status: TopicStatus.CLAIMED, claimedAt: { lt: staleBefore } },
+        ],
       },
       orderBy: { createdAt: 'asc' },
     });
@@ -122,7 +124,7 @@ export class BlogQueueService {
     const claim = await this.prisma.blogTopic.updateMany({
       where: {
         id: candidate.id,
-        status: { in: [TopicStatus.PENDING, TopicStatus.FAILED] },
+        status: { in: [TopicStatus.PENDING, TopicStatus.CLAIMED, TopicStatus.FAILED] },
         OR: [{ claimedAt: null }, { claimedAt: { isSet: false } as any }, { claimedAt: { lt: staleBefore } }],
       },
       data: { status: TopicStatus.CLAIMED, claimedAt: now, claimedBy: workerId },
@@ -142,10 +144,12 @@ export class BlogQueueService {
 
     const candidate = await this.prisma.blogTopic.findFirst({
       where: {
-        status: TopicStatus.PENDING,
         language,
         attempts: { lt: maxAttempts },
-        OR: [{ nextRetryAt: null }, { nextRetryAt: { isSet: false } as any }, { nextRetryAt: { lte: now } }],
+        OR: [
+          { status: TopicStatus.PENDING, OR: [{ nextRetryAt: null }, { nextRetryAt: { isSet: false } as any }, { nextRetryAt: { lte: now } }] },
+          { status: TopicStatus.CLAIMED, claimedAt: { lt: staleBefore } },
+        ],
       },
       orderBy: { createdAt: 'asc' },
     });
@@ -154,7 +158,7 @@ export class BlogQueueService {
     const claim = await this.prisma.blogTopic.updateMany({
       where: {
         id: candidate.id,
-        status: { in: [TopicStatus.PENDING, TopicStatus.FAILED] },
+        status: { in: [TopicStatus.PENDING, TopicStatus.CLAIMED, TopicStatus.FAILED] },
         OR: [{ claimedAt: null }, { claimedAt: { isSet: false } as any }, { claimedAt: { lt: staleBefore } }],
       },
       data: { status: TopicStatus.CLAIMED, claimedAt: now, claimedBy: workerId },

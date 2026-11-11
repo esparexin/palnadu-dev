@@ -78,3 +78,19 @@ export const automationBilingualSchema = z
   );
 
 export type AutomationBilingualInput = z.infer<typeof automationBilingualSchema>;
+
+export const geminiKeyInputSchema = z.object({
+  apiKey: z
+    .string({ required_error: 'API key is required' })
+    .trim()
+    .min(20, 'API key must be at least 20 characters')
+    .max(256, 'API key exceeds maximum length')
+    .regex(
+      /^(AIza|AQ)[0-9A-Za-z-_\.]{25,250}$/,
+      'Invalid Gemini API key format (must start with AIza or AQ)',
+    ),
+  primaryModel: z.string().trim().max(100).optional(),
+});
+
+export type GeminiKeyInput = z.infer<typeof geminiKeyInputSchema>;
+

@@ -8,6 +8,7 @@ import { ValidationOutcome } from '../seo-validation-rules';
 import { SearchIntent } from '../topic-identity';
 import { BlogLanguage } from '@prisma/client';
 import { ClaimedTopic } from './types';
+import { embedContextualBacklinks } from './backlink-policy';
 
 export interface ComposedArticle {
   draft: any;
@@ -77,7 +78,14 @@ export class BlogComposerService {
     const coverImage =
       images[0]?.url ||
       'https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&w=1200&q=80';
-    const enrichedContent = this.enrichContent(draft.content, images, draft.internalLinks, language);
+    const enrichedContent = this.enrichContent(
+      draft.content,
+      images,
+      draft.internalLinks,
+      language,
+      draft.slug,
+      categorySlug,
+    );
     draft.content = enrichedContent;
     const wordCount = enrichedContent.split(/\s+/).length;
 
@@ -129,6 +137,8 @@ export class BlogComposerService {
     images: LicensedImage[],
     internalLinks: { anchor: string; url: string }[] = [],
     language: BlogLanguage = BlogLanguage.en,
+    slug = '',
+    categorySlug = 'website-development',
   ): string {
     let content = rawContent;
 
@@ -144,16 +154,14 @@ export class BlogComposerService {
       if (p2.length === 2 && md2) content = `${p2[0]}${md2}## 5. ${p2[1]}`;
     }
 
-    const missingLinks = internalLinks.filter((l) => l.url && !content.includes(l.url));
-    if (missingLinks.length > 0) {
-      const isTe = language === BlogLanguage.te;
-      const heading = isTe ? '## సంబంధిత సాంకేతిక సేవలు & వనరులు' : '## Related Solutions & Next Steps';
-      const intro = isTe
-        ? 'మీ వ్యాపార డిజిటలైజేషన్ మరియు సాఫ్ట్‌వేర్ అవసరాల కోసం మా సేవలను పరిశీలించండి:'
-        : 'Explore relevant engineering capabilities and architectural solutions:';
-      const items = missingLinks.map((l) => `- [${l.anchor}](${l.url})`).join('\n');
-      content = `${content.trim()}\n\n---\n\n${heading}\n\n${intro}\n\n${items}\n`;
-    }
+    // Embed contextual backlinks naturally into prose body paragraphs
+    content = embedContextualBacklinks(
+      content,
+      slug,
+      categorySlug,
+      language === BlogLanguage.te ? 'te' : 'en',
+      internalLinks,
+    );
 
     return content
       .replace(/\*\*([^*]+)\*\*/g, '$1')

@@ -99,4 +99,28 @@ export const automationApi = {
     adminApi<{ success: boolean; count: number; data: any[] }>(
       `/api/admin/automation/crawler/history?limit=${limit || 10}`,
     ),
+  geminiStatus: () =>
+    adminApi<{ success: boolean; data: any }>('/api/admin/automation/gemini/status'),
+  geminiVerify: (apiKey: string, primaryModel?: string) =>
+    adminApi<{ success: boolean; message: string; data: any }>(
+      '/api/admin/automation/gemini/verify',
+      {
+        method: 'POST',
+        body: JSON.stringify({ apiKey, primaryModel }),
+        timeoutMs: 35000,
+      },
+    ),
+  geminiActivate: (apiKey: string, primaryModel?: string) =>
+    adminApi<{ success: boolean; message: string; data: any }>(
+      '/api/admin/automation/gemini/activate',
+      {
+        method: 'POST',
+        body: JSON.stringify({ apiKey, primaryModel }),
+        timeoutMs: 35000,
+      },
+    ),
+  geminiAuditLog: (limit?: number) =>
+    adminApi<{ success: boolean; data: any[] }>(
+      `/api/admin/automation/gemini/audit-log?limit=${limit || 20}`,
+    ),
 };

@@ -17,6 +17,9 @@ import { TopicDiscoveryService } from './topic-discovery.service';
 import { ContentSimilarityService } from './content-similarity.service';
 import { SeoValidationService } from './seo-validation.service';
 import { TechnicalSeoCrawlerService } from './technical-seo-crawler.service';
+import { GeminiKeyVerificationService } from './gemini-verification/gemini-verification.service';
+import { GeminiKeyStoreService } from './gemini-verification/gemini-key-store.service';
+import { GeminiSettingsController } from './gemini-verification/gemini-settings.controller';
 import {
   AutomationController,
   WebmasterAutomationController,
@@ -54,6 +57,7 @@ export { REFERENCE_SOURCES };
     AutomationController,
     WebmasterAutomationController,
     KeywordResearchController,
+    GeminiSettingsController,
   ],
   providers: [
     BlogAutomationService,
@@ -70,6 +74,8 @@ export { REFERENCE_SOURCES };
     ContentSimilarityService,
     SeoValidationService,
     TechnicalSeoCrawlerService,
+    GeminiKeyVerificationService,
+    GeminiKeyStoreService,
 
     GoogleAutocompleteSource,
     GoogleTrendsSource,
@@ -115,6 +121,8 @@ export { REFERENCE_SOURCES };
     ContentSimilarityService,
     SeoValidationService,
     TechnicalSeoCrawlerService,
+    GeminiKeyVerificationService,
+    GeminiKeyStoreService,
     GoogleSearchConsoleSource,
     BingWebmasterSource,
     IndexNowSource,

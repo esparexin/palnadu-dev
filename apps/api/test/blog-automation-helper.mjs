@@ -33,6 +33,7 @@ export function getAutomationModules() {
       'node',
       '--skipLibCheck',
       '--esModuleInterop',
+      '--experimentalDecorators',
     ],
     { cwd: process.cwd(), stdio: 'pipe' },
   );

@@ -4,6 +4,7 @@ import { IndexNowSource } from '../seo-sources';
 import { BlogLanguage, PublishStatus, TopicStatus } from '@prisma/client';
 import { ComposedArticle } from './blog-composer.service';
 import { ClaimedTopic, GenerationResult } from './types';
+import { extractInternalBacklinks } from './backlink-policy';
 
 @Injectable()
 export class BlogPublisherService {
@@ -14,7 +15,10 @@ export class BlogPublisherService {
     @Optional() private readonly indexNow?: IndexNowSource,
   ) {}
 
-  async decidePublishStatus(forcePublish: boolean, validation: { forceDraft: boolean }): Promise<PublishStatus> {
+  async decidePublishStatus(
+    forcePublish: boolean,
+    validation: { forceDraft: boolean; failures?: { name: string }[] },
+  ): Promise<PublishStatus> {
     let shouldPublish = forcePublish;
     if (!shouldPublish) {
       const setting = await this.prisma.siteSetting.findUnique({
@@ -23,6 +27,13 @@ export class BlogPublisherService {
       shouldPublish = setting?.value === true;
     }
 
+    const hasBacklinkFailure = validation.failures?.some((f) => f.name === 'internal_links');
+    if (hasBacklinkFailure) {
+      if (shouldPublish) {
+        this.logger.warn('Backlink validation failed; forcing DRAFT status despite auto-publish.');
+      }
+      shouldPublish = false;
+    }
     if (validation.forceDraft) {
       if (shouldPublish) {
         this.logger.warn('Draft produced a template-fallback; forcing DRAFT despite auto-publish.');
@@ -79,6 +90,11 @@ export class BlogPublisherService {
       },
     });
 
+    const inBodyLinks = extractInternalBacklinks(enrichedContent);
+    this.logger.log(
+      `Backlink Audit: "${draft.title}" [${language}] -> ${inBodyLinks.length} backlink(s): ${inBodyLinks.map((l) => l.url).join(', ') || 'none'} | Status: ${publishStatus}`,
+    );
+
     await this.prisma.blogTopic.update({
       where: { topicKey_language: { topicKey, language } },
       data: { status: TopicStatus.COMPLETED, postId: post.id, claimedAt: null, claimedBy: null },
@@ -105,6 +121,7 @@ export class BlogPublisherService {
             ? `/te/blog/${post.slug}`
             : `/blog/${post.slug}`
           : null,
+        failureReason: !validation.passed ? validation.failures.map((f: { name: string }) => f.name).join(', ') : null,
         durationMs: Date.now() - startedAt,
       },
     });
@@ -126,7 +143,7 @@ export class BlogPublisherService {
             : 'New Blog Draft Ready for Review',
         message: validation.forceDraft
           ? `"${post.title}" fell back to the static template because LLM generation did not succeed. Saved as DRAFT.`
-          : `"${post.title}" was generated with ${images.length} licensed images and is currently ${publishStatus}.`,
+          : `"${post.title}" was generated with ${images.length} licensed images (${inBodyLinks.length} backlinks) and is currently ${publishStatus}.`,
         type: 'BLOG_AUTOMATION',
         read: false,
         data: {
@@ -136,6 +153,9 @@ export class BlogPublisherService {
           topicKey,
           llmProvider,
           templateFallback: validation.forceDraft,
+          internalBacklinksCount: inBodyLinks.length,
+          internalBacklinkUrls: inBodyLinks.map((l) => l.url),
+          validationStatus: validation.passed ? 'PASSED' : 'FAILED',
         },
       },
     });
