@@ -86,3 +86,4 @@ export interface IndividualOutreachMessageItem {
   consentType?: WhatsAppConsentType;
   consentEvidenceRef?: string;
 }
+

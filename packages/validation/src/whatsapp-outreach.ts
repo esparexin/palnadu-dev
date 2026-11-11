@@ -64,3 +64,4 @@ export const sendIndividualOutreachSchema = z.object({
 
 export type WhatsAppConsentEvidenceInput = z.infer<typeof whatsAppConsentEvidenceSchema>;
 export type SendIndividualOutreachInput = z.infer<typeof sendIndividualOutreachSchema>;
+
