@@ -1,8 +1,9 @@
 import { adminApi, getToken, API_URL } from './api/client';
 import { automationApi } from './api/automation';
 import { settingsApi } from './api/settings';
+import { whatsappApi } from './api/whatsapp';
 
-export { adminApi, getToken, API_URL };
+export { adminApi, getToken, API_URL, whatsappApi };
 
 export const api = {
   auth: {
@@ -94,4 +95,5 @@ export const api = {
     stats: () => adminApi('/api/admin/dashboard/stats'),
   },
   settings: settingsApi,
+  whatsapp: whatsappApi,
 };

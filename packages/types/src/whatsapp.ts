@@ -14,6 +14,7 @@ export interface WhatsAppMessage {
   mediaId?: string;
   mimeType?: string;
   contextWamId?: string;
+  campaignId?: string;
   status: WhatsAppDeliveryStatus;
   statusTimestamp?: string;
   errorCode?: string;
@@ -110,4 +111,105 @@ export interface WhatsAppWebhookPayload {
   object: string;
   entry: WhatsAppWebhookEntry[];
 }
+
+export interface WhatsAppSendTextMessageParams {
+  to: string;
+  text: string;
+  previewUrl?: boolean;
+  replyToWamId?: string;
+}
+
+export interface WhatsAppSendResponseContact {
+  input: string;
+  wa_id: string;
+}
+
+export interface WhatsAppSendResponseMessage {
+  id: string;
+  message_status?: string;
+}
+
+export interface WhatsAppSendResponse {
+  messaging_product: string;
+  contacts: WhatsAppSendResponseContact[];
+  messages: WhatsAppSendResponseMessage[];
+}
+
+export interface WhatsAppApiErrorDetail {
+  message: string;
+  type: string;
+  code: number;
+  error_subcode?: number;
+  fbtrace_id?: string;
+}
+
+export interface WhatsAppApiErrorResponse {
+  error: WhatsAppApiErrorDetail;
+}
+
+export type WhatsAppTemplateComponentType = 'header' | 'body' | 'button';
+
+export interface WhatsAppTemplateParameter {
+  type: 'text' | 'currency' | 'date_time' | 'image' | 'document' | 'video';
+  text?: string;
+  image?: { id?: string; link?: string };
+  document?: { id?: string; link?: string; filename?: string };
+  video?: { id?: string; link?: string };
+  currency?: { fallback_value: string; code: string; amount_1000: number };
+  date_time?: { fallback_value: string };
+}
+
+export interface WhatsAppTemplateComponent {
+  type: WhatsAppTemplateComponentType;
+  sub_type?: 'url' | 'quick_reply';
+  index?: string;
+  parameters: WhatsAppTemplateParameter[];
+}
+
+export interface WhatsAppSendTemplateParams {
+  to: string;
+  templateName: string;
+  languageCode: string;
+  components?: WhatsAppTemplateComponent[];
+}
+
+export interface MarketingCampaign {
+  id: string;
+  name: string;
+  description?: string;
+  templateName: string;
+  languageCode: string;
+  status: string;
+  targetAudience?: string;
+  scheduledAt?: string;
+  startedAt?: string;
+  completedAt?: string;
+  totalContacts: number;
+  sentCount: number;
+  deliveredCount: number;
+  readCount: number;
+  failedCount: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface MarketingContact {
+  id: string;
+  businessName: string;
+  contactName?: string;
+  phone: string;
+  city?: string;
+  category?: string;
+  hasWebsite: boolean;
+  websiteUrl?: string;
+  optInStatus: string;
+  optOutReason?: string;
+  optOutTimestamp?: string;
+  source?: string;
+  lastContactedAt?: string;
+  notes?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 

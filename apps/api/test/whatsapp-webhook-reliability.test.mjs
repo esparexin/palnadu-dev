@@ -107,13 +107,9 @@ describe('WhatsApp Webhook Reliability & Idempotency', () => {
     };
 
     const mockNotifications = {
-      create: async () => {
-        notificationCount++;
-      },
+      create: async () => { notificationCount++; },
     };
-
     const messageService = new WhatsAppMessageService(mockPrisma, mockNotifications);
-
     const messageParams = {
       wamId: 'wamid.DUPLICATE_TEST_001',
       from: '919000000000',
@@ -173,4 +169,78 @@ describe('WhatsApp Webhook Reliability & Idempotency', () => {
     assert.equal(result.wamId, 'wamid.RACE_TEST_001');
     assert.equal(notificationCount, 0, 'No notification dispatched on race condition collision');
   });
+
+  it('correlates primary wamId to eventId in whatsAppWebhookLog', async () => {
+    let updatedLog = null;
+    const mockPrisma = {
+      whatsAppWebhookLog: {
+        create: async ({ data }) => ({ id: 'log_corr_1', ...data }),
+        update: async ({ where, data }) => (updatedLog = { id: where.id, ...data }),
+      },
+    };
+    const mockMsgSvc = {
+      saveInboundMessage: async (p) => ({ id: 'msg_1', ...p }),
+      updateMessageStatus: async (p) => ({ id: 'msg_1', ...p }),
+    };
+    const service = new WhatsAppWebhookService(mockConfig, mockMsgSvc, mockPrisma);
+    const payload = {
+      object: 'whatsapp_business_account',
+      entry: [{
+        id: 'entry_biz_1',
+        changes: [{
+          field: 'messages',
+          value: {
+            messaging_product: 'whatsapp',
+            messages: [{ id: 'wamid.CORRELATED_1', from: '919876543210', type: 'text', text: { body: 'Hi' } }],
+          },
+        }],
+      }],
+    };
+    await service.processIncomingPayload(payload);
+    assert.equal(updatedLog.eventId, 'wamid.CORRELATED_1');
+    assert.equal(updatedLog.processed, true);
+  });
+
+  it('safely extracts body text for interactive buttons, locations, and reactions', async () => {
+    const savedBodies = [];
+    const mockPrisma = {
+      whatsAppWebhookLog: {
+        create: async ({ data }) => ({ id: 'log_rich', ...data }),
+        update: async () => ({}),
+      },
+    };
+    const mockMsgSvc = {
+      saveInboundMessage: async (p) => {
+        savedBodies.push({ type: p.type, body: p.body });
+        return { id: 'msg_rich', ...p };
+      },
+      updateMessageStatus: async () => ({}),
+    };
+    const service = new WhatsAppWebhookService(mockConfig, mockMsgSvc, mockPrisma);
+    const payload = {
+      object: 'whatsapp_business_account',
+      entry: [{
+        id: 'entry_1',
+        changes: [{
+          field: 'messages',
+          value: {
+            messaging_product: 'whatsapp',
+            messages: [
+              { id: 'm1', from: '919000000001', type: 'interactive', interactive: { button_reply: { id: 'btn', title: 'Schedule Call' } } },
+              { id: 'm2', from: '919000000001', type: 'location', location: { name: 'HQ', latitude: 16.2, longitude: 80.0 } },
+              { id: 'm3', from: '919000000001', type: 'reaction', reaction: { emoji: '🚀' } },
+              { id: 'm4', from: '919000000001', type: 'audio' },
+            ],
+          },
+        }],
+      }],
+    };
+    await service.processIncomingPayload(payload);
+    assert.equal(savedBodies[0].body, '[Button: Schedule Call]');
+    assert.match(savedBodies[1].body, /\[Location: HQ/);
+    assert.equal(savedBodies[2].body, '[Reaction: 🚀]');
+    assert.equal(savedBodies[3].body, '[Audio Message]');
+  });
 });
+
+

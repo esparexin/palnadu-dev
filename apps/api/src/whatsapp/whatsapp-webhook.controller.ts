@@ -15,6 +15,7 @@ import {
 import type { Request, Response } from 'express';
 import { WhatsAppWebhookService } from './whatsapp-webhook.service';
 import { META_SIGNATURE_HEADER } from './whatsapp.constants';
+import { whatsAppWebhookPayloadSchema } from '@palnadu/validation';
 import type { WhatsAppWebhookPayload } from '@palnadu/types';
 
 @Controller('webhooks/whatsapp')
@@ -65,6 +66,11 @@ export class WhatsAppWebhookController {
     if (!isSignatureValid) {
       this.logger.warn('Rejected incoming WhatsApp webhook: invalid or missing X-Hub-Signature-256');
       throw new UnauthorizedException('Invalid or missing webhook signature');
+    }
+
+    const parseResult = whatsAppWebhookPayloadSchema.safeParse(req.body);
+    if (!parseResult.success) {
+      this.logger.warn(`WhatsApp webhook payload validation warning: ${parseResult.error.message}`);
     }
 
     const payload: WhatsAppWebhookPayload = req.body;
