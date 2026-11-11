@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
+import { api } from '@/lib/api';
 
 export function parseJwtPayload(token: string): { exp?: number; sub?: string; role?: string } | null {
   try {
@@ -38,21 +39,42 @@ export function AdminAuthGuard({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const token = typeof window !== 'undefined' ? localStorage.getItem('admin_token') : null;
-    if (!token) {
-      setAuthState('unauthorized');
-      router.replace('/login');
+    if (token) {
+      if (!isTokenValid(token)) {
+        localStorage.removeItem('admin_token');
+        localStorage.removeItem('admin_user');
+        setAuthState('unauthorized');
+        router.replace('/login?session=expired');
+        return;
+      }
+      setAuthState('authorized');
       return;
     }
 
-    if (!isTokenValid(token)) {
-      localStorage.removeItem('admin_token');
-      localStorage.removeItem('admin_user');
-      setAuthState('unauthorized');
-      router.replace('/login?session=expired');
-      return;
-    }
+    let isCancelled = false;
+    api.auth
+      .me()
+      .then((res) => {
+        if (isCancelled) return;
+        if (res && res.data) {
+          localStorage.setItem('admin_user', JSON.stringify(res.data));
+          setAuthState('authorized');
+        } else {
+          setAuthState('unauthorized');
+          router.replace('/login');
+        }
+      })
+      .catch(() => {
+        if (isCancelled) return;
+        localStorage.removeItem('admin_token');
+        localStorage.removeItem('admin_user');
+        setAuthState('unauthorized');
+        router.replace('/login');
+      });
 
-    setAuthState('authorized');
+    return () => {
+      isCancelled = true;
+    };
   }, [router]);
 
   if (authState !== 'authorized') {

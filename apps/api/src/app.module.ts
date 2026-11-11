@@ -5,6 +5,7 @@ import { APP_GUARD } from '@nestjs/core';
 import { HealthController } from './health.controller';
 import { PrismaModule } from './prisma.module';
 import { AuthModule } from './auth/auth.module';
+import { CsrfGuard } from './common/guards/csrf.guard';
 import { LeadsModule } from './leads/leads.module';
 import { ClientsModule } from './clients/clients.module';
 import { ProjectsModule } from './projects/projects.module';
@@ -44,6 +45,10 @@ import { WhatsAppModule } from './whatsapp/whatsapp.module';
     {
       provide: APP_GUARD,
       useClass: ThrottlerGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: CsrfGuard,
     },
   ],
 })

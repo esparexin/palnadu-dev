@@ -91,7 +91,10 @@ export function AdminSidebar() {
       .catch(() => {});
   }, [userRole]);
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    try {
+      await api.auth.logout();
+    } catch {}
     localStorage.removeItem('admin_token');
     localStorage.removeItem('admin_user');
     router.push('/login');

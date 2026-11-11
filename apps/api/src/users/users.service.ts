@@ -2,10 +2,14 @@ import { Injectable, ConflictException } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
 import { UserRole } from '@prisma/client';
 import * as bcrypt from 'bcryptjs';
+import { SessionService } from '../auth/session.service';
 
 @Injectable()
 export class UsersService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private sessionService: SessionService,
+  ) {}
 
   async create(data: {
     email: string;
@@ -88,7 +92,7 @@ export class UsersService {
       updateData.password = await bcrypt.hash(data.password, 12);
     }
 
-    return this.prisma.user.update({
+    const updatedUser = await this.prisma.user.update({
       where: { id },
       data: updateData,
       select: {
@@ -101,5 +105,11 @@ export class UsersService {
         createdAt: true,
       },
     });
+
+    if (data.isActive === false || data.password) {
+      await this.sessionService.revokeAllUserSessions(id);
+    }
+
+    return updatedUser;
   }
 }

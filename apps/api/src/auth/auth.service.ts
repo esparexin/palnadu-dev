@@ -2,6 +2,7 @@ import { Injectable, UnauthorizedException, Logger } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
 import { PrismaService } from '../prisma.service';
+import { SessionService, generateCsrfToken } from './session.service';
 
 export function maskEmail(email: string): string {
   if (!email || !email.includes('@')) return '***';
@@ -17,9 +18,10 @@ export class AuthService {
   constructor(
     private prisma: PrismaService,
     private jwtService: JwtService,
+    private sessionService?: SessionService,
   ) {}
 
-  async login(email: string, password: string) {
+  async login(email: string, password: string, ipAddress?: string, userAgent?: string) {
     const totalStart = Date.now();
 
     const dbStart = Date.now();
@@ -46,15 +48,30 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
+    const sessionStart = Date.now();
+    let rawToken: string = user.id;
+    if (this.sessionService) {
+      const sessionResult = await this.sessionService.createSession(user.id, ipAddress, userAgent);
+      rawToken = sessionResult.rawToken;
+    }
+    const sessionDuration = Date.now() - sessionStart;
+
+    const csrfToken = generateCsrfToken();
+
     const jwtStart = Date.now();
-    const payload = { sub: user.id, email: user.email, role: user.role };
+    const payload = {
+      sub: user.id,
+      email: user.email,
+      role: user.role,
+      sid: rawToken,
+    };
     const accessToken = this.jwtService.sign(payload);
     const jwtDuration = Date.now() - jwtStart;
 
     const totalDuration = Date.now() - totalStart;
     this.logger.log(
       `Admin login verified for ${maskEmail(email)} [${user.role}]: ` +
-      `db=${dbDuration}ms, verify=${bcryptDuration}ms, jwt=${jwtDuration}ms, total=${totalDuration}ms`,
+      `db=${dbDuration}ms, verify=${bcryptDuration}ms, session=${sessionDuration}ms, jwt=${jwtDuration}ms, total=${totalDuration}ms`,
     );
 
     const { password: _, ...userWithoutPassword } = user;
@@ -62,7 +79,14 @@ export class AuthService {
     return {
       user: userWithoutPassword,
       accessToken,
+      rawToken,
+      csrfToken,
     };
+  }
+
+  async logout(rawToken?: string): Promise<boolean> {
+    if (!rawToken || !this.sessionService) return false;
+    return this.sessionService.revokeSession(rawToken);
   }
 
   async validateUser(userId: string) {

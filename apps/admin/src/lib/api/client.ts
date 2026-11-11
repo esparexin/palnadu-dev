@@ -10,9 +10,18 @@ export function getToken(): string | null {
   return localStorage.getItem('admin_token');
 }
 
+export function getCsrfToken(): string | null {
+  if (typeof document === 'undefined') return null;
+  const match = document.cookie.match(/(?:^|;\s*)csrf_token=([^;]+)/);
+  return match ? decodeURIComponent(match[1]) : null;
+}
+
 export async function adminApi<T>(endpoint: string, options: FetchOptions = {}): Promise<T> {
   const { params, timeoutMs = 15000, ...fetchOptions } = options;
   const token = getToken();
+  const method = (fetchOptions.method || 'GET').toUpperCase();
+  const csrfToken = getCsrfToken();
+  const requiresCsrf = ['POST', 'PUT', 'PATCH', 'DELETE'].includes(method);
 
   let url = `${API_URL}${endpoint}`;
   if (params) {
@@ -29,9 +38,11 @@ export async function adminApi<T>(endpoint: string, options: FetchOptions = {}):
   let response: Response;
   try {
     response = await fetch(url, {
+      credentials: 'include',
       headers: {
         'Content-Type': 'application/json',
         ...(token && { Authorization: `Bearer ${token}` }),
+        ...(requiresCsrf && csrfToken && { 'X-CSRF-Token': csrfToken }),
         ...fetchOptions.headers,
       },
       ...fetchOptions,
