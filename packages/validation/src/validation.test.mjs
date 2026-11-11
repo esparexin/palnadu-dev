@@ -4,6 +4,7 @@ import {
   createLeadSchema,
   loginSchema,
   createServiceSchema,
+  geminiKeyInputSchema,
 } from '../dist/index.js';
 
 describe('Validation Schemas Audit', () => {
@@ -137,6 +138,31 @@ describe('Validation Schemas Audit', () => {
       };
       const result = createServiceSchema.safeParse(valid);
       assert.equal(result.success, true);
+    });
+  });
+
+  describe('geminiKeyInputSchema', () => {
+    it('should accept valid AIza-prefixed Gemini API key', () => {
+      const result = geminiKeyInputSchema.safeParse({
+        apiKey: 'AIzaSyTestApiKeyForVerification1234567890',
+        primaryModel: 'gemini-3.8-flash',
+      });
+      assert.equal(result.success, true);
+    });
+
+    it('should accept valid AQ-prefixed Gemini API key format', () => {
+      const result = geminiKeyInputSchema.safeParse({
+        apiKey: 'AQ.SyntheticTestKeyForSchemaValidationSample123456789',
+      });
+      assert.equal(result.success, true);
+    });
+
+    it('should reject keys with invalid prefix or short length', () => {
+      const result1 = geminiKeyInputSchema.safeParse({ apiKey: 'sk-proj-invalid1234567890123456' });
+      assert.equal(result1.success, false);
+
+      const result2 = geminiKeyInputSchema.safeParse({ apiKey: 'AIzaTooShort' });
+      assert.equal(result2.success, false);
     });
   });
 });
