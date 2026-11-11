@@ -33,6 +33,7 @@ export default function CampaignsPage() {
     actionLoadingId,
     handleCreateCampaign,
     handleSendIndividualOutreach,
+    handleReconcileOutreach,
     handleDispatch,
     handlePause,
     handleImportContacts,
@@ -120,6 +121,7 @@ export default function CampaignsPage() {
           messages={outreachMessages}
           loading={loading}
           onOpenOutreachModal={() => setOutreachModalOpen(true)}
+          onReconcileMessage={handleReconcileOutreach}
         />
       )}
 

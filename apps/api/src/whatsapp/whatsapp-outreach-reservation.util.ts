@@ -111,3 +111,20 @@ export async function acquireIdempotencyReservation(
   }
 }
 
+export async function cleanExpiredReservations(
+  prisma: PrismaService,
+  olderThanMs: number = 3600000,
+): Promise<{ deletedCount: number }> {
+  // Clamped to at least 1 hour ago so active reservations (< 1 hour old) can never be deleted
+  const safetyFloorMs = Math.max(olderThanMs, 3600000);
+  const cutoff = new Date(Date.now() - safetyFloorMs);
+
+  const res = await prisma.whatsAppMessage.deleteMany({
+    where: {
+      wamId: { startsWith: 'resv:' },
+      createdAt: { lt: cutoff },
+    },
+  });
+  return { deletedCount: res.count };
+}
+

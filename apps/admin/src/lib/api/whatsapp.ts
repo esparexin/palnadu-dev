@@ -81,6 +81,14 @@ export const whatsappApi = {
       }>('/api/admin/whatsapp/outreach/messages', {
         params: params ? { page: String(params.page || 1), limit: String(params.limit || 20) } : undefined,
       }),
+    reconcile: (id: string, data: { confirmedStatus: 'SENT' | 'DELIVERED' | 'FAILED'; metaWamId?: string; notes?: string }) =>
+      adminApi<{ success: boolean; data: { success: boolean; id: string; status: string; reconciled: boolean } }>(
+        `/api/admin/whatsapp/outreach/${id}/reconcile`,
+        {
+          method: 'POST',
+          body: JSON.stringify(data),
+        },
+      ),
   },
 
   campaigns: {

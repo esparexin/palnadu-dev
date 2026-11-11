@@ -71,6 +71,12 @@ export interface IndividualOutreachDispatchResult {
   timestamp: string;
 }
 
+export interface ReconcileOutreachInput {
+  confirmedStatus: 'SENT' | 'DELIVERED' | 'FAILED';
+  metaWamId?: string;
+  notes?: string;
+}
+
 export interface IndividualOutreachMessageItem {
   id: string;
   wamId: string;

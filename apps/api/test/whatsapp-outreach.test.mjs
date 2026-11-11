@@ -21,8 +21,29 @@ describe('WhatsApp Outreach Service - Verifiable Consent, Idempotency & Rate Lim
     messagesStore = new Map();
     contactsStore = new Map();
     leadsStore = new Map();
+    const mediaStore = new Map();
+    mediaStore.set('AGR-2026-RETAIL', {
+      id: 'AGR-2026-RETAIL',
+      filename: 'AGR-2026-RETAIL',
+      metadata: { authorizesWhatsAppMarketing: true },
+    });
 
     mockPrisma = {
+      media: {
+        findUnique: async ({ where }) => mediaStore.get(where.id) || null,
+        findFirst: async ({ where }) => {
+          for (const item of mediaStore.values()) {
+            if (where.filename === item.filename || where.id === item.id) return item;
+            if (where.OR) {
+              for (const orCond of where.OR) {
+                if (orCond.filename && item.filename === orCond.filename) return item;
+                if (orCond.originalName && item.originalName === orCond.originalName) return item;
+              }
+            }
+          }
+          return null;
+        },
+      },
       whatsAppMessage: {
         create: async ({ data }) => {
           if (messagesStore.has(data.wamId)) {

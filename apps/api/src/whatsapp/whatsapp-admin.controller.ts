@@ -22,8 +22,10 @@ import { WhatsAppOutreachService } from './whatsapp-outreach.service';
 import {
   createMarketingCampaignSchema,
   sendIndividualOutreachSchema,
+  reconcileOutreachSchema,
   type CreateMarketingCampaignInput,
   type SendIndividualOutreachInput,
+  type ReconcileOutreachInput,
 } from '@palnadu/validation';
 import { CampaignStatus, ContactOptInStatus } from '@prisma/client';
 import {
@@ -69,6 +71,18 @@ export class WhatsAppAdminController {
       limit: limit ? Number.parseInt(limit, 10) : 20,
     });
     return { success: true, ...result };
+  }
+
+  @Post('outreach/:id/reconcile')
+  async reconcileOutreach(
+    @Param('id') id: string,
+    @Body(new ZodValidationPipe(reconcileOutreachSchema)) body: ReconcileOutreachInput,
+    @Req() req: Request & { user?: { id: string } },
+  ) {
+    if (!this.outreachService) throw new NotFoundException('Outreach service unavailable');
+    const admin = { id: req.user?.id || 'admin_session' };
+    const result = await this.outreachService.reconcileOutreach(id, body, admin);
+    return { success: true, data: result };
   }
 
   @Get('templates')

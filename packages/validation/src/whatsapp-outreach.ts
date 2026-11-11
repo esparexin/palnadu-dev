@@ -62,6 +62,13 @@ export const sendIndividualOutreachSchema = z.object({
   saveContact: z.boolean().default(false),
 });
 
+export const reconcileOutreachSchema = z.object({
+  confirmedStatus: z.enum(['SENT', 'DELIVERED', 'FAILED']),
+  metaWamId: z.string().trim().min(5).max(128).optional(),
+  notes: z.string().trim().max(500).optional(),
+});
+
 export type WhatsAppConsentEvidenceInput = z.infer<typeof whatsAppConsentEvidenceSchema>;
 export type SendIndividualOutreachInput = z.infer<typeof sendIndividualOutreachSchema>;
+export type ReconcileOutreachInput = z.infer<typeof reconcileOutreachSchema>;
 

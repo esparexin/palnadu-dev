@@ -35,8 +35,36 @@ export async function verifyConsentEvidence(
       throw new BadRequestException('Referenced inbound WhatsApp consent interaction not found.');
     }
   } else if (evidence.consentType === 'SIGNED_AGREEMENT') {
-    if (!/^AGR-[A-Za-z0-9_-]{4,32}$/.test(evidence.consentEvidenceRef)) {
-      throw new BadRequestException('Invalid signed agreement reference format (must match AGR-XXXX).');
+    const isObjectId = /^[0-9a-fA-F]{24}$/.test(evidence.consentEvidenceRef);
+    const doc = isObjectId
+      ? await prisma.media.findUnique({ where: { id: evidence.consentEvidenceRef } })
+      : await prisma.media.findFirst({
+          where: {
+            OR: [
+              { filename: evidence.consentEvidenceRef },
+              { originalName: evidence.consentEvidenceRef },
+            ],
+          },
+        });
+    if (!doc) {
+      throw new BadRequestException('Referenced signed agreement document not found in stored documents.');
+    }
+    const meta = (doc.metadata as Record<string, unknown>) || {};
+    const hasMarketingConsent =
+      meta.authorizesWhatsAppMarketing === true ||
+      meta.whatsappConsent === true ||
+      meta.whatsappMarketingAuthorized === true;
+    if (!hasMarketingConsent) {
+      throw new BadRequestException(
+        'Stored agreement document does not explicitly authorize WhatsApp marketing communication.',
+      );
+    }
+    const docPhone =
+      meta.recipientPhone || meta.phone
+        ? sanitizePhoneNumber(String(meta.recipientPhone || meta.phone))
+        : null;
+    if (docPhone && docPhone !== phone && !phone.endsWith(docPhone) && !docPhone.endsWith(phone)) {
+      throw new BadRequestException('Stored agreement phone authorization does not match recipient.');
     }
   }
 }

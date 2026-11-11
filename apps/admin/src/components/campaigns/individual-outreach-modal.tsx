@@ -187,7 +187,7 @@ export function IndividualOutreachModal({
                 required
                 value={formData.consentEvidenceRef}
                 onChange={(e) => setFormData({ ...formData, consentEvidenceRef: e.target.value })}
-                placeholder="e.g. AGR-2026-001 or Lead ID"
+                placeholder="e.g. Lead ID, Inbound WamID, or Stored Media ID"
                 className="h-9 font-mono text-xs"
               />
             </div>

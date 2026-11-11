@@ -8,12 +8,14 @@ interface IndividualOutreachTableProps {
   messages: IndividualOutreachMessageItem[];
   loading: boolean;
   onOpenOutreachModal: () => void;
+  onReconcileMessage?: (id: string, confirmedStatus: 'DELIVERED' | 'FAILED') => Promise<void>;
 }
 
 export function IndividualOutreachTable({
   messages,
   loading,
   onOpenOutreachModal,
+  onReconcileMessage,
 }: IndividualOutreachTableProps) {
   if (loading) {
     return (
@@ -120,6 +122,26 @@ export function IndividualOutreachTable({
                 </td>
                 <td className="px-4 py-3">
                   <div>{getStatusBadge(m.status)}</div>
+                  {m.status === 'RECONCILIATION_PENDING' && onReconcileMessage && (
+                    <div className="mt-1.5 flex items-center gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => onReconcileMessage(m.id, 'DELIVERED')}
+                        className="rounded border border-palnadu-teal/30 bg-palnadu-teal/10 px-1.5 py-0.5 text-xs font-semibold text-palnadu-teal hover:bg-palnadu-teal/20 cursor-pointer"
+                        title="Confirm message was delivered to recipient"
+                      >
+                        Confirm Delivered
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => onReconcileMessage(m.id, 'FAILED')}
+                        className="rounded border border-palnadu-error/30 bg-palnadu-error/10 px-1.5 py-0.5 text-xs font-semibold text-palnadu-error hover:bg-palnadu-error/20 cursor-pointer"
+                        title="Mark message as undelivered / failed"
+                      >
+                        Mark Failed
+                      </button>
+                    </div>
+                  )}
                   {m.errorMessage && (
                     <div className="mt-0.5 text-xs text-palnadu-error line-clamp-1" title={m.errorMessage}>
                       {m.errorMessage}

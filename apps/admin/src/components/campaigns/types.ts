@@ -55,7 +55,7 @@ export const initialOutreachFormData: IndividualOutreachFormData = {
   contactName: '',
   templateName: 'b2b_website_outreach_v1',
   languageCode: 'en_US',
-  consentType: 'SIGNED_AGREEMENT',
-  consentEvidenceRef: 'AGR-',
+  consentType: 'WEBSITE_LEAD_FORM',
+  consentEvidenceRef: '',
   saveContact: false,
 };

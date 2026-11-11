@@ -1,3 +1,4 @@
+import { BadRequestException } from '@nestjs/common';
 import type { PrismaService } from '../prisma.service';
 import type { SendIndividualOutreachInput } from '@palnadu/types';
 import {
@@ -69,5 +70,43 @@ export async function recordOutboundMessage(
   await prisma.whatsAppMessage.update({
     where: { id: resId },
     data: { rawPayload: { dispatchedWamId: metaWamId, completedAt: new Date().toISOString() } },
+  });
+}
+
+export async function reconcileOutreachMessage(
+  prisma: PrismaService,
+  id: string,
+  confirmedStatus: WhatsAppDeliveryStatus,
+  admin: { id: string },
+  metaWamId?: string,
+  notes?: string,
+): Promise<void> {
+  const msg = await prisma.whatsAppMessage.findUnique({ where: { id } });
+  if (!msg) {
+    throw new BadRequestException('Outreach message not found for reconciliation.');
+  }
+
+  const payload = (msg.rawPayload as Record<string, unknown>) || {};
+  const isAmbiguous = payload.requiresReconciliation === true || msg.wamId.startsWith('ambiguous:');
+  if (!isAmbiguous && msg.status !== WhatsAppDeliveryStatus.RECEIVED) {
+    throw new BadRequestException('Message does not require reconciliation.');
+  }
+
+  const updatedPayload = {
+    ...payload,
+    requiresReconciliation: false,
+    reconciledAt: new Date().toISOString(),
+    reconciledBy: admin.id,
+    reconciliationNotes: notes || 'Confirmed by administrator without duplicate dispatch',
+  };
+
+  await prisma.whatsAppMessage.update({
+    where: { id },
+    data: {
+      status: confirmedStatus,
+      statusTimestamp: new Date(),
+      ...(metaWamId ? { wamId: metaWamId.trim() } : {}),
+      rawPayload: updatedPayload as unknown as Prisma.InputJsonValue,
+    },
   });
 }

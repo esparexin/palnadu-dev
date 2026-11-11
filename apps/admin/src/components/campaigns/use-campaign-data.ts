@@ -110,6 +110,18 @@ export function useCampaignData(search: string, onlyNoWebsite: boolean) {
     }
   };
 
+  const handleReconcileOutreach = async (id: string, confirmedStatus: 'DELIVERED' | 'FAILED') => {
+    try {
+      const res = await api.whatsapp.outreach.reconcile(id, { confirmedStatus });
+      if (res.success) {
+        toast.success(`Message reconciled as ${confirmedStatus} without duplicate dispatch.`);
+        loadData();
+      }
+    } catch {
+      toast.error('Failed to reconcile message status.');
+    }
+  };
+
   return {
     stats,
     campaigns,
@@ -120,6 +132,7 @@ export function useCampaignData(search: string, onlyNoWebsite: boolean) {
     actionLoadingId,
     handleCreateCampaign,
     handleSendIndividualOutreach,
+    handleReconcileOutreach,
     handleDispatch,
     handlePause,
     handleImportContacts,

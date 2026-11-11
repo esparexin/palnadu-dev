@@ -18,6 +18,7 @@ import {
 import {
   upsertOutreachContact,
   recordOutboundMessage,
+  reconcileOutreachMessage,
 } from './whatsapp-outreach-persistence.util';
 import { WHATSAPP_CONFIG_KEYS } from './whatsapp.constants';
 import type {
@@ -120,19 +121,27 @@ export class WhatsAppOutreachService {
     const msg = err instanceof Error ? err.message : String(err);
     this.logger.error(`Outbound dispatch error for ${maskPhone(phone)}: ${msg}`);
 
+    const ambiguousWamId = `ambiguous:${resId}`;
     await this.prisma.whatsAppMessage.update({
       where: { id: resId },
       data: {
+        wamId: isAmbiguous ? ambiguousWamId : undefined,
         status: isAmbiguous ? WhatsAppDeliveryStatus.RECEIVED : WhatsAppDeliveryStatus.FAILED,
         errorMessage: msg,
-        rawPayload: { failedAt: new Date().toISOString(), requiresReconciliation: isAmbiguous, error: msg, adminId: admin.id },
+        rawPayload: {
+          failedAt: new Date().toISOString(),
+          requiresReconciliation: isAmbiguous,
+          error: msg,
+          adminId: admin.id,
+          to: phone,
+        },
       },
     });
 
     if (isAmbiguous) {
       return {
         success: false,
-        wamId: `ambiguous:${resId}`,
+        wamId: ambiguousWamId,
         recipientPhone: phone,
         status: 'RECONCILIATION_PENDING',
         requiresReconciliation: true,
@@ -178,13 +187,14 @@ export class WhatsAppOutreachService {
     const formatted: IndividualOutreachMessageItem[] = data.map((m) => {
       const payload = (m.rawPayload as Record<string, unknown>) || {};
       const consent = (payload.consentEvidence as Record<string, unknown>) || {};
+      const status = payload.requiresReconciliation ? 'RECONCILIATION_PENDING' : m.status;
       return {
         id: m.id,
         wamId: m.wamId,
         to: m.to,
         templateName: m.body?.split('|')[0]?.replace('Template:', '').trim() || 'template',
         languageCode: 'en_US',
-        status: m.status,
+        status,
         statusTimestamp: m.statusTimestamp?.toISOString(),
         errorCode: m.errorCode || undefined,
         errorMessage: m.errorMessage || undefined,
@@ -195,5 +205,20 @@ export class WhatsAppOutreachService {
     });
 
     return { data: formatted, total, page, totalPages: Math.ceil(total / limit) || 1 };
+  }
+
+  async reconcileOutreach(
+    id: string,
+    dto: { confirmedStatus: 'SENT' | 'DELIVERED' | 'FAILED'; metaWamId?: string; notes?: string },
+    admin: { id: string },
+  ) {
+    const statusMap: Record<string, WhatsAppDeliveryStatus> = {
+      SENT: WhatsAppDeliveryStatus.SENT,
+      DELIVERED: WhatsAppDeliveryStatus.DELIVERED,
+      FAILED: WhatsAppDeliveryStatus.FAILED,
+    };
+    const deliveryStatus = statusMap[dto.confirmedStatus] || WhatsAppDeliveryStatus.SENT;
+    await reconcileOutreachMessage(this.prisma, id, deliveryStatus, admin, dto.metaWamId, dto.notes);
+    return { success: true, id, status: dto.confirmedStatus, reconciled: true };
   }
 }
