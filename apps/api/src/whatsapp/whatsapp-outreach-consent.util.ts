@@ -8,6 +8,7 @@ export async function verifyConsentEvidence(
   prisma: PrismaService,
   phone: string,
   evidence: WhatsAppConsentEvidence,
+  templateCategory = 'MARKETING',
 ): Promise<void> {
   const evidencePhone = sanitizePhoneNumber(evidence.recipientPhone);
   if (evidencePhone !== phone) {
@@ -20,19 +21,37 @@ export async function verifyConsentEvidence(
     throw new BadRequestException('Consent timestamp is invalid or older than 180 days.');
   }
 
-  if (evidence.consentType === 'WEBSITE_LEAD_FORM' || evidence.consentType === 'VERIFIED_CRM_LEAD') {
-    const lead = await prisma.lead.findUnique({ where: { id: evidence.consentEvidenceRef } });
-    if (!lead) throw new BadRequestException('Referenced consent lead record not found.');
-    const leadDigits = sanitizePhoneNumber(lead.phone || '');
-    if (leadDigits && leadDigits !== phone && !phone.endsWith(leadDigits) && !leadDigits.endsWith(phone)) {
-      throw new BadRequestException('Consent lead record phone does not match recipient.');
+  const isMarketing = templateCategory.toUpperCase() === 'MARKETING';
+
+  if (evidence.consentType === 'INBOUND_WHATSAPP_INQUIRY') {
+    if (isMarketing) {
+      throw new BadRequestException(
+        'Inbound customer enquiry authorizes customer service response only, not promotional marketing templates. Promotional outreach requires explicit marketing opt-in consent.',
+      );
     }
-  } else if (evidence.consentType === 'INBOUND_WHATSAPP_INQUIRY') {
     const inbound = await prisma.whatsAppMessage.findUnique({
       where: { wamId: evidence.consentEvidenceRef },
     });
     if (!inbound || inbound.direction !== WhatsAppMessageDirection.INBOUND) {
       throw new BadRequestException('Referenced inbound WhatsApp consent interaction not found.');
+    }
+    const inboundTime = new Date(inbound.statusTimestamp || inbound.createdAt).getTime();
+    const twentyFourHoursMs = 24 * 60 * 60 * 1000;
+    if (Date.now() - inboundTime > twentyFourHoursMs) {
+      throw new BadRequestException(
+        'Inbound WhatsApp inquiry is outside Meta’s applicable 24-hour customer-service window.',
+      );
+    }
+    const inboundFrom = sanitizePhoneNumber(inbound.from);
+    if (inboundFrom && inboundFrom !== phone && !phone.endsWith(inboundFrom) && !inboundFrom.endsWith(phone)) {
+      throw new BadRequestException('Referenced inbound message sender does not match recipient phone.');
+    }
+  } else if (evidence.consentType === 'WEBSITE_LEAD_FORM' || evidence.consentType === 'VERIFIED_CRM_LEAD') {
+    const lead = await prisma.lead.findUnique({ where: { id: evidence.consentEvidenceRef } });
+    if (!lead) throw new BadRequestException('Referenced consent lead record not found.');
+    const leadDigits = sanitizePhoneNumber(lead.phone || '');
+    if (leadDigits && leadDigits !== phone && !phone.endsWith(leadDigits) && !leadDigits.endsWith(phone)) {
+      throw new BadRequestException('Consent lead record phone does not match recipient.');
     }
   } else if (evidence.consentType === 'SIGNED_AGREEMENT') {
     const isObjectId = /^[0-9a-fA-F]{24}$/.test(evidence.consentEvidenceRef);

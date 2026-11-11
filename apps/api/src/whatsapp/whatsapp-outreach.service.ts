@@ -56,10 +56,10 @@ export class WhatsAppOutreachService {
       throw new BadRequestException('Recipient has opted out and is on the suppression list.');
     }
 
-    await verifyConsentEvidence(this.prisma, cleanPhone, input.consentEvidence);
-
     const approvedTemplates = await this.apiClient.fetchApprovedTemplates();
-    validateTemplateAgainstMeta(input.templateName, input.languageCode, approvedTemplates);
+    const matchedTemplate = validateTemplateAgainstMeta(input.templateName, input.languageCode, approvedTemplates);
+
+    await verifyConsentEvidence(this.prisma, cleanPhone, input.consentEvidence, matchedTemplate.category);
 
     const idempKey = input.idempotencyKey || `auto-${cleanPhone}-${Date.now()}`;
     const claimKey = `resv:idemp:${idempKey}`;
@@ -93,7 +93,16 @@ export class WhatsAppOutreachService {
       contactId = await upsertOutreachContact(this.prisma, cleanPhone, input.businessName, input.contactName);
     }
 
-    await recordOutboundMessage(this.prisma, metaWamId, claim.reservationId!, cleanPhone, businessPhone, input, admin);
+    await recordOutboundMessage(
+      this.prisma,
+      metaWamId,
+      claim.reservationId!,
+      cleanPhone,
+      businessPhone,
+      input,
+      admin,
+      matchedTemplate.category,
+    );
 
     return {
       success: true,
@@ -201,6 +210,10 @@ export class WhatsAppOutreachService {
         createdAt: m.createdAt.toISOString(),
         consentType: (consent.consentType as never) || undefined,
         consentEvidenceRef: (consent.consentEvidenceRef as string) || undefined,
+        isReconciled: Boolean(payload.reconciledAt),
+        reconciledAt: (payload.reconciledAt as string) || undefined,
+        reconciledBy: (payload.reconciledBy as string) || undefined,
+        reconciliationNotes: (payload.reconciliationNotes as string) || undefined,
       };
     });
 

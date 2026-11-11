@@ -48,6 +48,7 @@ export async function recordOutboundMessage(
   businessPhone: string,
   input: SendIndividualOutreachInput,
   admin: { id: string; email: string },
+  templateCategory = 'MARKETING',
 ): Promise<void> {
   await prisma.whatsAppMessage.create({
     data: {
@@ -61,6 +62,8 @@ export async function recordOutboundMessage(
       body: `Template: ${input.templateName} (${input.languageCode}) | Business: ${input.businessName}`,
       rawPayload: {
         consentEvidence: input.consentEvidence as unknown as Prisma.InputJsonValue,
+        consentPurpose: templateCategory,
+        evidenceSource: input.consentEvidence.consentType,
         adminId: admin.id,
         adminEmail: admin.email,
       },

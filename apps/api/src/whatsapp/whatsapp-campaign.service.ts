@@ -45,8 +45,19 @@ export class WhatsAppCampaignService {
     @Optional() private readonly optOutService?: WhatsAppOptOutService,
   ) {}
 
+  private getPacingDelayMs(): number {
+    const configured = this.config.get<string | number>('WHATSAPP_CAMPAIGN_DELAY_MS');
+    if (configured !== undefined && configured !== null) {
+      const parsed = typeof configured === 'number' ? configured : Number.parseInt(String(configured), 10);
+      if (!Number.isNaN(parsed)) {
+        return Math.max(500, Math.min(30000, parsed));
+      }
+    }
+    return 1500; // Conservative default: 1.5 seconds per message (~40 msgs/min)
+  }
+
   private sleep(): Promise<void> {
-    return new Promise((resolve) => setTimeout(resolve, DEFAULT_CAMPAIGN_DELAY_MS));
+    return new Promise((resolve) => setTimeout(resolve, this.getPacingDelayMs()));
   }
 
   async createCampaign(data: CreateMarketingCampaignInput): Promise<MarketingCampaign> {
@@ -129,7 +140,7 @@ export class WhatsAppCampaignService {
     for (const contact of contacts) {
       if (
         alreadyMessaged.has(contact.phone) ||
-        contact.optInStatus === ContactOptInStatus.OPTED_OUT ||
+        contact.optInStatus !== ContactOptInStatus.OPTED_IN ||
         (this.optOutService && (await this.optOutService.isSuppressed(contact.phone)))
       ) {
         skipped++;
@@ -162,7 +173,7 @@ export class WhatsAppCampaignService {
   }
 
   private async fetchEligibleContacts(campaign: MarketingCampaign, limit: number): Promise<MarketingContact[]> {
-    const where: Record<string, unknown> = { optInStatus: { not: ContactOptInStatus.OPTED_OUT } };
+    const where: Record<string, unknown> = { optInStatus: ContactOptInStatus.OPTED_IN };
     if (campaign.targetAudience === 'NO_WEBSITE') where.hasWebsite = false;
     return this.prisma.marketingContact.findMany({ where, take: limit, orderBy: { createdAt: 'asc' } });
   }
@@ -201,8 +212,28 @@ export class WhatsAppCampaignService {
       });
       return true;
     } catch (err: unknown) {
+      const isAmbiguous = err instanceof WhatsAppApiException && Boolean(err.isAmbiguous);
       const msg = err instanceof Error ? err.message : String(err);
       this.logger.error(`Campaign dispatch error for ${contact.phone}: ${msg}`);
+
+      if (isAmbiguous) {
+        await this.prisma.whatsAppMessage.create({
+          data: {
+            wamId: `ambiguous:cmp:${campaign.id}:${contact.phone}`,
+            direction: WhatsAppMessageDirection.OUTBOUND,
+            from: businessPhone,
+            to: contact.phone,
+            type: 'template',
+            status: WhatsAppDeliveryStatus.RECEIVED,
+            statusTimestamp: new Date(),
+            campaignId: campaign.id,
+            body: `Template: ${campaign.templateName}`,
+            errorMessage: msg,
+            rawPayload: { requiresReconciliation: true, error: msg, campaignId: campaign.id },
+          },
+        }).catch(() => null);
+      }
+
       return false;
     }
   }
