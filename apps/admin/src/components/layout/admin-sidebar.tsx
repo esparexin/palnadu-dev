@@ -43,19 +43,43 @@ export function AdminSidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [userRole, setUserRole] = useState<string>('SUPER_ADMIN');
-  const [userName, setUserName] = useState<string>('Admin');
-  const [customLogoUrl, setCustomLogoUrl] = useState<string | null>(null);
-
-  useEffect(() => {
+  const [userRole, setUserRole] = useState<string>(() => {
+    if (typeof window === 'undefined') return '';
     try {
       const raw = localStorage.getItem('admin_user');
       if (raw) {
         const parsed = JSON.parse(raw);
-        if (parsed.role) setUserRole(parsed.role);
-        if (parsed.name) setUserName(parsed.name);
+        return parsed.role || '';
       }
     } catch {}
+    return '';
+  });
+
+  const [userName, setUserName] = useState<string>(() => {
+    if (typeof window === 'undefined') return '';
+    try {
+      const raw = localStorage.getItem('admin_user');
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        return parsed.name || 'Admin';
+      }
+    } catch {}
+    return 'Admin';
+  });
+
+  const [customLogoUrl, setCustomLogoUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!userRole) {
+      try {
+        const raw = localStorage.getItem('admin_user');
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (parsed.role) setUserRole(parsed.role);
+          if (parsed.name) setUserName(parsed.name);
+        }
+      } catch {}
+    }
 
     api.settings.branding
       .get()
@@ -65,7 +89,7 @@ export function AdminSidebar() {
         }
       })
       .catch(() => {});
-  }, []);
+  }, [userRole]);
 
   const handleLogout = () => {
     localStorage.removeItem('admin_token');
@@ -86,7 +110,7 @@ export function AdminSidebar() {
       {/* Navigation Links (Filtered by RBAC User Role) */}
       <nav className="flex-1 space-y-1 p-3.5 overflow-y-auto" aria-label="Admin navigation">
         {sidebarItems
-          .filter((item) => item.roles.includes(userRole))
+          .filter((item) => (userRole ? item.roles.includes(userRole) : false))
           .map((item) => {
             const Icon = item.icon;
             const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
@@ -115,7 +139,7 @@ export function AdminSidebar() {
           <div className="truncate">
             <p className="text-xs font-bold text-palnadu-dark truncate">{userName}</p>
             <p className="text-xs font-mono text-palnadu-secondary uppercase tracking-wider">
-              {userRole.replace(/_/g, ' ')}
+              {userRole ? userRole.replace(/_/g, ' ') : 'AUTHENTICATED'}
             </p>
           </div>
         </div>

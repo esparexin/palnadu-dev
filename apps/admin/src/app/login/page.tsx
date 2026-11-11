@@ -25,6 +25,9 @@ export default function LoginPage() {
       }
     }
 
+    // Prefetch dashboard code chunks so navigation is instant after login
+    router.prefetch('/dashboard');
+
     api.settings.branding
       .get()
       .then((res) => {
@@ -33,7 +36,7 @@ export default function LoginPage() {
         }
       })
       .catch(() => {});
-  }, []);
+  }, [router]);
 
   const {
     register,
@@ -44,6 +47,7 @@ export default function LoginPage() {
   });
 
   const onSubmit = async (data: LoginInput) => {
+    if (isSubmitting) return; // Prevent duplicate concurrent submissions
     try {
       setError(null);
       const response = await api.auth.login(data);
@@ -77,6 +81,7 @@ export default function LoginPage() {
               type="email"
               aria-invalid={Boolean(errors.email)}
               placeholder="admin@palnadu.dev"
+              onFocus={() => router.prefetch('/dashboard')}
               {...register('email')}
             />
             {errors.email && (
@@ -91,6 +96,7 @@ export default function LoginPage() {
               type="password"
               aria-invalid={Boolean(errors.password)}
               placeholder="••••••••"
+              onFocus={() => router.prefetch('/dashboard')}
               {...register('password')}
             />
             {errors.password && (
