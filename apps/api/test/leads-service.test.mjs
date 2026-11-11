@@ -177,4 +177,65 @@ describe('LeadsService - Latency, Idempotency & Reliability', () => {
 
     assert.equal(result.id, 'lead_survives');
   });
+
+  it('persists server-side WhatsApp consent metadata when user explicitly opts in', async () => {
+    let createdPayload = null;
+    const mockPrisma = {
+      lead: {
+        findFirst: async () => null,
+        create: async ({ data }) => {
+          createdPayload = data;
+          return { id: 'lead_consent_1', ...data, createdAt: new Date() };
+        },
+      },
+      notification: { create: async () => ({ id: 'notif_c1' }) },
+    };
+    const lead = await new LeadsService(mockPrisma).create({
+      name: 'Sita Devi',
+      email: 'sita@example.com',
+      phone: '+91 98765-43210',
+      problemDescription: 'Requesting WhatsApp marketing and project updates.',
+      projectStage: 'EXISTING_BUSINESS',
+      requiredHelp: 'WEB_APPLICATION',
+      whatsappMarketingConsent: true,
+    });
+    assert.equal(lead.whatsappMarketingConsent, true);
+    assert.equal(createdPayload.whatsappConsentPhone, '919876543210');
+    assert.equal(createdPayload.whatsappConsentSource, 'WEBSITE_LEAD_FORM');
+    assert.ok(createdPayload.whatsappConsentAt instanceof Date);
+    assert.ok(typeof createdPayload.whatsappConsentVersion === 'string' && createdPayload.whatsappConsentVersion.length > 0);
+  });
+
+  it('does not deduplicate within 60s when whatsappMarketingConsent preference changes', async () => {
+    const existing = {
+      id: 'lead_ordinary_1',
+      email: 'sita@example.com',
+      problemDescription: 'Inquiry about custom software.',
+      whatsappMarketingConsent: false,
+      createdAt: new Date(),
+    };
+    let createdNew = false;
+    const mockPrisma = {
+      lead: {
+        findFirst: async () => existing,
+        create: async ({ data }) => {
+          createdNew = true;
+          return { id: 'lead_opted_2', ...data };
+        },
+      },
+      notification: { create: async () => ({ id: 'notif_c2' }) },
+    };
+    const result = await new LeadsService(mockPrisma).create({
+      name: 'Sita Devi',
+      email: 'sita@example.com',
+      phone: '919876543210',
+      problemDescription: 'Inquiry about custom software.',
+      projectStage: 'EXISTING_BUSINESS',
+      requiredHelp: 'WEB_APPLICATION',
+      whatsappMarketingConsent: true,
+    });
+    assert.equal(createdNew, true);
+    assert.equal(result.id, 'lead_opted_2');
+    assert.equal(result.whatsappMarketingConsent, true);
+  });
 });

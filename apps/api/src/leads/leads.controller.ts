@@ -14,8 +14,14 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
-import { createLeadSchema, updateLeadSchema, type CreateLeadInput } from '@palnadu/validation';
+import {
+  createLeadSchema,
+  updateLeadSchema,
+  WHATSAPP_MARKETING_CONSENT_VERSION,
+  type CreateLeadInput,
+} from '@palnadu/validation';
 import { LeadsService } from './leads.service';
+import { sanitizePhoneNumber } from '../whatsapp/whatsapp-api.util';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
@@ -31,6 +37,15 @@ export class LeadsController {
   @Throttle({ default: { ttl: 60000, limit: 5 } })
   @HttpCode(HttpStatus.CREATED)
   async createLead(@Body(new ZodValidationPipe(createLeadSchema)) validData: CreateLeadInput) {
+    const hasWhatsappConsent = Boolean(validData.whatsappMarketingConsent);
+    const consentPhone =
+      hasWhatsappConsent && validData.phone ? sanitizePhoneNumber(validData.phone) : undefined;
+    if (hasWhatsappConsent && (!consentPhone || consentPhone.length < 10)) {
+      throw new BadRequestException(
+        'A valid phone number is required to opt in to WhatsApp marketing updates.',
+      );
+    }
+
     const lead = await this.leadsService.create({
       name: validData.name,
       email: validData.email,
@@ -42,6 +57,16 @@ export class LeadsController {
       requiredHelp: validData.requiredHelp,
       budget: validData.budget || undefined,
       additionalInfo: validData.additionalInfo || undefined,
+      whatsappMarketingConsent: hasWhatsappConsent,
+      ...(hasWhatsappConsent
+        ? {
+            whatsappConsentPhone: consentPhone,
+            whatsappConsentAt: new Date(),
+            whatsappConsentSource: 'WEBSITE_LEAD_FORM',
+            whatsappConsentVersion:
+              validData.whatsappConsentVersion || WHATSAPP_MARKETING_CONSENT_VERSION,
+          }
+        : {}),
     });
 
     return {

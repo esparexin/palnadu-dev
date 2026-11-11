@@ -9,6 +9,7 @@ import type {
 import { Prisma, WhatsAppDeliveryStatus } from '@prisma/client';
 import { STATUS_PROGRESSION_RANK } from './whatsapp.constants';
 import { WhatsAppApiException } from './whatsapp-api.client';
+import type { VerifiedConsentRecord } from './whatsapp-outreach-consent.util';
 import { isPrismaP2002 } from './whatsapp-outreach-reservation.util';
 
 export async function reconcileOutreachMessage(
@@ -128,6 +129,7 @@ export async function handleOutreachDispatchFailure(
   admin: { id: string },
   input: SendIndividualOutreachInput,
   matchedTemplate: WhatsAppMetaTemplate,
+  verifiedConsent?: VerifiedConsentRecord,
 ): Promise<IndividualOutreachDispatchResult> {
   const isAmbiguous = err instanceof WhatsAppApiException && Boolean(err.isAmbiguous);
   const msg = err instanceof Error ? err.message : String(err);
@@ -151,6 +153,15 @@ export async function handleOutreachDispatchFailure(
         templateCategory: matchedTemplate.category || 'MARKETING',
         businessName: input.businessName,
         consentEvidence: input.consentEvidence as unknown as Prisma.InputJsonValue,
+        evidenceSource: verifiedConsent?.consentSource || input.consentEvidence.consentType,
+        ...(verifiedConsent
+          ? {
+              verifiedConsentTimestamp: verifiedConsent.consentTimestamp.toISOString(),
+              ...(verifiedConsent.consentVersion
+                ? { consentVersion: verifiedConsent.consentVersion }
+                : {}),
+            }
+          : {}),
       },
     },
   });

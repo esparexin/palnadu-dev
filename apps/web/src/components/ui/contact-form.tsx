@@ -3,19 +3,22 @@
 import React, { useState, useRef } from 'react';
 import { useForm, type FieldErrors } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { createLeadSchema, type CreateLeadInput } from '@palnadu/validation';
+import {
+  createLeadSchema,
+  WHATSAPP_MARKETING_CONSENT_VERSION,
+  type CreateLeadInput,
+} from '@palnadu/validation';
 import { Button } from '@/components/ui/button';
-import { siteConfig } from '@palnadu/config';
 import { api } from '@/lib/api';
 import {
   trackFormStart,
   trackFormSubmitAttempt,
   trackFormSubmitFailure,
   trackGenerateLead,
-  trackContactChannelClick,
 } from '@/lib/analytics';
-import { renderSocialIcon, helpTypeMapping, type ContactSectionProps } from './contact-data';
+import { helpTypeMapping, type ContactSectionProps } from './contact-data';
 import { ContactFormFields } from './contact-form-fields';
+import { ContactFormHeader } from './contact-form-header';
 import { ContactSuccessState } from './contact-success-state';
 
 interface ContactFormProps {
@@ -53,6 +56,7 @@ export function ContactFormCard({
     register,
     handleSubmit,
     setValue,
+    watch,
     reset,
     formState: { errors, isSubmitting },
   } = useForm<CreateLeadInput>({
@@ -67,8 +71,11 @@ export function ContactFormCard({
       problemDescription: '',
       projectStage: 'JUST_AN_IDEA',
       requiredHelp: 'NOT_SURE',
+      whatsappMarketingConsent: false,
     },
   });
+
+  const whatsappConsent = Boolean(watch('whatsappMarketingConsent'));
 
   const handleCheckboxToggle = (type: string) => {
     setSelectedTypes((prev) => {
@@ -107,14 +114,20 @@ export function ContactFormCard({
 
     try {
       let createdId = `lead_${Date.now()}`;
+      const leadPayload = {
+        ...data,
+        whatsappMarketingConsent: Boolean(data.whatsappMarketingConsent),
+        ...(data.whatsappMarketingConsent
+          ? { whatsappConsentVersion: WHATSAPP_MARKETING_CONSENT_VERSION }
+          : {}),
+        additionalInfo:
+          selectedTypes.length > 0 ? `Interested in: ${selectedTypes.join(', ')}` : undefined,
+      };
+
       if (onSubmit) {
-        await onSubmit({ ...data, projectType: selectedTypes });
+        await onSubmit({ ...leadPayload, projectType: selectedTypes });
       } else {
-        const response = await api.leads.create({
-          ...data,
-          additionalInfo:
-            selectedTypes.length > 0 ? `Interested in: ${selectedTypes.join(', ')}` : undefined,
-        }) as { data?: { id?: string } };
+        const response = await api.leads.create(leadPayload) as { data?: { id?: string } };
         if (response?.data?.id) {
           createdId = response.data.id;
         }
@@ -156,62 +169,11 @@ export function ContactFormCard({
 
   return (
     <>
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 mb-3 border-b border-palnadu-border/60">
-        <div>
-          <h2 className="text-base sm:text-lg font-bold text-palnadu-dark">{mainMessage}</h2>
-          <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs">
-            <a
-              href={`mailto:${contactEmail}`}
-              onClick={() =>
-                trackContactChannelClick({
-                  channel: 'email',
-                  destination: contactEmail,
-                  source_section: 'contact_form_header',
-                  source_page: '/contact',
-                })
-              }
-              className="font-semibold text-palnadu-blue hover:underline"
-            >
-              {contactEmail}
-            </a>
-            {siteConfig.contact.phone && (
-              <>
-                <span className="text-palnadu-secondary/60">•</span>
-                <a
-                  href={`tel:${siteConfig.contact.phone}`}
-                  onClick={() =>
-                    trackContactChannelClick({
-                      channel: 'phone',
-                      destination: siteConfig.contact.phone,
-                      source_section: 'contact_form_header',
-                      source_page: '/contact',
-                    })
-                  }
-                  className="font-semibold font-mono text-palnadu-blue hover:underline"
-                >
-                  {siteConfig.contact.phone}
-                </a>
-              </>
-            )}
-          </div>
-        </div>
-
-        <div className="flex items-center gap-1.5 self-start sm:self-auto">
-          {socialLinks.map((link) => (
-            <Button
-              key={link.id}
-              variant="outline"
-              size="icon"
-              asChild
-              className="h-7 w-7 rounded-md border-palnadu-border bg-white hover:bg-palnadu-light-blue hover:border-palnadu-blue"
-            >
-              <a href={link.href} target="_blank" rel="noopener noreferrer" aria-label={link.name}>
-                {renderSocialIcon(link)}
-              </a>
-            </Button>
-          ))}
-        </div>
-      </div>
+      <ContactFormHeader
+        mainMessage={mainMessage}
+        contactEmail={contactEmail}
+        socialLinks={socialLinks}
+      />
 
       <form
         onSubmit={handleSubmit(onFormSubmit, onValidationError)}
@@ -225,6 +187,13 @@ export function ContactFormCard({
           projectTypeOptions={projectTypeOptions}
           selectedTypes={selectedTypes}
           onCheckboxToggle={handleCheckboxToggle}
+          whatsappConsent={whatsappConsent}
+          onWhatsappConsentChange={(checked) =>
+            setValue('whatsappMarketingConsent', checked, {
+              shouldValidate: true,
+              shouldTouch: true,
+            })
+          }
         />
 
         {errorMessage && (

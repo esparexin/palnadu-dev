@@ -1,7 +1,9 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Optional } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../prisma.service';
 import { WhatsAppApiClient } from './whatsapp-api.client';
+import { WhatsAppOptOutService } from './whatsapp-opt-out.service';
+import { isOptOutKeywordText } from './whatsapp-opt-out.util';
 import {
   Prisma,
   WhatsAppDeliveryStatus,
@@ -23,6 +25,7 @@ export class WhatsAppAutoReplyService {
     private readonly prisma: PrismaService,
     private readonly config: ConfigService,
     private readonly apiClient: WhatsAppApiClient,
+    @Optional() private readonly optOutService?: WhatsAppOptOutService,
   ) {}
 
   isEnabled(): boolean {
@@ -53,6 +56,16 @@ export class WhatsAppAutoReplyService {
     }
 
     if (inboundMessage.direction !== WhatsAppMessageDirection.INBOUND) {
+      return null;
+    }
+
+    if (isOptOutKeywordText(inboundMessage.body)) {
+      this.logger.log(`Auto-reply skipped for ${this.maskPhone(inboundMessage.from)}: inbound opt-out keyword.`);
+      return null;
+    }
+
+    if (this.optOutService && (await this.optOutService.isSuppressed(inboundMessage.from))) {
+      this.logger.log(`Auto-reply skipped for ${this.maskPhone(inboundMessage.from)}: recipient is opted out.`);
       return null;
     }
 
@@ -225,8 +238,6 @@ export class WhatsAppAutoReplyService {
       this.inFlightReplies.delete(inboundMessage.wamId);
     }
   }
-
-
 
   private maskPhone(phone: string): string {
     if (phone.length <= 4) return '****';

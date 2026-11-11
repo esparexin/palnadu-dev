@@ -1,6 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
 import { Prisma, LeadStatus } from '@prisma/client';
+import { WHATSAPP_MARKETING_CONSENT_VERSION } from '@palnadu/validation';
+import { sanitizePhoneNumber } from '../whatsapp/whatsapp-api.util';
 
 @Injectable()
 export class LeadsService {
@@ -19,15 +21,34 @@ export class LeadsService {
       orderBy: { createdAt: 'desc' },
     });
 
-    if (existing && existing.problemDescription === data.problemDescription) {
+    const requestedConsent = Boolean(data.whatsappMarketingConsent);
+    if (
+      existing &&
+      existing.problemDescription === data.problemDescription &&
+      Boolean(existing.whatsappMarketingConsent) === requestedConsent
+    ) {
       this.logger.warn(
         `Idempotent lead submission detected for ${data.email} — returning existing record ${existing.id}`,
       );
       return existing;
     }
 
+    const normalizedData: Prisma.LeadCreateInput = requestedConsent
+      ? {
+          ...data,
+          whatsappMarketingConsent: true,
+          whatsappConsentPhone:
+            data.whatsappConsentPhone ||
+            (data.phone ? sanitizePhoneNumber(data.phone) : undefined),
+          whatsappConsentAt: data.whatsappConsentAt || new Date(),
+          whatsappConsentSource: data.whatsappConsentSource || 'WEBSITE_LEAD_FORM',
+          whatsappConsentVersion:
+            data.whatsappConsentVersion || WHATSAPP_MARKETING_CONSENT_VERSION,
+        }
+      : data;
+
     // Save lead as single source of truth
-    const lead = await this.prisma.lead.create({ data });
+    const lead = await this.prisma.lead.create({ data: normalizedData });
 
     // Persist notification reliably with error handling
     try {

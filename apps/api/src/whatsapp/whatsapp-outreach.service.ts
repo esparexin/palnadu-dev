@@ -65,7 +65,12 @@ export class WhatsAppOutreachService {
     );
     const templateCategory = matchedTemplate.category || 'MARKETING';
 
-    await verifyConsentEvidence(this.prisma, cleanPhone, input.consentEvidence, templateCategory);
+    const verifiedConsent = await verifyConsentEvidence(
+      this.prisma,
+      cleanPhone,
+      input.consentEvidence,
+      templateCategory,
+    );
 
     const { components, resolvedParameters } = buildTemplateComponents({
       templateName: matchedTemplate.name,
@@ -107,6 +112,7 @@ export class WhatsAppOutreachService {
         admin,
         input,
         matchedTemplate,
+        verifiedConsent,
       );
     }
 
@@ -122,6 +128,7 @@ export class WhatsAppOutreachService {
         input.businessName,
         input.contactName,
         hasVerifiedMarketingConsent,
+        verifiedConsent,
       );
     }
 
@@ -138,6 +145,7 @@ export class WhatsAppOutreachService {
         languageCode: matchedTemplate.language,
         templateCategory,
         resolvedParameters,
+        verifiedConsent,
       },
     );
 

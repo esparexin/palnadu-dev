@@ -5,6 +5,7 @@ import { PrismaService } from '../prisma.service';
 import { WhatsAppMessageService } from './whatsapp-message.service';
 import { WhatsAppAutoReplyService } from './whatsapp-auto-reply.service';
 import { WhatsAppOptOutService } from './whatsapp-opt-out.service';
+import { isOptOutKeywordText } from './whatsapp-opt-out.util';
 import {
   verifyMetaWebhookSignature,
   verifyTokenConstantTime,
@@ -141,11 +142,11 @@ export class WhatsAppWebhookService {
                 });
                 messageCount++;
 
-                if (this.optOutService && bodyText) {
-                  await this.optOutService.handleInboundOptOut(msg.from, bodyText);
-                }
+                const isOptOut = this.optOutService
+                  ? await this.optOutService.handleInboundOptOut(msg.from, bodyText)
+                  : isOptOutKeywordText(bodyText);
 
-                if (this.autoReplyService) {
+                if (!isOptOut && this.autoReplyService) {
                   setImmediate(() => {
                     this.autoReplyService?.handleAutoReply(saved).catch((err: unknown) => {
                       const msg = err instanceof Error ? err.message : String(err);
