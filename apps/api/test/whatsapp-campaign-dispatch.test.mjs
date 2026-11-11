@@ -185,4 +185,42 @@ describe('WhatsApp Paced Campaign Dispatcher', () => {
       /cannot be dispatched in status COMPLETED/,
     );
   });
+
+  it('fails dispatch cleanly without stripping parameters on Meta 132000 error', async () => {
+    const campaign = {
+      id: 'camp_004',
+      name: 'Parameter Test',
+      templateName: 'b2b_website_outreach_v1',
+      languageCode: 'en_US',
+      status: CampaignStatus.DRAFT,
+      sentCount: 0,
+      failedCount: 0,
+      delayMs: 1,
+    };
+    const contacts = [
+      { id: 'c1', businessName: 'Test Business', phone: '919876543210', optInStatus: ContactOptInStatus.UNVERIFIED },
+    ];
+    let callCount = 0;
+    const mockApiClient = {
+      sendTemplateMessage: async () => {
+        callCount++;
+        const { WhatsAppApiException } = require('../dist/whatsapp/whatsapp-api.util.js');
+        throw new WhatsAppApiException('Parameter mismatch', 400, { code: 132000, message: 'Param mismatch' });
+      },
+    };
+    const mockPrisma = {
+      marketingCampaign: {
+        findUnique: async () => campaign,
+        update: async ({ data }) => Object.assign(campaign, data),
+      },
+      marketingContact: { findMany: async () => contacts },
+      whatsAppMessage: { findMany: async () => [], create: async () => ({}) },
+    };
+    const service = new WhatsAppCampaignService(mockPrisma, { get: () => 'test_id' }, mockApiClient);
+    const result = await service.dispatchCampaign('camp_004');
+
+    assert.equal(result.failedCount, 1);
+    assert.equal(result.sentCount, 0);
+    assert.equal(callCount, 1, 'Must not retry by stripping parameters');
+  });
 });

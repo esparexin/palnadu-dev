@@ -5,6 +5,7 @@ import type {
   WhatsAppSendTemplateParams,
   WhatsAppSendResponse,
   WhatsAppApiErrorResponse,
+  WhatsAppMetaTemplate,
 } from '@palnadu/types';
 import {
   WHATSAPP_CONFIG_KEYS,
@@ -22,6 +23,7 @@ import {
   delay,
   safeJson,
 } from './whatsapp-api.util';
+import { fetchMetaApprovedTemplates } from './whatsapp-template.util';
 
 export { WhatsAppApiException, type OutboundClientOptions };
 
@@ -64,6 +66,10 @@ export class WhatsAppApiClient {
       this.config.get<string>(WHATSAPP_CONFIG_KEYS.GRAPH_API_VERSION)?.trim() ||
       DEFAULT_GRAPH_API_VERSION
     );
+  }
+
+  async fetchApprovedTemplates(): Promise<WhatsAppMetaTemplate[]> {
+    return fetchMetaApprovedTemplates(this.config, this.fetchImpl);
   }
 
   async sendTextMessage(
@@ -171,6 +177,7 @@ export class WhatsAppApiClient {
         }
 
         const isRetryable = response.status >= 500 || response.status === 429;
+        const isAmbiguous = response.status === 502 || response.status === 503 || response.status === 504;
         const errorBody = await safeJson<WhatsAppApiErrorResponse>(response);
         const metaError = errorBody?.error;
         const errMessage = metaError?.message || `Meta API HTTP ${response.status}: ${response.statusText}`;
@@ -179,7 +186,7 @@ export class WhatsAppApiClient {
           `Meta WhatsApp API returned HTTP ${response.status}: ${errMessage} (code: ${metaError?.code}, subcode: ${metaError?.error_subcode}, trace: ${metaError?.fbtrace_id})`,
         );
 
-        lastError = new WhatsAppApiException(errMessage, response.status, metaError);
+        lastError = new WhatsAppApiException(errMessage, response.status, metaError, isAmbiguous);
         if (!isRetryable) {
           throw lastError;
         }
@@ -187,7 +194,16 @@ export class WhatsAppApiClient {
         if (err instanceof WhatsAppApiException && err.statusCode && err.statusCode < 500 && err.statusCode !== 429) {
           throw err;
         }
-        lastError = err instanceof Error ? err : new Error(String(err));
+        const isTimeout = err instanceof Error && (err.name === 'AbortError' || err.message.includes('aborted'));
+        lastError =
+          err instanceof WhatsAppApiException
+            ? err
+            : new WhatsAppApiException(
+                err instanceof Error ? err.message : String(err),
+                undefined,
+                undefined,
+                isTimeout,
+              );
         this.logger.warn(`WhatsApp dispatch attempt failed: ${lastError.message}`);
       }
     }

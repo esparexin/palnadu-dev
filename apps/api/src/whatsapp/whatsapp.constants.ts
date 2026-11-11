@@ -69,4 +69,64 @@ export const MARKETING_OPT_OUT_KEYWORDS = [
 
 export const OPT_OUT_REASON_INBOUND_STOP = 'INBOUND_KEYWORD_STOP';
 
+export const INDIVIDUAL_OUTREACH_RECIPIENT_COOLDOWN_MS = 60000;
+export const MAX_ADMIN_OUTREACH_PER_MINUTE = 15;
+export const OUTREACH_LEASE_EXPIRY_MS = 45000;
+export const TEMPLATE_CACHE_TTL_MS = 15 * 60 * 1000;
+
+export const APPROVED_WHATSAPP_TEMPLATES = [
+  {
+    name: 'b2b_website_outreach_v1',
+    displayTitle: 'B2B Website Outreach (English)',
+    languageCode: 'en_US',
+    category: 'MARKETING',
+    description: 'Initial outreach to Palnadu businesses without a website.',
+    sampleText:
+      'Hello {{1}}, we noticed your business in Palnadu does not have an official website yet. Palnadu.dev builds modern, affordable websites for local businesses. Would you be open to a quick chat?',
+    requiredParameters: [
+      {
+        index: 1,
+        key: 'business_name',
+        label: 'Business Name',
+        placeholder: 'e.g. Sri Lakshmi Rice Mill',
+      },
+    ],
+  },
+  {
+    name: 'b2b_website_outreach_te',
+    displayTitle: 'B2B Website Outreach (Telugu)',
+    languageCode: 'te',
+    category: 'MARKETING',
+    description: 'Telugu outreach for regional businesses in Narasaraopet, Chilakaluripet, Guntur.',
+    sampleText:
+      'నమస్కారం {{1}}, పల్నాడులో మీ వ్యాపారానికి ఇంకా సొంత వెబ్‌సైట్ లేదా? స్థానిక వ్యాపారాల కోసం Palnadu.dev ఆధునిక వెబ్‌సైట్లు మరియు సాఫ్ట్‌వేర్ అందిస్తోంది. వివరాల కోసం ఇక్కడ ప్రత్యుత్తరం ఇవ్వండి.',
+    requiredParameters: [
+      {
+        index: 1,
+        key: 'business_name',
+        label: 'Business Name',
+        placeholder: 'ఉదా: శ్రీ లక్ష్మి రైస్ మిల్లు',
+      },
+    ],
+  },
+  {
+    name: 'b2b_intro_v1',
+    displayTitle: 'B2B General Introduction',
+    languageCode: 'en_US',
+    category: 'MARKETING',
+    description: 'General introduction to Palnadu.dev web and software development services.',
+    sampleText:
+      'Hello {{1}}, greetings from Palnadu.dev! We specialize in custom web apps, billing software, and digital solutions for local enterprises.',
+    requiredParameters: [
+      {
+        index: 1,
+        key: 'business_name',
+        label: 'Business Name',
+        placeholder: 'e.g. Kaveri Pesticides',
+      },
+    ],
+  },
+] as const;
+
+
 

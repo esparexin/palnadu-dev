@@ -176,29 +176,12 @@ export class WhatsAppCampaignService {
       : [];
 
     try {
-      let response;
-      try {
-        response = await this.apiClient.sendTemplateMessage({
-          to: contact.phone,
-          templateName: campaign.templateName,
-          languageCode: campaign.languageCode,
-          ...(components.length > 0 ? { components } : {}),
-        });
-      } catch (sendErr: unknown) {
-        if (
-          components.length > 0 &&
-          sendErr instanceof WhatsAppApiException &&
-          sendErr.metaError?.code === 132000
-        ) {
-          response = await this.apiClient.sendTemplateMessage({
-            to: contact.phone,
-            templateName: campaign.templateName,
-            languageCode: campaign.languageCode,
-          });
-        } else {
-          throw sendErr;
-        }
-      }
+      const response = await this.apiClient.sendTemplateMessage({
+        to: contact.phone,
+        templateName: campaign.templateName,
+        languageCode: campaign.languageCode,
+        ...(components.length > 0 ? { components } : {}),
+      });
 
       const wamId = response.messages[0]?.id;
       if (!wamId) throw new Error('Meta API response missing message id');
