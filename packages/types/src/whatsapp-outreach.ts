@@ -4,11 +4,14 @@ export type WhatsAppConsentType =
   | 'SIGNED_AGREEMENT'
   | 'VERIFIED_CRM_LEAD';
 
+export type WhatsAppConsentPurpose = 'MARKETING' | 'CUSTOMER_SERVICE';
+
 export interface WhatsAppConsentEvidence {
   consentType: WhatsAppConsentType;
   consentEvidenceRef: string;
   consentTimestamp: string;
   recipientPhone: string;
+  consentPurpose?: WhatsAppConsentPurpose;
 }
 
 export interface WhatsAppMetaTemplateComponent {
@@ -91,5 +94,9 @@ export interface IndividualOutreachMessageItem {
   createdAt: string;
   consentType?: WhatsAppConsentType;
   consentEvidenceRef?: string;
+  isReconciled?: boolean;
+  reconciledAt?: string;
+  reconciledBy?: string;
+  reconciliationNotes?: string;
 }
 

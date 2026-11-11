@@ -22,6 +22,7 @@ export const whatsAppConsentEvidenceSchema = z.object({
     .trim()
     .min(8, 'Consent recipient phone number must be at least 8 digits')
     .max(20, 'Consent recipient phone number must not exceed 20 digits'),
+  consentPurpose: z.enum(['MARKETING', 'CUSTOMER_SERVICE']).optional(),
 });
 
 export const sendIndividualOutreachSchema = z.object({
