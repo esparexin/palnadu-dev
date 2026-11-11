@@ -5,6 +5,7 @@ export class WhatsAppApiException extends Error {
     message: string,
     public readonly statusCode?: number,
     public readonly metaError?: WhatsAppApiErrorResponse['error'],
+    public readonly isAmbiguous?: boolean,
   ) {
     super(message);
     this.name = 'WhatsAppApiException';

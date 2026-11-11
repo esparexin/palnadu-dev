@@ -1,6 +1,22 @@
-import type { CampaignSummary, MarketingContactItem, WhatsAppStats } from '@/lib/api/whatsapp';
+import type {
+  CampaignSummary,
+  MarketingContactItem,
+  WhatsAppStats,
+  IndividualOutreachMessageItem,
+  WhatsAppTemplateDefinition,
+  SendIndividualOutreachInput,
+} from '@/lib/api/whatsapp';
+import type { WhatsAppConsentType } from '@palnadu/types';
 
-export type { CampaignSummary, MarketingContactItem, WhatsAppStats };
+export type {
+  CampaignSummary,
+  MarketingContactItem,
+  WhatsAppStats,
+  IndividualOutreachMessageItem,
+  WhatsAppTemplateDefinition,
+  SendIndividualOutreachInput,
+  WhatsAppConsentType,
+};
 
 export interface CreateCampaignFormData {
   name: string;
@@ -21,3 +37,25 @@ export const initialCampaignFormData: CreateCampaignFormData = {
 export interface ContactImportFormData {
   csvText: string;
 }
+
+export interface IndividualOutreachFormData {
+  phone: string;
+  businessName: string;
+  contactName: string;
+  templateName: string;
+  languageCode: string;
+  consentType: WhatsAppConsentType;
+  consentEvidenceRef: string;
+  saveContact: boolean;
+}
+
+export const initialOutreachFormData: IndividualOutreachFormData = {
+  phone: '+91 ',
+  businessName: '',
+  contactName: '',
+  templateName: 'b2b_website_outreach_v1',
+  languageCode: 'en_US',
+  consentType: 'WEBSITE_LEAD_FORM',
+  consentEvidenceRef: '',
+  saveContact: false,
+};

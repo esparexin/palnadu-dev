@@ -1,25 +1,28 @@
-import { Injectable, Logger, Optional, BadRequestException, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, Optional, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../prisma.service';
-import { WhatsAppApiClient, WhatsAppApiException } from './whatsapp-api.client';
+import { WhatsAppApiClient } from './whatsapp-api.client';
 import { WhatsAppOptOutService } from './whatsapp-opt-out.service';
 import type { CreateMarketingCampaignInput } from '@palnadu/validation';
 import type { WhatsAppTemplateComponent } from '@palnadu/types';
 import {
   CampaignStatus,
   ContactOptInStatus,
-  WhatsAppDeliveryStatus,
-  WhatsAppMessageDirection,
   type MarketingCampaign,
   type MarketingContact,
 } from '@prisma/client';
 import {
   WHATSAPP_CONFIG_KEYS,
   DEFAULT_CAMPAIGN_BATCH_SIZE,
-  DEFAULT_CAMPAIGN_DELAY_MS,
   MIN_CAMPAIGN_BATCH_SIZE,
   MAX_CAMPAIGN_BATCH_SIZE,
 } from './whatsapp.constants';
+import {
+  claimCampaignAtomically,
+  acquireCampaignRecipientReservation,
+  recordCampaignDispatchSuccess,
+  recordCampaignDispatchFailure,
+} from './whatsapp-campaign-dispatch.util';
 
 export interface DispatchCampaignOptions {
   batchSize?: number;
@@ -45,8 +48,19 @@ export class WhatsAppCampaignService {
     @Optional() private readonly optOutService?: WhatsAppOptOutService,
   ) {}
 
+  private getPacingDelayMs(): number {
+    const configured = this.config.get<string | number>('WHATSAPP_CAMPAIGN_DELAY_MS');
+    if (configured !== undefined && configured !== null) {
+      const parsed = typeof configured === 'number' ? configured : Number.parseInt(String(configured), 10);
+      if (!Number.isNaN(parsed)) {
+        return Math.max(500, Math.min(30000, parsed));
+      }
+    }
+    return 1500; // Conservative default: 1.5 seconds per message (~40 msgs/min)
+  }
+
   private sleep(): Promise<void> {
-    return new Promise((resolve) => setTimeout(resolve, DEFAULT_CAMPAIGN_DELAY_MS));
+    return new Promise((resolve) => setTimeout(resolve, this.getPacingDelayMs()));
   }
 
   async createCampaign(data: CreateMarketingCampaignInput): Promise<MarketingCampaign> {
@@ -100,17 +114,7 @@ export class WhatsAppCampaignService {
   }
 
   async dispatchCampaign(campaignId: string, options?: DispatchCampaignOptions): Promise<DispatchResult> {
-    const campaign = await this.prisma.marketingCampaign.findUnique({ where: { id: campaignId } });
-    if (!campaign) throw new NotFoundException(`Campaign ${campaignId} not found`);
-
-    if (campaign.status !== CampaignStatus.DRAFT && campaign.status !== CampaignStatus.SCHEDULED && campaign.status !== CampaignStatus.PAUSED) {
-      throw new BadRequestException(`Campaign ${campaignId} cannot be dispatched in status ${campaign.status}`);
-    }
-
-    await this.prisma.marketingCampaign.update({
-      where: { id: campaignId },
-      data: { status: CampaignStatus.RUNNING, startedAt: campaign.startedAt || new Date() },
-    });
+    const campaign = await claimCampaignAtomically(this.prisma, campaignId);
 
     const reqBatch = options?.batchSize;
     const batchLimit =
@@ -129,7 +133,7 @@ export class WhatsAppCampaignService {
     for (const contact of contacts) {
       if (
         alreadyMessaged.has(contact.phone) ||
-        contact.optInStatus === ContactOptInStatus.OPTED_OUT ||
+        contact.optInStatus !== ContactOptInStatus.OPTED_IN ||
         (this.optOutService && (await this.optOutService.isSuppressed(contact.phone)))
       ) {
         skipped++;
@@ -162,7 +166,7 @@ export class WhatsAppCampaignService {
   }
 
   private async fetchEligibleContacts(campaign: MarketingCampaign, limit: number): Promise<MarketingContact[]> {
-    const where: Record<string, unknown> = { optInStatus: { not: ContactOptInStatus.OPTED_OUT } };
+    const where: Record<string, unknown> = { optInStatus: ContactOptInStatus.OPTED_IN };
     if (campaign.targetAudience === 'NO_WEBSITE') where.hasWebsite = false;
     return this.prisma.marketingContact.findMany({ where, take: limit, orderBy: { createdAt: 'asc' } });
   }
@@ -175,51 +179,43 @@ export class WhatsAppCampaignService {
       ? [{ type: 'body', parameters: [{ type: 'text', text: contact.businessName.trim() }] }]
       : [];
 
+    const reserved = await acquireCampaignRecipientReservation(this.prisma, campaign.id, contact.phone);
+    if (!reserved) {
+      this.logger.warn(`Skipping recipient ${contact.phone}: reservation already claimed`);
+      return false;
+    }
+
     try {
-      let response;
-      try {
-        response = await this.apiClient.sendTemplateMessage({
-          to: contact.phone,
-          templateName: campaign.templateName,
-          languageCode: campaign.languageCode,
-          ...(components.length > 0 ? { components } : {}),
-        });
-      } catch (sendErr: unknown) {
-        if (
-          components.length > 0 &&
-          sendErr instanceof WhatsAppApiException &&
-          sendErr.metaError?.code === 132000
-        ) {
-          response = await this.apiClient.sendTemplateMessage({
-            to: contact.phone,
-            templateName: campaign.templateName,
-            languageCode: campaign.languageCode,
-          });
-        } else {
-          throw sendErr;
-        }
-      }
+      const response = await this.apiClient.sendTemplateMessage({
+        to: contact.phone,
+        templateName: campaign.templateName,
+        languageCode: campaign.languageCode,
+        ...(components.length > 0 ? { components } : {}),
+      });
 
       const wamId = response.messages[0]?.id;
       if (!wamId) throw new Error('Meta API response missing message id');
 
-      await this.prisma.whatsAppMessage.create({
-        data: {
-          wamId,
-          direction: WhatsAppMessageDirection.OUTBOUND,
-          from: businessPhone,
-          to: contact.phone,
-          type: 'template',
-          status: WhatsAppDeliveryStatus.SENT,
-          statusTimestamp: new Date(),
-          campaignId: campaign.id,
-          body: `Template: ${campaign.templateName}`,
-        },
-      });
+      await recordCampaignDispatchSuccess(
+        this.prisma,
+        campaign.id,
+        contact.phone,
+        wamId,
+        businessPhone,
+        campaign.templateName,
+      );
       return true;
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
       this.logger.error(`Campaign dispatch error for ${contact.phone}: ${msg}`);
+      await recordCampaignDispatchFailure(
+        this.prisma,
+        campaign.id,
+        contact.phone,
+        businessPhone,
+        campaign.templateName,
+        err,
+      );
       return false;
     }
   }

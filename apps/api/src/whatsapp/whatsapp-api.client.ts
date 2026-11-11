@@ -5,6 +5,7 @@ import type {
   WhatsAppSendTemplateParams,
   WhatsAppSendResponse,
   WhatsAppApiErrorResponse,
+  WhatsAppMetaTemplate,
 } from '@palnadu/types';
 import {
   WHATSAPP_CONFIG_KEYS,
@@ -22,6 +23,7 @@ import {
   delay,
   safeJson,
 } from './whatsapp-api.util';
+import { fetchMetaApprovedTemplates } from './whatsapp-template.util';
 
 export { WhatsAppApiException, type OutboundClientOptions };
 
@@ -64,6 +66,10 @@ export class WhatsAppApiClient {
       this.config.get<string>(WHATSAPP_CONFIG_KEYS.GRAPH_API_VERSION)?.trim() ||
       DEFAULT_GRAPH_API_VERSION
     );
+  }
+
+  async fetchApprovedTemplates(): Promise<WhatsAppMetaTemplate[]> {
+    return fetchMetaApprovedTemplates(this.config, this.fetchImpl);
   }
 
   async sendTextMessage(
@@ -170,24 +176,43 @@ export class WhatsAppApiClient {
           return data;
         }
 
-        const isRetryable = response.status >= 500 || response.status === 429;
+        const isAmbiguous = response.status === 502 || response.status === 503 || response.status === 504;
         const errorBody = await safeJson<WhatsAppApiErrorResponse>(response);
         const metaError = errorBody?.error;
         const errMessage = metaError?.message || `Meta API HTTP ${response.status}: ${response.statusText}`;
 
-        this.logger.error(
-          `Meta WhatsApp API returned HTTP ${response.status}: ${errMessage} (code: ${metaError?.code}, subcode: ${metaError?.error_subcode}, trace: ${metaError?.fbtrace_id})`,
-        );
+        this.logger.error(`Meta WhatsApp API returned HTTP ${response.status}: ${errMessage}`);
+        lastError = new WhatsAppApiException(errMessage, response.status, metaError, isAmbiguous);
 
-        lastError = new WhatsAppApiException(errMessage, response.status, metaError);
-        if (!isRetryable) {
+        // Ambiguous server outcomes (502, 503, 504) must NOT be retried automatically
+        if (isAmbiguous) {
           throw lastError;
         }
-      } catch (err: unknown) {
-        if (err instanceof WhatsAppApiException && err.statusCode && err.statusCode < 500 && err.statusCode !== 429) {
-          throw err;
+
+        // Deterministic non-retryable 4xx client errors (except 429) must fail fast
+        if (response.status >= 400 && response.status < 500 && response.status !== 429) {
+          throw lastError;
         }
-        lastError = err instanceof Error ? err : new Error(String(err));
+
+        // Controlled backoff for HTTP 429 rate limit
+        if (response.status === 429) {
+          const retryAfter = Number.parseInt(response.headers?.get('retry-after') || '', 10);
+          if (!Number.isNaN(retryAfter) && retryAfter > 0) {
+            await delay(Math.min(retryAfter * 1000, 10000));
+          }
+        }
+      } catch (err: unknown) {
+        if (err instanceof WhatsAppApiException) {
+          if (err.isAmbiguous || (err.statusCode && err.statusCode < 500 && err.statusCode !== 429)) {
+            throw err;
+          }
+        }
+        const isTimeout = err instanceof Error && (err.name === 'AbortError' || err.message.includes('aborted'));
+        if (isTimeout) {
+          // Network timeout is ambiguous — abort immediately without blind retry
+          throw new WhatsAppApiException(`WhatsApp dispatch timeout to ${maskedTo}`, 504, undefined, true);
+        }
+        lastError = err instanceof WhatsAppApiException ? err : new WhatsAppApiException(err instanceof Error ? err.message : String(err));
         this.logger.warn(`WhatsApp dispatch attempt failed: ${lastError.message}`);
       }
     }
@@ -195,21 +220,13 @@ export class WhatsAppApiClient {
     throw lastError || new WhatsAppApiException('WhatsApp dispatch failed after retries');
   }
 
-  private async executeFetch(
-    url: string,
-    token: string,
-    body: Record<string, unknown>,
-  ): Promise<Response> {
+  private async executeFetch(url: string, token: string, body: Record<string, unknown>): Promise<Response> {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), this.timeoutMs);
     try {
       return await this.fetchImpl(url, {
         method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-          Accept: 'application/json',
-        },
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json', Accept: 'application/json' },
         body: JSON.stringify(body),
         signal: controller.signal,
       });

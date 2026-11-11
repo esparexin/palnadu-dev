@@ -5,6 +5,8 @@ import {
   Body,
   Param,
   Query,
+  Req,
+  Optional,
   UseGuards,
   HttpCode,
   HttpStatus,
@@ -16,14 +18,20 @@ import { Roles } from '../common/decorators/roles.decorator';
 import { ZodValidationPipe } from '../common/pipes/zod-validation.pipe';
 import { WhatsAppCampaignService } from './whatsapp-campaign.service';
 import { WhatsAppContactService, type ImportContactItem } from './whatsapp-contact.service';
+import { WhatsAppOutreachService } from './whatsapp-outreach.service';
 import {
   createMarketingCampaignSchema,
+  sendIndividualOutreachSchema,
+  reconcileOutreachSchema,
   type CreateMarketingCampaignInput,
+  type SendIndividualOutreachInput,
+  type ReconcileOutreachInput,
 } from '@palnadu/validation';
 import { CampaignStatus, ContactOptInStatus } from '@prisma/client';
 import {
   MIN_CAMPAIGN_BATCH_SIZE,
   MAX_CAMPAIGN_BATCH_SIZE,
+  APPROVED_WHATSAPP_TEMPLATES,
 } from './whatsapp.constants';
 
 @Controller('admin/whatsapp')
@@ -33,7 +41,54 @@ export class WhatsAppAdminController {
   constructor(
     private readonly campaignService: WhatsAppCampaignService,
     private readonly contactService: WhatsAppContactService,
+    @Optional() private readonly outreachService?: WhatsAppOutreachService,
   ) {}
+
+  @Post('outreach/send')
+  @HttpCode(HttpStatus.OK)
+  async sendIndividualOutreach(
+    @Body(new ZodValidationPipe(sendIndividualOutreachSchema))
+    data: SendIndividualOutreachInput,
+    @Req() req?: { user?: { id?: string; sub?: string; email?: string } },
+  ) {
+    if (!this.outreachService) throw new NotFoundException('Outreach service unavailable');
+    const admin = {
+      id: req?.user?.sub || req?.user?.id || 'admin',
+      email: req?.user?.email || 'admin@palnadu.dev',
+    };
+    const result = await this.outreachService.sendOutreach(data, admin);
+    return { success: true, data: result };
+  }
+
+  @Get('outreach/messages')
+  async listIndividualOutreach(
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ) {
+    if (!this.outreachService) throw new NotFoundException('Outreach service unavailable');
+    const result = await this.outreachService.listIndividualOutreachMessages({
+      page: page ? Number.parseInt(page, 10) : 1,
+      limit: limit ? Number.parseInt(limit, 10) : 20,
+    });
+    return { success: true, ...result };
+  }
+
+  @Post('outreach/:id/reconcile')
+  async reconcileOutreach(
+    @Param('id') id: string,
+    @Body(new ZodValidationPipe(reconcileOutreachSchema)) body: ReconcileOutreachInput,
+    @Req() req: Request & { user?: { id: string } },
+  ) {
+    if (!this.outreachService) throw new NotFoundException('Outreach service unavailable');
+    const admin = { id: req.user?.id || 'admin_session' };
+    const result = await this.outreachService.reconcileOutreach(id, body, admin);
+    return { success: true, data: result };
+  }
+
+  @Get('templates')
+  getApprovedTemplates() {
+    return { success: true, data: APPROVED_WHATSAPP_TEMPLATES };
+  }
 
   @Post('campaigns')
   @HttpCode(HttpStatus.CREATED)
@@ -149,4 +204,3 @@ export class WhatsAppAdminController {
     };
   }
 }
-

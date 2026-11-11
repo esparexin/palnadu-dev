@@ -1,4 +1,17 @@
 import { adminApi } from './client';
+import type {
+  SendIndividualOutreachInput,
+  IndividualOutreachDispatchResult,
+  IndividualOutreachMessageItem,
+  WhatsAppTemplateDefinition,
+} from '@palnadu/types';
+
+export type {
+  SendIndividualOutreachInput,
+  IndividualOutreachDispatchResult,
+  IndividualOutreachMessageItem,
+  WhatsAppTemplateDefinition,
+};
 
 export interface CampaignSummary {
   id: string;
@@ -47,6 +60,36 @@ export interface WhatsAppStats {
 
 export const whatsappApi = {
   stats: () => adminApi<{ success: boolean; data: WhatsAppStats }>('/api/admin/whatsapp/stats'),
+
+  templates: {
+    list: () => adminApi<{ success: boolean; data: WhatsAppTemplateDefinition[] }>('/api/admin/whatsapp/templates'),
+  },
+
+  outreach: {
+    send: (data: SendIndividualOutreachInput) =>
+      adminApi<{ success: boolean; data: IndividualOutreachDispatchResult }>('/api/admin/whatsapp/outreach/send', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }),
+    listMessages: (params?: { page?: number; limit?: number }) =>
+      adminApi<{
+        success: boolean;
+        data: IndividualOutreachMessageItem[];
+        total: number;
+        page: number;
+        totalPages: number;
+      }>('/api/admin/whatsapp/outreach/messages', {
+        params: params ? { page: String(params.page || 1), limit: String(params.limit || 20) } : undefined,
+      }),
+    reconcile: (id: string, data: { confirmedStatus: 'SENT' | 'DELIVERED' | 'FAILED'; metaWamId?: string; notes?: string }) =>
+      adminApi<{ success: boolean; data: { success: boolean; id: string; status: string; reconciled: boolean } }>(
+        `/api/admin/whatsapp/outreach/${id}/reconcile`,
+        {
+          method: 'POST',
+          body: JSON.stringify(data),
+        },
+      ),
+  },
 
   campaigns: {
     list: (params?: Record<string, string | undefined>) =>
