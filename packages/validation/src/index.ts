@@ -4,5 +4,6 @@ export * from './auth-user';
 export * from './services-case-studies';
 export * from './blog';
 export * from './whatsapp';
+export * from './whatsapp-outreach';
 
 export { z } from 'zod';

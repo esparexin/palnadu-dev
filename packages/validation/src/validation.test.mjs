@@ -5,6 +5,8 @@ import {
   loginSchema,
   createServiceSchema,
   geminiKeyInputSchema,
+  sendIndividualOutreachSchema,
+  whatsAppConsentEvidenceSchema,
 } from '../dist/index.js';
 
 describe('Validation Schemas Audit', () => {
@@ -163,6 +165,51 @@ describe('Validation Schemas Audit', () => {
 
       const result2 = geminiKeyInputSchema.safeParse({ apiKey: 'AIzaTooShort' });
       assert.equal(result2.success, false);
+    });
+  });
+
+  describe('sendIndividualOutreachSchema & whatsAppConsentEvidenceSchema', () => {
+    const validConsent = {
+      consentType: 'INBOUND_WHATSAPP_INQUIRY',
+      consentEvidenceRef: 'wamid.HBgL123456789',
+      consentTimestamp: new Date().toISOString(),
+      recipientPhone: '+919876543210',
+    };
+
+    it('should validate complete outreach request with verifiable consent', () => {
+      const valid = {
+        phone: '+919876543210',
+        businessName: 'Sri Lakshmi Rice Mill',
+        contactName: 'Rao',
+        templateName: 'b2b_website_outreach_v1',
+        languageCode: 'en_US',
+        parameters: { business_name: 'Sri Lakshmi Rice Mill' },
+        consentEvidence: validConsent,
+        idempotencyKey: 'idemp-req-0012345',
+        saveContact: true,
+      };
+      const result = sendIndividualOutreachSchema.safeParse(valid);
+      assert.equal(result.success, true);
+    });
+
+    it('should reject consent evidence with invalid consentType or missing reference', () => {
+      const invalid = {
+        ...validConsent,
+        consentType: 'ARBITRARY_NOTES',
+      };
+      const result = whatsAppConsentEvidenceSchema.safeParse(invalid);
+      assert.equal(result.success, false);
+    });
+
+    it('should reject outreach request without consentEvidence', () => {
+      const invalid = {
+        phone: '+919876543210',
+        businessName: 'Test Biz',
+        templateName: 'b2b_website_outreach_v1',
+        languageCode: 'en_US',
+      };
+      const result = sendIndividualOutreachSchema.safeParse(invalid);
+      assert.equal(result.success, false);
     });
   });
 });
