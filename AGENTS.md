@@ -73,3 +73,13 @@ A change is not considered complete until:
 - No unintended frontend or backend regressions exist.
 - The implementation is production-ready, maintainable, and fully integrated.
 
+### 8. Execution Efficiency & Workflow Discipline
+To ensure predictable turnaround without sacrificing engineering rigor:
+- **Scoped Builds & Tests:** During active development, use package-scoped builds (`pnpm build:api`, `pnpm build:web`, `pnpm build:admin`) and targeted test files (`node --test apps/api/test/<target>.test.mjs`). Do not invoke full monorepo `pnpm build` or `pnpm test` repeatedly for micro-edits.
+- **Milestone Validation (`pnpm gate:all`):** Use `pnpm gate:quick` during rapid iteration. Run comprehensive validation (`pnpm gate:all`) at clearly bounded phase milestones and pre-commit audits. Never skip required quality gates.
+- **Proactive Architectural Decomposition:** Monitor the 249-line maximum. When a file approaches 220 lines, proactively extract helpers, types, or constants into distinct modules *before* adding logic. Never engage in single-line trimming loops (`wc -l` ping-pong).
+- **Bounded Searches:** Never execute unbounded `grep -rn <term> .` across the repository root. Always use `pnpm search <query>` or explicitly exclude build and cache directories (`--exclude-dir={node_modules,.next,.turbo,dist,.git}`).
+- **Task-Scoped Sleep Prevention:** For authorized long-running background tasks, wrap commands with `pnpm sleep:prevent <cmd>` to prevent macOS network sleep and SSE stream disconnection. Normal power states are restored immediately upon exit.
+- **Fresh Context & Handover Discipline:** Keep individual PRs and feature phases bounded. When completing a phase, record a concise implementation handover note (decisions made, files changed, tests passed, outstanding tasks) to prevent context bloat and compaction stalls.
+
+
