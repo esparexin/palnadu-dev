@@ -111,6 +111,26 @@ export function GeminiVerificationModal({
             activeUsableModel={result.activeUsableModel}
           />
 
+          {canActivate && !result.fallbackUsed && (
+            <div className="p-3 rounded-lg bg-palnadu-teal/10 border border-palnadu-teal/30 text-palnadu-teal-dark flex items-start gap-2">
+              <CheckCircle2 className="h-4 w-4 shrink-0 mt-0.5" />
+              <div>
+                <p className="font-semibold">Key Authenticated &amp; Generation Verified</p>
+                <p className="mt-0.5">
+                  Live generation succeeded on{' '}
+                  <span className="font-mono font-semibold">
+                    {result.activeUsableModel || 'the configured model'}
+                  </span>
+                  {result.project.status === 'Project Not Identified'
+                    ? ' (Google does not expose a Cloud Project ID header for this key probe).'
+                    : '.'}{' '}
+                  Click <span className="font-semibold">Confirm &amp; Activate Key</span> below to
+                  encrypt and activate it.
+                </p>
+              </div>
+            </div>
+          )}
+
           {canActivate && result.fallbackUsed && result.activeUsableModel && (
             <div className="p-3 rounded-lg bg-palnadu-blue/10 border border-palnadu-blue/30 text-palnadu-blue flex items-start gap-2">
               <CheckCircle2 className="h-4 w-4 shrink-0 mt-0.5" />
@@ -119,7 +139,9 @@ export function GeminiVerificationModal({
                 <p className="mt-0.5">
                   Primary model experienced high demand, and fallback model{' '}
                   <span className="font-mono font-semibold">{result.activeUsableModel}</span>{' '}
-                  passed live generation verification.
+                  passed live generation verification. Click{' '}
+                  <span className="font-semibold">Confirm &amp; Activate Key</span> below to
+                  encrypt and activate it.
                 </p>
               </div>
             </div>

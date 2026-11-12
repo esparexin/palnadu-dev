@@ -10,6 +10,7 @@ import { GeminiVerificationModal } from './gemini-verification-modal';
 import { GeminiPendingBanner } from './gemini-pending-banner';
 import { GeminiAuditTable } from './gemini-audit-table';
 import { useGeminiSettings } from './use-gemini-settings';
+import { DEFAULT_GEMINI_MODELS } from './types';
 
 export function GeminiSettingsPanel() {
   const {
@@ -186,7 +187,7 @@ export function GeminiSettingsPanel() {
               id="primary-model"
               value={primaryModel}
               onChange={(e) => setPrimaryModel(e.target.value)}
-              placeholder="gemini-3.8-flash"
+              placeholder={DEFAULT_GEMINI_MODELS[0]}
               className="h-9 text-xs rounded-md"
             />
           </div>

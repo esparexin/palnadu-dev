@@ -9,6 +9,10 @@ import {
   type GeminiKeyVerificationResult,
   type GeminiKeyAuditEntry,
 } from './types';
+import {
+  resolveActivationTarget,
+  validateCandidateGeminiInput,
+} from './gemini-settings.util';
 
 export function useGeminiSettings() {
   const { toast } = useToast();
@@ -54,19 +58,18 @@ export function useGeminiSettings() {
   }, [fetchStatus, fetchAuditLogs]);
 
   const handleVerify = async () => {
-    const trimmed = candidateKey.trim();
-    if (!trimmed) {
-      toast.error('Please enter a Gemini API Key to verify.');
-      return;
-    }
-    if (!trimmed.startsWith('AIza') && !trimmed.startsWith('AQ')) {
-      toast.error('Invalid format: Gemini API key must begin with "AIza" or "AQ".');
+    const validated = validateCandidateGeminiInput(candidateKey, primaryModel);
+    if (!validated.ok) {
+      toast.error(validated.error);
       return;
     }
 
     try {
       setVerifying(true);
-      const res = await api.automation.geminiVerify(trimmed, primaryModel);
+      const res = await api.automation.geminiVerify(
+        validated.data.apiKey,
+        validated.data.primaryModel,
+      );
       if (res.success && res.data) {
         setCandidateResult(res.data);
         setModalOpen(true);
@@ -88,12 +91,28 @@ export function useGeminiSettings() {
   };
 
   const handleActivate = async () => {
-    const trimmed = candidateKey.trim();
-    if (!trimmed) return;
+    const target = resolveActivationTarget(
+      candidateKey,
+      Boolean(activeKey?.pendingCandidate),
+    );
+    if (target === 'pending') {
+      await handleRetryPending(true);
+      return;
+    }
+    if (target === 'none') return;
+
+    const validated = validateCandidateGeminiInput(candidateKey, primaryModel);
+    if (!validated.ok) {
+      toast.error(validated.error);
+      return;
+    }
 
     try {
       setActivating(true);
-      const res = await api.automation.geminiActivate(trimmed, primaryModel);
+      const res = await api.automation.geminiActivate(
+        validated.data.apiKey,
+        validated.data.primaryModel,
+      );
       if (res.success && res.data) {
         setActiveKey(res.data);
         setModalOpen(false);
@@ -121,6 +140,7 @@ export function useGeminiSettings() {
           setActiveKey(res.data.activated);
           setModalOpen(false);
           setCandidateKey('');
+          setCandidateResult(null);
           toast.success('Pending Gemini API Key verified and activated!');
         } else {
           setModalOpen(true);
