@@ -1,8 +1,11 @@
 import type {
+  ActiveGeminiKeySummary,
   AutomationCoverage,
   AutomationReferenceSource,
   AutomationStatus,
   BilingualStatus,
+  GeminiKeyAuditEntry,
+  GeminiKeyVerificationResult,
 } from '@palnadu/types';
 import { adminApi } from './client';
 
@@ -100,27 +103,37 @@ export const automationApi = {
       `/api/admin/automation/crawler/history?limit=${limit || 10}`,
     ),
   geminiStatus: () =>
-    adminApi<{ success: boolean; data: any }>('/api/admin/automation/gemini/status'),
+    adminApi<{ success: boolean; data: ActiveGeminiKeySummary }>('/api/admin/automation/gemini/status'),
   geminiVerify: (apiKey: string, primaryModel?: string) =>
-    adminApi<{ success: boolean; message: string; data: any }>(
+    adminApi<{ success: boolean; message: string; data: GeminiKeyVerificationResult }>(
       '/api/admin/automation/gemini/verify',
       {
         method: 'POST',
         body: JSON.stringify({ apiKey, primaryModel }),
-        timeoutMs: 35000,
+        timeoutMs: 45000,
       },
     ),
   geminiActivate: (apiKey: string, primaryModel?: string) =>
-    adminApi<{ success: boolean; message: string; data: any }>(
+    adminApi<{ success: boolean; message: string; data: ActiveGeminiKeySummary }>(
       '/api/admin/automation/gemini/activate',
       {
         method: 'POST',
         body: JSON.stringify({ apiKey, primaryModel }),
-        timeoutMs: 35000,
+        timeoutMs: 45000,
       },
     ),
+  geminiRetryPending: (primaryModel?: string, activate = false) =>
+    adminApi<{
+      success: boolean;
+      message: string;
+      data: { verification: GeminiKeyVerificationResult; activated?: ActiveGeminiKeySummary };
+    }>('/api/admin/automation/gemini/retry-pending', {
+      method: 'POST',
+      body: JSON.stringify({ primaryModel, activate }),
+      timeoutMs: 45000,
+    }),
   geminiAuditLog: (limit?: number) =>
-    adminApi<{ success: boolean; data: any[] }>(
+    adminApi<{ success: boolean; data: GeminiKeyAuditEntry[] }>(
       `/api/admin/automation/gemini/audit-log?limit=${limit || 20}`,
     ),
 };

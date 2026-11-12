@@ -5,3 +5,4 @@ export * from './blog';
 export * from './analytics';
 export * from './whatsapp';
 export * from './whatsapp-outreach';
+export * from './gemini';

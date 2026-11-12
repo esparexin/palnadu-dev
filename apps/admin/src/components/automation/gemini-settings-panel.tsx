@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { GeminiStatusBadge } from './gemini-status-badge';
 import { GeminiVerificationModal } from './gemini-verification-modal';
+import { GeminiPendingBanner } from './gemini-pending-banner';
 import { GeminiAuditTable } from './gemini-audit-table';
 import { useGeminiSettings } from './use-gemini-settings';
 
@@ -16,6 +17,7 @@ export function GeminiSettingsPanel() {
     loading,
     verifying,
     activating,
+    retryingPending,
     candidateKey,
     setCandidateKey,
     candidateResult,
@@ -26,18 +28,35 @@ export function GeminiSettingsPanel() {
     setPrimaryModel,
     handleVerify,
     handleActivate,
+    handleRetryPending,
+    handleRetryFromModal,
     refreshStatus,
     refreshAuditLogs,
   } = useGeminiSettings();
 
+  const statusDisplay =
+    activeKey && !activeKey.configured && !activeKey.pendingCandidate
+      ? 'Not Configured'
+      : activeKey?.verificationStatus || 'UNVERIFIED';
+
   return (
     <div className="space-y-6">
+      {activeKey?.pendingCandidate && (
+        <GeminiPendingBanner
+          pending={activeKey.pendingCandidate}
+          retrying={retryingPending}
+          onRetry={handleRetryPending}
+        />
+      )}
+
       <div className="rounded-xl border border-palnadu-border bg-white shadow-sm p-6 space-y-5">
         <div className="flex items-center justify-between border-b border-palnadu-border pb-4">
           <div className="flex items-center gap-2">
             <KeyRound className="h-5 w-5 text-palnadu-blue" />
             <div>
-              <h2 className="text-sm font-bold text-palnadu-dark">Active Gemini API Key & Cloud Project</h2>
+              <h2 className="text-sm font-bold text-palnadu-dark">
+                Active Gemini API Key & Cloud Project
+              </h2>
               <p className="text-xs text-palnadu-secondary mt-0.5">
                 Authoritative runtime credentials for automated research, article composition, and multilingual generation.
               </p>
@@ -63,12 +82,15 @@ export function GeminiSettingsPanel() {
         ) : activeKey ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 text-xs">
             <div className="p-3.5 rounded-lg border border-palnadu-border bg-palnadu-off-white/40 space-y-1.5">
-              <span className="text-palnadu-secondary font-medium">Masked API Key</span>
+              <span className="text-palnadu-secondary font-medium">Masked API Key & Auth</span>
               <p className="font-mono font-bold text-palnadu-dark text-xs">
                 {activeKey.maskedKey || 'No API key configured'}
               </p>
-              <div className="pt-1">
-                <GeminiStatusBadge status={activeKey.verificationStatus} />
+              <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                <GeminiStatusBadge status={statusDisplay} />
+                {activeKey.authenticationStatus && (
+                  <GeminiStatusBadge status={activeKey.authenticationStatus} />
+                )}
               </div>
             </div>
 
@@ -88,28 +110,42 @@ export function GeminiSettingsPanel() {
                 {activeKey.account.email || 'Account Identity Unavailable'}
               </p>
               <p className="text-palnadu-secondary">
-                Verified: {activeKey.account.status}
+                Identity Check: {activeKey.account.status}
               </p>
             </div>
 
             <div className="p-3.5 rounded-lg border border-palnadu-border space-y-1">
-              <span className="text-palnadu-secondary font-medium">Primary Generation Model</span>
-              <p className="font-bold text-palnadu-dark">{primaryModel}</p>
+              <span className="text-palnadu-secondary font-medium">Active & Fallback Model</span>
+              <p className="font-mono font-bold text-palnadu-dark">
+                {activeKey.activeUsableModel || activeKey.primaryModel || primaryModel}
+              </p>
               <p className="text-palnadu-secondary">
-                Storage: {activeKey.source === 'database' ? 'AES-256-GCM Encrypted' : 'Environment Variable'}
+                Storage:{' '}
+                {activeKey.source === 'database'
+                  ? 'AES-256-GCM Encrypted'
+                  : activeKey.source === 'environment'
+                    ? 'Environment Fallback'
+                    : 'Not Configured'}
+                {activeKey.fallbackUsed ? ' (Fallback active)' : ''}
               </p>
             </div>
 
             <div className="p-3.5 rounded-lg border border-palnadu-border space-y-1">
               <span className="text-palnadu-secondary font-medium">Quota & Permissions</span>
-              <p className="font-bold text-palnadu-dark">Quota: {activeKey.quota.status}</p>
-              <p className="text-palnadu-secondary">Permissions: {activeKey.permissions.status}</p>
+              <p className="font-bold text-palnadu-dark">
+                Quota: {activeKey.quota?.status || 'Unknown'}
+              </p>
+              <p className="text-palnadu-secondary">
+                Permissions: {activeKey.permissions?.status || 'Unknown'}
+              </p>
             </div>
 
             <div className="p-3.5 rounded-lg border border-palnadu-border space-y-1">
               <span className="text-palnadu-secondary font-medium">Last Verification / Activation</span>
               <p className="text-palnadu-dark font-mono">
-                {activeKey.activatedAt ? new Date(activeKey.activatedAt).toLocaleString() : 'N/A'}
+                {activeKey.activatedAt
+                  ? new Date(activeKey.activatedAt).toLocaleString()
+                  : 'Environment / Unactivated'}
               </p>
               <p className="text-palnadu-secondary">By: {activeKey.activatedBy || 'System'}</p>
             </div>
@@ -121,9 +157,11 @@ export function GeminiSettingsPanel() {
         <div className="flex items-center gap-2 border-b border-palnadu-border pb-3">
           <ShieldCheck className="h-5 w-5 text-palnadu-teal" />
           <div>
-            <h2 className="text-sm font-bold text-palnadu-dark">Rotate or Update Gemini API Key</h2>
+            <h2 className="text-sm font-bold text-palnadu-dark">
+              Rotate or Update Gemini API Key
+            </h2>
             <p className="text-xs text-palnadu-secondary mt-0.5">
-              Two-step atomic workflow: probe candidate key identity and project metadata, then confirm activation.
+              Two-step atomic workflow: verify key authentication & model availability, then confirm activation.
             </p>
           </div>
         </div>
@@ -138,6 +176,7 @@ export function GeminiSettingsPanel() {
               value={candidateKey}
               onChange={(e) => setCandidateKey(e.target.value)}
               placeholder="AIzaSy... or AQ..."
+              className="h-9 text-xs rounded-md"
             />
           </div>
 
@@ -148,24 +187,26 @@ export function GeminiSettingsPanel() {
               value={primaryModel}
               onChange={(e) => setPrimaryModel(e.target.value)}
               placeholder="gemini-3.8-flash"
+              className="h-9 text-xs rounded-md"
             />
           </div>
         </div>
 
-        <div className="flex items-center justify-between pt-2">
+        <div className="flex flex-wrap items-center justify-between gap-2 pt-2">
           <p className="text-xs text-palnadu-secondary max-w-md">
-            Safe Activation Guarantee: Existing key is preserved if candidate verification, quota check, or model access fails.
+            Safe Activation Guarantee: Existing active DB or environment key stays protected if verification encounters overload or invalid credentials.
           </p>
           <Button
             variant="default"
             size="sm"
             onClick={handleVerify}
             disabled={verifying || !candidateKey.trim()}
+            className="cursor-pointer"
           >
             {verifying ? (
               <>
                 <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
-                <span>Verifying Identity...</span>
+                <span>Verifying Identity & Models...</span>
               </>
             ) : (
               <>
@@ -184,6 +225,8 @@ export function GeminiSettingsPanel() {
         onClose={() => setModalOpen(false)}
         result={candidateResult}
         activating={activating}
+        retrying={verifying || retryingPending}
+        onRetryVerification={handleRetryFromModal}
         onConfirmActivate={handleActivate}
       />
     </div>

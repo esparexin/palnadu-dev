@@ -5,6 +5,7 @@ import { BlogLanguage, PublishStatus, TopicStatus } from '@prisma/client';
 import { ComposedArticle } from './blog-composer.service';
 import { ClaimedTopic, GenerationResult } from './types';
 import { extractInternalBacklinks } from './backlink-policy';
+import { syncExistingTopicPost } from './blog-idempotency.util';
 
 @Injectable()
 export class BlogPublisherService {
@@ -57,38 +58,52 @@ export class BlogPublisherService {
     const { draft, enrichedContent, coverImage, images, wordCount, validation, llmProvider } = composed;
     const isPublished = publishStatus === PublishStatus.PUBLISHED;
 
-    const post = await this.prisma.blogPost.create({
-      data: {
-        topicKey,
-        topic,
-        language,
-        title: draft.title,
-        slug: draft.slug,
-        excerpt: draft.excerpt,
-        content: enrichedContent,
-        coverImage,
-        categoryId,
-        authorId,
-        seoTitle: draft.seoTitle,
-        seoDescription: draft.seoDescription,
-        canonicalUrl: draft.canonicalUrl,
-        ogImage: coverImage,
-        status: publishStatus,
-        publishDate: isPublished ? new Date() : null,
-        imageMetadata: images as any,
-        faqData: draft.faq as any,
-        primaryKeyword: draft.primaryKeyword,
-        secondaryKeywords: draft.secondaryKeywords,
-        relatedKeywords: draft.relatedKeywords,
-        longTailKeywords: draft.longTailKeywords,
-        searchIntent: draft.searchIntent,
-        tags: draft.tags,
-        internalLinks: draft.internalLinks as any,
-        externalRefs: draft.externalReferences as any,
-        llmProvider,
-        referenceSources: topicRow.referenceSources ?? [],
-      },
-    });
+    let post;
+    try {
+      post = await this.prisma.blogPost.create({
+        data: {
+          topicKey,
+          topic,
+          language,
+          title: draft.title,
+          slug: draft.slug,
+          excerpt: draft.excerpt,
+          content: enrichedContent,
+          coverImage,
+          categoryId,
+          authorId,
+          seoTitle: draft.seoTitle,
+          seoDescription: draft.seoDescription,
+          canonicalUrl: draft.canonicalUrl,
+          ogImage: coverImage,
+          status: publishStatus,
+          publishDate: isPublished ? new Date() : null,
+          imageMetadata: images as any,
+          faqData: draft.faq as any,
+          primaryKeyword: draft.primaryKeyword,
+          secondaryKeywords: draft.secondaryKeywords,
+          relatedKeywords: draft.relatedKeywords,
+          longTailKeywords: draft.longTailKeywords,
+          searchIntent: draft.searchIntent,
+          tags: draft.tags,
+          internalLinks: draft.internalLinks as any,
+          externalRefs: draft.externalReferences as any,
+          llmProvider,
+          referenceSources: topicRow.referenceSources ?? [],
+        },
+      });
+    } catch (err: any) {
+      if (err?.code === 'P2002') {
+        const existing = await this.prisma.blogPost.findUnique({
+          where: { topicKey_language: { topicKey, language } },
+        });
+        if (existing) {
+          this.logger.warn(`Duplicate BlogPost prevented on retry for topicKey="${topicKey}" [${language}]`);
+          return syncExistingTopicPost(this.prisma, existing, categoryName);
+        }
+      }
+      throw err;
+    }
 
     const inBodyLinks = extractInternalBacklinks(enrichedContent);
     this.logger.log(

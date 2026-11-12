@@ -3,7 +3,7 @@ import { Cron } from '@nestjs/schedule';
 import { PrismaService } from '../prisma.service';
 import { TopicDiscoveryService } from './topic-discovery.service';
 import { DiscoveredTopic } from './seo-sources';
-import { BlogLanguage, TopicStatus } from '@prisma/client';
+import { BlogLanguage } from '@prisma/client';
 import { allocateQuota, BilingualConfig, BilingualQuota } from './bilingual-quota';
 import { BlogQueueService } from './blog/blog-queue.service';
 import { BlogComposerService } from './blog/blog-composer.service';
@@ -13,6 +13,7 @@ import { BlogStatusService } from './blog/blog-status.service';
 import { BlogBatchService } from './blog/blog-batch.service';
 import { inferCategoryFromTopic, resolveOrEnsureCategory } from './blog/blog-seeds';
 import { ClaimedTopic, GenerationResult, QueueCandidate, RejectedTopic } from './blog/types';
+import { syncExistingTopicPost, toGenerationResultFromPost, recordSingleArticleFailure } from './blog/blog-idempotency.util';
 
 export * from './blog/types';
 export * from './blog/blog-queue.service';
@@ -131,19 +132,7 @@ export class BlogAutomationService {
       const existing = await this.prisma.blogPost.findUnique({
         where: { topicKey_language: { topicKey, language } },
       });
-      if (existing) {
-        return {
-          id: existing.id,
-          title: existing.title,
-          slug: existing.slug,
-          category: categorySlug,
-          status: existing.status,
-          wordCount: existing.content.split(/\s+/).length,
-          imagesCount: 0,
-          url: language === BlogLanguage.te ? `/te/blog/${existing.slug}` : `/blog/${existing.slug}`,
-          topicKey,
-        };
-      }
+      if (existing) return toGenerationResultFromPost(existing, categorySlug);
       if (enqueued.reason !== 'already queued') {
         throw new Error(`Topic refused: ${enqueued.reason}.`);
       }
@@ -163,11 +152,15 @@ export class BlogAutomationService {
     try {
       return await this.generateForTopic(target, forcePublish, `manual:${process.pid}:${Date.now()}`);
     } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
-      await this.prisma.blogTopic.update({
-        where: { topicKey_language: { topicKey, language } },
-        data: { attempts: { increment: 1 }, lastError: msg.slice(0, 500) },
-      }).catch(() => {});
+      await recordSingleArticleFailure({
+        prisma: this.prisma,
+        topicKey,
+        language,
+        currentAttempts: queued.attempts,
+        maxAttempts: this.queueService.maxAttempts,
+        retryDelayMs: this.queueService.retryDelayMs,
+        err,
+      });
       throw err;
     }
   }
@@ -190,10 +183,17 @@ export class BlogAutomationService {
     });
     if (!author) throw new Error('No admin author found in database for blog generation.');
 
-    const [existingSlugs, existingTitles, sameTopicSameLang] = await Promise.all([
+    const existingForTopic = await this.prisma.blogPost.findUnique({
+      where: { topicKey_language: { topicKey, language } },
+    });
+    if (existingForTopic) {
+      this.logger.log(`Idempotent retry skip: post already exists for topicKey="${topicKey}" [${language}]`);
+      return syncExistingTopicPost(this.prisma, existingForTopic, category.name);
+    }
+
+    const [existingSlugs, existingTitles] = await Promise.all([
       this.prisma.blogPost.findMany({ where: { language }, select: { slug: true } }),
       this.prisma.blogPost.findMany({ where: { language }, select: { title: true } }),
-      this.prisma.blogPost.findUnique({ where: { topicKey_language: { topicKey, language } }, select: { id: true } }),
     ]);
 
     const composed = await this.composerService.composeArticle(
@@ -201,7 +201,7 @@ export class BlogAutomationService {
       !!category,
       new Set(existingSlugs.map((p) => p.slug)),
       new Set(existingTitles.map((p) => p.title.toLowerCase().trim())),
-      !!sameTopicSameLang,
+      false,
     );
 
     if (!composed.validation.passed) {

@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { History } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { GeminiStatusBadge } from './gemini-status-badge';
 import type { GeminiKeyAuditEntry } from './types';
 
@@ -16,14 +17,18 @@ export function GeminiAuditTable({ entries, onRefresh }: AuditTableProps) {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <History className="h-4 w-4 text-palnadu-blue" />
-          <h2 className="text-sm font-bold text-palnadu-dark">Gemini API Key Audit Trail</h2>
+          <h2 className="text-sm font-bold text-palnadu-dark">
+            Gemini API Key Audit Trail
+          </h2>
         </div>
-        <button
+        <Button
+          variant="ghost"
+          size="sm"
           onClick={onRefresh}
-          className="text-xs text-palnadu-blue hover:underline font-medium cursor-pointer"
+          className="text-xs text-palnadu-blue cursor-pointer"
         >
           Refresh Logs
-        </button>
+        </Button>
       </div>
 
       <p className="text-xs text-palnadu-secondary">
@@ -56,14 +61,20 @@ export function GeminiAuditTable({ entries, onRefresh }: AuditTableProps) {
                   <td className="py-2.5 px-3 font-semibold text-palnadu-dark whitespace-nowrap">
                     {entry.action.replace(/_/g, ' ')}
                   </td>
-                  <td className="py-2.5 px-3 text-palnadu-dark whitespace-nowrap">{entry.actor}</td>
+                  <td className="py-2.5 px-3 text-palnadu-dark whitespace-nowrap">
+                    {entry.actor}
+                  </td>
                   <td className="py-2.5 px-3 font-mono text-palnadu-secondary whitespace-nowrap">
                     {entry.maskedKey}
                   </td>
                   <td className="py-2.5 px-3 whitespace-nowrap">
                     <GeminiStatusBadge status={entry.status} size="sm" />
                   </td>
-                  <td className="py-2.5 px-3 text-palnadu-body max-w-xs truncate" title={entry.reason || ''}>
+                  <td
+                    className="py-2.5 px-3 text-palnadu-body max-w-xs truncate"
+                    title={entry.reason || ''}
+                  >
+                    {entry.verificationCode ? `[${entry.verificationCode}] ` : ''}
                     {entry.projectId ? `[Project: ${entry.projectId}] ` : ''}
                     {entry.reason || 'N/A'}
                   </td>

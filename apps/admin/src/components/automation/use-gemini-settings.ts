@@ -3,10 +3,11 @@
 import { useState, useEffect, useCallback } from 'react';
 import { api } from '@/lib/api';
 import { useToast } from '@/components/ui/toast';
-import type {
-  ActiveGeminiKeySummary,
-  GeminiKeyVerificationResult,
-  GeminiKeyAuditEntry,
+import {
+  DEFAULT_GEMINI_MODELS,
+  type ActiveGeminiKeySummary,
+  type GeminiKeyVerificationResult,
+  type GeminiKeyAuditEntry,
 } from './types';
 
 export function useGeminiSettings() {
@@ -15,11 +16,12 @@ export function useGeminiSettings() {
   const [loading, setLoading] = useState<boolean>(true);
   const [verifying, setVerifying] = useState<boolean>(false);
   const [activating, setActivating] = useState<boolean>(false);
+  const [retryingPending, setRetryingPending] = useState<boolean>(false);
   const [candidateKey, setCandidateKey] = useState<string>('');
   const [candidateResult, setCandidateResult] = useState<GeminiKeyVerificationResult | null>(null);
   const [modalOpen, setModalOpen] = useState<boolean>(false);
   const [auditLogs, setAuditLogs] = useState<GeminiKeyAuditEntry[]>([]);
-  const [primaryModel, setPrimaryModel] = useState<string>('gemini-3.8-flash');
+  const [primaryModel, setPrimaryModel] = useState<string>(DEFAULT_GEMINI_MODELS[0]);
 
   const fetchStatus = useCallback(async () => {
     try {
@@ -33,7 +35,7 @@ export function useGeminiSettings() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [toast]);
 
   const fetchAuditLogs = useCallback(async () => {
     try {
@@ -70,6 +72,8 @@ export function useGeminiSettings() {
         setModalOpen(true);
         if (res.data.isValid && res.data.isUsableForGeneration) {
           toast.success(`Key probe successful: ${res.data.verificationStatus}`);
+        } else if (res.data.isTemporary) {
+          toast.error(`Temporary Gemini issue (${res.data.verificationStatus}) — safe to retry.`);
         } else {
           toast.error(`Key verification issue: ${res.data.verificationStatus}`);
         }
@@ -78,6 +82,7 @@ export function useGeminiSettings() {
       toast.error(err?.message || 'Verification request failed.');
     } finally {
       setVerifying(false);
+      fetchStatus();
       fetchAuditLogs();
     }
   };
@@ -99,9 +104,48 @@ export function useGeminiSettings() {
       }
     } catch (err: any) {
       toast.error(err?.message || 'Activation failed. Existing key was preserved.');
+      fetchStatus();
+      fetchAuditLogs();
     } finally {
       setActivating(false);
     }
+  };
+
+  const handleRetryPending = async (activate = false) => {
+    try {
+      setRetryingPending(true);
+      const res = await api.automation.geminiRetryPending(primaryModel, activate);
+      if (res.success && res.data) {
+        setCandidateResult(res.data.verification);
+        if (res.data.activated) {
+          setActiveKey(res.data.activated);
+          setModalOpen(false);
+          setCandidateKey('');
+          toast.success('Pending Gemini API Key verified and activated!');
+        } else {
+          setModalOpen(true);
+          if (res.data.verification.isUsableForGeneration) {
+            toast.success('Pending candidate passed verification!');
+          } else {
+            toast.error(`Retry status: ${res.data.verification.verificationStatus}`);
+          }
+        }
+      }
+    } catch (err: any) {
+      toast.error(err?.message || 'Retry verification failed.');
+    } finally {
+      setRetryingPending(false);
+      fetchStatus();
+      fetchAuditLogs();
+    }
+  };
+
+  const handleRetryFromModal = async () => {
+    if (candidateKey.trim()) {
+      await handleVerify();
+      return;
+    }
+    await handleRetryPending(false);
   };
 
   return {
@@ -109,6 +153,7 @@ export function useGeminiSettings() {
     loading,
     verifying,
     activating,
+    retryingPending,
     candidateKey,
     setCandidateKey,
     candidateResult,
@@ -119,6 +164,8 @@ export function useGeminiSettings() {
     setPrimaryModel,
     handleVerify,
     handleActivate,
+    handleRetryPending,
+    handleRetryFromModal,
     refreshStatus: fetchStatus,
     refreshAuditLogs: fetchAuditLogs,
   };

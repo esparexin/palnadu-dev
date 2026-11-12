@@ -185,8 +185,9 @@ describe('Phase 1 Gemini Key & Project Verification Engine', () => {
       const result = await service.verifyKey('AIzaSyKeyModelDenied123456', { fetchFn: mockFetch });
       assert.equal(result.isValid, true);
       assert.equal(result.isUsableForGeneration, false);
-      assert.equal(result.verificationStatus, 'Permission Denied');
-      assert.ok(result.errorMessage?.includes('Permission denied'));
+      assert.equal(result.verificationCode, 'MODEL_ACCESS_DENIED');
+      assert.equal(result.verificationStatus, 'Model Access Denied');
+      assert.ok(result.errorMessage?.includes('Model access denied'));
     });
 
     it('detects quota exhaustion during verification', async () => {
