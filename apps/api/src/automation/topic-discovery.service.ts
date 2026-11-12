@@ -1,4 +1,5 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
+import { BlogLanguage } from '@prisma/client';
 import { PrismaService } from '../prisma.service';
 import {
   DiscoveredTopic,
@@ -58,12 +59,35 @@ export class TopicDiscoveryService {
   }
 
   /**
-   * Runs every configured source and returns deduplicated candidate topics.
+   * Runs every configured source and returns deduplicated candidate topics for the target language.
    *
-   * Candidates whose topicKey already exists in the database are dropped here as
-   * a cheap first pass; the authoritative check still happens at enqueue time.
+   * Candidates whose (topicKey, language) already exists in the database are dropped here
+   * as a cheap first pass; the authoritative check still happens at enqueue time.
    */
-  async discover(limit = 100): Promise<DiscoveredTopic[]> {
+  async discover(
+    limit = 100,
+    language: BlogLanguage = BlogLanguage.en,
+  ): Promise<DiscoveredTopic[]> {
+    const candidates = await this.collectMergedCandidates();
+    return this.filterFreshForLanguage(candidates, language, limit);
+  }
+
+  /** Collects reference-source candidates once and filters independently per target language. */
+  async discoverForLanguages(
+    limit = 100,
+    languages: BlogLanguage[] = [BlogLanguage.en],
+  ): Promise<Array<{ language: BlogLanguage; topics: DiscoveredTopic[] }>> {
+    const uniqueLanguages = [...new Set(languages)];
+    const candidates = await this.collectMergedCandidates();
+    return Promise.all(
+      uniqueLanguages.map(async (language) => ({
+        language,
+        topics: await this.filterFreshForLanguage(candidates, language, limit),
+      })),
+    );
+  }
+
+  private async collectMergedCandidates(): Promise<DiscoveredTopic[]> {
     const collected: DiscoveredTopic[] = [];
 
     const results = await Promise.allSettled(
@@ -106,23 +130,38 @@ export class TopicDiscoveryService {
       }
     }
 
-    const candidates = [...merged.values()];
+    return [...merged.values()];
+  }
 
-    // Cheap pre-filter: drop anything we already generated.
+  private async filterFreshForLanguage(
+    candidates: DiscoveredTopic[],
+    language: BlogLanguage,
+    limit: number,
+  ): Promise<DiscoveredTopic[]> {
+    const matchesLang = (rowLang?: BlogLanguage | null) =>
+      rowLang === language || (!rowLang && language === BlogLanguage.en);
+
+    const [postRows, topicRows] = await Promise.all([
+      this.prisma.blogPost.findMany({ where: { language }, select: { topicKey: true, language: true } }),
+      this.prisma.blogTopic.findMany({ where: { language }, select: { topicKey: true, language: true } }),
+    ]);
+
     const alreadyGenerated = new Set(
-      (await this.prisma.blogPost.findMany({ select: { topicKey: true } }))
-        .map((p) => p.topicKey)
-        .filter((k): k is string => !!k),
+      postRows
+        .filter((p) => p.topicKey && matchesLang(p.language))
+        .map((p) => p.topicKey as string),
     );
     const queued = new Set(
-      (await this.prisma.blogTopic.findMany({ select: { topicKey: true } })).map((t) => t.topicKey),
+      topicRows
+        .filter((t) => matchesLang(t.language))
+        .map((t) => t.topicKey),
     );
 
     const fresh = candidates.filter((c) => !alreadyGenerated.has(c.topicKey) && !queued.has(c.topicKey));
 
     this.logger.log(
       `discovered ${candidates.length} candidate topics from ${this.sources.filter((s) => s.isConfigured()).length} sources; ` +
-        `${fresh.length} are new after dedup`,
+        `${fresh.length} are new [${language}] after dedup`,
     );
 
     return fresh.slice(0, limit);
