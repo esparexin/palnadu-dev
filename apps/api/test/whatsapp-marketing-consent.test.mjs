@@ -138,6 +138,9 @@ describe('WhatsApp Marketing Consent, Strict Phone Match & Opt-Out Safety', () =
     assert.equal(service.isOptOutKeyword('unsubscribe!'), true);
     assert.equal(service.isOptOutKeyword('వద్దు.'), true);
     assert.equal(service.isOptOutKeyword('opt out'), true);
+    assert.equal(service.isOptOutKeyword(`...STOP${'!'.repeat(5000)}`), true);
+    assert.equal(service.isOptOutKeyword(`hello${'!'.repeat(5000)}x`), false);
+    assert.equal(service.isOptOutKeyword('!'.repeat(5000)), false);
 
     assert.equal(await service.handleInboundOptOut('+919876511111', 'STOP.'), true);
     assert.equal(contacts.get('919876511111')?.optInStatus, ContactOptInStatus.OPTED_OUT);

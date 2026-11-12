@@ -4,8 +4,21 @@ const OPT_OUT_KEYWORDS_SET = new Set<string>(
   MARKETING_OPT_OUT_KEYWORDS.map((k) => k.toLowerCase()),
 );
 
+const EDGE_PUNCTUATION = new Set('.,!?;:"\'()[]{}<>…–—-');
+
+/**
+ * Strips leading and trailing punctuation in linear O(n) time without regex backtracking.
+ */
 function stripEdgePunctuation(value: string): string {
-  return value.replace(/^[.,!?;:"'()[\]{}<>…–—-]+|[.,!?;:"'()[\]{}<>…–—-]+$/g, '');
+  let start = 0;
+  let end = value.length;
+  while (start < end && EDGE_PUNCTUATION.has(value.charAt(start))) {
+    start += 1;
+  }
+  while (end > start && EDGE_PUNCTUATION.has(value.charAt(end - 1))) {
+    end -= 1;
+  }
+  return start === 0 && end === value.length ? value : value.slice(start, end);
 }
 
 export function isOptOutKeywordText(text?: string | null): boolean {
