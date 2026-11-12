@@ -11,26 +11,23 @@ import {
 
 describe('Phase 3 Auto-Blogging Date, Timezone & Admin Consistency', () => {
   describe('Sorting Consistency Between Admin and Public', () => {
-    it('findAllAdmin orders by publishDate desc followed by createdAt desc', async () => {
-      let capturedArgs = null;
+    it('findAllAdmin orders unfiltered/draft queries by createdAt desc first and published queries by publishDate desc first', async () => {
+      const captured = [];
       const mockPrisma = {
         blogPost: {
-          findMany: async (args) => {
-            capturedArgs = args;
-            return [];
-          },
+          findMany: async (args) => { captured.push(args); return []; },
           count: async () => 0,
         },
       };
 
       const service = new BlogService(mockPrisma);
       await service.findAllAdmin({ page: 1, limit: 10 });
+      await service.findAllAdmin({ page: 1, limit: 10, status: PublishStatus.DRAFT });
+      await service.findAllAdmin({ page: 1, limit: 10, status: PublishStatus.PUBLISHED });
 
-      assert.ok(capturedArgs, 'findMany was called');
-      assert.deepEqual(capturedArgs.orderBy, [
-        { publishDate: 'desc' },
-        { createdAt: 'desc' },
-      ]);
+      assert.deepEqual(captured[0].orderBy, [{ createdAt: 'desc' }, { publishDate: 'desc' }]);
+      assert.deepEqual(captured[1].orderBy, [{ createdAt: 'desc' }, { publishDate: 'desc' }]);
+      assert.deepEqual(captured[2].orderBy, [{ publishDate: 'desc' }, { createdAt: 'desc' }]);
     });
 
     it('findPublished orders by publishDate desc followed by createdAt desc', async () => {
