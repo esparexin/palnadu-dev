@@ -5,6 +5,7 @@ import {
   loginSchema,
   createServiceSchema,
   geminiKeyInputSchema,
+  geminiRetryPendingSchema,
   sendIndividualOutreachSchema,
   whatsAppConsentEvidenceSchema,
 } from '../dist/index.js';
@@ -165,6 +166,14 @@ describe('Validation Schemas Audit', () => {
 
       const result2 = geminiKeyInputSchema.safeParse({ apiKey: 'AIzaTooShort' });
       assert.equal(result2.success, false);
+    });
+  });
+
+  describe('geminiRetryPendingSchema', () => {
+    it('should validate retry pending payload with defaults and model override', () => {
+      const def = geminiRetryPendingSchema.parse({});
+      assert.equal(def.activate, false);
+      assert.equal(geminiRetryPendingSchema.safeParse({ primaryModel: 'gemini-3.6-flash', activate: true }).success, true);
     });
   });
 
