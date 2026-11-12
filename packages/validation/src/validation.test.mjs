@@ -211,5 +211,28 @@ describe('Validation Schemas Audit', () => {
       const result = sendIndividualOutreachSchema.safeParse(invalid);
       assert.equal(result.success, false);
     });
+
+    it('should require and trim customer_name for palnadu_customer_acknowledgement', () => {
+      const validAck = sendIndividualOutreachSchema.safeParse({
+        phone: '+919876543210',
+        businessName: 'Palnadu Client',
+        templateName: 'palnadu_customer_acknowledgement',
+        languageCode: 'en_IN',
+        parameters: { customer_name: '  Ramesh Kumar  ' },
+        consentEvidence: validConsent,
+      });
+      assert.equal(validAck.success, true);
+      assert.equal(validAck.data.parameters.customer_name, 'Ramesh Kumar');
+
+      const missingAck = sendIndividualOutreachSchema.safeParse({
+        phone: '+919876543210',
+        businessName: 'Palnadu Client',
+        templateName: 'palnadu_customer_acknowledgement',
+        languageCode: 'en_IN',
+        parameters: { customer_name: '   ' },
+        consentEvidence: validConsent,
+      });
+      assert.equal(missingAck.success, false);
+    });
   });
 });

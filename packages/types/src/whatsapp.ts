@@ -151,6 +151,7 @@ export type WhatsAppTemplateComponentType = 'header' | 'body' | 'button';
 
 export interface WhatsAppTemplateParameter {
   type: 'text' | 'currency' | 'date_time' | 'image' | 'document' | 'video';
+  parameter_name?: string;
   text?: string;
   image?: { id?: string; link?: string };
   document?: { id?: string; link?: string; filename?: string };

@@ -11,6 +11,7 @@ import {
   HttpCode,
   HttpStatus,
   NotFoundException,
+  Logger,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
@@ -19,6 +20,8 @@ import { ZodValidationPipe } from '../common/pipes/zod-validation.pipe';
 import { WhatsAppCampaignService } from './whatsapp-campaign.service';
 import { WhatsAppContactService, type ImportContactItem } from './whatsapp-contact.service';
 import { WhatsAppOutreachService } from './whatsapp-outreach.service';
+import { WhatsAppApiClient } from './whatsapp-api.client';
+import { mapMetaTemplatesToDefinitions } from './whatsapp-template.util';
 import {
   createMarketingCampaignSchema,
   sendIndividualOutreachSchema,
@@ -38,10 +41,13 @@ import {
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles('SUPER_ADMIN', 'ADMIN', 'PROJECT_MANAGER')
 export class WhatsAppAdminController {
+  private readonly logger = new Logger(WhatsAppAdminController.name);
+
   constructor(
     private readonly campaignService: WhatsAppCampaignService,
     private readonly contactService: WhatsAppContactService,
     @Optional() private readonly outreachService?: WhatsAppOutreachService,
+    @Optional() private readonly apiClient?: WhatsAppApiClient,
   ) {}
 
   @Post('outreach/send')
@@ -86,7 +92,16 @@ export class WhatsAppAdminController {
   }
 
   @Get('templates')
-  getApprovedTemplates() {
+  async getApprovedTemplates() {
+    if (this.apiClient) {
+      try {
+        const liveTemplates = await this.apiClient.fetchApprovedTemplates();
+        return { success: true, data: mapMetaTemplatesToDefinitions(liveTemplates) };
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err);
+        this.logger.warn(`Live Meta template verification unavailable (${msg}). Using baseline catalog.`);
+      }
+    }
     return { success: true, data: APPROVED_WHATSAPP_TEMPLATES };
   }
 

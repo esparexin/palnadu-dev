@@ -74,6 +74,77 @@ export const MAX_ADMIN_OUTREACH_PER_MINUTE = 15;
 export const OUTREACH_LEASE_EXPIRY_MS = 45000;
 export const TEMPLATE_CACHE_TTL_MS = 15 * 60 * 1000;
 
+import { PALNADU_CUSTOMER_ACKNOWLEDGEMENT_TEMPLATE } from '@palnadu/validation';
+
+export { PALNADU_CUSTOMER_ACKNOWLEDGEMENT_TEMPLATE };
+
+export interface TemplateMetadataSpec {
+  displayTitle: string;
+  description: string;
+  allowBusinessNameFallback?: boolean;
+  requiredParameters: Array<{
+    index: number;
+    key: string;
+    label: string;
+    placeholder: string;
+  }>;
+}
+
+export const WHATSAPP_TEMPLATE_PARAMETER_SPECS: Record<string, TemplateMetadataSpec> = {
+  [PALNADU_CUSTOMER_ACKNOWLEDGEMENT_TEMPLATE]: {
+    displayTitle: 'Customer Acknowledgement',
+    description: 'Marketing acknowledgement template for authorized customer leads.',
+    allowBusinessNameFallback: false,
+    requiredParameters: [
+      {
+        index: 1,
+        key: 'customer_name',
+        label: 'Customer Name',
+        placeholder: 'e.g. Ramesh Kumar',
+      },
+    ],
+  },
+  b2b_website_outreach_v1: {
+    displayTitle: 'B2B Website Outreach (English)',
+    description: 'Initial outreach to Palnadu businesses without a website.',
+    allowBusinessNameFallback: true,
+    requiredParameters: [
+      {
+        index: 1,
+        key: 'business_name',
+        label: 'Business Name',
+        placeholder: 'e.g. Sri Lakshmi Rice Mill',
+      },
+    ],
+  },
+  b2b_website_outreach_te: {
+    displayTitle: 'B2B Website Outreach (Telugu)',
+    description: 'Telugu outreach for regional businesses in Narasaraopet, Chilakaluripet, Guntur.',
+    allowBusinessNameFallback: true,
+    requiredParameters: [
+      {
+        index: 1,
+        key: 'business_name',
+        label: 'Business Name',
+        placeholder: 'ఉదా: శ్రీ లక్ష్మి రైస్ మిల్లు',
+      },
+    ],
+  },
+  b2b_intro_v1: {
+    displayTitle: 'B2B General Introduction',
+    description: 'General introduction to Palnadu.dev web and software development services.',
+    allowBusinessNameFallback: true,
+    requiredParameters: [
+      {
+        index: 1,
+        key: 'business_name',
+        label: 'Business Name',
+        placeholder: 'e.g. Kaveri Pesticides',
+      },
+    ],
+  },
+};
+
 export const APPROVED_WHATSAPP_TEMPLATES = [
   {
     name: 'b2b_website_outreach_v1',

@@ -20,6 +20,7 @@ export interface WhatsAppMetaTemplateComponent {
   text?: string;
   example?: {
     body_text?: string[][];
+    body_text_named_params?: Array<{ param_name: string; example: string }>;
     header_text?: string[];
   };
 }
@@ -29,6 +30,7 @@ export interface WhatsAppMetaTemplate {
   status: 'APPROVED' | 'PENDING' | 'REJECTED' | 'PAUSED';
   language: string;
   category: 'MARKETING' | 'UTILITY' | 'AUTHENTICATION';
+  parameter_format?: 'NAMED' | 'POSITIONAL';
   components: WhatsAppMetaTemplateComponent[];
 }
 
