@@ -2,10 +2,31 @@ import { BlogLanguage, TopicStatus } from '@prisma/client';
 import { Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma.service';
 import { DiscoveredTopic } from '../seo-sources';
+import { canonicalizeTopic } from '../topic-identity';
 import { inferCategoryFromTopic } from './blog-seeds';
 import { QueueCandidate } from './types';
 
 export const DEFAULT_TRANSIENT_FAILURE_COOLDOWN_MS = 12 * 60 * 60 * 1000;
+const DEFAULT_DISCOVERY_TARGET_LOCATION = 'Palnadu and Guntur, Andhra Pradesh';
+const DISCOVERY_LOCATION_LABELS: Record<string, string> = {
+  guntur: 'Guntur, Andhra Pradesh',
+  palnadu: 'Palnadu, Andhra Pradesh',
+  narasaraopet: 'Narasaraopet, Palnadu, Andhra Pradesh',
+  chilakaluripet: 'Chilakaluripet, Palnadu, Andhra Pradesh',
+  vinukonda: 'Vinukonda, Palnadu, Andhra Pradesh',
+  sattenapalle: 'Sattenapalle, Palnadu, Andhra Pradesh',
+  macherla: 'Macherla, Palnadu, Andhra Pradesh',
+  piduguralla: 'Piduguralla, Palnadu, Andhra Pradesh',
+  tenali: 'Tenali, Guntur, Andhra Pradesh',
+  mangalagiri: 'Mangalagiri, Guntur, Andhra Pradesh',
+  bapatla: 'Bapatla, Andhra Pradesh',
+  amaravati: 'Amaravati, Andhra Pradesh',
+  vijayawada: 'Vijayawada, Andhra Pradesh',
+  rajahmundry: 'Rajahmundry, Andhra Pradesh',
+  kakinada: 'Kakinada, Andhra Pradesh',
+  'andhra-pradesh': 'Andhra Pradesh',
+  telangana: 'Telangana',
+};
 
 const PERMANENT_FAILURE_PATTERNS = [
   'validation:',
@@ -109,6 +130,14 @@ export async function recoverTransientFailedTopics(
   return recovered;
 }
 
+function resolveDiscoveryTargetLocation(topic: DiscoveredTopic): string {
+  const detected =
+    canonicalizeTopic(topic.phrase).location ??
+    canonicalizeTopic(topic.primaryKeyword).location;
+  if (!detected) return DEFAULT_DISCOVERY_TARGET_LOCATION;
+  return DISCOVERY_LOCATION_LABELS[detected] ?? DEFAULT_DISCOVERY_TARGET_LOCATION;
+}
+
 export function toDiscoveryQueueCandidate(
   topic: DiscoveredTopic,
   language: BlogLanguage,
@@ -116,7 +145,7 @@ export function toDiscoveryQueueCandidate(
   return {
     categorySlug: inferCategoryFromTopic(topic.phrase, topic.primaryKeyword),
     topic: topic.phrase,
-    targetLocation: topic.sources.join(', '),
+    targetLocation: resolveDiscoveryTargetLocation(topic),
     searchIntent: topic.intent,
     primaryKeyword: topic.primaryKeyword,
     keywords: [...topic.secondaryKeywords, ...topic.longTailKeywords],

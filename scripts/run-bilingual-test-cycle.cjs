@@ -1,5 +1,5 @@
 /**
- * Automated Bilingual Auto-Blogging Generation Run (3 Telugu + 2 English)
+ * Automated Bilingual Auto-Blogging Generation Run (3 English + 2 Telugu)
  * Executes against live MongoDB Atlas & Google Gemini API.
  */
 const { NestFactory } = require('@nestjs/core');
@@ -57,10 +57,10 @@ async function main() {
     const bilingualStatus = await blogService.getBilingualStatus();
     console.log(`\n📊 Queue State: Pending TE=${bilingualStatus.pending.te}, Pending EN=${bilingualStatus.pending.en}`);
 
-    console.log('\n⚙️  Running Bilingual Batch (Quota: 3 TE + 2 EN)...');
+    console.log('\n⚙️  Running Bilingual Batch (Quota: 3 EN + 2 TE)...');
     const workerId = `runner:${process.pid}:${Date.now()}`;
     const startTime = Date.now();
-    const batchResult = await blogService.generateBilingualBatch({ te: 3, en: 2 }, false, workerId);
+    const batchResult = await blogService.generateBilingualBatch({ te: 2, en: 3 }, false, workerId);
     const durationSec = ((Date.now() - startTime) / 1000).toFixed(1);
 
     console.log(`\n✅ Generation run finished in ${durationSec}s`);

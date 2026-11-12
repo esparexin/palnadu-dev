@@ -1,5 +1,5 @@
 /**
- * Per-cycle bilingual quota allocator (3 Telugu + 2 English).
+ * Per-cycle bilingual quota allocator (3 English + 2 Telugu).
  *
  * Pure module: no Nest, no Prisma, fully unit-testable. The allocator decides
  * *which* pending topics a cycle may claim; claiming itself stays in the
@@ -20,7 +20,7 @@ import type { BilingualQuota, BilingualConfig } from '@palnadu/types';
 
 export type { BilingualQuota, BilingualConfig };
 
-export const BILINGUAL_QUOTA_DEFAULT: BilingualQuota = { te: 3, en: 2 };
+export const BILINGUAL_QUOTA_DEFAULT: BilingualQuota = { te: 2, en: 3 };
 
 /** Hard ceiling so a misconfigured quota cannot drain the queue in one run. */
 export const BILINGUAL_QUOTA_MAX_TOTAL = 10;

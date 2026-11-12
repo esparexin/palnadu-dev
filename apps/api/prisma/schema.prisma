@@ -414,7 +414,7 @@ model BlogGenerationLog {
   topic       String?
   postId      String?  @db.ObjectId
   // Optional so legacy log rows need no backfill; new attempts always set it.
-  // Lets per-cycle auditing distinguish the 3 te + 2 en quota when enabled.
+  // Lets per-cycle auditing distinguish the 3 en + 2 te quota when enabled.
   language    BlogLanguage?
 
   primaryKeyword    String?

@@ -109,7 +109,7 @@ export function BlogQueueModal({
                       {bilingualStatus?.enabled ? 'Bilingual (Active)' : 'English Only'}
                     </p>
                     <p className="text-xs text-palnadu-secondary mt-1">
-                      {bilingualStatus?.quota?.te ?? 1} TE / {bilingualStatus?.quota?.en ?? 1} EN
+                      {bilingualStatus?.quota?.te ?? 2} TE / {bilingualStatus?.quota?.en ?? 3} EN
                     </p>
                   </div>
                   <Button size="sm" variant="outline" disabled={togglingBilingual || !bilingualStatus} onClick={onToggleBilingual} className="mt-2 h-7 text-xs w-full justify-center">
