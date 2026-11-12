@@ -4,7 +4,9 @@ import type { PrismaService } from '../prisma.service';
 import type { WhatsAppApiClient } from './whatsapp-api.client';
 import type { WhatsAppMetaTemplate } from '@palnadu/types';
 import type { MarketingCampaign, MarketingContact } from '@prisma/client';
+import { WhatsAppApiException } from './whatsapp-api.util';
 import { WHATSAPP_CONFIG_KEYS } from './whatsapp.constants';
+import { validateTemplateAgainstMeta } from './whatsapp-template.util';
 import { buildTemplateComponents } from './whatsapp-template-params.util';
 import {
   acquireCampaignRecipientReservation,
@@ -16,14 +18,20 @@ export async function resolveApprovedCampaignTemplate(
   apiClient: WhatsAppApiClient,
   templateName: string,
   languageCode: string,
-): Promise<WhatsAppMetaTemplate | undefined> {
-  if (typeof apiClient.fetchApprovedTemplates !== 'function') {
-    return undefined;
+): Promise<WhatsAppMetaTemplate> {
+  const cleanName = templateName?.trim();
+  const cleanLanguage = languageCode?.trim();
+  if (!cleanName || !cleanLanguage) {
+    throw new WhatsAppApiException('Campaign template name and language code are required.', 400);
   }
-  const templates = await apiClient.fetchApprovedTemplates().catch(() => []);
-  return templates.find(
-    (t) => t.name === templateName && t.language === languageCode && t.status === 'APPROVED',
-  );
+  if (!apiClient || typeof apiClient.fetchApprovedTemplates !== 'function') {
+    throw new WhatsAppApiException(
+      'Meta template verification client is unavailable. Campaign aborted.',
+      502,
+    );
+  }
+  const templates = await apiClient.fetchApprovedTemplates();
+  return validateTemplateAgainstMeta(cleanName, cleanLanguage, templates);
 }
 
 export async function dispatchCampaignContact(

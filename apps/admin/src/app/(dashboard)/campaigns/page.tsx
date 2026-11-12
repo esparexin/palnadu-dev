@@ -29,6 +29,7 @@ export default function CampaignsPage() {
     contacts,
     outreachMessages,
     templates,
+    templatesError,
     loading,
     actionLoadingId,
     handleCreateCampaign,
@@ -150,6 +151,8 @@ export default function CampaignsPage() {
         open={campaignModalOpen}
         onClose={() => setCampaignModalOpen(false)}
         onSubmit={handleCreateCampaign}
+        templates={templates}
+        templatesError={templatesError}
       />
 
       <ContactImportModal

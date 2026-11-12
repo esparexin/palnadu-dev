@@ -626,7 +626,7 @@ model MarketingCampaign {
   name           String
   description    String?
   templateName   String            @map("template_name")
-  languageCode   String            @default("en_US") @map("language_code")
+  languageCode   String            @map("language_code")
   status         CampaignStatus    @default(DRAFT)
   targetAudience String?           @map("target_audience")
   scheduledAt    DateTime?         @map("scheduled_at")

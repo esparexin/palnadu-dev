@@ -65,6 +65,7 @@ describe('WhatsApp Campaign Concurrency & Durable Reservation Lifecycle', () => 
     const messagesStore = new Map();
     const mockPrisma = createConcurrentMockPrisma({ campaign, contacts, messagesStore });
     const mockApiClient = {
+      fetchApprovedTemplates: async () => [{ name: 't1', status: 'APPROVED', language: 'en_US', category: 'MARKETING', components: [] }],
       sendTemplateMessage: async () => ({ messages: [{ id: 'wamid_race_1' }] }),
     };
 
@@ -100,6 +101,7 @@ describe('WhatsApp Campaign Concurrency & Durable Reservation Lifecycle', () => 
 
     let metaCalls = 0;
     const mockApiClient = {
+      fetchApprovedTemplates: async () => [{ name: 't1', status: 'APPROVED', language: 'en_US', category: 'MARKETING', components: [] }],
       sendTemplateMessage: async () => {
         metaCalls++;
         return { messages: [{ id: 'wamid_should_not_happen' }] };
@@ -131,6 +133,7 @@ describe('WhatsApp Campaign Concurrency & Durable Reservation Lifecycle', () => 
 
     const sentNumbers = [];
     const mockApiClient = {
+      fetchApprovedTemplates: async () => [{ name: 't1', status: 'APPROVED', language: 'en_US', category: 'MARKETING', components: [] }],
       sendTemplateMessage: async (payload) => {
         sentNumbers.push(payload.to);
         return { messages: [{ id: `wamid_${payload.to}` }] };
@@ -152,6 +155,7 @@ describe('WhatsApp Campaign Concurrency & Durable Reservation Lifecycle', () => 
     const messagesStore = new Map();
 
     const mockApiClient = {
+      fetchApprovedTemplates: async () => [{ name: 't1', status: 'APPROVED', language: 'en_US', category: 'MARKETING', components: [] }],
       sendTemplateMessage: async () => {
         throw new WhatsAppApiException('Meta Gateway Timeout', 504, undefined, true);
       },

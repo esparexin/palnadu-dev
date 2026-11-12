@@ -98,7 +98,7 @@ export const whatsappApi = {
         { params: params as Record<string, string> | undefined },
       ),
     get: (id: string) => adminApi<{ success: boolean; data: CampaignSummary }>(`/api/admin/whatsapp/campaigns/${id}`),
-    create: (data: { name: string; description?: string; templateName: string; languageCode?: string; targetAudience?: string }) =>
+    create: (data: { name: string; description?: string; templateName: string; languageCode: string; targetAudience?: string }) =>
       adminApi<{ success: boolean; data: CampaignSummary }>('/api/admin/whatsapp/campaigns', {
         method: 'POST',
         body: JSON.stringify(data),
