@@ -2,14 +2,6 @@ import type { BlogLanguage } from '@prisma/client';
 import { CURATED_TOPIC_QUEUE, type QueueCandidate } from './types';
 import { TELUGU_CURATED_TOPIC_QUEUE } from './telugu-seeds';
 
-/**
- * Programmatic location-service matrix generator.
- * Disabled by default to comply with Google Helpful Content & Scaled Spam policies (anti-doorway safeguards).
- */
-export function matrixCandidates(_generatedKeys: Set<string>): QueueCandidate[] {
-  return [];
-}
-
 export function getAllInitialSeeds(
   _generatedKeys: Set<string>,
   language: BlogLanguage = 'en' as BlogLanguage,

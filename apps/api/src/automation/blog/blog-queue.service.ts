@@ -168,29 +168,6 @@ export class BlogQueueService {
     return this.claimNextTopic(workerId, maxAttempts, language);
   }
 
-  async releaseTopic(
-    topicKey: string,
-    language: BlogLanguage,
-    error: string,
-    nextRetryAt: Date,
-  ): Promise<void> {
-    const row = await this.prisma.blogTopic.findUnique({
-      where: { topicKey_language: { topicKey, language } },
-    });
-    if (!row) return;
-
-    await this.prisma.blogTopic.update({
-      where: { topicKey_language: { topicKey, language } },
-      data: {
-        status: row.attempts + 1 >= this.maxAttempts ? TopicStatus.FAILED : TopicStatus.PENDING,
-        lastError: error.slice(0, 500),
-        nextRetryAt,
-        claimedAt: null,
-        claimedBy: null,
-      },
-    });
-  }
-
   async replenishQueueForLanguages(
     minPending = 10,
     maxToEnqueue = 15,

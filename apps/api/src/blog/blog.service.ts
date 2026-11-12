@@ -207,10 +207,6 @@ export class BlogService {
     }
   }
 
-  async getPublishedCount() {
-    return this.prisma.blogPost.count({ where: { status: PublishStatus.PUBLISHED } });
-  }
-
   async getCategories() {
     return this.prisma.blogCategory.findMany({
       include: { _count: { select: { posts: true } } },

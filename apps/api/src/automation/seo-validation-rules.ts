@@ -11,6 +11,7 @@ import type {
 } from './seo-validation-types';
 import { EMOJI_RE } from './seo-validation-types';
 import {
+  checkContentOriginality,
   checkKeywordRelevance,
   checkTeluguScriptCoverage,
 } from './seo-validation-content';
@@ -50,40 +51,13 @@ export function validate(input: ValidationInput): ValidationOutcome {
   // 3. Keyword relevance
   checks.push(checkKeywordRelevance(d));
 
-  // 4. Content originality: substantive length, no keyword stuffing, and not
-  //    produced by the static fallback template.
-  const primary = (d.primaryKeyword ?? '').trim().toLowerCase();
-  const body = d.content.toLowerCase();
-  const words = input.wordCount;
-  const occurrences = primary ? body.split(primary).length - 1 : 0;
-  const density = words > 0 ? occurrences / words : 0;
-  const stuffed = primary.length > 0 && density > 0.03;
-  const isTelugu = String(input.language) === 'te';
-  const minWords = isTelugu ? 400 : 600;
-  const tooShort = words < minWords;
-  const isTemplate = d.isTemplateFallback === true;
-  checks.push({
-    name: 'content_originality',
-    passed: !tooShort && !stuffed && !isTemplate,
-    blocking: true,
-    detail: isTemplate
-      ? 'generated from the static fallback template (identical body for every topic) - must not be auto-published'
-      : tooShort
-        ? `article too short (${words} words, minimum ${minWords})`
-        : stuffed
-          ? `keyword density ${(density * 100).toFixed(2)}% for "${primary}" exceeds 3% (stuffing)`
-          : `${words} words, primary keyword density ${(density * 100).toFixed(2)}%`,
-  });
-
-  // 4b. Records the template decision for the publish step.
-  checks.push({
-    name: 'template_fallback_marker',
-    passed: !isTemplate,
-    blocking: false,
-    detail: isTemplate
-      ? 'template fallback: forced to DRAFT regardless of the auto-publish setting'
-      : 'LLM-generated original content',
-  });
+  // 4. Content originality + 4b. Template fallback marker
+  const { originalityCheck, templateMarkerCheck } = checkContentOriginality(
+    d,
+    input.wordCount,
+    String(input.language) === 'te',
+  );
+  checks.push(originalityCheck, templateMarkerCheck);
 
   // 4c. Telugu script coverage
   if (input.language === 'te') {
@@ -213,5 +187,5 @@ export function validate(input: ValidationInput): ValidationOutcome {
     .map((c) => `${c.passed ? 'PASS' : 'FAIL'} ${c.name}: ${c.detail}`)
     .join(' | ');
 
-  return { passed, checks, failures, summary, forceDraft: isTemplate };
+  return { passed, checks, failures, summary, forceDraft: !templateMarkerCheck.passed };
 }
