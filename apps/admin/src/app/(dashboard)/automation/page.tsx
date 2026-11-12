@@ -61,7 +61,7 @@ export default function AutomationPage() {
             <h2 className="text-sm font-bold text-palnadu-dark">Daily Auto-Blogging Engine</h2>
           </div>
           <p className="text-palnadu-body leading-relaxed">
-            The background cron automatically runs daily, publishing up to 5 comprehensive technical articles in English and Telugu.
+            The background cron automatically runs daily at 05:00 AM IST, generating up to 5 comprehensive technical articles (3 English + 2 Telugu in bilingual mode, saved as drafts unless auto-publish is enabled).
             Every generated article strictly enforces the <strong>Mandatory Internal Backlink Policy</strong> with 2–3 contextual in-body links before publication.
           </p>
           <div className="p-4 rounded-lg bg-palnadu-off-white/50 border border-palnadu-border space-y-2">

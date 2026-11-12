@@ -9,7 +9,7 @@ import { createRequire } from 'node:module';
 const require = createRequire(import.meta.url);
 
 /**
- * Bilingual quota allocator: 3 Telugu + 2 English per cycle.
+ * Bilingual quota allocator: 3 English + 2 Telugu per cycle (5 daily target).
  *
  * Like the other suites, the pure allocator module is compiled with tsc and
  * the emitted JS is imported directly — no Nest container, no database.
@@ -48,7 +48,7 @@ describe('readBilingualConfig', () => {
   it('is disabled when the setting is absent', () => {
     const cfg = quota.readBilingualConfig(() => undefined);
     assert.equal(cfg.enabled, false);
-    assert.deepEqual(cfg.quota, { te: 3, en: 2 });
+    assert.deepEqual(cfg.quota, { te: 2, en: 3 });
   });
 
   it('is disabled for falsy or malformed values, never enabled by accident', () => {
@@ -67,19 +67,19 @@ describe('readBilingualConfig', () => {
     assert.equal(cfg.enabled, true);
   });
 
-  it('falls back to 3/2 on missing, negative, or absurd quotas', () => {
+  it('falls back to 2/3 on missing, negative, or absurd quotas', () => {
     const missing = quota.readBilingualConfig(() => undefined);
-    assert.deepEqual(missing.quota, { te: 3, en: 2 });
+    assert.deepEqual(missing.quota, { te: 2, en: 3 });
 
     const negative = quota.readBilingualConfig((k) =>
       k === 'bilingual_quota_te' ? -5 : undefined,
     );
-    assert.deepEqual(negative.quota, { te: 3, en: 2 });
+    assert.deepEqual(negative.quota, { te: 2, en: 3 });
 
     const huge = quota.readBilingualConfig((k) =>
       k === 'bilingual_quota_te' ? 100 : undefined,
     );
-    assert.deepEqual(huge.quota, { te: 3, en: 2 });
+    assert.deepEqual(huge.quota, { te: 2, en: 3 });
   });
 
   it('honours sane custom quotas, including zero for a language', () => {
@@ -92,7 +92,7 @@ describe('readBilingualConfig', () => {
 });
 
 describe('allocateQuota', () => {
-  it('selects 3 te + 2 en oldest-first', () => {
+  it('selects 2 te + 3 en oldest-first', () => {
     const pending = [
       topic('k-te-1', 'గుంటూరులో వెబ్‌సైట్ ఖర్చు', 'te', '2026-01-05'),
       topic('k-en-1', 'Website cost in Guntur', 'en', '2026-01-01'),
@@ -100,13 +100,14 @@ describe('allocateQuota', () => {
       topic('k-en-2', 'School portals in Narasaraopet', 'en', '2026-01-03'),
       topic('k-te-3', 'స్కూల్ ఫీజు పోర్టల్', 'te', '2026-01-01'),
       topic('k-en-3', 'Local SEO for clinics', 'en', '2026-01-04'),
+      topic('k-en-4', 'Hospital appointment software', 'en', '2026-01-02'),
       topic('k-te-4', 'హాస్పిటల్ అపాయింట్‌మెంట్ సాఫ్ట్‌వేర్', 'te', '2026-01-04'),
     ];
-    const selected = quota.allocateQuota(pending, { te: 3, en: 2 });
+    const selected = quota.allocateQuota(pending, { te: 2, en: 3 });
     const te = selected.filter((t) => t.language === 'te').map((t) => t.topicKey);
     const en = selected.filter((t) => t.language === 'en').map((t) => t.topicKey);
-    assert.equal(te.length, 3);
-    assert.equal(en.length, 2);
+    assert.equal(te.length, 2);
+    assert.equal(en.length, 3);
     // Oldest-first within each language (subject to anti-clustering).
     assert.ok(te.includes('k-te-3'), 'oldest te topic should be selected');
     assert.ok(en.includes('k-en-1'), 'oldest en topic should be selected');
@@ -163,7 +164,7 @@ describe('allocateQuota', () => {
   });
 
   it('exports valid SSOT quota constants', () => {
-    assert.deepEqual(quota.BILINGUAL_QUOTA_DEFAULT, { te: 3, en: 2 });
+    assert.deepEqual(quota.BILINGUAL_QUOTA_DEFAULT, { te: 2, en: 3 });
     assert.equal(quota.BILINGUAL_QUOTA_MAX_TOTAL, 10);
   });
 
@@ -176,7 +177,7 @@ describe('allocateQuota', () => {
     const overCeiling = quota.readBilingualConfig((k) =>
       ({ bilingual_generation_enabled: true, bilingual_quota_te: 6, bilingual_quota_en: 5 })[k],
     );
-    assert.deepEqual(overCeiling.quota, { te: 3, en: 2 });
+    assert.deepEqual(overCeiling.quota, { te: 2, en: 3 });
 
     const stringNumbers = quota.readBilingualConfig((k) =>
       ({ bilingual_generation_enabled: true, bilingual_quota_te: '4', bilingual_quota_en: '1' })[k],

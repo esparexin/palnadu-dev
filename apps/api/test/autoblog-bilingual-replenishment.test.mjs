@@ -12,7 +12,9 @@ import {
   isPermanentFailureError,
   isTransientFailureError,
   recoverTransientFailedTopics,
+  toDiscoveryQueueCandidate,
 } from '../dist/automation/blog/blog-queue-recovery.util.js';
+import { executeDailyPipelineSteps } from '../dist/automation/blog/blog-cron-runner.util.js';
 
 function createBilingualQueuePrisma({ topics = [], posts = [], settings = [] } = {}) {
   let seq = 1;
@@ -131,6 +133,11 @@ describe('PR3 Bilingual Queue Replenishment, Per-Language Discovery & Transient 
             primaryKeyword: 'school portal palnadu', secondaryKeywords: [], longTailKeywords: [],
             intent: 'LOCAL', confidence: 'verified_google', sources: ['google_autocomplete'],
           },
+          {
+            topicKey: 'noise-crack', phrase: 'billing software crack free download',
+            primaryKeyword: 'billing software crack', secondaryKeywords: [], longTailKeywords: [],
+            intent: 'INFORMATIONAL', confidence: 'ai_suggestion', sources: ['google_autocomplete'],
+          },
         ];
       },
     };
@@ -187,5 +194,46 @@ describe('PR3 Bilingual Queue Replenishment, Per-Language Discovery & Transient 
     assert.equal(topics.find((t) => t.id === 'f-transient-recent').status, TopicStatus.FAILED);
     assert.equal(topics.find((t) => t.id === 'f-validation').status, TopicStatus.FAILED);
     assert.equal(topics.find((t) => t.id === 'f-invalid-key').status, TopicStatus.FAILED);
+  });
+
+  it('resolves geographic targetLocation in toDiscoveryQueueCandidate instead of source names', () => {
+    const base = {
+      topicKey: 'k', primaryKeyword: 'website development',
+      secondaryKeywords: [], longTailKeywords: [],
+      intent: 'LOCAL', confidence: 'verified_google', sources: ['google_autocomplete', 'gsc'],
+    };
+    const narasaraopet = toDiscoveryQueueCandidate(
+      { ...base, phrase: 'school website design in narasaraopet' }, BlogLanguage.en,
+    );
+    assert.equal(narasaraopet.targetLocation, 'Narasaraopet, Palnadu, Andhra Pradesh');
+    assert.deepEqual(narasaraopet.referenceSources, ['google_autocomplete', 'gsc']);
+
+    const generic = toDiscoveryQueueCandidate(
+      { ...base, phrase: 'nextjs agency pricing guide' }, BlogLanguage.en,
+    );
+    assert.equal(generic.targetLocation, 'Palnadu and Guntur, Andhra Pradesh');
+  });
+
+  it('preserves FIFO createdAt ASC ordering in claimNextTopic and daily target of 5', async () => {
+    let seenOrderBy = null;
+    const queue = new BlogQueueService(
+      { blogTopic: { findFirst: async ({ orderBy }) => ((seenOrderBy = orderBy), null) } },
+      { isLikelyDuplicateTopic: async () => false },
+    );
+    await queue.claimNextTopic('worker-1', BlogLanguage.en);
+    assert.deepEqual(seenOrderBy, { createdAt: 'asc' });
+
+    const calls = { bilingual: [], batch: [] };
+    const noop = async () => ({ enqueued: 0 });
+    const mkDeps = (enabled) => ({
+      discoverAndEnqueue: noop, replenishQueueIfLow: noop,
+      readBilingualSwitch: async () => ({ enabled, quota: { te: 2, en: 3 } }),
+      generateBilingualBatch: async (q) => (calls.bilingual.push(q), { results: [], rejected: [] }),
+      generateBatch: async (n) => (calls.batch.push(n), { results: [], rejected: [] }),
+    });
+    await executeDailyPipelineSteps({ warn: () => {} }, 'daily_cron', mkDeps(true));
+    await executeDailyPipelineSteps({ warn: () => {} }, 'daily_cron', mkDeps(false));
+    assert.deepEqual(calls.bilingual, [{ te: 2, en: 3 }]);
+    assert.deepEqual(calls.batch, [5]);
   });
 });

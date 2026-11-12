@@ -8,6 +8,7 @@ import {
   SourceStatus,
   REFERENCE_SOURCE_URLS,
   REFERENCE_SOURCES,
+  isViableTopicPhrase,
 } from './seo-sources';
 
 /**
@@ -108,6 +109,7 @@ export class TopicDiscoveryService {
     // Merge duplicates that several sources surfaced, keeping all provenance and highest confidence.
     const merged = new Map<string, DiscoveredTopic>();
     for (const t of collected) {
+      if (!isViableTopicPhrase(t.phrase)) continue;
       const existing = merged.get(t.topicKey);
       if (existing) {
         existing.sources = [...new Set([...existing.sources, ...t.sources])];
@@ -122,8 +124,11 @@ export class TopicDiscoveryService {
         } else if (existing.confidence !== 'verified_google' && t.confidence) {
           existing.confidence = t.confidence;
         }
-        if (!existing.metrics && t.metrics) {
+        if (t.metrics && (!existing.metrics || (existing.metrics.status !== 'verified' && t.metrics.status === 'verified'))) {
           existing.metrics = t.metrics;
+        }
+        if (t.note && (!existing.note || t.metrics?.status === 'verified')) {
+          existing.note = t.note;
         }
       } else {
         merged.set(t.topicKey, { ...t });
