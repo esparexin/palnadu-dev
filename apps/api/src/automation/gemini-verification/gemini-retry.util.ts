@@ -13,9 +13,19 @@ export interface GeminiRetryConfig {
   baseDelayMs?: number;
   maxDelayMs?: number;
   jitterRatio?: number;
+  deadlineAt?: number;
+  nowFn?: () => number;
   sleepFn?: (ms: number) => Promise<void>;
   randomFn?: () => number;
 }
+
+export const INTERACTIVE_VERIFY_OVERALL_TIMEOUT_MS = 26000;
+export const INTERACTIVE_VERIFY_RETRY: GeminiRetryConfig = {
+  timeoutMs: 7000,
+  maxRetries: 1,
+  baseDelayMs: 300,
+  maxDelayMs: 1200,
+};
 
 export interface RetryAttemptOutcome<T = unknown> {
   ok: boolean;
@@ -46,6 +56,8 @@ export function resolveRetrySettings(cfg?: GeminiRetryConfig) {
     baseDelayMs: clampNum(cfg?.baseDelayMs ?? 450, 0, 10000),
     maxDelayMs: clampNum(cfg?.maxDelayMs ?? 4000, 0, 20000),
     jitterRatio: Math.min(Math.max(cfg?.jitterRatio ?? 0.25, 0), 0.5),
+    deadlineAt: cfg?.deadlineAt,
+    nowFn: cfg?.nowFn ?? Date.now,
     sleepFn: cfg?.sleepFn ?? ((ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms))),
     randomFn: cfg?.randomFn ?? Math.random,
   };
@@ -76,17 +88,45 @@ export async function executeWithGeminiRetry<T = any>(params: {
   retry?: GeminiRetryConfig;
 }): Promise<RetryAttemptOutcome<T>> {
   const settings = resolveRetrySettings(params.retry);
-  const overallStart = Date.now();
+  const overallStart = settings.nowFn();
   let lastOutcome: RetryAttemptOutcome<T> | null = null;
 
   for (let attempt = 0; attempt <= settings.maxRetries; attempt++) {
     if (attempt > 0) {
       const delayMs = computeBackoffDelayMs(attempt - 1, settings);
+      if (settings.deadlineAt !== undefined && settings.nowFn() + delayMs >= settings.deadlineAt - 200) {
+        break;
+      }
       if (delayMs > 0) await settings.sleepFn(delayMs);
     }
 
+    const remainingMs = settings.deadlineAt !== undefined ? settings.deadlineAt - settings.nowFn() : settings.timeoutMs;
+    if (settings.deadlineAt !== undefined && remainingMs < 200) {
+      if (lastOutcome) return lastOutcome;
+      return {
+        ok: false,
+        httpStatus: 408,
+        headers: new Headers(),
+        body: null,
+        latencyMs: Math.max(0, settings.nowFn() - overallStart),
+        attempts: attempt,
+        failure: {
+          code: 'TEMPORARY_PROVIDER_ERROR',
+          status: VERIFICATION_CODE_TO_LABEL.TEMPORARY_PROVIDER_ERROR,
+          quotaStatus: 'Unknown',
+          permissionStatus: 'Granted',
+          isTemporary: true,
+          retryable: false,
+          modelSpecific: false,
+          stopAllModels: false,
+          detail: 'Verification time budget exceeded before completing probe.',
+        },
+      };
+    }
+
+    const attemptTimeoutMs = Math.min(settings.timeoutMs, Math.max(200, remainingMs));
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), settings.timeoutMs);
+    const timer = setTimeout(() => controller.abort(), attemptTimeoutMs);
     try {
       const res = await params.fetchFn(params.url, { ...params.init, signal: controller.signal });
       const body = await res.json().catch(() => null);
@@ -96,7 +136,7 @@ export async function executeWithGeminiRetry<T = any>(params: {
           httpStatus: res.status,
           headers: res.headers ?? new Headers(),
           body,
-          latencyMs: Date.now() - overallStart,
+          latencyMs: Math.max(0, settings.nowFn() - overallStart),
           attempts: attempt + 1,
         };
       }
@@ -108,7 +148,7 @@ export async function executeWithGeminiRetry<T = any>(params: {
         httpStatus: res.status,
         headers: res.headers ?? new Headers(),
         body,
-        latencyMs: Date.now() - overallStart,
+        latencyMs: Math.max(0, settings.nowFn() - overallStart),
         attempts: attempt + 1,
         failure,
       };
@@ -125,7 +165,7 @@ export async function executeWithGeminiRetry<T = any>(params: {
         modelSpecific: false,
         stopAllModels: false,
         detail: isAbort
-          ? `Request timed out after ${settings.timeoutMs}ms`
+          ? `Request timed out after ${attemptTimeoutMs}ms`
           : redactGeminiSecrets(err?.message || 'Network connection failed', params.rawSecretToRedact),
       };
       lastOutcome = {
@@ -133,7 +173,7 @@ export async function executeWithGeminiRetry<T = any>(params: {
         httpStatus: isAbort ? 408 : 0,
         headers: new Headers(),
         body: null,
-        latencyMs: Date.now() - overallStart,
+        latencyMs: Math.max(0, settings.nowFn() - overallStart),
         attempts: attempt + 1,
         failure,
       };
