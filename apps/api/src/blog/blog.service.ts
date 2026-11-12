@@ -3,6 +3,14 @@ import { PrismaService } from '../prisma.service';
 import { Prisma, PublishStatus, BlogLanguage } from '@prisma/client';
 import { parseLanguageValue } from './blog-translations';
 import { assertCanJoinGroup, linkBlogTranslations } from './blog-translation-manager';
+import {
+  BLOG_MUTATION_INCLUDE,
+  PUBLIC_READ_STATUSES,
+  buildBlogPostWhere,
+  fetchPostSlugCompanions,
+  isPrismaErrorCode,
+  mapBlogPostPrismaError,
+} from './blog-prisma.util';
 
 /** Languages the API accepts. Anything else is a client error, not a silent default. */
 export function parseLanguage(value: unknown): BlogLanguage | undefined {
@@ -37,10 +45,14 @@ export class BlogService {
         ? new Date()
         : rest.publishDate;
 
-    return this.prisma.blogPost.create({
-      data: { ...rest, publishDate, language, translationGroupId: translationGroupId ?? undefined },
-      include: { author: { select: { id: true, name: true, avatar: true } }, category: true },
-    });
+    try {
+      return await this.prisma.blogPost.create({
+        data: { ...rest, publishDate, language, translationGroupId: translationGroupId ?? undefined },
+        include: BLOG_MUTATION_INCLUDE,
+      });
+    } catch (err) {
+      return mapBlogPostPrismaError(err, { slug: rest.slug, topicKey: rest.topicKey, language });
+    }
   }
 
   async findPublished(params: {
@@ -52,19 +64,14 @@ export class BlogService {
 
     const allowedStatuses = status
       ? [status]
-      : includeArchived ? [PublishStatus.PUBLISHED, PublishStatus.ARCHIVED] : [PublishStatus.PUBLISHED];
+      : includeArchived ? PUBLIC_READ_STATUSES : [PublishStatus.PUBLISHED];
 
-    const where: Prisma.BlogPostWhereInput = {
-      status: allowedStatuses.length === 1 ? allowedStatuses[0] : { in: allowedStatuses },
-      ...(language !== undefined && { language }),
-      ...(categorySlug && { category: { slug: categorySlug } }),
-      ...(search && {
-        OR: [
-          { title: { contains: search, mode: 'insensitive' } },
-          { excerpt: { contains: search, mode: 'insensitive' } },
-        ],
-      }),
-    };
+    const where = buildBlogPostWhere({
+      statuses: allowedStatuses,
+      language,
+      categorySlug,
+      search,
+    });
 
     const [posts, total] = await Promise.all([
       this.prisma.blogPost.findMany({
@@ -91,50 +98,15 @@ export class BlogService {
       where: {
         slug,
         language,
-        status: { in: [PublishStatus.PUBLISHED, PublishStatus.ARCHIVED] },
+        status: { in: PUBLIC_READ_STATUSES },
       },
-      include: {
-        author: { select: { id: true, name: true, avatar: true } },
-        category: true,
-      },
+      include: BLOG_MUTATION_INCLUDE,
     });
 
     if (!post) return null;
 
-    const relatedPosts = await this.prisma.blogPost.findMany({
-      where: {
-        status: { in: [PublishStatus.PUBLISHED, PublishStatus.ARCHIVED] },
-        language,
-        id: { not: post.id },
-        ...(post.categoryId ? { categoryId: post.categoryId } : {}),
-      },
-      take: 2,
-      orderBy: [{ publishDate: 'desc' }, { createdAt: 'desc' }],
-      select: {
-        id: true,
-        title: true,
-        slug: true,
-        language: true,
-        excerpt: true,
-        coverImage: true,
-        publishDate: true,
-        createdAt: true,
-        category: { select: { name: true, slug: true } },
-      },
-    });
-
-    const translations = post.translationGroupId
-      ? await this.prisma.blogPost.findMany({
-          where: {
-            translationGroupId: post.translationGroupId,
-            id: { not: post.id },
-            status: { in: [PublishStatus.PUBLISHED, PublishStatus.ARCHIVED] },
-          },
-          select: { id: true, slug: true, language: true },
-        })
-      : [];
-
-    return { ...post, relatedPosts, translations };
+    const companions = await fetchPostSlugCompanions(this.prisma, post, language);
+    return { ...post, ...companions };
   }
 
   async linkTranslations(postIds: string[], groupId?: string) {
@@ -147,17 +119,7 @@ export class BlogService {
   } = {}) {
     const { page = 1, limit = 20, status, categorySlug, search, language } = params;
     const skip = (page - 1) * limit;
-    const where: Prisma.BlogPostWhereInput = {
-      ...(status && { status }),
-      ...(language !== undefined && { language }),
-      ...(categorySlug && { category: { slug: categorySlug } }),
-      ...(search && {
-        OR: [
-          { title: { contains: search, mode: 'insensitive' } },
-          { excerpt: { contains: search, mode: 'insensitive' } },
-        ],
-      }),
-    };
+    const where = buildBlogPostWhere({ status, language, categorySlug, search });
 
     const [posts, total] = await Promise.all([
       this.prisma.blogPost.findMany({
@@ -205,8 +167,9 @@ export class BlogService {
     }
 
     const { translationGroupId, ...rest } = data as Prisma.BlogPostUpdateInput & { translationGroupId?: string | null };
+    const requestedGroup = translationGroupId === '' ? null : translationGroupId;
     const nextGroup =
-      translationGroupId === undefined ? existing.translationGroupId : translationGroupId;
+      requestedGroup === undefined ? existing.translationGroupId : requestedGroup;
     if (nextGroup !== null && nextGroup !== undefined) {
       await assertCanJoinGroup(this.prisma, nextGroup, { id, language: nextLanguage });
     }
@@ -216,14 +179,32 @@ export class BlogService {
       nextPublishDate = new Date();
     }
 
-    return this.prisma.blogPost.update({
-      where: { id },
-      data: { ...rest, publishDate: nextPublishDate, translationGroupId: nextGroup ?? undefined },
-    });
+    const groupUpdate = requestedGroup === undefined ? undefined : nextGroup;
+    try {
+      return await this.prisma.blogPost.update({
+        where: { id },
+        data: { ...rest, publishDate: nextPublishDate, translationGroupId: groupUpdate },
+        include: BLOG_MUTATION_INCLUDE,
+      });
+    } catch (err) {
+      return mapBlogPostPrismaError(err, {
+        id,
+        slug: nextSlug,
+        topicKey: existing.topicKey,
+        language: nextLanguage,
+      });
+    }
   }
 
   async delete(id: string) {
-    return this.prisma.blogPost.delete({ where: { id } });
+    try {
+      return await this.prisma.blogPost.delete({ where: { id } });
+    } catch (err) {
+      if (isPrismaErrorCode(err, 'P2025')) {
+        throw new NotFoundException(`Article '${id}' not found`);
+      }
+      throw err;
+    }
   }
 
   async getPublishedCount() {
@@ -237,6 +218,19 @@ export class BlogService {
   }
 
   async createCategory(data: Prisma.BlogCategoryCreateInput) {
-    return this.prisma.blogCategory.create({ data });
+    const existing = await this.prisma.blogCategory.findUnique?.({
+      where: { slug: data.slug },
+    });
+    if (existing) {
+      throw new ConflictException(`Category with slug '${data.slug}' already exists`);
+    }
+    try {
+      return await this.prisma.blogCategory.create({ data });
+    } catch (err) {
+      if (isPrismaErrorCode(err, 'P2002')) {
+        throw new ConflictException(`Category with slug '${data.slug}' already exists`);
+      }
+      throw err;
+    }
   }
 }
