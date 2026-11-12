@@ -25,6 +25,8 @@ import {
   WebmasterAutomationController,
   KeywordResearchController,
 } from './automation.controller';
+import { AutomationCronController } from './blog/automation-cron.controller';
+import { CronOrAdminGuard } from './blog/cron-or-admin.guard';
 
 // Reference sources. Credential-gated adapters are always registered so the
 // admin UI can report their status; each reports itself unavailable until its
@@ -55,6 +57,7 @@ export { REFERENCE_SOURCES };
   ],
   controllers: [
     AutomationController,
+    AutomationCronController,
     WebmasterAutomationController,
     KeywordResearchController,
     GeminiSettingsController,
@@ -76,6 +79,7 @@ export { REFERENCE_SOURCES };
     TechnicalSeoCrawlerService,
     GeminiKeyVerificationService,
     GeminiKeyStoreService,
+    CronOrAdminGuard,
 
     GoogleAutocompleteSource,
     GoogleTrendsSource,

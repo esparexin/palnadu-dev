@@ -10,6 +10,8 @@ import { BlogComposerService } from './blog/blog-composer.service';
 import { BlogPublisherService } from './blog/blog-publisher.service';
 import { BlogBilingualService } from './blog/blog-bilingual.service';
 import { BlogStatusService } from './blog/blog-status.service';
+import { DAILY_CRON_EXPRESSION, type DailyCronTriggerSource, readDailyCronStatus } from './blog/blog-cron-lock.util';
+import { executeDailyPipelineSteps, runDailyCronBatch, startDailyCronInBackground } from './blog/blog-cron-runner.util';
 import { BlogBatchService } from './blog/blog-batch.service';
 import { inferCategoryFromTopic, resolveOrEnsureCategory } from './blog/blog-seeds';
 import { ClaimedTopic, GenerationResult, QueueCandidate, RejectedTopic } from './blog/types';
@@ -65,34 +67,35 @@ export class BlogAutomationService {
     return { discovered: candidates.length, enqueued, rejected };
   }
 
-  @Cron('0 23 * * *')
-  async handleDailyCron() {
-    const workerId = `cron:${process.pid}`;
-    this.logger.log('Starting automated daily blog generation batch (5 articles)...');
-    try {
-      try {
-        await this.discoverAndEnqueue();
-      } catch (err) {
-        this.logger.warn(`discovery step failed: ${String(err)}`);
-      }
+  @Cron(DAILY_CRON_EXPRESSION)
+  handleDailyCron() {
+    return this.runDailyAutomation('cron');
+  }
 
-      try {
-        await this.queueService.replenishQueueIfLow(10);
-      } catch (err) {
-        this.logger.warn(`queue replenishment failed: ${String(err)}`);
-      }
+  runDailyAutomation(source: DailyCronTriggerSource = 'cron', force = false) {
+    return runDailyCronBatch(this.prisma, this.logger, source, force, () =>
+      executeDailyPipelineSteps(this.logger, source, this.pipelineDeps()),
+    );
+  }
 
-      const bilingual = await this.readBilingualSwitch();
-      if (bilingual.enabled) {
-        const { results, rejected } = await this.generateBilingualBatch(bilingual.quota, false, workerId);
-        this.logger.log(`Daily bilingual batch completed: ${results.length} generated, ${rejected.length} rejected.`);
-      } else {
-        const { results, rejected } = await this.generateBatch(5, false, workerId);
-        this.logger.log(`Daily blog automation batch completed: ${results.length} generated, ${rejected.length} rejected.`);
-      }
-    } catch (err) {
-      this.logger.error(`Daily blog cron failed: ${err instanceof Error ? err.message : err}`);
-    }
+  startDailyAutomationInBackground(source: DailyCronTriggerSource = 'cron', force = false) {
+    return startDailyCronInBackground(this.prisma, this.logger, source, force, () =>
+      executeDailyPipelineSteps(this.logger, source, this.pipelineDeps()),
+    );
+  }
+
+  getDailyCronStatus() {
+    return readDailyCronStatus(this.prisma);
+  }
+
+  private pipelineDeps() {
+    return {
+      discoverAndEnqueue: () => this.discoverAndEnqueue(),
+      replenishQueueIfLow: (min: number) => this.queueService.replenishQueueIfLow(min),
+      readBilingualSwitch: () => this.readBilingualSwitch(),
+      generateBilingualBatch: this.generateBilingualBatch.bind(this),
+      generateBatch: this.generateBatch.bind(this),
+    };
   }
 
   async generateBatch(
