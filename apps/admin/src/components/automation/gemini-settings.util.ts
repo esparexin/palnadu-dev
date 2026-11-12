@@ -1,4 +1,5 @@
 import { geminiKeyInputSchema, type GeminiKeyInput } from '@palnadu/validation';
+import type { GeminiKeyVerificationResult } from './types';
 
 export type GeminiActivationTarget = 'candidate' | 'pending' | 'none';
 
@@ -44,4 +45,25 @@ export function resolveActivationTarget(
   if (candidateKey.trim().length > 0) return 'candidate';
   if (hasPendingCandidate) return 'pending';
   return 'none';
+}
+
+/**
+ * Prefers the model already proven usable during Step 1 verification so
+ * Step 2 activation does not stall re-probing an overloaded primary model.
+ */
+export function resolvePreferredActivationModel(
+  configuredModel: string,
+  candidateResult?: Pick<
+    GeminiKeyVerificationResult,
+    'isValid' | 'isUsableForGeneration' | 'activeUsableModel'
+  > | null,
+): string | undefined {
+  if (
+    candidateResult?.isValid &&
+    candidateResult?.isUsableForGeneration &&
+    candidateResult.activeUsableModel
+  ) {
+    return candidateResult.activeUsableModel;
+  }
+  return configuredModel.trim() || undefined;
 }
