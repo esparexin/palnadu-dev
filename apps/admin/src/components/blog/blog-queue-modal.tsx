@@ -16,6 +16,7 @@ interface BlogQueueModalProps {
   togglingBilingual: boolean;
   discoveringTopics: boolean;
   generatingAi: boolean;
+  canManageSettings?: boolean;
   onToggleAutoPublish: () => void;
   onToggleBilingual: () => void;
   onDiscoverTopics: () => void;
@@ -32,6 +33,7 @@ export function BlogQueueModal({
   togglingBilingual,
   discoveringTopics,
   generatingAi,
+  canManageSettings = false,
   onToggleAutoPublish,
   onToggleBilingual,
   onDiscoverTopics,
@@ -40,20 +42,34 @@ export function BlogQueueModal({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-fade-in">
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="blog-queue-modal-title"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-fade-in"
+    >
       <div className="w-full max-w-3xl max-h-[85vh] rounded-xl border border-palnadu-border bg-white shadow-2xl flex flex-col overflow-hidden">
         <div className="flex items-center justify-between border-b border-palnadu-border px-5 py-3.5 bg-palnadu-off-white">
           <div className="flex items-center gap-2">
             <div className="h-7 w-7 rounded-lg bg-palnadu-teal/10 text-palnadu-teal-dark flex items-center justify-center border border-palnadu-teal/30">
-              <ListChecks className="h-4 w-4" />
+              <ListChecks className="h-4 w-4" aria-hidden="true" />
             </div>
             <div>
-              <h3 className="text-sm font-bold text-palnadu-dark">Blog Automation Engine & Queue</h3>
+              <h3 id="blog-queue-modal-title" className="text-sm font-bold text-palnadu-dark">
+                Blog Automation Engine &amp; Queue
+              </h3>
               <p className="text-xs text-palnadu-secondary">Autonomous cron schedule, topic rotation, and publish status</p>
             </div>
           </div>
-          <Button size="sm" variant="ghost" onClick={onClose} className="h-8 w-8 p-0 text-palnadu-secondary hover:text-palnadu-dark">
-            <X className="h-4 w-4" />
+          <Button
+            type="button"
+            size="sm"
+            variant="ghost"
+            onClick={onClose}
+            aria-label="Close automation queue modal"
+            className="h-8 w-8 p-0 text-palnadu-secondary hover:text-palnadu-dark"
+          >
+            <X className="h-4 w-4" aria-hidden="true" />
           </Button>
         </div>
 
@@ -92,14 +108,16 @@ export function BlogQueueModal({
                 <div className="rounded-lg border border-palnadu-border bg-palnadu-off-white/40 p-3 flex flex-col justify-between">
                   <div>
                     <p className="text-xs font-semibold text-palnadu-secondary uppercase tracking-wider">Auto-Publish Mode</p>
-                    <p className={cn('text-xs font-bold mt-1', automationStatus.autoPublishEnabled ? 'text-palnadu-success' : 'text-palnadu-warning')}>
+                    <p className={cn('text-xs font-bold mt-1', automationStatus.autoPublishEnabled ? 'text-palnadu-teal-dark' : 'text-palnadu-warning')}>
                       {automationStatus.autoPublishEnabled ? 'Automatic (Live)' : 'Draft Review (Safe)'}
                     </p>
                   </div>
-                  <Button size="sm" variant="outline" disabled={updatingSettings} onClick={onToggleAutoPublish} className="mt-2 h-7 text-xs w-full justify-center">
-                    {updatingSettings && <Loader2 className="h-3 w-3 animate-spin mr-1" />}
-                    Switch to {automationStatus.autoPublishEnabled ? 'Draft' : 'Auto-Publish'}
-                  </Button>
+                  {canManageSettings && (
+                    <Button type="button" size="sm" variant="outline" disabled={updatingSettings} onClick={onToggleAutoPublish} className="mt-2 h-7 text-xs w-full justify-center">
+                      {updatingSettings && <Loader2 className="h-3 w-3 animate-spin mr-1" aria-hidden="true" />}
+                      Switch to {automationStatus.autoPublishEnabled ? 'Draft' : 'Auto-Publish'}
+                    </Button>
+                  )}
                 </div>
 
                 <div className="rounded-lg border border-palnadu-border bg-palnadu-off-white/40 p-3 flex flex-col justify-between">
@@ -112,10 +130,12 @@ export function BlogQueueModal({
                       {bilingualStatus?.quota?.te ?? 2} TE / {bilingualStatus?.quota?.en ?? 3} EN
                     </p>
                   </div>
-                  <Button size="sm" variant="outline" disabled={togglingBilingual || !bilingualStatus} onClick={onToggleBilingual} className="mt-2 h-7 text-xs w-full justify-center">
-                    {togglingBilingual && <Loader2 className="h-3 w-3 animate-spin mr-1" />}
-                    {bilingualStatus?.enabled ? 'Disable Bilingual' : 'Enable Bilingual'}
-                  </Button>
+                  {canManageSettings && (
+                    <Button type="button" size="sm" variant="outline" disabled={togglingBilingual || !bilingualStatus} onClick={onToggleBilingual} className="mt-2 h-7 text-xs w-full justify-center">
+                      {togglingBilingual && <Loader2 className="h-3 w-3 animate-spin mr-1" aria-hidden="true" />}
+                      {bilingualStatus?.enabled ? 'Disable Bilingual' : 'Enable Bilingual'}
+                    </Button>
+                  )}
                 </div>
               </div>
 

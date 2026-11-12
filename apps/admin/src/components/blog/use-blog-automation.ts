@@ -126,6 +126,7 @@ export function useBlogAutomation(
           : res.message || 'Draft generated! Review below!';
         toast.success(msg);
         onSuccessDraft();
+        fetchCounts();
       }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to generate blog draft');

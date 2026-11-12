@@ -31,9 +31,10 @@ export function BlogFilters({
   return (
     <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
       <div className="relative flex-1 max-w-sm">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-palnadu-secondary" />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-palnadu-secondary" aria-hidden="true" />
         <Input
           type="text"
+          aria-label="Search articles by title or keyword"
           placeholder="Search articles by title or keyword..."
           value={search}
           onChange={(e) => onSearchChange(e.target.value)}
@@ -43,6 +44,7 @@ export function BlogFilters({
 
       <div className="flex items-center gap-2 flex-wrap">
         <select
+          aria-label="Filter by language"
           value={languageFilter}
           onChange={(e) => onLanguageFilterChange(e.target.value)}
           className="flex h-9 rounded-md border border-palnadu-border bg-white px-3 py-1.5 text-xs text-palnadu-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-palnadu-blue cursor-pointer"
@@ -53,6 +55,7 @@ export function BlogFilters({
         </select>
 
         <select
+          aria-label="Filter by category"
           value={categoryFilter}
           onChange={(e) => onCategoryFilterChange(e.target.value)}
           className="flex h-9 rounded-md border border-palnadu-border bg-white px-3 py-1.5 text-xs text-palnadu-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-palnadu-blue cursor-pointer"
@@ -66,6 +69,7 @@ export function BlogFilters({
         </select>
 
         <select
+          aria-label="Filter by status"
           value={statusFilter}
           onChange={(e) => onStatusFilterChange(e.target.value)}
           className="flex h-9 rounded-md border border-palnadu-border bg-white px-3 py-1.5 text-xs text-palnadu-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-palnadu-blue cursor-pointer"

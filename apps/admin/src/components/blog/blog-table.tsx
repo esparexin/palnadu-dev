@@ -12,7 +12,7 @@ import {
   Loader2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { siteConfig, formatBlogDate } from '@palnadu/config';
+import { siteConfig, formatBlogDate, blogPostPath, blogCanonicalUrl } from '@palnadu/config';
 import { cn } from '@/lib/utils';
 import { BlogPagination } from './blog-pagination';
 
@@ -20,6 +20,7 @@ interface BlogTableProps {
   posts: BlogPost[];
   loading: boolean;
   publishingId: string | null;
+  canDelete?: boolean;
   onQuickPublish: (_post: BlogPost) => void;
   onOpenEdit: (_post: BlogPost) => void;
   onDeleteRequest: (_target: { id: string; title: string }) => void;
@@ -35,6 +36,7 @@ export function BlogTable({
   posts,
   loading,
   publishingId,
+  canDelete = false,
   onQuickPublish,
   onOpenEdit,
   onDeleteRequest,
@@ -83,7 +85,9 @@ export function BlogTable({
                       <FileText className="h-3.5 w-3.5 text-palnadu-blue shrink-0" />
                       <span>{post.title}</span>
                     </div>
-                    <div className="font-mono text-xs text-palnadu-secondary mt-0.5">/blog/{post.slug}</div>
+                    <div className="font-mono text-xs text-palnadu-secondary mt-0.5">
+                      {blogPostPath({ slug: post.slug, language: post.language })}
+                    </div>
                   </td>
                   <td className="px-4 py-3 whitespace-nowrap">
                     <div className="flex items-center gap-1">
@@ -175,13 +179,14 @@ export function BlogTable({
                     )}
                     {post.status === 'PUBLISHED' && (
                       <a
-                        href={post.language === 'te' ? `${siteConfig.url}/te/blog/${post.slug}` : `${siteConfig.url}/blog/${post.slug}`}
+                        href={blogCanonicalUrl(siteConfig.url, { slug: post.slug, language: post.language })}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="inline-flex items-center justify-center h-7 w-7 rounded-md text-palnadu-secondary hover:text-palnadu-blue hover:bg-palnadu-light-blue transition-colors align-middle"
                         title="View Live on Site"
+                        aria-label={`View ${post.title} on live site`}
                       >
-                        <ExternalLink className="h-3.5 w-3.5" />
+                        <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
                       </a>
                     )}
                     <Button
@@ -190,18 +195,22 @@ export function BlogTable({
                       onClick={() => onOpenEdit(post)}
                       className="h-7 w-7 p-0 text-palnadu-blue"
                       title="Edit Article"
+                      aria-label={`Edit ${post.title}`}
                     >
-                      <Edit2 className="h-3.5 w-3.5" />
+                      <Edit2 className="h-3.5 w-3.5" aria-hidden="true" />
                     </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => onDeleteRequest({ id: post.id, title: post.title })}
-                      className="h-7 w-7 p-0 text-palnadu-error hover:text-palnadu-error hover:bg-palnadu-error/10"
-                      title="Delete Article"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </Button>
+                    {canDelete && (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => onDeleteRequest({ id: post.id, title: post.title })}
+                        className="h-7 w-7 p-0 text-palnadu-error hover:text-palnadu-error hover:bg-palnadu-error/10"
+                        title="Delete Article"
+                        aria-label={`Delete ${post.title}`}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
+                      </Button>
+                    )}
                   </td>
                 </tr>
               ))

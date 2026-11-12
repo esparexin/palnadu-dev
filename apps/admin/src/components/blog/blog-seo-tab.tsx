@@ -20,7 +20,7 @@ export function BlogSeoTab({ formData, setFormData }: BlogSeoTabProps) {
       <div className="rounded-lg border border-palnadu-border bg-palnadu-off-white/40 p-4 space-y-3">
         <div className="space-y-1">
           <div className="flex items-center justify-between">
-            <Label>Google Search Title Tag</Label>
+            <Label htmlFor="blog-seo-title">Google Search Title Tag</Label>
             <span
               className={cn(
                 'text-xs font-mono font-semibold',
@@ -35,6 +35,7 @@ export function BlogSeoTab({ formData, setFormData }: BlogSeoTabProps) {
             </span>
           </div>
           <Input
+            id="blog-seo-title"
             type="text"
             placeholder="e.g. 5 Practical Steps to Validate a SaaS MVP | Palnadu.dev"
             value={formData.seoTitle}
@@ -45,7 +46,7 @@ export function BlogSeoTab({ formData, setFormData }: BlogSeoTabProps) {
 
         <div className="space-y-1">
           <div className="flex items-center justify-between">
-            <Label>Google Meta Description Snippet</Label>
+            <Label htmlFor="blog-seo-description">Google Meta Description Snippet</Label>
             <span
               className={cn(
                 'text-xs font-mono font-semibold',
@@ -60,6 +61,7 @@ export function BlogSeoTab({ formData, setFormData }: BlogSeoTabProps) {
             </span>
           </div>
           <Textarea
+            id="blog-seo-description"
             rows={3}
             placeholder="e.g. Learn how software engineers validate startup ideas, avoid costly technical traps, and launch an MVP with paying customers in 3 to 6 weeks."
             value={formData.seoDescription}

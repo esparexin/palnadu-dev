@@ -30,7 +30,7 @@ export const initialFormData: BlogFormData = {
 
 export interface KeywordResult {
   keyword: string;
-  intent: 'transactional' | 'local' | 'informational';
+  intent: 'transactional' | 'local' | 'informational' | 'commercial';
   relevanceScore: number;
   source: string;
 }

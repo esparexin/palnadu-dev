@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
 import type { BlogPost } from '@palnadu/types';
 import { Plus, Sparkles, Loader2, Compass, ListChecks } from 'lucide-react';
@@ -8,6 +8,11 @@ import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { useToast } from '@/components/ui/toast';
 import { Button } from '@/components/ui/button';
 import { BlogFormData, initialFormData } from '@/components/blog/types';
+import {
+  canManageBlogAdminControls,
+  getBlogSaveSuccessMessage,
+  readStoredAdminRole,
+} from '@/components/blog/blog-admin.util';
 import { BlogKpiCards } from '@/components/blog/blog-kpi-cards';
 import { BlogFilters } from '@/components/blog/blog-filters';
 import { BlogTable } from '@/components/blog/blog-table';
@@ -27,6 +32,13 @@ export default function BlogAdminPage() {
   const [submitting, setSubmitting] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; title: string } | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [adminRole, setAdminRole] = useState<string | null>(null);
+
+  useEffect(() => {
+    setAdminRole(readStoredAdminRole());
+  }, []);
+
+  const canManageAdminSettings = canManageBlogAdminControls(adminRole);
 
   const onSuccessDraft = () => {
     blogPosts.setStatusFilter('DRAFT');
@@ -34,7 +46,7 @@ export default function BlogAdminPage() {
   };
 
   const automation = useBlogAutomation(onSuccessDraft, blogPosts.fetchCounts);
-  const keywords = useBlogKeywords(onSuccessDraft, automation.setGeneratingAi);
+  const keywords = useBlogKeywords(onSuccessDraft, automation.setGeneratingAi, blogPosts.fetchCounts);
 
   const openCreateModal = () => {
     setEditingPost(null);
@@ -42,7 +54,7 @@ export default function BlogAdminPage() {
     setModalOpen(true);
   };
 
-  const openEditModal = (post: any) => {
+  const openEditModal = (post: BlogPost) => {
     setEditingPost(post);
     setFormData({
       title: post.title,
@@ -82,11 +94,10 @@ export default function BlogAdminPage() {
       };
       if (editingPost) {
         await api.blog.update(editingPost.id, payload);
-        toast.success('Article updated successfully');
       } else {
         await api.blog.create(payload);
-        toast.success('Article published successfully');
       }
+      toast.success(getBlogSaveSuccessMessage(Boolean(editingPost), formData.status));
       setModalOpen(false);
       blogPosts.fetchPosts();
       blogPosts.fetchCounts();
@@ -117,7 +128,7 @@ export default function BlogAdminPage() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-palnadu-dark">Blog & Articles</h1>
+          <h1 className="text-2xl font-extrabold tracking-tight text-palnadu-dark">Blog & Articles</h1>
           <p className="text-xs text-palnadu-secondary mt-0.5">
             Publish technical guides, engineering case breakdowns, and manage SEO search metadata.
           </p>
@@ -168,6 +179,7 @@ export default function BlogAdminPage() {
         posts={blogPosts.posts}
         loading={blogPosts.loading}
         publishingId={blogPosts.publishingId}
+        canDelete={canManageAdminSettings}
         onQuickPublish={blogPosts.quickPublish}
         onOpenEdit={openEditModal}
         onDeleteRequest={setDeleteTarget}
@@ -226,6 +238,7 @@ export default function BlogAdminPage() {
         togglingBilingual={automation.togglingBilingual}
         discoveringTopics={automation.discoveringTopics}
         generatingAi={automation.generatingAi}
+        canManageSettings={canManageAdminSettings}
         onToggleAutoPublish={automation.toggleAutoPublish}
         onToggleBilingual={automation.toggleBilingual}
         onDiscoverTopics={automation.handleDiscoverTopics}
