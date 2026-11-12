@@ -2,9 +2,10 @@
 
 import React from 'react';
 import type { AutomationStatus, BilingualStatus, BlogTopic } from '@palnadu/types';
-import { X, ListChecks, Sparkles, Loader2 } from 'lucide-react';
+import { X, ListChecks, Sparkles, Loader2, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { formatQueueTopicError } from './blog-queue.util';
 
 interface BlogQueueModalProps {
   open: boolean;
@@ -16,6 +17,7 @@ interface BlogQueueModalProps {
   togglingBilingual: boolean;
   discoveringTopics: boolean;
   generatingAi: boolean;
+  generateError?: string | null;
   onToggleAutoPublish: () => void;
   onToggleBilingual: () => void;
   onDiscoverTopics: () => void;
@@ -32,6 +34,7 @@ export function BlogQueueModal({
   togglingBilingual,
   discoveringTopics,
   generatingAi,
+  generateError,
   onToggleAutoPublish,
   onToggleBilingual,
   onDiscoverTopics,
@@ -131,15 +134,26 @@ export function BlogQueueModal({
                   </Button>
                 </div>
 
+                {generateError && (
+                  <div
+                    role="alert"
+                    className="rounded-lg border border-palnadu-error/30 bg-palnadu-error/5 px-3 py-2 text-xs text-palnadu-error flex items-start gap-2"
+                  >
+                    <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
+                    <span className="break-words">{generateError}</span>
+                  </div>
+                )}
+
                 {automationStatus.upcomingQueue && automationStatus.upcomingQueue.length > 0 ? (
                   <div className="space-y-2">
                     {automationStatus.upcomingQueue.map((item: BlogTopic, idx: number) => {
                       const isCompleted = item.status === 'COMPLETED';
                       const isClaimed = item.status === 'CLAIMED';
                       const isFailed = item.status === 'FAILED';
+                      const topicError = formatQueueTopicError(item.lastError);
                       return (
                         <div key={item.id || item.topicKey || idx} className="rounded-lg border border-palnadu-border bg-white p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
-                          <div className="space-y-1">
+                          <div className="space-y-1 min-w-0">
                             <div className="flex flex-wrap items-center gap-2">
                               <span className="font-semibold text-palnadu-dark">{item.topic}</span>
                               <span className={cn('px-2 py-0.5 rounded text-xs font-mono font-bold uppercase border', isCompleted ? 'bg-palnadu-teal/10 text-palnadu-teal-dark border-palnadu-teal/30' : isClaimed ? 'bg-palnadu-blue/10 text-palnadu-blue border-palnadu-blue/30' : isFailed ? 'bg-palnadu-error/10 text-palnadu-error border-palnadu-error/30' : 'bg-palnadu-warning/10 text-palnadu-warning border-palnadu-warning/30')}>
@@ -153,6 +167,11 @@ export function BlogQueueModal({
                               Category: <span className="font-mono">{item.categorySlug}</span> • Target: {item.targetLocation || 'Global'}
                               {item.attempts > 0 ? ` • Attempts: ${item.attempts}` : ''}
                             </p>
+                            {topicError && (
+                              <p className="text-xs text-palnadu-error bg-palnadu-error/5 border border-palnadu-error/30 rounded-md px-2.5 py-1.5 break-words">
+                                Last error: <span className="font-mono">{topicError}</span>
+                              </p>
+                            )}
                           </div>
                           {!isCompleted && !isClaimed && (
                             <Button size="sm" variant="secondary" onClick={() => onGenerateFromTopic(item)} disabled={generatingAi} className="h-8 text-xs shrink-0 self-end sm:self-auto">

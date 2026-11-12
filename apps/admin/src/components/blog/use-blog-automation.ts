@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { api } from '@/lib/api';
 import type { AutomationStatus, BilingualStatus, BlogTopic } from '@palnadu/types';
 import { useToast } from '@/components/ui/toast';
+import { extractAutomationErrorMessage } from './blog-queue.util';
 
 export function useBlogAutomation(
   onSuccessDraft: () => void,
@@ -18,9 +19,11 @@ export function useBlogAutomation(
   const [discoveringTopics, setDiscoveringTopics] = useState(false);
   const [togglingBilingual, setTogglingBilingual] = useState(false);
   const [generatingAi, setGeneratingAi] = useState(false);
+  const [generateError, setGenerateError] = useState<string | null>(null);
 
   const fetchAutomationStatus = async () => {
     setLoadingStatus(true);
+    setGenerateError(null);
     setQueueModalOpen(true);
     try {
       const [statusRes, bilingualRes] = await Promise.all([
@@ -89,6 +92,7 @@ export function useBlogAutomation(
 
   const generateFromTopic = async (topicItem: BlogTopic) => {
     setGeneratingAi(true);
+    setGenerateError(null);
     toast.info(`Generating draft for "${topicItem.topic.slice(0, 32)}..."`);
     try {
       const res = await api.automation.generate({
@@ -108,7 +112,15 @@ export function useBlogAutomation(
         fetchCounts();
       }
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Failed to generate blog draft');
+      const msg = extractAutomationErrorMessage(err, 'Failed to generate blog draft');
+      setGenerateError(msg);
+      toast.error(msg);
+      try {
+        const updated = await api.automation.status();
+        if (updated.success) setAutomationStatus(updated.data);
+      } catch {
+        // Non-fatal: keep existing queue snapshot and visible generateError
+      }
     } finally {
       setGeneratingAi(false);
     }
@@ -128,7 +140,7 @@ export function useBlogAutomation(
         onSuccessDraft();
       }
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Failed to generate blog draft');
+      toast.error(extractAutomationErrorMessage(err, 'Failed to generate blog draft'));
     } finally {
       setGeneratingAi(false);
     }
@@ -144,6 +156,7 @@ export function useBlogAutomation(
     discoveringTopics,
     togglingBilingual,
     generatingAi,
+    generateError,
     setGeneratingAi,
     fetchAutomationStatus,
     toggleAutoPublish,

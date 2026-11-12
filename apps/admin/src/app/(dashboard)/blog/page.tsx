@@ -226,6 +226,7 @@ export default function BlogAdminPage() {
         togglingBilingual={automation.togglingBilingual}
         discoveringTopics={automation.discoveringTopics}
         generatingAi={automation.generatingAi}
+        generateError={automation.generateError}
         onToggleAutoPublish={automation.toggleAutoPublish}
         onToggleBilingual={automation.toggleBilingual}
         onDiscoverTopics={automation.handleDiscoverTopics}
