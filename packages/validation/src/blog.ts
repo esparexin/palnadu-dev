@@ -41,6 +41,13 @@ export const createBlogCategorySchema = z.object({
 
 export type CreateBlogCategoryInput = z.infer<typeof createBlogCategorySchema>;
 
+export const linkTranslationsSchema = z.object({
+  postIds: z.array(dbIdSchema).min(1, 'At least one post id is required to form a translation group'),
+  translationGroupId: z.string().trim().min(1).optional(),
+});
+
+export type LinkTranslationsInput = z.infer<typeof linkTranslationsSchema>;
+
 // ─── Blog Automation & Topic Queue ────────────────────────────
 
 export const automationGenerateSchema = z.object({

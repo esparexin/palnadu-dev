@@ -10,13 +10,14 @@ import {
   UseGuards,
   Request,
   NotFoundException,
-  BadRequestException,
 } from '@nestjs/common';
 import {
   createBlogPostSchema,
   createBlogCategorySchema,
+  linkTranslationsSchema,
   type CreateBlogPostInput,
   type CreateBlogCategoryInput,
+  type LinkTranslationsInput,
 } from '@palnadu/validation';
 import { BlogService, parseLanguage } from './blog.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
@@ -124,12 +125,7 @@ export class BlogController {
       canonicalUrl: valid.canonicalUrl || undefined,
       ogImage: valid.ogImage || undefined,
       status: (valid.status as PublishStatus) || PublishStatus.DRAFT,
-      publishDate:
-        valid.status === PublishStatus.PUBLISHED
-          ? valid.publishDate
-            ? new Date(valid.publishDate)
-            : new Date()
-          : undefined,
+      publishDate: valid.publishDate ? new Date(valid.publishDate) : undefined,
       author: { connect: { id: req.user.sub } },
       ...(valid.categoryId && { category: { connect: { id: valid.categoryId } } }),
     });
@@ -139,11 +135,10 @@ export class BlogController {
   @Post('admin/blog/link-translations')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('SUPER_ADMIN', 'ADMIN', 'EDITOR')
-  async linkTranslations(@Body() body: { postIds: string[]; translationGroupId?: string }) {
-    if (!Array.isArray(body?.postIds)) {
-      throw new BadRequestException('postIds must be an array of post ids');
-    }
-    const result = await this.blogService.linkTranslations(body.postIds, body.translationGroupId);
+  async linkTranslations(
+    @Body(new ZodValidationPipe(linkTranslationsSchema)) valid: LinkTranslationsInput,
+  ) {
+    const result = await this.blogService.linkTranslations(valid.postIds, valid.translationGroupId);
     return { success: true, data: result };
   }
 
@@ -167,11 +162,8 @@ export class BlogController {
 
     if (publishDate) {
       updateData.publishDate = new Date(publishDate);
-    } else if (status === PublishStatus.PUBLISHED) {
-      const existing = await this.blogService.findOneAdmin(id);
-      if (!existing?.publishDate) {
-        updateData.publishDate = new Date();
-      }
+    } else if (publishDate === null && status !== PublishStatus.PUBLISHED) {
+      updateData.publishDate = null;
     }
 
     if (categoryId) {
@@ -197,7 +189,7 @@ export class BlogController {
   async createCategory(
     @Body(new ZodValidationPipe(createBlogCategorySchema)) valid: CreateBlogCategoryInput,
   ) {
-    const category = await this.blogService.createCategory(valid as any);
+    const category = await this.blogService.createCategory(valid);
     return { success: true, data: category };
   }
 }
