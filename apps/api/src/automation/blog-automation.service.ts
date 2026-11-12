@@ -2,7 +2,6 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import { PrismaService } from '../prisma.service';
 import { TopicDiscoveryService } from './topic-discovery.service';
-import { DiscoveredTopic } from './seo-sources';
 import { BlogLanguage } from '@prisma/client';
 import { allocateQuota, BilingualConfig, BilingualQuota } from './bilingual-quota';
 import { BlogQueueService } from './blog/blog-queue.service';
@@ -13,7 +12,8 @@ import { BlogStatusService } from './blog/blog-status.service';
 import { DAILY_CRON_EXPRESSION, type DailyCronTriggerSource, readDailyCronStatus } from './blog/blog-cron-lock.util';
 import { executeDailyPipelineSteps, runDailyCronBatch, startDailyCronInBackground } from './blog/blog-cron-runner.util';
 import { BlogBatchService } from './blog/blog-batch.service';
-import { inferCategoryFromTopic, resolveOrEnsureCategory } from './blog/blog-seeds';
+import { resolveOrEnsureCategory } from './blog/blog-seeds';
+import { enqueueDiscoveredTopicsForLanguages } from './blog/blog-queue-recovery.util';
 import { ClaimedTopic, GenerationResult, QueueCandidate, RejectedTopic } from './blog/types';
 import { syncExistingTopicPost, toGenerationResultFromPost, recordSingleArticleFailure } from './blog/blog-idempotency.util';
 
@@ -43,28 +43,24 @@ export class BlogAutomationService {
   async getPendingQueueItems() { return this.queueService.getPendingQueueItems(); }
   async enqueueTopic(candidate: QueueCandidate) { return this.queueService.enqueueTopic(candidate); }
 
-  async discoverAndEnqueue(limit = 40): Promise<{ discovered: number; enqueued: number; rejected: string[] }> {
-    const candidates = await this.discoveryService.discover(limit);
-    let enqueued = 0;
-    const rejected: string[] = [];
+  async discoverAndEnqueue(
+    limit = 40,
+    languages?: BlogLanguage[],
+  ): Promise<{ discovered: number; enqueued: number; rejected: string[] }> {
+    const targetLanguages = languages ?? (await this.resolveActiveLanguages());
+    return enqueueDiscoveredTopicsForLanguages({
+      logger: this.logger,
+      discoveryService: this.discoveryService,
+      enqueueTopic: (c) => this.queueService.enqueueTopic(c),
+      languages: targetLanguages,
+      limit,
+    });
+  }
 
-    for (const c of candidates) {
-      const res = await this.queueService.enqueueTopic({
-        categorySlug: inferCategoryFromTopic(c.phrase, c.primaryKeyword),
-        topic: c.phrase,
-        targetLocation: c.sources.join(', '),
-        searchIntent: c.intent,
-        primaryKeyword: c.primaryKeyword,
-        keywords: [...c.secondaryKeywords, ...c.longTailKeywords],
-        referenceSources: c.sources,
-        source: 'discovery',
-      });
-      if (res.enqueued) enqueued += 1;
-      else rejected.push(`${c.phrase}: ${res.reason}`);
-    }
-
-    this.logger.log(`discovery: ${candidates.length} candidates, ${enqueued} enqueued, ${rejected.length} rejected`);
-    return { discovered: candidates.length, enqueued, rejected };
+  private async resolveActiveLanguages(): Promise<BlogLanguage[]> {
+    if (!this.bilingualService) return [BlogLanguage.en];
+    const bilingual = await this.readBilingualSwitch();
+    return bilingual.enabled ? [BlogLanguage.en, BlogLanguage.te] : [BlogLanguage.en];
   }
 
   @Cron(DAILY_CRON_EXPRESSION)
@@ -91,7 +87,8 @@ export class BlogAutomationService {
   private pipelineDeps() {
     return {
       discoverAndEnqueue: () => this.discoverAndEnqueue(),
-      replenishQueueIfLow: (min: number) => this.queueService.replenishQueueIfLow(min),
+      replenishQueueIfLow: async (min: number) =>
+        this.queueService.replenishQueueForLanguages(min, 15, await this.resolveActiveLanguages()),
       readBilingualSwitch: () => this.readBilingualSwitch(),
       generateBilingualBatch: this.generateBilingualBatch.bind(this),
       generateBatch: this.generateBatch.bind(this),

@@ -1,6 +1,6 @@
-import { BlogLanguage } from '@prisma/client';
-import { toTopicKey } from '../topic-identity';
-import { CURATED_TOPIC_QUEUE, QueueCandidate } from './types';
+import type { BlogLanguage } from '@prisma/client';
+import { CURATED_TOPIC_QUEUE, type QueueCandidate } from './types';
+import { TELUGU_CURATED_TOPIC_QUEUE } from './telugu-seeds';
 
 /**
  * Programmatic location-service matrix generator.
@@ -10,8 +10,26 @@ export function matrixCandidates(_generatedKeys: Set<string>): QueueCandidate[] 
   return [];
 }
 
-export function getAllInitialSeeds(_generatedKeys: Set<string>): QueueCandidate[] {
-  return CURATED_TOPIC_QUEUE.map((t): QueueCandidate => ({ ...t, source: 'curated-rotation' }));
+export function getAllInitialSeeds(
+  _generatedKeys: Set<string>,
+  language: BlogLanguage = 'en' as BlogLanguage,
+): QueueCandidate[] {
+  if (language === ('te' as BlogLanguage)) {
+    return [
+      ...TELUGU_CURATED_TOPIC_QUEUE.map((t): QueueCandidate => ({ ...t, source: 'curated-rotation' })),
+      ...CURATED_TOPIC_QUEUE.map((t): QueueCandidate => ({
+        ...t,
+        language: 'te' as BlogLanguage,
+        source: 'curated-rotation',
+      })),
+    ];
+  }
+
+  return CURATED_TOPIC_QUEUE.map((t): QueueCandidate => ({
+    ...t,
+    language: 'en' as BlogLanguage,
+    source: 'curated-rotation',
+  }));
 }
 
 export function inferCategoryFromTopic(phrase: string, primaryKeyword = ''): string {

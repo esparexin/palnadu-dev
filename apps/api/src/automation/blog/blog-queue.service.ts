@@ -5,6 +5,7 @@ import { canonicalizeTopic, SearchIntent, toTopicKey } from '../topic-identity';
 import { BlogLanguage, TopicStatus } from '@prisma/client';
 import { ClaimedTopic, QueueCandidate } from './types';
 import { getAllInitialSeeds } from './blog-seeds';
+import { recoverTransientFailedTopics } from './blog-queue-recovery.util';
 
 export const STALE_CLAIM_MS = 5 * 60 * 1000;
 
@@ -105,12 +106,17 @@ export class BlogQueueService {
     }
   }
 
-  async claimNextTopic(workerId: string, maxAttempts: number): Promise<ClaimedTopic | null> {
+  async claimNextTopic(
+    workerId: string,
+    maxAttempts: number,
+    language?: BlogLanguage,
+  ): Promise<ClaimedTopic | null> {
     const now = new Date();
     const staleBefore = new Date(now.getTime() - STALE_CLAIM_MS);
 
     const candidate = await this.prisma.blogTopic.findFirst({
       where: {
+        ...(language ? { language } : {}),
         attempts: { lt: maxAttempts },
         OR: [
           { status: TopicStatus.PENDING, OR: [{ nextRetryAt: null }, { nextRetryAt: { isSet: false } as any }, { nextRetryAt: { lte: now } }] },
@@ -139,33 +145,7 @@ export class BlogQueueService {
     language: BlogLanguage,
     maxAttempts: number,
   ): Promise<ClaimedTopic | null> {
-    const now = new Date();
-    const staleBefore = new Date(now.getTime() - STALE_CLAIM_MS);
-
-    const candidate = await this.prisma.blogTopic.findFirst({
-      where: {
-        language,
-        attempts: { lt: maxAttempts },
-        OR: [
-          { status: TopicStatus.PENDING, OR: [{ nextRetryAt: null }, { nextRetryAt: { isSet: false } as any }, { nextRetryAt: { lte: now } }] },
-          { status: TopicStatus.CLAIMED, claimedAt: { lt: staleBefore } },
-        ],
-      },
-      orderBy: { createdAt: 'asc' },
-    });
-    if (!candidate) return null;
-
-    const claim = await this.prisma.blogTopic.updateMany({
-      where: {
-        id: candidate.id,
-        status: { in: [TopicStatus.PENDING, TopicStatus.CLAIMED, TopicStatus.FAILED] },
-        OR: [{ claimedAt: null }, { claimedAt: { isSet: false } as any }, { claimedAt: { lt: staleBefore } }],
-      },
-      data: { status: TopicStatus.CLAIMED, claimedAt: now, claimedBy: workerId },
-    });
-
-    if (claim.count === 0) return null;
-    return { ...candidate, status: TopicStatus.CLAIMED };
+    return this.claimNextTopic(workerId, maxAttempts, language);
   }
 
   async releaseTopic(
@@ -191,31 +171,57 @@ export class BlogQueueService {
     });
   }
 
-  async replenishQueueIfLow(minPending = 10, maxToEnqueue = 15): Promise<number> {
+  async replenishQueueForLanguages(
+    minPending = 10,
+    maxToEnqueue = 15,
+    languages: BlogLanguage[] = [BlogLanguage.en, BlogLanguage.te],
+  ): Promise<number> {
+    let total = 0;
+    for (const language of [...new Set(languages)]) {
+      total += await this.replenishQueueIfLow(minPending, maxToEnqueue, language);
+    }
+    return total;
+  }
+
+  async replenishQueueIfLow(
+    minPending = 10,
+    maxToEnqueue = 15,
+    language: BlogLanguage = BlogLanguage.en,
+  ): Promise<number> {
     const pendingCount = await this.prisma.blogTopic.count({
-      where: { status: TopicStatus.PENDING, attempts: { lt: this.maxAttempts } },
+      where: { status: TopicStatus.PENDING, attempts: { lt: this.maxAttempts }, language },
     });
     if (pendingCount >= minPending) return 0;
 
-    const needed = minPending - pendingCount;
-    const limit = Math.min(needed + 5, maxToEnqueue);
+    const deficit = minPending - pendingCount;
+    const recovered = await recoverTransientFailedTopics(this.prisma, {
+      language,
+      maxAttempts: this.maxAttempts,
+      limit: Math.min(deficit, 3),
+    });
 
-    const generatedKeys = new Set(
-      (await this.prisma.blogPost.findMany({ select: { topicKey: true, language: true } })).map(
-        (p) => `${p.topicKey}::${p.language}`,
-      ),
-    );
-
+    const remainingNeeded = deficit - recovered;
     let enqueued = 0;
-    for (const seed of getAllInitialSeeds(generatedKeys)) {
-      if (enqueued >= limit) break;
-      const res = await this.enqueueTopic(seed);
-      if (res.enqueued) enqueued += 1;
+    if (remainingNeeded > 0) {
+      const limit = Math.min(remainingNeeded + 5, maxToEnqueue);
+      const generatedKeys = new Set(
+        (await this.prisma.blogPost.findMany({ where: { language }, select: { topicKey: true, language: true } })).map(
+          (p) => `${p.topicKey}::${p.language}`,
+        ),
+      );
+
+      for (const seed of getAllInitialSeeds(generatedKeys, language)) {
+        if (enqueued >= limit) break;
+        const res = await this.enqueueTopic(seed);
+        if (res.enqueued) enqueued += 1;
+      }
     }
 
-    if (enqueued > 0) {
-      this.logger.log(`Replenished queue with ${enqueued} seed topics (had ${pendingCount} pending)`);
+    if (recovered > 0 || enqueued > 0) {
+      this.logger.log(
+        `Replenished [${language}] queue: ${recovered} transient recovered, ${enqueued} seeds enqueued (had ${pendingCount} pending)`,
+      );
     }
-    return enqueued;
+    return recovered + enqueued;
   }
 }
