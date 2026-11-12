@@ -181,15 +181,3 @@ export async function callLlmProviderDetailed(
 
   return { result: null, geminiFailure };
 }
-
-export async function callLlmProvider(
-  systemPrompt: string,
-  userPrompt: string,
-  strategy: SeoStrategy,
-  keys: LlmApiKeys,
-  logger: Logger,
-  options?: LlmCallOptions,
-): Promise<{ draft: any; provider: string } | null> {
-  const { result } = await callLlmProviderDetailed(systemPrompt, userPrompt, strategy, keys, logger, options);
-  return result;
-}

@@ -112,8 +112,10 @@ describe('template output cannot auto-publish', () => {
 
   it('validation treats template output as a blocking originality failure', () => {
     const rules = readFileSync('src/automation/seo-validation-rules.ts', 'utf8');
+    const contentChecks = readFileSync('src/automation/seo-validation-content.ts', 'utf8');
+    assert.match(rules, /\bcheckContentOriginality\(/, 'validate() should delegate to checkContentOriginality');
     assert.match(
-      rules,
+      contentChecks,
       /passed: !tooShort && !stuffed && !isTemplate/,
       'content_originality must fail for template output',
     );
