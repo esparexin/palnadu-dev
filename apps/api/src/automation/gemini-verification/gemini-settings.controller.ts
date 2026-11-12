@@ -14,7 +14,9 @@ import { UserRole } from '@prisma/client';
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe';
 import {
   geminiKeyInputSchema,
+  geminiRetryPendingSchema,
   type GeminiKeyInput,
+  type GeminiRetryPendingInput,
 } from '@palnadu/validation';
 import { GeminiKeyStoreService } from './gemini-key-store.service';
 
@@ -76,6 +78,30 @@ export class GeminiSettingsController {
     return {
       success: true,
       message: 'Gemini API key verified and atomically activated successfully.',
+      data,
+    };
+  }
+
+  /**
+   * Retries verification for the currently preserved PENDING_VERIFICATION candidate key.
+   */
+  @Post('retry-pending')
+  async retryPending(
+    @Body(new ZodValidationPipe(geminiRetryPendingSchema))
+    body: GeminiRetryPendingInput,
+    @Req() req: any,
+  ) {
+    const actor = req?.user?.email || req?.user?.sub || 'admin';
+    const data = await this.keyStoreService.retryPendingVerification(
+      actor,
+      body.primaryModel,
+      body.activate,
+    );
+    return {
+      success: true,
+      message: data.activated
+        ? 'Pending Gemini API key verified and activated successfully.'
+        : `Pending candidate retry completed: ${data.verification.verificationStatus}`,
       data,
     };
   }

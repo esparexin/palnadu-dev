@@ -1,204 +1,209 @@
 import { Injectable, Logger } from '@nestjs/common';
 import {
+  GeminiAuthenticationStatus,
   GeminiKeyVerificationResult,
   ModelAccessStatus,
   VerifyKeyOptions,
 } from './gemini-verification.types';
 import {
-  maskApiKey,
-  sanitizeErrorMessage,
-  parseGoogleError,
-  extractProjectIdentity,
-  extractAccountIdentity,
-} from './gemini-verification.util';
-import { DEFAULT_GEMINI_MODELS } from '../content-research/llm-provider';
+  buildOrderedGeminiModels,
+  executeWithGeminiRetry,
+} from './gemini-retry.util';
+import type { ParsedGoogleFailure } from './gemini-error-classifier.util';
+import {
+  buildEmptyKeyResult,
+  buildVerificationResult,
+  mergeProjectIdentity,
+  resolveOverallFailureCode,
+} from './gemini-verification-summary.util';
+import { maskApiKey, sanitizeErrorMessage } from './gemini-verification.util';
+
+const GEMINI_BASE_URL = 'https://generativelanguage.googleapis.com/v1beta';
 
 @Injectable()
 export class GeminiKeyVerificationService {
   private readonly logger = new Logger(GeminiKeyVerificationService.name);
 
   async verifyKey(
-    apiKey: string,
+    rawKey: string,
     options: VerifyKeyOptions = {},
   ): Promise<GeminiKeyVerificationResult> {
-    const fetchImpl = options.fetchFn ?? globalThis.fetch;
-    const timeoutMs = options.timeoutMs ?? 30000;
-    const trimmedKey = (apiKey || '').trim();
-    const masked = maskApiKey(trimmedKey);
-    const verifiedAt = new Date().toISOString();
+    const trimmedKey = (rawKey || '').trim();
+    if (!trimmedKey) return buildEmptyKeyResult();
 
-    if (!trimmedKey) {
-      return {
-        isValid: false,
-        isUsableForGeneration: false,
-        verificationStatus: 'Invalid Key',
-        maskedKey: '',
-        project: { id: null, name: null, status: 'Unavailable' },
-        account: { email: null, status: 'Account Identity Unavailable' },
-        models: { tested: [], supportedCount: 0 },
-        quota: { status: 'Unknown', detail: 'Empty API key provided' },
-        permissions: { status: 'Denied', detail: 'No key provided' },
-        verifiedAt,
-        errorMessage: 'API key cannot be empty',
-      };
+    const fetchFn = options.fetchFn || globalThis.fetch;
+    const identityCandidates: Array<{ headers?: Headers; body?: any }> = [];
+    let authenticationStatus: GeminiAuthenticationStatus = 'UNVERIFIED';
+    let isValid = false;
+    let supportedModelsCount = 0;
+    let listFailure: ParsedGoogleFailure | null = null;
+
+    const listOutcome = await executeWithGeminiRetry<any>({
+      fetchFn,
+      url: `${GEMINI_BASE_URL}/models?key=${encodeURIComponent(trimmedKey)}`,
+      init: { method: 'GET' },
+      stage: 'list_models',
+      rawSecretToRedact: trimmedKey,
+      retry: options.retry,
+    });
+    identityCandidates.push({ headers: listOutcome.headers, body: listOutcome.body });
+
+    if (listOutcome.ok) {
+      authenticationStatus = 'AUTHENTICATED';
+      isValid = true;
+      const models = Array.isArray(listOutcome.body?.models) ? listOutcome.body.models : [];
+      supportedModelsCount = models.filter((m: any) =>
+        m.supportedGenerationMethods?.includes('generateContent'),
+      ).length;
+    } else if (listOutcome.failure) {
+      listFailure = listOutcome.failure;
+      if (listFailure.code === 'INVALID_API_KEY') {
+        authenticationStatus = 'INVALID_KEY';
+        isValid = false;
+      } else if (listFailure.code === 'PERMISSION_DENIED') {
+        authenticationStatus = 'PERMISSION_DENIED';
+        isValid = true;
+      } else {
+        authenticationStatus = 'TEMPORARY_ERROR';
+        isValid = true;
+      }
+
+      if (listFailure.stopAllModels) {
+        return buildVerificationResult({
+          trimmedKey,
+          atLeastOneModelUsable: false,
+          authenticationStatus,
+          isValid,
+          project: mergeProjectIdentity(identityCandidates),
+          testedModels: [],
+          supportedModelsCount: 0,
+          fallbackUsed: false,
+          activeUsableModel: null,
+          dominantFailure: listFailure,
+        });
+      }
     }
 
-    try {
-      // 1. Probe ModelService to check key validity and model listings
-      const listUrl = `https://generativelanguage.googleapis.com/v1beta/models?key=${encodeURIComponent(trimmedKey)}`;
-      const listRes = await fetchImpl(listUrl, {
-        signal: AbortSignal.timeout(timeoutMs),
+    const modelsToTest =
+      options.testModels && options.testModels.length > 0
+        ? options.testModels
+        : buildOrderedGeminiModels(options.primaryModel);
+
+    const testedModels: ModelAccessStatus[] = [];
+    const modelFailures: ParsedGoogleFailure[] = [];
+    let atLeastOneModelUsable = false;
+    let activeUsableModel: string | null = null;
+    let fallbackUsed = false;
+
+    for (let i = 0; i < modelsToTest.length; i++) {
+      const model = modelsToTest[i];
+      const genOutcome = await executeWithGeminiRetry<any>({
+        fetchFn,
+        url: `${GEMINI_BASE_URL}/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(trimmedKey)}`,
+        init: {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: 'Reply with OK.' }] }],
+            generationConfig: { maxOutputTokens: 8, temperature: 0 },
+          }),
+        },
+        stage: 'generate',
+        rawSecretToRedact: trimmedKey,
+        retry: options.retry,
       });
 
-      const listHeaders = listRes.headers;
-      let listJson: any = null;
-      try {
-        listJson = await listRes.json();
-      } catch {
-        listJson = null;
-      }
+      identityCandidates.push({ headers: genOutcome.headers, body: genOutcome.body });
 
-      if (!listRes.ok) {
-        const parsed = parseGoogleError(listRes.status, listJson);
-        const project = extractProjectIdentity(listHeaders, listJson);
-        const account = extractAccountIdentity(trimmedKey);
-
-        this.logger.warn(`Gemini verification for key ${masked} returned ${listRes.status}: ${parsed.status}`);
-        return {
-          isValid: false,
-          isUsableForGeneration: false,
-          verificationStatus: parsed.status,
-          maskedKey: masked,
-          project,
-          account,
-          models: { tested: [], supportedCount: 0 },
-          quota: { status: parsed.quotaStatus, detail: parsed.detail },
-          permissions: { status: parsed.permissionStatus, detail: parsed.detail },
-          verifiedAt,
-          errorMessage: parsed.detail,
-        };
-      }
-
-      // 2. Discover supported models
-      const modelsList: any[] = Array.isArray(listJson?.models) ? listJson.models : [];
-      const supportedModelNames = new Set(
-        modelsList
-          .filter((m) => Array.isArray(m?.supportedGenerationMethods) && m.supportedGenerationMethods.includes('generateContent'))
-          .map((m) => (m.name || '').replace('models/', '')),
-      );
-
-      // 3. Test generation capability on primary and fallback models
-      const modelsToTest = options.testModels && options.testModels.length > 0
-        ? options.testModels
-        : [DEFAULT_GEMINI_MODELS[0], DEFAULT_GEMINI_MODELS[DEFAULT_GEMINI_MODELS.length - 1]];
-
-      const testedResults: ModelAccessStatus[] = [];
-      let atLeastOneModelUsable = false;
-      let lastHeaders = listHeaders;
-      let quotaStatus: 'Active' | 'Quota Exceeded' | 'Billing Restricted' | 'Unknown' = 'Active';
-      let permissionStatus: 'Granted' | 'Restricted' | 'Denied' = 'Granted';
-      let genErrorMessage: string | undefined;
-
-      for (const model of modelsToTest) {
-        const start = Date.now();
-        const genUrl = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(trimmedKey)}`;
-
-        try {
-          const genRes = await fetchImpl(genUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ contents: [{ parts: [{ text: 'ping' }] }] }),
-            signal: AbortSignal.timeout(timeoutMs),
-          });
-          lastHeaders = genRes.headers;
-          let genJson: any = null;
-          try {
-            genJson = await genRes.json();
-          } catch {
-            genJson = null;
-          }
-
-          if (genRes.ok) {
-            atLeastOneModelUsable = true;
-            testedResults.push({
-              model,
-              accessible: true,
-              latencyMs: Date.now() - start,
-            });
-          } else {
-            const parsed = parseGoogleError(genRes.status, genJson);
-            if (parsed.quotaStatus === 'Quota Exceeded') quotaStatus = 'Quota Exceeded';
-            if (parsed.quotaStatus === 'Billing Restricted') quotaStatus = 'Billing Restricted';
-            if (parsed.permissionStatus === 'Denied') permissionStatus = 'Denied';
-            genErrorMessage = parsed.detail;
-            testedResults.push({
-              model,
-              accessible: false,
-              latencyMs: Date.now() - start,
-              error: parsed.detail,
-            });
-          }
-        } catch (err) {
-          testedResults.push({
+      if (genOutcome.ok) {
+        const text = genOutcome.body?.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (typeof text === 'string' && text.trim().length > 0) {
+          testedModels.push({
             model,
-            accessible: false,
-            latencyMs: Date.now() - start,
-            error: sanitizeErrorMessage(err, trimmedKey),
+            accessible: true,
+            latencyMs: genOutcome.latencyMs,
+            attempts: genOutcome.attempts,
+            statusCode: 'VERIFIED',
+            isTemporary: false,
           });
+          atLeastOneModelUsable = true;
+          activeUsableModel = model;
+          fallbackUsed = i > 0;
+          authenticationStatus = 'AUTHENTICATED';
+          isValid = true;
+          break;
         }
+
+        const emptyErr: ParsedGoogleFailure = {
+          code: 'TEMPORARY_PROVIDER_ERROR',
+          status: 'Temporary Provider Error',
+          quotaStatus: 'Active',
+          permissionStatus: 'Granted',
+          isTemporary: true,
+          retryable: false,
+          modelSpecific: true,
+          stopAllModels: false,
+          detail: 'Model returned an empty generation payload.',
+        };
+        modelFailures.push(emptyErr);
+        testedModels.push({
+          model,
+          accessible: false,
+          latencyMs: genOutcome.latencyMs,
+          attempts: genOutcome.attempts,
+          statusCode: emptyErr.code,
+          failureCategory: emptyErr.code,
+          isTemporary: true,
+          error: emptyErr.detail,
+        });
+        continue;
       }
 
-      const project = extractProjectIdentity(lastHeaders, listJson);
-      const account = extractAccountIdentity(trimmedKey);
+      const failure = genOutcome.failure!;
+      modelFailures.push(failure);
+      testedModels.push({
+        model,
+        accessible: false,
+        latencyMs: genOutcome.latencyMs,
+        attempts: genOutcome.attempts,
+        statusCode: failure.code,
+        failureCategory: failure.code,
+        isTemporary: failure.isTemporary,
+        error: sanitizeErrorMessage(failure.detail, trimmedKey),
+      });
 
-      let verificationStatus: GeminiKeyVerificationResult['verificationStatus'] = 'Verified';
-      if (!atLeastOneModelUsable) {
-        if (quotaStatus === 'Quota Exceeded') verificationStatus = 'Quota Exceeded';
-        else if (permissionStatus === 'Denied') verificationStatus = 'Permission Denied';
-        else verificationStatus = 'Verification Failed';
-      } else if (project.status === 'Project Not Identified') {
-        verificationStatus = 'Partially Verified';
+      if (failure.stopAllModels) {
+        if (failure.code === 'INVALID_API_KEY') {
+          authenticationStatus = 'INVALID_KEY';
+          isValid = false;
+        } else if (failure.code === 'PERMISSION_DENIED') {
+          authenticationStatus = 'PERMISSION_DENIED';
+        }
+        break;
       }
-
-      return {
-        isValid: true,
-        isUsableForGeneration: atLeastOneModelUsable,
-        verificationStatus,
-        maskedKey: masked,
-        project,
-        account,
-        models: {
-          tested: testedResults,
-          supportedCount: supportedModelNames.size,
-        },
-        quota: {
-          status: quotaStatus,
-          detail: quotaStatus === 'Active' ? 'Standard API quotas active' : genErrorMessage,
-        },
-        permissions: {
-          status: permissionStatus,
-          detail: permissionStatus === 'Granted' ? 'API access confirmed' : genErrorMessage,
-        },
-        verifiedAt,
-        errorMessage: atLeastOneModelUsable ? undefined : genErrorMessage,
-      };
-    } catch (err) {
-      const sanitized = sanitizeErrorMessage(err, trimmedKey);
-      this.logger.error(`Network or execution error verifying key ${masked}: ${sanitized}`);
-      return {
-        isValid: false,
-        isUsableForGeneration: false,
-        verificationStatus: 'Verification Failed',
-        maskedKey: masked,
-        project: { id: null, name: null, status: 'Unavailable' },
-        account: { email: null, status: 'Account Identity Unavailable' },
-        models: { tested: [], supportedCount: 0 },
-        quota: { status: 'Unknown' },
-        permissions: { status: 'Denied', detail: sanitized },
-        verifiedAt,
-        errorMessage: sanitized,
-      };
     }
+
+    const project = mergeProjectIdentity(identityCandidates);
+    const dominantFailure = resolveOverallFailureCode(
+      modelFailures.length > 0 ? modelFailures : listFailure ? [listFailure] : [],
+    );
+
+    const finalResult = buildVerificationResult({
+      trimmedKey,
+      atLeastOneModelUsable,
+      authenticationStatus,
+      isValid,
+      project,
+      testedModels,
+      supportedModelsCount,
+      fallbackUsed,
+      activeUsableModel,
+      dominantFailure,
+    });
+
+    this.logger.log(
+      `Verification key=${maskApiKey(trimmedKey)} code=${finalResult.verificationCode} usable=${finalResult.isUsableForGeneration} model=${activeUsableModel ?? 'none'} fallback=${fallbackUsed}`,
+    );
+    return finalResult;
   }
 }
-

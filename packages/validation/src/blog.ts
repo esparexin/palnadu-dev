@@ -94,3 +94,10 @@ export const geminiKeyInputSchema = z.object({
 
 export type GeminiKeyInput = z.infer<typeof geminiKeyInputSchema>;
 
+export const geminiRetryPendingSchema = z.object({
+  primaryModel: z.string().trim().max(100).optional(),
+  activate: z.boolean().optional().default(false),
+});
+
+export type GeminiRetryPendingInput = z.infer<typeof geminiRetryPendingSchema>;
+

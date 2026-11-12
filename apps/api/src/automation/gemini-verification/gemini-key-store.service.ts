@@ -1,26 +1,23 @@
-import {
-  Injectable,
-  Logger,
-  BadRequestException,
-  OnModuleInit,
-} from '@nestjs/common';
+import { Injectable, Logger, BadRequestException, OnModuleInit } from '@nestjs/common';
+import { DEFAULT_GEMINI_MODELS } from '@palnadu/types';
 import { PrismaService } from '../../prisma.service';
 import { GeminiKeyVerificationService } from './gemini-verification.service';
-import {
-  encryptSecret,
-  decryptSecret,
-  validateEncryptionConfig,
-} from './gemini-crypto.util';
+import { encryptSecret, decryptSecret, validateEncryptionConfig } from './gemini-crypto.util';
 import {
   SETTING_KEY_ENCRYPTED,
-  SETTING_KEY_AUDIT_LOG,
-  MAX_AUDIT_ENTRIES,
-  buildAuditEntry,
   buildDatabaseKeyStatus,
   buildEnvKeyStatus,
   buildUnconfiguredKeyStatus,
   type StoredEncryptedRecord,
 } from './gemini-key-store.types';
+import {
+  clearPendingCandidate,
+  decryptPendingRecord,
+  readPendingCandidateRecord,
+  savePendingCandidate,
+  toPendingCandidateSummary,
+} from './gemini-pending-store.util';
+import { appendGeminiAuditEntry, readGeminiAuditLog } from './gemini-audit-store.util';
 import type {
   ActiveGeminiKeySummary,
   GeminiKeyAuditEntry,
@@ -42,20 +39,17 @@ export class GeminiKeyStoreService implements OnModuleInit {
   }
 
   async getActiveKeyStatus(): Promise<ActiveGeminiKeySummary> {
-    const record = await this.prisma.siteSetting.findUnique({
-      where: { key: SETTING_KEY_ENCRYPTED },
-    });
-
+    const [record, pendingRaw] = await Promise.all([
+      this.prisma.siteSetting.findUnique({ where: { key: SETTING_KEY_ENCRYPTED } }),
+      readPendingCandidateRecord(this.prisma),
+    ]);
+    const pending = toPendingCandidateSummary(pendingRaw);
     if (record?.value) {
-      return buildDatabaseKeyStatus(record.value as unknown as StoredEncryptedRecord);
+      return buildDatabaseKeyStatus(record.value as unknown as StoredEncryptedRecord, pending);
     }
-
     const envKey = process.env.GEMINI_API_KEY?.trim();
-    if (envKey) {
-      return buildEnvKeyStatus(envKey);
-    }
-
-    return buildUnconfiguredKeyStatus();
+    if (envKey) return buildEnvKeyStatus(envKey, pending);
+    return buildUnconfiguredKeyStatus(pending);
   }
 
   async verifyCandidateKey(
@@ -63,18 +57,22 @@ export class GeminiKeyStoreService implements OnModuleInit {
     actor: string = 'admin',
     primaryModel?: string,
   ): Promise<GeminiKeyVerificationResult> {
-    const opts = primaryModel ? { testModels: [primaryModel] } : undefined;
-    const result = await this.verificationService.verifyKey(apiKey, opts);
-
-    await this.recordAudit({
+    const result = await this.verificationService.verifyKey(apiKey, {
+      primaryModel: primaryModel?.trim() || undefined,
+    });
+    if (!result.isUsableForGeneration && result.isTemporary && result.isValid) {
+      await this.preserveTemporaryCandidate(apiKey, actor, result, primaryModel);
+    }
+    await appendGeminiAuditEntry(this.prisma, {
       action: 'VERIFICATION_PROBE',
       actor,
       maskedKey: result.maskedKey,
       status: result.verificationStatus,
+      verificationCode: result.verificationCode,
+      isTemporary: result.isTemporary,
       projectId: result.project.id,
       reason: result.errorMessage || (result.isValid ? 'Probe successful' : 'Probe failed'),
-    });
-
+    }, this.logger);
     return result;
   }
 
@@ -83,75 +81,143 @@ export class GeminiKeyStoreService implements OnModuleInit {
     actor: string = 'admin',
     primaryModel?: string,
   ): Promise<ActiveGeminiKeySummary> {
-    const opts = primaryModel ? { testModels: [primaryModel] } : undefined;
-    const result = await this.verificationService.verifyKey(apiKey, opts);
-
+    const result = await this.verificationService.verifyKey(apiKey, {
+      primaryModel: primaryModel?.trim() || undefined,
+    });
     if (!result.isValid || !result.isUsableForGeneration) {
-      await this.recordAudit({
+      if (result.isTemporary && result.isValid) {
+        await this.preserveTemporaryCandidate(apiKey, actor, result, primaryModel);
+      }
+      await appendGeminiAuditEntry(this.prisma, {
         action: 'KEY_ACTIVATION_REJECTED',
         actor,
         maskedKey: result.maskedKey,
         status: result.verificationStatus,
+        verificationCode: result.verificationCode,
+        isTemporary: result.isTemporary,
         projectId: result.project.id,
         reason: result.errorMessage || `Key unusable (status: ${result.verificationStatus})`,
-      });
-
+      }, this.logger);
+      const pendingNote = result.isTemporary && result.isValid
+        ? ' Candidate preserved securely as PENDING_VERIFICATION.' : '';
       throw new BadRequestException(
-        `Gemini API key activation rejected: ${result.verificationStatus}. ` +
-          `${result.errorMessage || 'Key is not authorized or quota exceeded.'} Existing key preserved.`,
+        `Gemini API key activation rejected: ${result.verificationStatus} (${result.verificationCode}). ` +
+          `${result.errorMessage || 'Key is not authorized or quota exceeded.'}${pendingNote} Existing key preserved.`,
       );
     }
+    return this.persistActivatedKey(apiKey, result, actor, primaryModel);
+  }
 
+  async retryPendingVerification(
+    actor: string = 'admin',
+    primaryModelOverride?: string,
+    activateOnSuccess: boolean = false,
+  ): Promise<{ verification: GeminiKeyVerificationResult; activated?: ActiveGeminiKeySummary }> {
+    const pending = await readPendingCandidateRecord(this.prisma);
+    if (!pending) throw new BadRequestException('No pending Gemini API candidate key is stored for retry.');
+    const decryptedKey = decryptPendingRecord(pending);
+    if (!decryptedKey) throw new BadRequestException('Stored pending Gemini candidate could not be decrypted.');
+
+    const targetModel = primaryModelOverride?.trim() || pending.primaryModel;
+    const result = await this.verificationService.verifyKey(decryptedKey, { primaryModel: targetModel });
+    await appendGeminiAuditEntry(this.prisma, {
+      action: 'PENDING_VERIFICATION_RETRIED',
+      actor,
+      maskedKey: result.maskedKey,
+      status: result.verificationStatus,
+      verificationCode: result.verificationCode,
+      isTemporary: result.isTemporary,
+      projectId: result.project.id,
+      reason: result.errorMessage || 'Pending candidate retry completed.',
+    }, this.logger);
+
+    if (result.isValid && result.isUsableForGeneration) {
+      if (activateOnSuccess) {
+        return { verification: result, activated: await this.persistActivatedKey(decryptedKey, result, actor, targetModel) };
+      }
+      await clearPendingCandidate(this.prisma, actor);
+      return { verification: result };
+    }
+    if (result.isTemporary && result.isValid) {
+      await savePendingCandidate({
+        prisma: this.prisma,
+        apiKey: decryptedKey,
+        actor,
+        primaryModel: targetModel,
+        result,
+        previousAttempts: pending.attemptCount || 1,
+        previousSubmittedAt: pending.submittedAt,
+      });
+      result.pendingPreserved = true;
+    } else {
+      await clearPendingCandidate(this.prisma, actor);
+    }
+    return { verification: result };
+  }
+
+  private async preserveTemporaryCandidate(
+    apiKey: string,
+    actor: string,
+    result: GeminiKeyVerificationResult,
+    primaryModel?: string,
+  ): Promise<void> {
+    await savePendingCandidate({ prisma: this.prisma, apiKey, actor, primaryModel, result });
+    result.pendingPreserved = true;
+    await appendGeminiAuditEntry(this.prisma, {
+      action: 'KEY_PENDING_VERIFICATION',
+      actor,
+      maskedKey: result.maskedKey,
+      status: 'Pending Verification',
+      verificationCode: 'PENDING_VERIFICATION',
+      isTemporary: true,
+      projectId: result.project.id,
+      reason: result.errorMessage || 'Temporary model capacity error; candidate preserved.',
+    }, this.logger);
+  }
+
+  private async persistActivatedKey(
+    apiKey: string,
+    result: GeminiKeyVerificationResult,
+    actor: string,
+    requestedModel?: string,
+  ): Promise<ActiveGeminiKeySummary> {
     const encrypted = encryptSecret(apiKey);
+    const selectedModel =
+      result.activeUsableModel || requestedModel?.trim() || result.models.tested[0]?.model || DEFAULT_GEMINI_MODELS[0];
     const storedRecord: StoredEncryptedRecord = {
       ...encrypted,
       maskedKey: result.maskedKey,
       verificationResult: result,
-      primaryModel: primaryModel || result.models.tested[0]?.model || 'gemini-3.8-flash',
+      primaryModel: selectedModel,
       activatedAt: new Date().toISOString(),
       activatedBy: actor,
     };
-
     await this.prisma.siteSetting.upsert({
       where: { key: SETTING_KEY_ENCRYPTED },
-      update: {
-        value: storedRecord as any,
-        updatedBy: actor,
-        description: 'Encrypted Gemini API Key with project metadata',
-      },
-      create: {
-        key: SETTING_KEY_ENCRYPTED,
-        value: storedRecord as any,
-        updatedBy: actor,
-        description: 'Encrypted Gemini API Key with project metadata',
-      },
+      update: { value: storedRecord as any, updatedBy: actor, description: 'Encrypted Gemini API Key with project metadata' },
+      create: { key: SETTING_KEY_ENCRYPTED, value: storedRecord as any, updatedBy: actor, description: 'Encrypted Gemini API Key with project metadata' },
     });
-
-    await this.recordAudit({
+    await clearPendingCandidate(this.prisma, actor).catch(() => undefined);
+    await appendGeminiAuditEntry(this.prisma, {
       action: 'KEY_ACTIVATION_SUCCESS',
       actor,
       maskedKey: result.maskedKey,
       status: result.verificationStatus,
+      verificationCode: result.verificationCode,
+      isTemporary: false,
       projectId: result.project.id,
-      reason: `Activated key successfully with project ${result.project.id || 'N/A'}.`,
-    });
-
+      reason: `Activated key successfully (model: ${selectedModel}, fallbackUsed: ${result.fallbackUsed}, project: ${result.project.id || 'N/A'}).`,
+    }, this.logger);
     return this.getActiveKeyStatus();
   }
 
   async getDecryptedActiveKey(): Promise<string | undefined> {
     try {
-      const record = await this.prisma.siteSetting.findUnique({
-        where: { key: SETTING_KEY_ENCRYPTED },
-      });
+      const record = await this.prisma.siteSetting.findUnique({ where: { key: SETTING_KEY_ENCRYPTED } });
       if (record?.value) {
         const data = record.value as unknown as StoredEncryptedRecord;
         if (data.ciphertext && data.iv && data.authTag) {
-          return decryptSecret({
-            ciphertext: data.ciphertext,
-            iv: data.iv,
-            authTag: data.authTag,
-          });
+          return decryptSecret({ ciphertext: data.ciphertext, iv: data.iv, authTag: data.authTag });
         }
       }
     } catch (err: any) {
@@ -162,44 +228,16 @@ export class GeminiKeyStoreService implements OnModuleInit {
 
   async getActiveModel(): Promise<string | undefined> {
     try {
-      const record = await this.prisma.siteSetting.findUnique({
-        where: { key: SETTING_KEY_ENCRYPTED },
-      });
+      const record = await this.prisma.siteSetting.findUnique({ where: { key: SETTING_KEY_ENCRYPTED } });
       if (record?.value) {
         const data = record.value as unknown as StoredEncryptedRecord;
         if (data.primaryModel) return data.primaryModel;
       }
-    } catch {
-      // non-fatal
-    }
+    } catch { /* non-fatal */ }
     return process.env.GEMINI_MODEL?.trim() || undefined;
   }
 
   async getAuditLog(limit: number = 20): Promise<GeminiKeyAuditEntry[]> {
-    const record = await this.prisma.siteSetting.findUnique({
-      where: { key: SETTING_KEY_AUDIT_LOG },
-    });
-    if (!record?.value || !Array.isArray(record.value)) return [];
-    return (record.value as unknown as GeminiKeyAuditEntry[]).slice(0, limit);
-  }
-
-  private async recordAudit(entry: Omit<GeminiKeyAuditEntry, 'id' | 'timestamp'>): Promise<void> {
-    try {
-      const fullEntry = buildAuditEntry(entry);
-      const existing = await this.getAuditLog(MAX_AUDIT_ENTRIES);
-      const updated = [fullEntry, ...existing].slice(0, MAX_AUDIT_ENTRIES);
-
-      await this.prisma.siteSetting.upsert({
-        where: { key: SETTING_KEY_AUDIT_LOG },
-        update: { value: updated as any },
-        create: {
-          key: SETTING_KEY_AUDIT_LOG,
-          value: updated as any,
-          description: 'Audit history of Gemini API key verifications and activations',
-        },
-      });
-    } catch (err: any) {
-      this.logger.warn(`Could not persist Gemini key audit log: ${err?.message || err}`);
-    }
+    return readGeminiAuditLog(this.prisma, limit);
   }
 }
