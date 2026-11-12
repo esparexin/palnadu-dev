@@ -121,12 +121,18 @@ export class BlogService {
     const skip = (page - 1) * limit;
     const where = buildBlogPostWhere({ status, language, categorySlug, search });
 
+    // Drafts have publishDate: null; sorting publishDate desc first pushes them below all published posts in MongoDB.
+    const orderBy: Prisma.BlogPostOrderByWithRelationInput[] =
+      status === PublishStatus.PUBLISHED
+        ? [{ publishDate: 'desc' }, { createdAt: 'desc' }]
+        : [{ createdAt: 'desc' }, { publishDate: 'desc' }];
+
     const [posts, total] = await Promise.all([
       this.prisma.blogPost.findMany({
         where,
         skip,
         take: limit,
-        orderBy: [{ publishDate: 'desc' }, { createdAt: 'desc' }],
+        orderBy,
         include: {
           author: { select: { id: true, name: true } },
           category: { select: { id: true, name: true, slug: true } },
