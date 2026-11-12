@@ -1,6 +1,7 @@
 import { Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { canonicalizeTopic } from '../topic-identity';
+import { isViableTopicPhrase } from './topic-relevance';
 import {
   DiscoveredTopic,
   ReferenceSource,
@@ -16,8 +17,8 @@ export function buildTopic(
   extras: Partial<DiscoveredTopic> = {},
 ): DiscoveredTopic | null {
   const cleaned = phrase.replace(/\s+/g, ' ').trim();
-  // Very short fragments are autocomplete noise, not topics.
-  if (cleaned.length < 6 || cleaned.length > 120) return null;
+  // Drop short fragments, single-word autocomplete noise, and off-topic junk.
+  if (!isViableTopicPhrase(cleaned)) return null;
 
   const canonical = canonicalizeTopic(cleaned);
   if (!canonical.topicKey || canonical.tokens.length === 0) return null;

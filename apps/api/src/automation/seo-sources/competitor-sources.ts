@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { buildTopic } from './base-source';
+import { buildTopic, CredentialGatedSource } from './base-source';
 import { DiscoveredTopic, ReferenceSource, ReferenceSourceId, SourceConfidence } from './types';
 
 @Injectable()
@@ -104,30 +104,20 @@ export class SemrushSource implements ReferenceSource {
 }
 
 @Injectable()
-export class AhrefsSource implements ReferenceSource {
+export class AhrefsSource extends CredentialGatedSource {
   readonly id: ReferenceSourceId = 'ahrefs';
-  readonly confidence: SourceConfidence = 'ai_suggestion';
-  readonly capabilities = ['backlink opportunity discovery', 'directory research', 'outreach suggestions'];
-  private readonly logger = new Logger(AhrefsSource.name);
+  readonly confidence: SourceConfidence = 'verified_external';
+  readonly capabilities = ['backlink opportunity discovery', 'keyword research', 'competitor gap analysis'];
+  readonly credentialKeys = ['AHREFS_API_TOKEN'];
 
-  constructor(private readonly config: ConfigService) {}
-
-  isConfigured(): boolean {
-    return true;
+  constructor(config: ConfigService) {
+    super(config);
   }
 
-  async discover(seedPhrases: string[], location = 'Guntur'): Promise<DiscoveredTopic[]> {
+  async fetchTopics(seedPhrases: string[]): Promise<DiscoveredTopic[]> {
     const token = this.config.get<string>('AHREFS_API_TOKEN');
-    if (token) {
-      try {
-        const topics = await this.fetchFromAhrefsApi(token, seedPhrases);
-        if (topics.length > 0) return topics;
-      } catch (err) {
-        this.logger.warn(`Ahrefs API failed, falling back to AI outreach discovery: ${String(err)}`);
-      }
-    }
-
-    return this.discoverOutreachAndDirectoryTopics(seedPhrases, location);
+    if (!token) return [];
+    return this.fetchFromAhrefsApi(token, seedPhrases);
   }
 
   private async fetchFromAhrefsApi(token: string, seedPhrases: string[]): Promise<DiscoveredTopic[]> {
@@ -152,39 +142,5 @@ export class AhrefsSource implements ReferenceSource {
       }
     }
     return topics;
-  }
-
-  private discoverOutreachAndDirectoryTopics(seedPhrases: string[], location: string): DiscoveredTopic[] {
-    const loc = location || 'Palnadu and Guntur';
-    const domainService = seedPhrases[0] || 'Software and Website Development';
-    const opportunities = [
-      `Andhra Pradesh Chamber of Commerce and Industry Directory for ${domainService}`,
-      `District Industries Centre MSME Technology Partner Guide in ${loc}`,
-      `Verified Local Software and Web Services Register in ${loc}`,
-    ];
-
-    const topics: DiscoveredTopic[] = [];
-    for (const opp of opportunities) {
-      const t = buildTopic(opp, this.id, {
-        intent: 'PRODUCT_SERVICE_RESEARCH',
-        confidence: 'ai_suggestion',
-        note: 'AI-assisted directory & backlink opportunity (regional outreach)',
-        metrics: {
-          searchVolume: null,
-          keywordDifficulty: null,
-          cpc: null,
-          domainAuthority: null,
-          backlinks: null,
-          status: 'unavailable',
-          notes: 'AHREFS_API_TOKEN is not configured; DR, DA, and backlink counts are unavailable and never fabricated.',
-        },
-      });
-      if (t) topics.push(t);
-    }
-    return topics;
-  }
-
-  describeError(err: unknown): string {
-    return `Ahrefs discovery error: ${String(err)}`;
   }
 }

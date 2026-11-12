@@ -120,23 +120,87 @@ describe('AI-Powered SEO Research Sources', () => {
   });
 
   describe('AhrefsSource without AHREFS_API_TOKEN', () => {
-    it('is configured by default and discovers genuine backlink and directory outreach without fake metrics', async () => {
+    it('is credential-gated and returns no synthetic outreach topics without AHREFS_API_TOKEN', async () => {
       const { AhrefsSource } = mod.sources;
       const mockConfig = { get: () => undefined };
       const source = new AhrefsSource(mockConfig);
-      assert.strictEqual(source.isConfigured(), true);
-      assert.strictEqual(source.confidence, 'ai_suggestion');
+      assert.strictEqual(source.isConfigured(), false);
+      assert.strictEqual(source.confidence, 'verified_external');
       assert.ok(source.capabilities.includes('backlink opportunity discovery'));
 
       const topics = await source.discover(['Software Development'], 'Palnadu');
-      assert.ok(topics.length > 0);
-      for (const t of topics) {
-        assert.equal(t.confidence, 'ai_suggestion');
-        assert.equal(t.metrics.status, 'unavailable');
-        assert.strictEqual(t.metrics.domainAuthority, null);
-        assert.strictEqual(t.metrics.backlinks, null);
-        assert.match(t.note, /AI-assisted directory & backlink opportunity/);
+      assert.deepStrictEqual(topics, []);
+    });
+
+    it('reports configured when AHREFS_API_TOKEN is provided', () => {
+      const { AhrefsSource } = mod.sources;
+      const mockConfig = { get: (k) => (k === 'AHREFS_API_TOKEN' ? 'test-token' : undefined) };
+      const source = new AhrefsSource(mockConfig);
+      assert.strictEqual(source.isConfigured(), true);
+      assert.strictEqual(source.confidence, 'verified_external');
+    });
+  });
+
+  describe('Google Trends & Topic Relevance Filtering', () => {
+    it('rejects substring false positives and consumer/news noise in Google Trends', () => {
+      const { isBusinessRelevantTrend } = mod.sources;
+      const noise = [
+        'Air India flight delay',
+        'Mumbai train schedule update',
+        'WhatsApp down today',
+        'iPhone 17 mobile launch',
+        'Apollo hospital share price',
+        'School holiday Andhra Pradesh',
+        'IPL cricket live score',
+      ];
+      for (const phrase of noise) {
+        assert.strictEqual(isBusinessRelevantTrend(phrase), false, `expected noise rejected: ${phrase}`);
       }
+
+      const relevant = [
+        'AI chatbot for small business',
+        'GST billing software for retail shop',
+        'Website development cost in Guntur',
+        'School admission portal',
+        'Local SEO for clinics in Andhra Pradesh',
+      ];
+      for (const phrase of relevant) {
+        assert.strictEqual(isBusinessRelevantTrend(phrase), true, `expected relevant accepted: ${phrase}`);
+      }
+    });
+
+    it('GoogleTrendsSource filters RSS items accurately and ignores channel title', async () => {
+      const { GoogleTrendsSource } = mod.sources;
+      const source = new GoogleTrendsSource();
+      const origFetch = globalThis.fetch;
+      globalThis.fetch = async () => ({
+        ok: true,
+        text: async () => `<?xml version="1.0" encoding="UTF-8"?>
+          <rss><channel>
+            <title>Daily Search Trends</title>
+            <item><title>Air India flight delay</title></item>
+            <item><title>WhatsApp outage in India</title></item>
+            <item><title>GST billing software for retail shop</title></item>
+            <item><title><![CDATA[Website development cost in Andhra Pradesh]]></title></item>
+          </channel></rss>`,
+      });
+      try {
+        const topics = await source.discover([], 'IN');
+        assert.deepStrictEqual(
+          topics.map((t) => t.phrase),
+          ['GST billing software for retail shop', 'Website development cost in Andhra Pradesh'],
+        );
+      } finally {
+        globalThis.fetch = origFetch;
+      }
+    });
+
+    it('buildTopic rejects single-word fragments and navigational/piracy noise across sources', () => {
+      const { buildTopic } = mod.sources;
+      assert.strictEqual(buildTopic('software', 'google-autocomplete'), null);
+      assert.strictEqual(buildTopic('billing software crack free download', 'google-autocomplete'), null);
+      assert.strictEqual(buildTopic('erp software login', 'semrush'), null);
+      assert.ok(buildTopic('గుంటూరులో వెబ్‌సైట్ డెవలప్మెంట్ ఖర్చు', 'google-autocomplete'));
     });
   });
 

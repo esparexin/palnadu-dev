@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { buildTopic, CredentialGatedSource } from './base-source';
+import { extractTrendTitlesFromRss, isBusinessRelevantTrend } from './topic-relevance';
 import { DiscoveredTopic, ReferenceSource, ReferenceSourceId, SourceConfidence } from './types';
 
 @Injectable()
@@ -107,11 +108,9 @@ export class GoogleTrendsSource implements ReferenceSource {
       if (!res.ok) return [];
 
       const xml = await res.text();
-      const titles = [...xml.matchAll(/<title>(?:<!\[CDATA\[)?(.*?)(?:\]\]>)?<\/title>/g)]
-        .map((m) => m[1]?.trim())
-        .filter((t): t is string => !!t);
-
-      const trends = titles.slice(1).filter((t) => isBusinessRelevant(t));
+      const trends = extractTrendTitlesFromRss(xml).filter((t) =>
+        isBusinessRelevantTrend(t),
+      );
       const topics: DiscoveredTopic[] = [];
       for (const t of trends) {
         const topic = buildTopic(t, this.id, {
@@ -130,16 +129,6 @@ export class GoogleTrendsSource implements ReferenceSource {
   describeError(err: unknown): string {
     return `Google Trends RSS fetch failed: ${String(err)}`;
   }
-}
-
-function isBusinessRelevant(phrase: string): boolean {
-  const p = phrase.toLowerCase();
-  const relevant = [
-    'software', 'website', 'app', 'digital', 'seo', 'marketing', 'business',
-    'startup', 'technology', 'tech', 'cloud', 'data', 'ai', 'mobile', 'online',
-    'shop', 'store', 'billing', 'payment', 'school', 'hospital', 'clinic',
-  ];
-  return relevant.some((k) => p.includes(k));
 }
 
 @Injectable()

@@ -1,6 +1,7 @@
 // ─── Reference Discovery Sources (SSOT) ───────────────────────────
 
 export * from './types';
+export * from './topic-relevance';
 export * from './base-source';
 export * from './google-sources';
 export * from './search-console-source';

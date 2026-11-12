@@ -8,6 +8,7 @@ import {
   SourceStatus,
   REFERENCE_SOURCE_URLS,
   REFERENCE_SOURCES,
+  isViableTopicPhrase,
 } from './seo-sources';
 
 /**
@@ -108,6 +109,7 @@ export class TopicDiscoveryService {
     // Merge duplicates that several sources surfaced, keeping all provenance and highest confidence.
     const merged = new Map<string, DiscoveredTopic>();
     for (const t of collected) {
+      if (!isViableTopicPhrase(t.phrase)) continue;
       const existing = merged.get(t.topicKey);
       if (existing) {
         existing.sources = [...new Set([...existing.sources, ...t.sources])];

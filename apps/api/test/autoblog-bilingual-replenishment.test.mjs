@@ -131,6 +131,11 @@ describe('PR3 Bilingual Queue Replenishment, Per-Language Discovery & Transient 
             primaryKeyword: 'school portal palnadu', secondaryKeywords: [], longTailKeywords: [],
             intent: 'LOCAL', confidence: 'verified_google', sources: ['google_autocomplete'],
           },
+          {
+            topicKey: 'noise-crack', phrase: 'billing software crack free download',
+            primaryKeyword: 'billing software crack', secondaryKeywords: [], longTailKeywords: [],
+            intent: 'INFORMATIONAL', confidence: 'ai_suggestion', sources: ['google_autocomplete'],
+          },
         ];
       },
     };
