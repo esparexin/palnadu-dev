@@ -2,10 +2,21 @@
 
 import React, { useState } from 'react';
 import { Bot, Sparkles, Layers } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { GeminiSettingsPanel } from '@/components/automation/gemini-settings-panel';
 
 type TabKey = 'ai-config' | 'blog-automation' | 'sources';
+
+const AUTOMATION_TABS: ReadonlyArray<{
+  id: TabKey;
+  label: string;
+  Icon: React.ComponentType<{ className?: string }>;
+}> = [
+  { id: 'ai-config', label: 'AI Configuration (Gemini API)', Icon: Bot },
+  { id: 'blog-automation', label: 'Automated Blogging Pipeline', Icon: Sparkles },
+  { id: 'sources', label: 'Reference Sources', Icon: Layers },
+];
 
 export default function AutomationPage() {
   const [activeTab, setActiveTab] = useState<TabKey>('ai-config');
@@ -22,44 +33,23 @@ export default function AutomationPage() {
       </div>
 
       <div className="flex items-center gap-2 border-b border-palnadu-border">
-        <button
-          onClick={() => setActiveTab('ai-config')}
-          className={cn(
-            'flex items-center gap-2 px-4 py-2.5 text-xs font-semibold border-b-2 transition-colors cursor-pointer',
-            activeTab === 'ai-config'
-              ? 'border-palnadu-blue text-palnadu-blue'
-              : 'border-transparent text-palnadu-secondary hover:text-palnadu-dark',
-          )}
-        >
-          <Bot className="h-4 w-4" />
-          <span>AI Configuration (Gemini API)</span>
-        </button>
-
-        <button
-          onClick={() => setActiveTab('blog-automation')}
-          className={cn(
-            'flex items-center gap-2 px-4 py-2.5 text-xs font-semibold border-b-2 transition-colors cursor-pointer',
-            activeTab === 'blog-automation'
-              ? 'border-palnadu-blue text-palnadu-blue'
-              : 'border-transparent text-palnadu-secondary hover:text-palnadu-dark',
-          )}
-        >
-          <Sparkles className="h-4 w-4" />
-          <span>Automated Blogging Pipeline</span>
-        </button>
-
-        <button
-          onClick={() => setActiveTab('sources')}
-          className={cn(
-            'flex items-center gap-2 px-4 py-2.5 text-xs font-semibold border-b-2 transition-colors cursor-pointer',
-            activeTab === 'sources'
-              ? 'border-palnadu-blue text-palnadu-blue'
-              : 'border-transparent text-palnadu-secondary hover:text-palnadu-dark',
-          )}
-        >
-          <Layers className="h-4 w-4" />
-          <span>Reference Sources</span>
-        </button>
+        {AUTOMATION_TABS.map(({ id, label, Icon }) => (
+          <Button
+            key={id}
+            variant="ghost"
+            size="sm"
+            onClick={() => setActiveTab(id)}
+            className={cn(
+              'flex items-center gap-2 px-4 py-2.5 h-auto rounded-none text-xs font-semibold border-b-2 transition-colors',
+              activeTab === id
+                ? 'border-palnadu-blue text-palnadu-blue hover:bg-transparent hover:text-palnadu-blue'
+                : 'border-transparent text-palnadu-secondary hover:bg-transparent hover:text-palnadu-dark',
+            )}
+          >
+            <Icon className="h-4 w-4" />
+            <span>{label}</span>
+          </Button>
+        ))}
       </div>
 
       {activeTab === 'ai-config' && <GeminiSettingsPanel />}
