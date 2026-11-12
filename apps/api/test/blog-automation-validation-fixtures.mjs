@@ -16,7 +16,7 @@ export function validDraft(overrides = {}) {
     metaDescription: 'A practical breakdown of website development cost in Guntur, including what drives the price.',
     seoTitle: 'Website Development Cost in Guntur | Palnadu.dev',
     seoDescription: 'A practical breakdown of website development cost in Guntur.',
-    canonicalUrl: '/blog/website-development-cost-guntur',
+    canonicalUrl: 'https://www.palnadu.dev/blog/website-development-cost-guntur',
     primaryKeyword: keyword,
     secondaryKeywords: ['web design price guntur'],
     searchIntent: 'COMMERCIAL_INVESTIGATION',

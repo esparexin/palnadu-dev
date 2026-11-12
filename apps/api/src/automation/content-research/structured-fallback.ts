@@ -1,4 +1,5 @@
 import { SeoStrategy, extractHeadings } from '../seo-strategy';
+import { buildLanguageCanonicalUrl } from '../blog/blog-url.util';
 import { GeneratedBlogDraft } from './types';
 
 /**
@@ -23,6 +24,7 @@ export function generateStructuredFallback(
   categorySlug: string,
   locationContext: string,
   s: SeoStrategy,
+  language: 'en' | 'te' = 'en',
 ): GeneratedBlogDraft {
   const topicTitle = buildFallbackTitle(rawTopicTitle, locationContext);
   const slug = topicTitle
@@ -126,7 +128,7 @@ Explore our [Web Application Development Services](/services/web-development), l
     metaDescription,
     seoTitle: metaTitle,
     seoDescription: metaDescription,
-    canonicalUrl: `/blog/${slug}`,
+    canonicalUrl: buildLanguageCanonicalUrl(slug, language),
     keywords: [
       'software development Palnadu',
       'web application development Guntur',

@@ -6,8 +6,14 @@ import { BlogLanguage, TopicStatus } from '@prisma/client';
 import { ClaimedTopic, QueueCandidate } from './types';
 import { getAllInitialSeeds } from './blog-seeds';
 import { recoverTransientFailedTopics } from './blog-queue-recovery.util';
+import {
+  STALE_CLAIM_MS,
+  atomicClaimTopic,
+  claimAllocatedTopicRow,
+  claimManualTopicByKey,
+} from './blog-queue-claim.util';
 
-export const STALE_CLAIM_MS = 5 * 60 * 1000;
+export { STALE_CLAIM_MS };
 
 @Injectable()
 export class BlogQueueService {
@@ -127,17 +133,31 @@ export class BlogQueueService {
     });
     if (!candidate) return null;
 
-    const claim = await this.prisma.blogTopic.updateMany({
-      where: {
-        id: candidate.id,
-        status: { in: [TopicStatus.PENDING, TopicStatus.CLAIMED, TopicStatus.FAILED] },
-        OR: [{ claimedAt: null }, { claimedAt: { isSet: false } as any }, { claimedAt: { lt: staleBefore } }],
-      },
-      data: { status: TopicStatus.CLAIMED, claimedAt: now, claimedBy: workerId },
+    return atomicClaimTopic({
+      prisma: this.prisma,
+      candidate,
+      workerId,
+      now,
+      staleBefore,
+      allowedStatuses: [TopicStatus.PENDING, TopicStatus.CLAIMED],
+      maxAttempts,
     });
+  }
 
-    if (claim.count === 0) return null;
-    return { ...candidate, status: TopicStatus.CLAIMED };
+  async claimTopicById(
+    workerId: string,
+    target: { topicKey: string; language: BlogLanguage },
+    maxAttempts: number,
+  ): Promise<ClaimedTopic | null> {
+    return claimAllocatedTopicRow({ prisma: this.prisma, workerId, target, maxAttempts });
+  }
+
+  async claimTopicByKey(
+    workerId: string,
+    topicKey: string,
+    language: BlogLanguage,
+  ): Promise<ClaimedTopic | null> {
+    return claimManualTopicByKey({ prisma: this.prisma, workerId, topicKey, language });
   }
 
   async claimNextTopicForLanguage(

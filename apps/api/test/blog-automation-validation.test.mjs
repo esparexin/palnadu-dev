@@ -94,7 +94,7 @@ describe('publishing validation', () => {
   });
 
   it('blocks a slug that is not clean kebab-case', () => {
-    const outcome = run({ slug: 'Not A Clean Slug', canonicalUrl: '/blog/not-a-clean-slug' });
+    const outcome = run({ slug: 'Not A Clean Slug', canonicalUrl: 'https://www.palnadu.dev/blog/not-a-clean-slug' });
     assert.equal(outcome.passed, false);
     assert.ok(outcome.failures.some((f) => f.name === 'slug_uniqueness'));
   });

@@ -138,25 +138,30 @@ export class BlogAutomationService {
       }
     }
 
-    const queued = await this.prisma.blogTopic.findUnique({
-      where: { topicKey_language: { topicKey, language } },
-    });
-    if (!queued) throw new Error(`Topic ${topicKey} could not be queued.`);
+    const workerId = `manual:${process.pid}:${Date.now()}`;
+    const claimed = await this.queueService.claimTopicByKey(workerId, topicKey, language);
+    if (!claimed) {
+      const donePost = await this.prisma.blogPost.findUnique({
+        where: { topicKey_language: { topicKey, language } },
+      });
+      if (donePost) return toGenerationResultFromPost(donePost, categorySlug);
+      throw new Error(`Topic ${topicKey} (${language}) is already claimed by another worker.`);
+    }
 
     const target = {
-      ...queued,
-      categorySlug: categorySlug || queued.categorySlug,
-      targetLocation: targetLocation ?? queued.targetLocation,
+      ...claimed,
+      categorySlug: categorySlug || claimed.categorySlug,
+      targetLocation: targetLocation ?? claimed.targetLocation,
     };
 
     try {
-      return await this.generateForTopic(target, forcePublish, `manual:${process.pid}:${Date.now()}`);
+      return await this.generateForTopic(target, forcePublish, workerId);
     } catch (err) {
       await recordSingleArticleFailure({
         prisma: this.prisma,
         topicKey,
         language,
-        currentAttempts: queued.attempts,
+        currentAttempts: claimed.attempts ?? 0,
         maxAttempts: this.queueService.maxAttempts,
         retryDelayMs: this.queueService.retryDelayMs,
         err,

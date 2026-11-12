@@ -15,6 +15,7 @@ import {
   checkTeluguScriptCoverage,
 } from './seo-validation-content';
 import { validateArticleBacklinks } from './blog/backlink-policy';
+import { buildLanguageCanonicalUrl } from './blog/blog-url.util';
 
 export type { CheckName, CheckResult, ValidationOutcome, ValidationInput };
 
@@ -153,7 +154,9 @@ export function validate(input: ValidationInput): ValidationOutcome {
 
   // 9. SEO metadata completeness
   const metaTitleOk = (d.metaTitle ?? '').length > 0 && (d.metaTitle ?? '').length <= 70;
-  const metaDescOk = (d.metaDescription ?? '').length > 0 && (d.metaDescription ?? '').length <= 175;
+  const metaDescLen = (d.metaDescription ?? '').length;
+  const seoDescLen = (d.seoDescription ?? d.metaDescription ?? '').length;
+  const metaDescOk = metaDescLen > 0 && metaDescLen <= 160 && seoDescLen <= 160;
   const hasH1 = !!d.h1 && d.h1.length > 0;
   const h2Count = (d.h2Headings ?? []).length;
   checks.push({
@@ -163,12 +166,12 @@ export function validate(input: ValidationInput): ValidationOutcome {
     detail: !metaTitleOk
       ? `meta title length ${(d.metaTitle ?? '').length} (need 1-70)`
       : !metaDescOk
-        ? `meta description length ${(d.metaDescription ?? '').length} (need 1-175)`
+        ? `meta/seo description length ${Math.max(metaDescLen, seoDescLen)} (need 1-160)`
         : !hasH1
           ? 'missing H1'
           : h2Count < 2
             ? `only ${h2Count} H2 heading(s), want at least 2`
-            : `meta title ${(d.metaTitle ?? '').length}, description ${(d.metaDescription ?? '').length}, H1 + ${h2Count} H2s`,
+            : `meta title ${(d.metaTitle ?? '').length}, description ${metaDescLen}, H1 + ${h2Count} H2s`,
   });
 
   // 10. Category
@@ -182,7 +185,7 @@ export function validate(input: ValidationInput): ValidationOutcome {
   });
 
   // 11. Canonical URL
-  const expectedCanonical = `/blog/${d.slug}`;
+  const expectedCanonical = buildLanguageCanonicalUrl(d.slug, input.language);
   checks.push({
     name: 'canonical_url',
     passed: d.canonicalUrl === expectedCanonical,

@@ -1,4 +1,4 @@
-﻿import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type { LicensedImage } from './image-vault';
 import { FALLBACK_VAULT } from './image-vault';
@@ -69,6 +69,13 @@ export class ImageSourcingService {
 
     // Fallback: Use verified, curated high-resolution CC0/Commercial-Use vault
     const categoryVault = FALLBACK_VAULT[categorySlug] || FALLBACK_VAULT['default'];
-    return categoryVault.slice(0, count);
+    const combined = [...categoryVault];
+    for (const fallback of FALLBACK_VAULT['default']) {
+      if (combined.length >= count) break;
+      if (!combined.some((img) => img.url === fallback.url)) {
+        combined.push(fallback);
+      }
+    }
+    return combined.slice(0, count);
   }
 }

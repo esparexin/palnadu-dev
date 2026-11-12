@@ -61,7 +61,7 @@ describe('Google Live SEO Keyword Discovery → Draft Post Reliability', () => {
 
       assert.equal(draft.isTemplateFallback, true);
       assert.ok(draft.title.length >= 15 && draft.title.length <= 120);
-      assert.equal(draft.canonicalUrl, `/blog/${draft.slug}`);
+      assert.equal(draft.canonicalUrl, `https://www.palnadu.dev/blog/${draft.slug}`);
 
       const outcome = validationService.validate({
         topicKey: 'subject-saas-india-informational',

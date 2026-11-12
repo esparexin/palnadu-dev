@@ -218,7 +218,7 @@ title, slug, h1, excerpt, content, metaTitle, metaDescription, seoTitle, seoDesc
     }
 
     if (!writeTelugu && options?.allowTemplateFallback) {
-      return generateStructuredFallback(topicTitle, categorySlug, locationContext, s);
+      return generateStructuredFallback(topicTitle, categorySlug, locationContext, s, 'en');
     }
 
     const codeLabel = geminiFailure?.code || (geminiApiKey ? 'TEMPORARY_PROVIDER_ERROR' : 'UNCONFIGURED');
