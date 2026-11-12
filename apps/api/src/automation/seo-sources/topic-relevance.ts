@@ -58,14 +58,18 @@ export function isBusinessRelevantTrend(phrase: string): boolean {
   );
 }
 
+const XML_ENTITY_MAP: Readonly<Record<string, string>> = {
+  '&amp;': '&',
+  '&apos;': "'",
+  '&#39;': "'",
+  '&quot;': '"',
+  '&lt;': '<',
+  '&gt;': '>',
+};
+
 function decodeBasicXmlEntities(input: string): string {
   return input
-    .replace(/&amp;/g, '&')
-    .replace(/&apos;/g, "'")
-    .replace(/&#39;/g, "'")
-    .replace(/&quot;/g, '"')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
+    .replace(/&(?:amp|apos|#39|quot|lt|gt);/g, (entity) => XML_ENTITY_MAP[entity] ?? entity)
     .trim();
 }
 

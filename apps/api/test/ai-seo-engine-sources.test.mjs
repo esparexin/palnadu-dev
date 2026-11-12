@@ -202,6 +202,12 @@ describe('AI-Powered SEO Research Sources', () => {
       assert.strictEqual(buildTopic('erp software login', 'semrush'), null);
       assert.ok(buildTopic('గుంటూరులో వెబ్‌సైట్ డెవలప్మెంట్ ఖర్చు', 'google-autocomplete'));
     });
+
+    it('extractTrendTitlesFromRss decodes XML entities without double-unescaping', () => {
+      const { extractTrendTitlesFromRss } = mod.sources;
+      const xml = '<rss><channel><title>T</title><item><title>ERP &amp; CRM &amp;lt;b&amp;gt; &apos;v1&apos;</title></item></channel></rss>';
+      assert.deepStrictEqual(extractTrendTitlesFromRss(xml), ["ERP & CRM &lt;b&gt; 'v1'"]);
+    });
   });
 
   describe('BingWebmasterSource & IndexNowSource', () => {
