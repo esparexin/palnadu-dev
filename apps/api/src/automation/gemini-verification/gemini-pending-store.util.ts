@@ -118,3 +118,4 @@ export function decryptPendingRecord(
   }
   return decryptSecret(record.encrypted);
 }
+

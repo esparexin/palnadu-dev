@@ -41,3 +41,4 @@ export async function appendGeminiAuditEntry(
     logger?.warn(`Could not persist Gemini key audit log: ${err?.message || err}`);
   }
 }
+

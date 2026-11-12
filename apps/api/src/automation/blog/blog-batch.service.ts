@@ -40,9 +40,18 @@ export class BlogBatchService {
   ): Promise<{ results: GenerationResult[]; rejected: RejectedTopic[] }> {
     const results: GenerationResult[] = [];
     const rejected: RejectedTopic[] = [];
+    const now = new Date();
 
     const pending = await this.prisma.blogTopic.findMany({
-      where: { status: TopicStatus.PENDING, attempts: { lt: this.queueService.maxAttempts } },
+      where: {
+        status: TopicStatus.PENDING,
+        attempts: { lt: this.queueService.maxAttempts },
+        OR: [
+          { nextRetryAt: null },
+          { nextRetryAt: { isSet: false } as any },
+          { nextRetryAt: { lte: now } },
+        ],
+      },
       orderBy: { createdAt: 'asc' },
     });
     const selected = allocateQuota(pending, quota);
@@ -73,7 +82,10 @@ export class BlogBatchService {
       const reason: RejectionReason = detail.startsWith('validation:') ? 'validation_failed' : 'generation_failed';
       rejected.push({ topicKey, topic: topic.topic, reason, detail });
 
-      const permanent = reason === 'validation_failed';
+      const currentAttempts = (topic.attempts ?? 0) + 1;
+      const exhausted = currentAttempts >= this.queueService.maxAttempts;
+      const permanent = reason === 'validation_failed' || exhausted;
+
       await this.prisma.blogTopic.update({
         where: { topicKey_language: { topicKey, language: topic.language } },
         data: {
@@ -85,7 +97,7 @@ export class BlogBatchService {
           claimedBy: null,
         },
       });
-      this.logger.error(`topicKey="${topicKey}" ${reason}: ${detail}`);
+      this.logger.error(`topicKey="${topicKey}" ${reason} (attempt ${currentAttempts}): ${detail}`);
     }
   }
 }
