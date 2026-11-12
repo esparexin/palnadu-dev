@@ -16,6 +16,7 @@ export {
 export interface VerifyKeyOptions {
   primaryModel?: string;
   testModels?: string[];
+  overallTimeoutMs?: number;
   fetchFn?: typeof fetch;
   retry?: GeminiRetryConfig;
 }

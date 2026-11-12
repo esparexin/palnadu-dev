@@ -2,6 +2,7 @@ import { Injectable, Logger, BadRequestException, OnModuleInit } from '@nestjs/c
 import { DEFAULT_GEMINI_MODELS } from '@palnadu/types';
 import { PrismaService } from '../../prisma.service';
 import { GeminiKeyVerificationService } from './gemini-verification.service';
+import { INTERACTIVE_VERIFY_OVERALL_TIMEOUT_MS, INTERACTIVE_VERIFY_RETRY } from './gemini-retry.util';
 import { encryptSecret, decryptSecret, validateEncryptionConfig } from './gemini-crypto.util';
 import {
   SETTING_KEY_ENCRYPTED,
@@ -52,14 +53,20 @@ export class GeminiKeyStoreService implements OnModuleInit {
     return buildUnconfiguredKeyStatus(pending);
   }
 
+  private verifyInteractive(apiKey: string, primaryModel?: string): Promise<GeminiKeyVerificationResult> {
+    return this.verificationService.verifyKey(apiKey, {
+      primaryModel: primaryModel?.trim() || undefined,
+      overallTimeoutMs: INTERACTIVE_VERIFY_OVERALL_TIMEOUT_MS,
+      retry: INTERACTIVE_VERIFY_RETRY,
+    });
+  }
+
   async verifyCandidateKey(
     apiKey: string,
     actor: string = 'admin',
     primaryModel?: string,
   ): Promise<GeminiKeyVerificationResult> {
-    const result = await this.verificationService.verifyKey(apiKey, {
-      primaryModel: primaryModel?.trim() || undefined,
-    });
+    const result = await this.verifyInteractive(apiKey, primaryModel);
     if (!result.isUsableForGeneration && result.isTemporary && result.isValid) {
       await this.preserveTemporaryCandidate(apiKey, actor, result, primaryModel);
     }
@@ -81,9 +88,7 @@ export class GeminiKeyStoreService implements OnModuleInit {
     actor: string = 'admin',
     primaryModel?: string,
   ): Promise<ActiveGeminiKeySummary> {
-    const result = await this.verificationService.verifyKey(apiKey, {
-      primaryModel: primaryModel?.trim() || undefined,
-    });
+    const result = await this.verifyInteractive(apiKey, primaryModel);
     if (!result.isValid || !result.isUsableForGeneration) {
       if (result.isTemporary && result.isValid) {
         await this.preserveTemporaryCandidate(apiKey, actor, result, primaryModel);
@@ -119,7 +124,7 @@ export class GeminiKeyStoreService implements OnModuleInit {
     if (!decryptedKey) throw new BadRequestException('Stored pending Gemini candidate could not be decrypted.');
 
     const targetModel = primaryModelOverride?.trim() || pending.primaryModel;
-    const result = await this.verificationService.verifyKey(decryptedKey, { primaryModel: targetModel });
+    const result = await this.verifyInteractive(decryptedKey, targetModel);
     await appendGeminiAuditEntry(this.prisma, {
       action: 'PENDING_VERIFICATION_RETRIED',
       actor,

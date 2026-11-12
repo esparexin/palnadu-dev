@@ -32,6 +32,11 @@ export class GeminiKeyVerificationService {
     if (!trimmedKey) return buildEmptyKeyResult();
 
     const fetchFn = options.fetchFn || globalThis.fetch;
+    const nowFn = options.retry?.nowFn ?? Date.now;
+    const deadlineAt =
+      options.retry?.deadlineAt ??
+      (options.overallTimeoutMs && options.overallTimeoutMs > 0 ? nowFn() + options.overallTimeoutMs : undefined);
+    const retryWithDeadline = deadlineAt !== undefined ? { ...options.retry, deadlineAt, nowFn } : options.retry;
     const identityCandidates: Array<{ headers?: Headers; body?: any }> = [];
     let authenticationStatus: GeminiAuthenticationStatus = 'UNVERIFIED';
     let isValid = false;
@@ -44,7 +49,7 @@ export class GeminiKeyVerificationService {
       init: { method: 'GET' },
       stage: 'list_models',
       rawSecretToRedact: trimmedKey,
-      retry: options.retry,
+      retry: retryWithDeadline,
     });
     identityCandidates.push({ headers: listOutcome.headers, body: listOutcome.body });
 
@@ -96,6 +101,7 @@ export class GeminiKeyVerificationService {
     let fallbackUsed = false;
 
     for (let i = 0; i < modelsToTest.length; i++) {
+      if (deadlineAt !== undefined && nowFn() >= deadlineAt - 200) break;
       const model = modelsToTest[i];
       const genOutcome = await executeWithGeminiRetry<any>({
         fetchFn,
@@ -110,7 +116,7 @@ export class GeminiKeyVerificationService {
         },
         stage: 'generate',
         rawSecretToRedact: trimmedKey,
-        retry: options.retry,
+        retry: retryWithDeadline,
       });
 
       identityCandidates.push({ headers: genOutcome.headers, body: genOutcome.body });

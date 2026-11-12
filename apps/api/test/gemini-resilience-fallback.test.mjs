@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { GeminiKeyVerificationService } from '../dist/automation/gemini-verification/gemini-verification.service.js';
 import { GeminiKeyStoreService } from '../dist/automation/gemini-verification/gemini-key-store.service.js';
 import { maskApiKey } from '../dist/automation/gemini-verification/gemini-verification.util.js';
-import { computeBackoffDelayMs, resolveRetrySettings } from '../dist/automation/gemini-verification/gemini-retry.util.js';
+import { computeBackoffDelayMs, INTERACTIVE_VERIFY_OVERALL_TIMEOUT_MS, INTERACTIVE_VERIFY_RETRY, resolveRetrySettings } from '../dist/automation/gemini-verification/gemini-retry.util.js';
 import { createMockPrisma } from './gemini-test-mocks.mjs';
 
 const noopSleep = async () => {};
@@ -224,5 +224,26 @@ describe('Phase 6 Gemini Resilience, Classification & Pending Preservation', () 
     assert.equal(computeBackoffDelayMs(0, settings), 625);
     assert.equal(computeBackoffDelayMs(1, settings), 1250);
     assert.equal(computeBackoffDelayMs(5, settings), 2000);
+  });
+
+  it('caps interactive verifyKey probes within overallTimeoutMs wall-clock budget', async () => {
+    let fakeNow = 1000;
+    const probed = [];
+    const res = await verifier.verifyKey('AIzaSyBudgetTestKey123456789012345', {
+      overallTimeoutMs: 5000,
+      fetchFn: async (url) => {
+        if (url.includes('/models?')) { fakeNow += 1000; return okModelsRes(); }
+        probed.push(url.split('/models/')[1].split(':')[0]);
+        fakeNow += 4200;
+        return errRes(503, 'UNAVAILABLE', 'High demand');
+      },
+      retry: { maxRetries: 2, baseDelayMs: 500, sleepFn: noopSleep, nowFn: () => fakeNow },
+    });
+    assert.deepEqual(probed, ['gemini-3.8-flash']);
+    assert.equal(res.verificationCode, 'MODEL_OVERLOADED');
+    assert.equal(res.isTemporary, true);
+    assert.equal(INTERACTIVE_VERIFY_OVERALL_TIMEOUT_MS, 26000);
+    assert.equal(INTERACTIVE_VERIFY_RETRY.timeoutMs, 7000);
+    assert.equal(INTERACTIVE_VERIFY_RETRY.maxRetries, 1);
   });
 });
