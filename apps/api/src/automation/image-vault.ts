@@ -1,3 +1,5 @@
+import { APP_AND_SCHOOL_VAULT } from './image-vault-categories';
+
 export interface LicensedImage {
   url: string;
   alt: string;
@@ -11,6 +13,7 @@ export interface LicensedImage {
 }
 
 export const FALLBACK_VAULT: Record<string, LicensedImage[]> = {
+  ...APP_AND_SCHOOL_VAULT,
   startups: [
     {
       url: 'https://images.unsplash.com/photo-1559136555-9303baea8ebd?auto=format&fit=crop&w=1200&q=80',
@@ -101,30 +104,6 @@ export const FALLBACK_VAULT: Record<string, LicensedImage[]> = {
       licenseType: 'Unsplash Commercial License',
       licenseUrl: 'https://unsplash.com/license',
       originalUrl: 'https://unsplash.com/photos/coding-debugging-m_HRfLhgABo',
-    },
-  ],
-  'app-development': [
-    {
-      url: 'https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?auto=format&fit=crop&w=1200&q=80',
-      alt: 'Smartphone running custom mobile application interface',
-      caption: 'Photo by Rami Al-zayat on Unsplash',
-      photographer: 'Rami Al-zayat',
-      photographerProfile: 'https://unsplash.com/@ramialzayat',
-      source: 'Unsplash',
-      licenseType: 'Unsplash Commercial License',
-      licenseUrl: 'https://unsplash.com/license',
-      originalUrl: 'https://unsplash.com/photos/mobile-ui',
-    },
-    {
-      url: 'https://images.unsplash.com/photo-1551650975-87deedd944c3?auto=format&fit=crop&w=1200&q=80',
-      alt: 'Cross-platform mobile application development in Flutter and React Native',
-      caption: 'Photo by Austin Distel on Unsplash',
-      photographer: 'Austin Distel',
-      photographerProfile: 'https://unsplash.com/@austindistel',
-      source: 'Unsplash',
-      licenseType: 'Unsplash Commercial License',
-      licenseUrl: 'https://unsplash.com/license',
-      originalUrl: 'https://unsplash.com/photos/mobile-dev-screens',
     },
   ],
   'local-seo-business': [

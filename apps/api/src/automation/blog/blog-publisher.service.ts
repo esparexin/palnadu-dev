@@ -6,6 +6,11 @@ import { ComposedArticle } from './blog-composer.service';
 import { ClaimedTopic, GenerationResult } from './types';
 import { extractInternalBacklinks } from './backlink-policy';
 import { syncExistingTopicPost } from './blog-idempotency.util';
+import {
+  AUTHORITATIVE_SITE_HOST,
+  buildLanguageBlogPath,
+  buildLanguageCanonicalUrl,
+} from './blog-url.util';
 
 @Injectable()
 export class BlogPublisherService {
@@ -132,9 +137,7 @@ export class BlogPublisherService {
         similarityResult: composed.similaritySummary,
         status: publishStatus,
         publishedUrl: isPublished
-          ? post.language === BlogLanguage.te
-            ? `/te/blog/${post.slug}`
-            : `/blog/${post.slug}`
+          ? buildLanguageBlogPath(post.slug, post.language)
           : null,
         failureReason: !validation.passed ? validation.failures.map((f: { name: string }) => f.name).join(', ') : null,
         durationMs: Date.now() - startedAt,
@@ -142,9 +145,8 @@ export class BlogPublisherService {
     });
 
     if (isPublished && this.indexNow) {
-      const canonicalPath = post.language === BlogLanguage.te ? `/te/blog/${post.slug}` : `/blog/${post.slug}`;
-      const fullUrl = `https://www.palnadu.dev${canonicalPath}`;
-      this.indexNow.submitUrls('www.palnadu.dev', [fullUrl]).catch((err: unknown) => {
+      const fullUrl = buildLanguageCanonicalUrl(post.slug, post.language);
+      this.indexNow.submitUrls(AUTHORITATIVE_SITE_HOST, [fullUrl]).catch((err: unknown) => {
         this.logger.warn(`Real-time IndexNow notification failed: ${String(err)}`);
       });
     }

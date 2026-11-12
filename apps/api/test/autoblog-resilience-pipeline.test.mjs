@@ -227,7 +227,7 @@ describe('Phase 6 Auto-Blogging Protection, Key Priority & Backlink Gate', () =>
       existingTitles: new Set(),
       language: 'en',
     };
-    const draftBase = { ...rawDraft, searchIntent: 'INFORMATIONAL', isTemplateFallback: false, canonicalUrl: `/blog/${rawDraft.slug}`, seoTitle: rawDraft.metaTitle, seoDescription: rawDraft.metaDescription };
+    const draftBase = { ...rawDraft, searchIntent: 'INFORMATIONAL', isTemplateFallback: false, canonicalUrl: `https://www.palnadu.dev/blog/${rawDraft.slug}`, seoTitle: rawDraft.metaTitle, seoDescription: rawDraft.metaDescription };
     const validation = validate({ ...baseCheck, topicKey: 'backlink-check', draft: { ...draftBase, content: enriched }, wordCount: enriched.split(/\s+/).length });
     assert.equal(validation.passed, true, validation.summary);
 

@@ -10,6 +10,7 @@ import {
   cleanHeadingTitle,
 } from '../seo-strategy';
 import { toAsciiSlug } from '../script-utils';
+import { buildLanguageCanonicalUrl } from '../blog/blog-url.util';
 import { buildFallbackTitle } from './structured-fallback';
 import type { GeneratedBlogDraft } from './types';
 
@@ -56,10 +57,7 @@ export function mapLlmDraftToBlogDraft(params: {
     writeTelugu,
   } = params;
 
-  const cleanContent = (llmDraft.content || '')
-    .replace(/\*\*([^*]+)\*\*/g, '$1')
-    .replace(/\*([^*\n]+)\*/g, '$1')
-    .replace(/\*\*/g, '');
+  const cleanContent = str(llmDraft.content);
   const words = cleanContent.split(/\s+/).filter(Boolean).length;
   const rawTitle = str(llmDraft.title) || topicTitle;
   const parsedTitle = cleanHeadingTitle(rawTitle);
@@ -102,14 +100,14 @@ export function mapLlmDraftToBlogDraft(params: {
       str(llmDraft.metaDescription) ||
       str(llmDraft.seoDescription) ||
       ''
-    ).slice(0, 175),
+    ).slice(0, 160),
     seoTitle: (str(llmDraft.seoTitle) || metaTitle).slice(0, 70),
     seoDescription: (
       str(llmDraft.seoDescription) ||
       str(llmDraft.metaDescription) ||
       ''
-    ).slice(0, 175),
-    canonicalUrl: `/blog/${slug}`,
+    ).slice(0, 160),
+    canonicalUrl: buildLanguageCanonicalUrl(slug, writeTelugu ? 'te' : 'en'),
     keywords: arr(llmDraft.keywords),
     primaryKeyword,
     secondaryKeywords,

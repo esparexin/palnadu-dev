@@ -15,14 +15,11 @@ export function getAllInitialSeeds(
   language: BlogLanguage = 'en' as BlogLanguage,
 ): QueueCandidate[] {
   if (language === ('te' as BlogLanguage)) {
-    return [
-      ...TELUGU_CURATED_TOPIC_QUEUE.map((t): QueueCandidate => ({ ...t, source: 'curated-rotation' })),
-      ...CURATED_TOPIC_QUEUE.map((t): QueueCandidate => ({
-        ...t,
-        language: 'te' as BlogLanguage,
-        source: 'curated-rotation',
-      })),
-    ];
+    return TELUGU_CURATED_TOPIC_QUEUE.map((t): QueueCandidate => ({
+      ...t,
+      language: 'te' as BlogLanguage,
+      source: 'curated-rotation',
+    }));
   }
 
   return CURATED_TOPIC_QUEUE.map((t): QueueCandidate => ({

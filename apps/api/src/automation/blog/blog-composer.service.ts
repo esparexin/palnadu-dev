@@ -3,6 +3,7 @@ import { ContentResearchService } from '../content-research.service';
 import { ContentSimilarityService } from '../content-similarity.service';
 import { defaultStrategy, SeoStrategy, VALID_INTENTS } from '../seo-strategy';
 import { ImageSourcingService, LicensedImage } from '../image-sourcing.service';
+import { FALLBACK_VAULT } from '../image-vault';
 import { SeoValidationService } from '../seo-validation.service';
 import { ValidationOutcome } from '../seo-validation-rules';
 import { SearchIntent } from '../topic-identity';
@@ -75,9 +76,9 @@ export class BlogComposerService {
     const llmProvider = draft.llmProvider ?? 'unknown';
 
     const images = await this.imageService.sourceImagesForArticle(topic, categorySlug, 4);
-    const coverImage =
-      images[0]?.url ||
-      'https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&w=1200&q=80';
+    const fallbackCover =
+      (FALLBACK_VAULT[categorySlug] || FALLBACK_VAULT['website-development'] || FALLBACK_VAULT['default'])[0]?.url;
+    const coverImage = images[0]?.url || fallbackCover;
     const enrichedContent = this.enrichContent(
       draft.content,
       images,
@@ -163,9 +164,6 @@ export class BlogComposerService {
       internalLinks,
     );
 
-    return content
-      .replace(/\*\*([^*]+)\*\*/g, '$1')
-      .replace(/\*([^*\n]+)\*/g, '$1')
-      .replace(/\*\*/g, '');
+    return content;
   }
 }

@@ -164,7 +164,7 @@ describe('AI-Powered SEO Research Services', () => {
         metaDescription: 'Discover how modern clinic management software streamlines appointments and billing for healthcare centers in Guntur.',
         seoTitle: 'Clinic Management Software in Guntur | Palnadu.dev',
         seoDescription: 'Discover how modern clinic management software streamlines appointments and billing for healthcare centers in Guntur.',
-        canonicalUrl: '/blog/hospital-clinic-management-software-guntur',
+        canonicalUrl: 'https://www.palnadu.dev/blog/hospital-clinic-management-software-guntur',
         keywords: ['clinic software', 'guntur healthcare'],
         primaryKeyword: strategy.primaryKeyword,
         secondaryKeywords: strategy.secondaryKeywords,

@@ -81,7 +81,7 @@ describe('Mandatory Internal Backlink Policy & Publishing Gate', () => {
         metaDescription: 'A complete guide to enterprise architecture, cloud systems, and database scaling.',
         seoTitle: 'Enterprise Architecture in Guntur | Palnadu.dev',
         seoDescription: 'A complete guide to enterprise architecture and cloud systems.',
-        canonicalUrl: '/blog/enterprise-architecture-cloud-systems-guntur',
+        canonicalUrl: 'https://www.palnadu.dev/blog/enterprise-architecture-cloud-systems-guntur',
         primaryKeyword: 'enterprise architecture',
         secondaryKeywords: ['cloud systems'],
         searchIntent: 'INFORMATIONAL',

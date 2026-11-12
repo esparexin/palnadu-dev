@@ -96,7 +96,8 @@ describe('PR3 Bilingual Queue Replenishment, Per-Language Discovery & Transient 
 
     const teSeeds = getAllInitialSeeds(new Set(), BlogLanguage.te);
     assert.equal(teSeeds[0].topic, TELUGU_CURATED_TOPIC_QUEUE[0].topic);
-    assert.ok(teSeeds.length > TELUGU_CURATED_TOPIC_QUEUE.length);
+    assert.equal(teSeeds.length, TELUGU_CURATED_TOPIC_QUEUE.length);
+    assert.ok(teSeeds.every((s) => s.language === BlogLanguage.te && /[\u0C00-\u0C7F]/.test(s.topic)));
   });
 
   it('replenishes Telugu queue independently even when English queue already meets minPending', async () => {

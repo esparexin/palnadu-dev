@@ -57,7 +57,7 @@ export class BlogBatchService {
     const selected = allocateQuota(pending, quota);
 
     for (const row of selected) {
-      const topic = await this.queueService.claimNextTopicForLanguage(workerId, row.language, this.queueService.maxAttempts);
+      const topic = await this.queueService.claimTopicById(workerId, row, this.queueService.maxAttempts);
       if (!topic) continue;
       await this.attemptTopic(topic, forcePublish, workerId, results, rejected, generateFn);
     }

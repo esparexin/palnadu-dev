@@ -16,6 +16,7 @@ import { BlogAutomationService } from './blog-automation.service';
 import { TopicDiscoveryService } from './topic-discovery.service';
 import { PrismaService } from '../prisma.service';
 import { inferCategoryFromTopic } from './blog/blog-seeds';
+import { TELUGU_CURATED_TOPIC_QUEUE } from './blog/telugu-seeds';
 import { ZodValidationPipe } from '../common/pipes/zod-validation.pipe';
 import {
   automationGenerateSchema,
@@ -124,17 +125,26 @@ export class AutomationController {
       };
     }
 
-    // No explicit topic: take the next pending item from the durable queue matching language.
-    const queue = await this.automationService.getPendingQueueItems();
-    const pending =
-      queue.find((i) => !i.isGenerated && i.status === 'PENDING' && i.language === language) ||
-      queue.find((i) => !i.isGenerated && i.status === 'PENDING');
-    const topic = body.topic || pending?.topic || 'How Digital Transformation and Modern Web Apps Accelerate Growth for Regional Enterprises';
+    // No explicit topic: take the next pending item from the durable queue strictly matching language.
+    const queue = !body.topic ? await this.automationService.getPendingQueueItems() : [];
+    const pending = queue.find(
+      (i) => !i.isGenerated && i.status === 'PENDING' && i.language === language,
+    );
+    const teFallback =
+      !body.topic && !pending && language === BlogLanguage.te
+        ? TELUGU_CURATED_TOPIC_QUEUE[0]
+        : undefined;
+    const topic =
+      body.topic ||
+      pending?.topic ||
+      teFallback?.topic ||
+      'How Digital Transformation and Modern Web Apps Accelerate Growth for Regional Enterprises';
     const categorySlug =
       body.categorySlug ||
-      (body.topic ? inferCategoryFromTopic(body.topic) : pending?.categorySlug) ||
+      (body.topic ? inferCategoryFromTopic(body.topic) : pending?.categorySlug || teFallback?.categorySlug) ||
       'website-development';
-    const targetLocation = body.targetLocation || pending?.targetLocation || undefined;
+    const targetLocation =
+      body.targetLocation || pending?.targetLocation || teFallback?.targetLocation || undefined;
 
     try {
       const result = await this.automationService.generateSingleArticle(
