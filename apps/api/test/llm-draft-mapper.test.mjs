@@ -46,7 +46,8 @@ describe('LLM Draft SearchIntent Normalization & Generation Config', () => {
   it('includes maxOutputTokens 8192 and explicit VALID_INTENTS guidance during article generation', async () => {
     let capturedBody = null;
     const mockFetch = async (url, init) => {
-      if (String(url).includes('suggestqueries.google.com')) {
+      const targetUrl = new URL(url instanceof Request ? url.url : String(url));
+      if (targetUrl.hostname === 'suggestqueries.google.com') {
         return { ok: true, json: async () => ['', []] };
       }
       capturedBody = JSON.parse(init.body);
