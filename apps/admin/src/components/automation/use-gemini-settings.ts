@@ -11,6 +11,7 @@ import {
 } from './types';
 import {
   resolveActivationTarget,
+  resolvePreferredActivationModel,
   validateCandidateGeminiInput,
 } from './gemini-settings.util';
 
@@ -91,17 +92,21 @@ export function useGeminiSettings() {
   };
 
   const handleActivate = async () => {
+    const preferredModel = resolvePreferredActivationModel(
+      primaryModel,
+      candidateResult,
+    );
     const target = resolveActivationTarget(
       candidateKey,
       Boolean(activeKey?.pendingCandidate),
     );
     if (target === 'pending') {
-      await handleRetryPending(true);
+      await handleRetryPending(true, preferredModel);
       return;
     }
     if (target === 'none') return;
 
-    const validated = validateCandidateGeminiInput(candidateKey, primaryModel);
+    const validated = validateCandidateGeminiInput(candidateKey, preferredModel);
     if (!validated.ok) {
       toast.error(validated.error);
       return;
@@ -130,10 +135,10 @@ export function useGeminiSettings() {
     }
   };
 
-  const handleRetryPending = async (activate = false) => {
+  const handleRetryPending = async (activate = false, modelOverride?: string) => {
     try {
       setRetryingPending(true);
-      const res = await api.automation.geminiRetryPending(primaryModel, activate);
+      const res = await api.automation.geminiRetryPending(modelOverride ?? primaryModel, activate);
       if (res.success && res.data) {
         setCandidateResult(res.data.verification);
         if (res.data.activated) {

@@ -47,6 +47,24 @@ export function buildOrderedGeminiModels(
   return [...new Set(ordered)];
 }
 
+/**
+ * Bounds a single model probe within the shared deadline so slow earlier
+ * models do not starve remaining fallback models inside interactive budgets.
+ */
+export function computeModelProbeDeadline(params: {
+  deadlineAt?: number;
+  nowMs: number;
+  remainingModels: number;
+  minSliceMs?: number;
+}): number | undefined {
+  const { deadlineAt, nowMs, remainingModels, minSliceMs = 2500 } = params;
+  if (deadlineAt === undefined) return undefined;
+  const remainingBudget = deadlineAt - nowMs;
+  if (remainingBudget <= 0 || remainingModels <= 1) return deadlineAt;
+  const sliceMs = Math.max(minSliceMs, Math.floor(remainingBudget / remainingModels));
+  return Math.min(deadlineAt, nowMs + sliceMs);
+}
+
 export function resolveRetrySettings(cfg?: GeminiRetryConfig) {
   const envTimeout = Number(process.env.GEMINI_REQUEST_TIMEOUT_MS);
   const envRetries = Number(process.env.GEMINI_MAX_RETRIES);

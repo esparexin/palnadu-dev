@@ -2,6 +2,7 @@ import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   resolveActivationTarget,
+  resolvePreferredActivationModel,
   validateCandidateGeminiInput,
 } from './gemini-settings.util.ts';
 
@@ -42,5 +43,25 @@ describe('Admin Gemini Settings Helpers', () => {
     assert.equal(resolveActivationTarget('  AQ.CandidateKey123  ', true), 'candidate');
     assert.equal(resolveActivationTarget('   ', true), 'pending');
     assert.equal(resolveActivationTarget('', false), 'none');
+  });
+
+  it('prefers verified fallback model for activation when Step 1 proved it usable', () => {
+    assert.equal(
+      resolvePreferredActivationModel('gemini-3.8-flash', {
+        isValid: true,
+        isUsableForGeneration: true,
+        activeUsableModel: 'gemini-3.1-flash-lite',
+      }),
+      'gemini-3.1-flash-lite',
+    );
+    assert.equal(
+      resolvePreferredActivationModel('gemini-3.8-flash', {
+        isValid: true,
+        isUsableForGeneration: false,
+        activeUsableModel: null,
+      }),
+      'gemini-3.8-flash',
+    );
+    assert.equal(resolvePreferredActivationModel('  gemini-3.6-flash  ', null), 'gemini-3.6-flash');
   });
 });

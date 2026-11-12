@@ -7,6 +7,7 @@ import {
 } from './gemini-verification.types';
 import {
   buildOrderedGeminiModels,
+  computeModelProbeDeadline,
   executeWithGeminiRetry,
 } from './gemini-retry.util';
 import type { ParsedGoogleFailure } from './gemini-error-classifier.util';
@@ -103,6 +104,15 @@ export class GeminiKeyVerificationService {
     for (let i = 0; i < modelsToTest.length; i++) {
       if (deadlineAt !== undefined && nowFn() >= deadlineAt - 200) break;
       const model = modelsToTest[i];
+      const modelDeadlineAt = computeModelProbeDeadline({
+        deadlineAt,
+        nowMs: nowFn(),
+        remainingModels: modelsToTest.length - i,
+      });
+      const modelRetry =
+        modelDeadlineAt !== undefined
+          ? { ...(retryWithDeadline ?? {}), deadlineAt: modelDeadlineAt, nowFn }
+          : retryWithDeadline;
       const genOutcome = await executeWithGeminiRetry<any>({
         fetchFn,
         url: `${GEMINI_BASE_URL}/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(trimmedKey)}`,
@@ -116,7 +126,7 @@ export class GeminiKeyVerificationService {
         },
         stage: 'generate',
         rawSecretToRedact: trimmedKey,
-        retry: retryWithDeadline,
+        retry: modelRetry,
       });
 
       identityCandidates.push({ headers: genOutcome.headers, body: genOutcome.body });
