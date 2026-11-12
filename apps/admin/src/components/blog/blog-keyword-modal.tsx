@@ -42,38 +42,56 @@ export function BlogKeywordModal({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-fade-in">
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="blog-keyword-modal-title"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-fade-in"
+    >
       <div className="w-full max-w-2xl max-h-[85vh] rounded-xl border border-palnadu-border bg-white shadow-2xl flex flex-col overflow-hidden">
         <div className="flex items-center justify-between border-b border-palnadu-border px-5 py-3.5 bg-palnadu-off-white">
           <div className="flex items-center gap-2">
             <div className="h-7 w-7 rounded-lg bg-palnadu-light-blue text-palnadu-blue flex items-center justify-center">
-              <Compass className="h-4 w-4" />
+              <Compass className="h-4 w-4" aria-hidden="true" />
             </div>
             <div>
-              <h3 className="text-sm font-bold text-palnadu-dark">Google Live SEO Keyword Discovery</h3>
+              <h3 id="blog-keyword-modal-title" className="text-sm font-bold text-palnadu-dark">
+                Google Live SEO Keyword Discovery
+              </h3>
               <p className="text-xs text-palnadu-secondary">Real-time autocomplete queries from Google India for regional intent</p>
             </div>
           </div>
-          <Button size="sm" variant="ghost" onClick={onClose} className="h-8 w-8 p-0 text-palnadu-secondary hover:text-palnadu-dark">
-            <X className="h-4 w-4" />
+          <Button
+            type="button"
+            size="sm"
+            variant="ghost"
+            onClick={onClose}
+            aria-label="Close keyword discovery modal"
+            className="h-8 w-8 p-0 text-palnadu-secondary hover:text-palnadu-dark"
+          >
+            <X className="h-4 w-4" aria-hidden="true" />
           </Button>
         </div>
 
         <div className="p-5 border-b border-palnadu-border/60 bg-palnadu-off-white/30 space-y-3">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1">
-              <Label>Seed Keyword / Topic</Label>
+              <Label htmlFor="blog-keyword-seed">Seed Keyword / Topic</Label>
               <Input
+                id="blog-keyword-seed"
                 type="text"
                 value={keywordSeed}
                 onChange={(e) => onKeywordSeedChange(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && onFetchKeywords()}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.nativeEvent.isComposing) onFetchKeywords();
+                }}
                 placeholder="e.g. billing software, school website, web design"
               />
             </div>
             <div className="space-y-1">
-              <Label>Target Regional Location</Label>
+              <Label htmlFor="blog-keyword-location">Target Regional Location</Label>
               <select
+                id="blog-keyword-location"
                 value={keywordLocation}
                 onChange={(e) => onKeywordLocationChange(e.target.value)}
                 className="flex h-9 w-full rounded-md border border-palnadu-border bg-white px-3 py-1.5 text-xs text-palnadu-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-palnadu-blue cursor-pointer"
@@ -118,6 +136,8 @@ export function BlogKeywordModal({
                 const intentColor =
                   kw.intent === 'transactional'
                     ? 'bg-palnadu-teal/10 text-palnadu-teal-dark border-palnadu-teal/30'
+                    : kw.intent === 'commercial'
+                    ? 'bg-palnadu-warning/10 text-palnadu-warning border-palnadu-warning/30'
                     : kw.intent === 'local'
                     ? 'bg-palnadu-light-blue text-palnadu-blue border-palnadu-blue/30'
                     : 'bg-palnadu-off-white text-palnadu-dark border-palnadu-border';
@@ -139,11 +159,19 @@ export function BlogKeywordModal({
                     </div>
 
                     <div className="flex items-center gap-2 shrink-0">
-                      <Button size="sm" variant="outline" onClick={() => onCopyKeyword(kw.keyword)} className="h-8 w-8 p-0" title="Copy keyword">
-                        {copiedKw === kw.keyword ? <Check className="h-3.5 w-3.5 text-palnadu-teal" /> : <Copy className="h-3.5 w-3.5" />}
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        onClick={() => onCopyKeyword(kw.keyword)}
+                        className="h-8 w-8 p-0"
+                        title="Copy keyword"
+                        aria-label={`Copy keyword ${kw.keyword}`}
+                      >
+                        {copiedKw === kw.keyword ? <Check className="h-3.5 w-3.5 text-palnadu-teal" aria-hidden="true" /> : <Copy className="h-3.5 w-3.5" aria-hidden="true" />}
                       </Button>
-                      <Button size="sm" variant="secondary" onClick={() => onGenerateFromKeyword(kw.keyword)} disabled={generatingAi}>
-                        <Sparkles className="h-3.5 w-3.5 mr-1" />
+                      <Button type="button" size="sm" variant="secondary" onClick={() => onGenerateFromKeyword(kw.keyword)} disabled={generatingAi}>
+                        <Sparkles className="h-3.5 w-3.5 mr-1" aria-hidden="true" />
                         <span>Draft Post</span>
                       </Button>
                     </div>

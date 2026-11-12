@@ -3,6 +3,7 @@
 import React from 'react';
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
 
 interface BlogPaginationProps {
   currentPage: number;
@@ -32,11 +33,12 @@ export function BlogPagination({
           <span className="font-semibold text-palnadu-dark">{totalPosts}</span> articles
         </span>
         <div className="flex items-center gap-1.5 pl-3 border-l border-palnadu-border/80">
-          <span>Per page:</span>
+          <Label htmlFor="blog-page-size" className="font-normal text-palnadu-secondary">Per page:</Label>
           <select
+            id="blog-page-size"
             value={pageSize}
             onChange={(e) => onPageSizeChange(Number(e.target.value))}
-            className="h-7 rounded border border-palnadu-border bg-white px-2 text-xs font-semibold text-palnadu-dark cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-palnadu-blue"
+            className="h-9 rounded-md border border-palnadu-border bg-white px-2.5 text-xs font-semibold text-palnadu-dark cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-palnadu-blue"
           >
             <option value={10}>10</option>
             <option value={20}>20</option>
@@ -48,24 +50,28 @@ export function BlogPagination({
 
       <div className="flex items-center gap-1">
         <Button
+          type="button"
           size="sm"
           variant="outline"
           onClick={() => onPageChange(1)}
           disabled={currentPage <= 1 || loading}
           className="h-7 w-7 p-0"
           title="First page"
+          aria-label="First page"
         >
-          <ChevronsLeft className="h-3.5 w-3.5" />
+          <ChevronsLeft className="h-3.5 w-3.5" aria-hidden="true" />
         </Button>
         <Button
+          type="button"
           size="sm"
           variant="outline"
           onClick={() => onPageChange(Math.max(1, currentPage - 1))}
           disabled={currentPage <= 1 || loading}
           className="h-7 w-7 p-0"
           title="Previous page"
+          aria-label="Previous page"
         >
-          <ChevronLeft className="h-3.5 w-3.5" />
+          <ChevronLeft className="h-3.5 w-3.5" aria-hidden="true" />
         </Button>
         <div className="flex items-center gap-1 px-1">
           {Array.from({ length: totalPages }, (_, i) => i + 1)
@@ -89,24 +95,28 @@ export function BlogPagination({
             })}
         </div>
         <Button
+          type="button"
           size="sm"
           variant="outline"
           onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
           disabled={currentPage >= totalPages || loading}
           className="h-7 w-7 p-0"
           title="Next page"
+          aria-label="Next page"
         >
-          <ChevronRight className="h-3.5 w-3.5" />
+          <ChevronRight className="h-3.5 w-3.5" aria-hidden="true" />
         </Button>
         <Button
+          type="button"
           size="sm"
           variant="outline"
           onClick={() => onPageChange(totalPages)}
           disabled={currentPage >= totalPages || loading}
           className="h-7 w-7 p-0"
           title="Last page"
+          aria-label="Last page"
         >
-          <ChevronsRight className="h-3.5 w-3.5" />
+          <ChevronsRight className="h-3.5 w-3.5" aria-hidden="true" />
         </Button>
       </div>
     </div>
