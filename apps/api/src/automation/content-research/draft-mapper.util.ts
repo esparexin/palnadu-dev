@@ -1,5 +1,7 @@
 import {
+  SearchIntent,
   SeoStrategy,
+  VALID_INTENTS,
   str,
   arr,
   objArr,
@@ -10,6 +12,30 @@ import {
 import { toAsciiSlug } from '../script-utils';
 import { buildFallbackTitle } from './structured-fallback';
 import type { GeneratedBlogDraft } from './types';
+
+const INTENT_ALIASES: Readonly<Record<string, SearchIntent>> = {
+  INFO: 'INFORMATIONAL',
+  GUIDE: 'HOW_TO',
+  TUTORIAL: 'HOW_TO',
+  COMMERCIAL: 'COMMERCIAL_INVESTIGATION',
+  PROBLEM_SOLVING: 'PROBLEM_SOLING',
+  PRODUCT_RESEARCH: 'PRODUCT_SERVICE_RESEARCH',
+  SERVICE_RESEARCH: 'PRODUCT_SERVICE_RESEARCH',
+};
+
+/**
+ * Normalizes LLM-supplied searchIntent values to canonical VALID_INTENTS tokens,
+ * falling back to the pre-computed strategy intent when unrecognized.
+ */
+export function normalizeSearchIntent(rawIntent: unknown, fallback: SearchIntent): SearchIntent {
+  const raw = str(rawIntent);
+  if (raw) {
+    const normalized = raw.toUpperCase().replace(/[^A-Z0-9]+/g, '_').replace(/^_|_$/g, '');
+    const mapped = INTENT_ALIASES[normalized] ?? normalized;
+    if (VALID_INTENTS.has(mapped)) return mapped as SearchIntent;
+  }
+  return VALID_INTENTS.has(fallback) ? fallback : 'INFORMATIONAL';
+}
 
 export function mapLlmDraftToBlogDraft(params: {
   llmDraft: any;
@@ -93,7 +119,7 @@ export function mapLlmDraftToBlogDraft(params: {
     longTailKeywords: arr(llmDraft.longTailKeywords).length
       ? arr(llmDraft.longTailKeywords)
       : s.longTailKeywords,
-    searchIntent: str(llmDraft.searchIntent) || s.searchIntent,
+    searchIntent: normalizeSearchIntent(llmDraft.searchIntent, s.searchIntent),
     h2Headings: arr(llmDraft.h2Headings).length
       ? arr(llmDraft.h2Headings)
       : extractHeadings(cleanContent, 2),

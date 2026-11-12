@@ -209,7 +209,7 @@ export class BlogAutomationService {
         composed.validation.forceDraft &&
         composed.validation.failures.every((f: { name: string }) => f.name === 'content_originality');
       if (!isTemplateOnly) {
-        throw new Error(`validation: ${composed.validation.failures.map((f: { name: string }) => f.name).join(', ')}`);
+        throw new Error(`validation: ${composed.validation.failures.map((f: { name: string; detail?: string }) => (f.detail ? `${f.name} (${f.detail})` : f.name)).join('; ')}`);
       }
     }
 

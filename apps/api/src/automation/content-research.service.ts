@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import {
   SeoStrategy,
   INTENT_GUIDANCE,
+  VALID_INTENTS,
   defaultStrategy,
   TELUGU_STYLE_GUIDANCE,
 } from './seo-strategy';
@@ -181,6 +182,8 @@ REQUIRED INTERNAL LINKS: ${s.internalLinks.map((l) => `[${l.anchor}](${l.url})`)
 RESEARCH DATA:
 ${researchContext}
 
+LENGTH MANDATE: The "content" field MUST contain at least 800 to 1,200 words (never under 650 words; include 5-6 detailed H2 sections with real architectural and regional business detail).
+Set "searchIntent" strictly to one of: ${Array.from(VALID_INTENTS).join(', ')} (prefer "${s.searchIntent}").
 Output strictly valid JSON with keys:
 title, slug, h1, excerpt, content, metaTitle, metaDescription, seoTitle, seoDescription, primaryKeyword, secondaryKeywords, relatedKeywords, longTailKeywords, searchIntent, h2Headings, h3Headings, internalLinks, externalReferences, imageSuggestions, faq, tags.`;
 

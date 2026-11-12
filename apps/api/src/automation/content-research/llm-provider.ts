@@ -117,7 +117,7 @@ export async function callLlmProviderDetailed(
       geminiApiKey,
       preferredModel: geminiModel,
       contents: [{ role: 'user', parts: [{ text: `${systemPrompt}\n\n${userPrompt}` }] }],
-      generationConfig: { responseMimeType: 'application/json', temperature: 0.7 },
+      generationConfig: { responseMimeType: 'application/json', temperature: 0.7, maxOutputTokens: 8192 },
       logger,
       options,
     });
