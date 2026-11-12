@@ -149,9 +149,14 @@ model Lead {
   currentSituation   String?
   projectStage       ProjectStage
   requiredHelp       RequiredHelp
-  budget             String?
-  additionalInfo     String?
-  status             LeadStatus   @default(NEW)
+  budget                   String?
+  additionalInfo           String?
+  whatsappMarketingConsent Boolean      @default(false) @map("whatsapp_marketing_consent")
+  whatsappConsentPhone     String?      @map("whatsapp_consent_phone")
+  whatsappConsentAt        DateTime?    @map("whatsapp_consent_at")
+  whatsappConsentSource    String?      @map("whatsapp_consent_source")
+  whatsappConsentVersion   String?      @map("whatsapp_consent_version")
+  status                   LeadStatus   @default(NEW)
   assignedToId       String?      @db.ObjectId
   assignedTo         User?        @relation("AssignedLeads", fields: [assignedToId], references: [id])
   notes              String?
@@ -651,9 +656,14 @@ model MarketingContact {
   hasWebsite      Boolean            @default(false) @map("has_website")
   websiteUrl      String?            @map("website_url")
   optInStatus     ContactOptInStatus @default(UNVERIFIED) @map("opt_in_status")
-  optOutReason    String?            @map("opt_out_reason")
-  optOutTimestamp DateTime?          @map("opt_out_timestamp")
-  source          String?            @default("csv_import")
+  optOutReason       String?            @map("opt_out_reason")
+  optOutTimestamp    DateTime?          @map("opt_out_timestamp")
+  consentType        String?            @map("consent_type")
+  consentEvidenceRef String?            @map("consent_evidence_ref")
+  consentTimestamp   DateTime?          @map("consent_timestamp")
+  consentSource      String?            @map("consent_source")
+  consentVersion     String?            @map("consent_version")
+  source             String?            @default("csv_import")
   lastContactedAt DateTime?          @map("last_contacted_at")
   notes           String?
   createdAt       DateTime           @default(now())

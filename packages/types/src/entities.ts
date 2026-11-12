@@ -30,6 +30,11 @@ export interface Lead {
   requiredHelp: RequiredHelp;
   budget?: string;
   additionalInfo?: string;
+  whatsappMarketingConsent?: boolean;
+  whatsappConsentPhone?: string;
+  whatsappConsentAt?: string;
+  whatsappConsentSource?: string;
+  whatsappConsentVersion?: string;
   status: LeadStatus;
   assignedTo?: string;
   notes?: string;

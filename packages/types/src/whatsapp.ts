@@ -206,6 +206,11 @@ export interface MarketingContact {
   optInStatus: string;
   optOutReason?: string;
   optOutTimestamp?: string;
+  consentType?: string;
+  consentEvidenceRef?: string;
+  consentTimestamp?: string;
+  consentSource?: string;
+  consentVersion?: string;
   source?: string;
   lastContactedAt?: string;
   notes?: string;

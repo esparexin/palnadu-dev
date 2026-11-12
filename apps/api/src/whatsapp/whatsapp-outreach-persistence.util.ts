@@ -7,6 +7,8 @@ import {
   WhatsAppMessageDirection,
 } from '@prisma/client';
 import { STATUS_PROGRESSION_RANK } from './whatsapp.constants';
+import { buildPhoneVariants } from './whatsapp-api.util';
+import type { VerifiedConsentRecord } from './whatsapp-outreach-consent.util';
 import { isPrismaP2002 } from './whatsapp-outreach-reservation.util';
 
 export {
@@ -19,6 +21,7 @@ export interface OutboundTemplateRecordMeta {
   languageCode: string;
   templateCategory?: string;
   resolvedParameters?: Record<string, string>;
+  verifiedConsent?: VerifiedConsentRecord;
 }
 
 export async function upsertOutreachContact(
@@ -27,8 +30,16 @@ export async function upsertOutreachContact(
   businessName: string,
   contactName?: string,
   hasVerifiedMarketingConsent = false,
+  verifiedConsent?: VerifiedConsentRecord,
 ): Promise<string> {
-  const existing = await prisma.marketingContact.findUnique({ where: { phone } });
+  const variants = buildPhoneVariants(phone);
+  const existing =
+    typeof prisma.marketingContact.findFirst === 'function'
+      ? await prisma.marketingContact.findFirst({
+          where: { phone: { in: variants } },
+          orderBy: { createdAt: 'asc' },
+        })
+      : await prisma.marketingContact.findUnique({ where: { phone } });
   if (existing) {
     if (existing.optInStatus === 'OPTED_OUT') {
       throw new BadRequestException(
@@ -36,7 +47,7 @@ export async function upsertOutreachContact(
       );
     }
     const updated = await prisma.marketingContact.update({
-      where: { phone },
+      where: { phone: existing.phone },
       data: {
         businessName: businessName.trim(),
         contactName: contactName?.trim() || existing.contactName,
@@ -46,13 +57,28 @@ export async function upsertOutreachContact(
     return updated.id;
   }
 
+  const canOptIn = Boolean(
+    hasVerifiedMarketingConsent &&
+      verifiedConsent &&
+      verifiedConsent.consentType !== 'INBOUND_WHATSAPP_INQUIRY',
+  );
+
   const created = await prisma.marketingContact.create({
     data: {
       businessName: businessName.trim(),
       contactName: contactName?.trim(),
       phone,
       source: 'individual_outreach',
-      optInStatus: hasVerifiedMarketingConsent ? 'OPTED_IN' : 'UNVERIFIED',
+      optInStatus: canOptIn ? 'OPTED_IN' : 'UNVERIFIED',
+      ...(canOptIn && verifiedConsent
+        ? {
+            consentType: verifiedConsent.consentType,
+            consentEvidenceRef: verifiedConsent.consentEvidenceRef,
+            consentTimestamp: verifiedConsent.consentTimestamp,
+            consentSource: verifiedConsent.consentSource,
+            consentVersion: verifiedConsent.consentVersion,
+          }
+        : {}),
       lastContactedAt: new Date(),
     },
   });
@@ -95,7 +121,15 @@ export async function recordOutboundMessage(
     businessName: input.businessName,
     consentEvidence: input.consentEvidence,
     consentPurpose: templateCategory,
-    evidenceSource: input.consentEvidence.consentType,
+    evidenceSource: meta.verifiedConsent?.consentSource || input.consentEvidence.consentType,
+    ...(meta.verifiedConsent
+      ? {
+          verifiedConsentTimestamp: meta.verifiedConsent.consentTimestamp.toISOString(),
+          ...(meta.verifiedConsent.consentVersion
+            ? { consentVersion: meta.verifiedConsent.consentVersion }
+            : {}),
+        }
+      : {}),
     adminId: admin.id,
     adminEmail: admin.email,
   };

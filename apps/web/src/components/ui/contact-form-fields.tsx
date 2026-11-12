@@ -2,7 +2,10 @@
 
 import React from 'react';
 import type { UseFormRegister, FieldErrors } from 'react-hook-form';
-import type { CreateLeadInput } from '@palnadu/validation';
+import {
+  WHATSAPP_MARKETING_CONSENT_WORDING,
+  type CreateLeadInput,
+} from '@palnadu/validation';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
@@ -15,6 +18,8 @@ interface ContactFormFieldsProps {
   projectTypeOptions: string[];
   selectedTypes: string[];
   onCheckboxToggle: (_type: string) => void;
+  whatsappConsent?: boolean;
+  onWhatsappConsentChange?: (_checked: boolean) => void;
 }
 
 export function ContactFormFields({
@@ -23,6 +28,8 @@ export function ContactFormFields({
   projectTypeOptions,
   selectedTypes,
   onCheckboxToggle,
+  whatsappConsent = false,
+  onWhatsappConsentChange,
 }: ContactFormFieldsProps) {
   return (
     <>
@@ -172,6 +179,33 @@ export function ContactFormFields({
             );
           })}
         </div>
+      </div>
+
+      <div className="rounded-md border border-palnadu-border/60 bg-palnadu-off-white/50 p-3 space-y-1.5">
+        <div className="flex items-start gap-2.5">
+          <Checkbox
+            id="whatsappMarketingConsent"
+            checked={Boolean(whatsappConsent)}
+            onCheckedChange={(checked) => onWhatsappConsentChange?.(checked === true)}
+            className="mt-0.5 cursor-pointer"
+          />
+          <div className="space-y-1">
+            <Label
+              htmlFor="whatsappMarketingConsent"
+              className="text-xs font-medium text-palnadu-dark leading-relaxed cursor-pointer block"
+            >
+              {WHATSAPP_MARKETING_CONSENT_WORDING}
+            </Label>
+            <p className="text-xs text-palnadu-secondary leading-normal">
+              Optional — leave unchecked if you only want a direct enquiry response without WhatsApp marketing updates.
+            </p>
+          </div>
+        </div>
+        {errors.whatsappMarketingConsent && (
+          <p className="text-xs text-palnadu-error font-medium">
+            {errors.whatsappMarketingConsent.message}
+          </p>
+        )}
       </div>
     </>
   );

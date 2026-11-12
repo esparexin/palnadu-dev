@@ -22,11 +22,17 @@ describe('WhatsApp Outreach Service - Verifiable Consent, Idempotency & Rate Lim
     contactsStore = new Map();
     leadsStore = new Map();
     const mediaStore = new Map();
-    mediaStore.set('AGR-2026-RETAIL', {
-      id: 'AGR-2026-RETAIL',
-      filename: 'AGR-2026-RETAIL',
-      metadata: { authorizesWhatsAppMarketing: true },
-    });
+    const registerAgreement = (id, recipientPhone) =>
+      mediaStore.set(id, {
+        id,
+        filename: id,
+        metadata: { authorizesWhatsAppMarketing: true, recipientPhone },
+      });
+    registerAgreement('AGR-2026-RETAIL', '+919876543210');
+    registerAgreement('AGR-0001', '+919876500001');
+    registerAgreement('AGR-0002', '+919876500002');
+    registerAgreement('AGR-0004', '+919876500004');
+    registerAgreement('AGR-0005', '+919876500005');
 
     mockPrisma = {
       media: {
@@ -81,11 +87,8 @@ describe('WhatsApp Outreach Service - Verifiable Consent, Idempotency & Rate Lim
           return record;
         },
       },
-      lead: {
-        findUnique: async ({ where }) => leadsStore.get(where.id) || null,
-      },
+      lead: { findUnique: async ({ where }) => leadsStore.get(where.id) || null },
     };
-
     mockApiClient = {
       fetchApprovedTemplates: async () => [
         { name: 'b2b_website_outreach_v1', category: 'MARKETING', language: 'en_US', status: 'APPROVED', components: [] },
@@ -97,11 +100,7 @@ describe('WhatsApp Outreach Service - Verifiable Consent, Idempotency & Rate Lim
         messages: [{ id: `wamid.META_${Date.now()}` }],
       }),
     };
-
-    mockOptOutService = {
-      isSuppressed: async (phone) => phone.includes('9999999999'),
-    };
-
+    mockOptOutService = { isSuppressed: async (phone) => phone.includes('9999999999') };
     mockConfig = { get: () => '919030787819' };
     service = new WhatsAppOutreachService(mockPrisma, mockConfig, mockApiClient, mockOptOutService);
   });
@@ -139,7 +138,15 @@ describe('WhatsApp Outreach Service - Verifiable Consent, Idempotency & Rate Lim
   });
 
   it('validates WEBSITE_LEAD_FORM against database lead record', async () => {
-    leadsStore.set('lead_123', { id: 'lead_123', phone: '919876543210' });
+    leadsStore.set('lead_123', {
+      id: 'lead_123',
+      phone: '919876543210',
+      whatsappMarketingConsent: true,
+      whatsappConsentPhone: '919876543210',
+      whatsappConsentAt: new Date(),
+      whatsappConsentSource: 'WEBSITE_LEAD_FORM',
+      whatsappConsentVersion: 'whatsapp_marketing_v1_2026_11',
+    });
     const input = {
       ...baseInput,
       consentEvidence: {
@@ -180,17 +187,18 @@ describe('WhatsApp Outreach Service - Verifiable Consent, Idempotency & Rate Lim
   });
 
   it('creates marketing contact when saveContact is true', async () => {
-    const input = { ...baseInput, saveContact: true, phone: '+919876500001', consentEvidence: { ...baseInput.consentEvidence, recipientPhone: '+919876500001' } };
+    const input = { ...baseInput, saveContact: true, phone: '+919876500001', consentEvidence: { ...baseInput.consentEvidence, consentEvidenceRef: 'AGR-0001', recipientPhone: '+919876500001' } };
     const res = await service.sendOutreach(input, { id: 'admin1' });
     assert.equal(res.contactSaved, true);
-    assert.equal(contactsStore.has('919876500001'), true);
+    assert.equal(contactsStore.get('919876500001')?.optInStatus, ContactOptInStatus.OPTED_IN);
+    assert.equal(contactsStore.get('919876500001')?.consentSource, 'SIGNED_AGREEMENT');
   });
 
   it('handles ambiguous Meta dispatch timeout with RECONCILIATION_PENDING', async () => {
     mockApiClient.sendTemplateMessage = async () => {
       throw new WhatsAppApiException('Gateway Timeout', 504, undefined, true);
     };
-    const input = { ...baseInput, phone: '+919876500002', consentEvidence: { ...baseInput.consentEvidence, recipientPhone: '+919876500002' } };
+    const input = { ...baseInput, phone: '+919876500002', consentEvidence: { ...baseInput.consentEvidence, consentEvidenceRef: 'AGR-0002', recipientPhone: '+919876500002' } };
     const res = await service.sendOutreach(input, { id: 'admin1' });
     assert.equal(res.status, 'RECONCILIATION_PENDING');
     assert.equal(res.requiresReconciliation, true);
@@ -200,12 +208,7 @@ describe('WhatsApp Outreach Service - Verifiable Consent, Idempotency & Rate Lim
     ...baseInput,
     phone: '+919876500003',
     templateName,
-    consentEvidence: {
-      consentType: 'INBOUND_WHATSAPP_INQUIRY',
-      consentEvidenceRef: wamId,
-      consentTimestamp: new Date().toISOString(),
-      recipientPhone: '+919876500003',
-    },
+    consentEvidence: { consentType: 'INBOUND_WHATSAPP_INQUIRY', consentEvidenceRef: wamId, consentTimestamp: new Date().toISOString(), recipientPhone: '+919876500003' },
   });
 
   it('rejects INBOUND_WHATSAPP_INQUIRY for MARKETING templates', async () => {
@@ -226,16 +229,12 @@ describe('WhatsApp Outreach Service - Verifiable Consent, Idempotency & Rate Lim
 
   it('rejects stale consent older than 180 days', async () => {
     const twoHundredDaysAgo = new Date(Date.now() - 200 * 24 * 60 * 60 * 1000).toISOString();
-    const input = {
-      ...baseInput,
-      phone: '+919876500004',
-      consentEvidence: { ...baseInput.consentEvidence, consentTimestamp: twoHundredDaysAgo, recipientPhone: '+919876500004' },
-    };
+    const input = { ...baseInput, phone: '+919876500004', consentEvidence: { ...baseInput.consentEvidence, consentEvidenceRef: 'AGR-0004', consentTimestamp: twoHundredDaysAgo, recipientPhone: '+919876500004' } };
     await assert.rejects(() => service.sendOutreach(input, { id: 'admin1' }), /older than 180 days/);
   });
 
   it('verifies reservations use isolated resv: prefix and do not pollute messages list', async () => {
-    const input = { ...baseInput, phone: '+919876500005', consentEvidence: { ...baseInput.consentEvidence, recipientPhone: '+919876500005' } };
+    const input = { ...baseInput, phone: '+919876500005', consentEvidence: { ...baseInput.consentEvidence, consentEvidenceRef: 'AGR-0005', recipientPhone: '+919876500005' } };
     await service.sendOutreach(input, { id: 'admin1' });
     const listRes = await service.listIndividualOutreachMessages();
     for (const msg of listRes.data) {

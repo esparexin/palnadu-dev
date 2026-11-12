@@ -1,6 +1,10 @@
 import { z } from 'zod';
 import { phoneRegex, dbIdSchema } from './common';
 
+export const WHATSAPP_MARKETING_CONSENT_VERSION = 'website_lead_form_v1';
+export const WHATSAPP_MARKETING_CONSENT_WORDING =
+  'Yes, I agree to receive WhatsApp project updates and promotional messages from Palnadu.dev on the phone number provided. Reply STOP anytime to opt out.';
+
 export const projectStageValues = [
   'JUST_AN_IDEA',
   'EXISTING_BUSINESS',
@@ -85,6 +89,19 @@ export const createLeadSchema = z.object({
     .max(3000, 'Additional information cannot exceed 3000 characters')
     .optional()
     .or(z.literal('')),
+  whatsappMarketingConsent: z.boolean().optional().default(false),
+  whatsappConsentVersion: z.string().trim().max(64).optional(),
+}).superRefine((data, ctx) => {
+  if (data.whatsappMarketingConsent) {
+    const digits = (data.phone || '').replace(/[^0-9]/g, '');
+    if (!data.phone?.trim() || digits.length < 10) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['phone'],
+        message: 'Please provide a valid phone or WhatsApp number (at least 10 digits) to opt in to WhatsApp updates.',
+      });
+    }
+  }
 });
 
 export type CreateLeadInput = z.infer<typeof createLeadSchema>;

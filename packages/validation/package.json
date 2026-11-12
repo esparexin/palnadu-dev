@@ -8,7 +8,7 @@
     "build": "tsc",
     "clean": "rm -rf dist",
     "dev": "tsc --watch",
-    "test": "node --test src/validation.test.mjs"
+    "test": "node --test \"src/*.test.mjs\""
   },
   "dependencies": {
     "zod": "^3.23.0"
