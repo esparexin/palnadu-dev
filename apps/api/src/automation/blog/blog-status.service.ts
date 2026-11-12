@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma.service';
 import { TopicDiscoveryService } from '../topic-discovery.service';
 import { TopicStatus } from '@prisma/client';
+import { DAILY_CRON_SCHEDULE } from './blog-cron-lock.util';
 
 @Injectable()
 export class BlogStatusService {
@@ -40,7 +41,7 @@ export class BlogStatusService {
 
     return {
       engineStatus: 'active',
-      schedule: 'Daily at 05:00 IST (23:00 UTC)',
+      schedule: DAILY_CRON_SCHEDULE,
       autoPublishEnabled: autoPublishSetting?.value === true,
       referenceSources: await this.discoveryService.sourceStatuses(),
       statistics: {

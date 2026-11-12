@@ -1,0 +1,126 @@
+name: Daily Auto-Blog Cron
+
+on:
+  schedule:
+    # 23:22 UTC = 04:52 IST (8 minutes before 05:00 IST / 23:30 UTC in-process @Cron)
+    - cron: '22 23 * * *'
+  workflow_dispatch:
+    inputs:
+      force:
+        description: 'Force re-run even if today IST batch already completed'
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: daily-autoblog
+  cancel-in-progress: false
+
+jobs:
+  daily-autoblog:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Wake Render API via /api/health
+        run: |
+          API_BASE="https://palnadu-dev.onrender.com"
+          for i in $(seq 1 10); do
+            STATUS=$(curl -sS -o /tmp/health.json -w "%{http_code}" --max-time 45 "${API_BASE}/api/health" || echo "000")
+            echo "Attempt ${i}: HTTP ${STATUS}"
+            if [ "${STATUS}" = "200" ]; then
+              cat /tmp/health.json
+              echo ""
+              exit 0
+            fi
+            sleep 15
+          done
+          echo "::error::Render API failed to respond 200 on /api/health after 10 attempts"
+          exit 1
+
+      - name: Trigger & verify daily blog generation
+        env:
+          CRON_SECRET: ${{ secrets.AUTOMATION_CRON_SECRET }}
+          FORCE_RUN: ${{ inputs.force || false }}
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          API_BASE="https://palnadu-dev.onrender.com"
+
+          if [ -z "${CRON_SECRET}" ]; then
+            echo "AUTOMATION_CRON_SECRET secret is not set; relying on Render in-process @Cron at 23:30 UTC (05:00 IST)."
+            if [ "${EVENT_NAME}" = "schedule" ]; then
+              # Keep Render warm across 23:30 UTC so free/starter instance does not idle before @Cron fires
+              for tick in $(seq 1 6); do
+                UTC_H=$((10#$(date -u +%H)))
+                UTC_M=$((10#$(date -u +%M)))
+                if [ "${UTC_H}" -ne 23 ] || [ "${UTC_M}" -ge 31 ]; then
+                  curl -fsS --max-time 20 "${API_BASE}/api/health" >/dev/null || true
+                  break
+                fi
+                sleep 90
+                curl -fsS --max-time 20 "${API_BASE}/api/health" >/dev/null || true
+              done
+            fi
+            echo "### Daily Auto-Blog Wake Completed" >> "${GITHUB_STEP_SUMMARY}"
+            echo "- Render woken cleanly via \`/api/health\`." >> "${GITHUB_STEP_SUMMARY}"
+            echo "- Tip: Set matching \`AUTOMATION_CRON_SECRET\` in Render Env and GitHub Actions Secrets for direct cron trigger & completion verification." >> "${GITHUB_STEP_SUMMARY}"
+            exit 0
+          fi
+
+          TRIGGER_URL="${API_BASE}/api/admin/automation/cron/daily?background=true&force=${FORCE_RUN}"
+          HTTP_CODE=$(curl -sS -o /tmp/trigger.json -w "%{http_code}" --max-time 30 \
+            -X POST "${TRIGGER_URL}" \
+            -H "Content-Type: application/json" \
+            -H "x-cron-secret: ${CRON_SECRET}" \
+            -d '{}')
+
+          echo "Trigger HTTP ${HTTP_CODE}: $(cat /tmp/trigger.json)"
+          if [ "${HTTP_CODE}" != "200" ]; then
+            echo "::error::Cron trigger failed with HTTP ${HTTP_CODE}"
+            exit 1
+          fi
+
+          SKIPPED=$(jq -r '.data.skipped // false' /tmp/trigger.json)
+          if [ "${SKIPPED}" = "true" ]; then
+            REASON=$(jq -r '.data.reason // "unknown"' /tmp/trigger.json)
+            echo "Batch skipped (${REASON}). Polling current status..."
+          fi
+
+          for poll in $(seq 1 18); do
+            sleep 20
+            STATUS_CODE=$(curl -sS -o /tmp/status.json -w "%{http_code}" --max-time 20 \
+              -H "x-cron-secret: ${CRON_SECRET}" \
+              "${API_BASE}/api/admin/automation/cron/status" || echo "000")
+            if [ "${STATUS_CODE}" != "200" ]; then
+              echo "Poll ${poll}: HTTP ${STATUS_CODE}"
+              continue
+            fi
+
+            RUN_STATUS=$(jq -r '.data.todayRun.status // "UNKNOWN"' /tmp/status.json)
+            GENERATED=$(jq -r '.data.todayRun.generatedCount // 0' /tmp/status.json)
+            REJECTED=$(jq -r '.data.todayRun.rejectedCount // 0' /tmp/status.json)
+            DATE_KEY=$(jq -r '.data.todayDateKey // ""' /tmp/status.json)
+            ERR_MSG=$(jq -r '.data.todayRun.error // ""' /tmp/status.json)
+            echo "Poll ${poll} [${DATE_KEY}]: status=${RUN_STATUS}, generated=${GENERATED}, rejected=${REJECTED}"
+
+            if [ "${RUN_STATUS}" = "COMPLETED" ]; then
+              {
+                echo "### Daily Auto-Blog Completed (${DATE_KEY})"
+                echo "- Status: \`COMPLETED\`"
+                echo "- Generated: **${GENERATED}**"
+                echo "- Rejected: **${REJECTED}**"
+              } >> "${GITHUB_STEP_SUMMARY}"
+              exit 0
+            fi
+
+            if [ "${RUN_STATUS}" = "FAILED" ]; then
+              echo "::error::Daily auto-blog failed: ${ERR_MSG}"
+              exit 1
+            fi
+          done
+
+          echo "::warning::Daily auto-blog still ${RUN_STATUS:-RUNNING} after 6 minutes; check Admin dashboard telemetry."
+          exit 0
