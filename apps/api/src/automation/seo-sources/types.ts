@@ -24,6 +24,10 @@ export interface TopicMetrics {
   cpc: number | null;
   domainAuthority: number | null;
   backlinks: number | null;
+  impressions?: number | null;
+  clicks?: number | null;
+  ctr?: number | null;
+  position?: number | null;
   status: 'verified' | 'unavailable';
   notes?: string;
 }
