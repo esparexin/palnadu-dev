@@ -165,7 +165,9 @@ export function classifyGoogleError(
     statusStr === 'UNAVAILABLE' ||
     msg.includes('high demand') ||
     msg.includes('spikes in demand') ||
-    msg.includes('overloaded')
+    msg.includes('overloaded') ||
+    msg.includes('service unavailable') ||
+    msg.includes('temporarily unavailable')
   ) {
     return {
       code: 'MODEL_OVERLOADED',

@@ -93,7 +93,7 @@ describe('Phase 6 Auto-Blogging Protection, Key Priority & Backlink Gate', () =>
     const enDraft = await research.generateArticle('Enterprise Web Platforms in Guntur', 'website-development', 'Guntur', undefined, BlogLanguage.en, {
       retry: { maxRetries: 0, sleepFn: noopSleep },
       fetchFn: async (url) => {
-        if (url.includes('gemini-3.8-flash')) {
+        if (url.includes('gemini-3.1-flash-lite')) {
           return { ok: false, status: 503, headers: new Headers(), json: async () => ({ error: { status: 'UNAVAILABLE', message: `High demand for key=${secretKey}` } }) };
         }
         return { ok: true, status: 200, headers: new Headers(), json: async () => ({ candidates: [{ content: { parts: [{ text: validLlmDraftPayload('en') }] } }] }) };

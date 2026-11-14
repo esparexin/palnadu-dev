@@ -36,11 +36,13 @@ const PERMANENT_FAILURE_PATTERNS = [
   'no_category',
   'invalid_api_key',
   'permission_denied',
-  'model_access_denied',
 ];
 
 const TRANSIENT_FAILURE_PATTERNS = [
   'model_overloaded',
+  'model_access_denied',
+  'model unavailable',
+  'model not found',
   'temporary_provider_error',
   'quota_exceeded',
   'high demand',
