@@ -181,4 +181,42 @@ describe('Phase 4: Semantic Duplicate Prevention & Replenishment Safety', () => 
     assert.equal(failedRes.enqueued, false);
     assert.ok(failedRes.reason?.includes('duplicate topicKey'), 'Race must be safely caught by unique index');
   });
+
+  it('lease safety: active in-flight jobs (< 5m) cannot be stolen, while expired leases (> 5m) can be reclaimed', async () => {
+    const now = new Date();
+    const activeClaimTime = new Date(now.getTime() - 2 * 60 * 1000); // 2 minutes ago (actively processing)
+    const expiredClaimTime = new Date(now.getTime() - 7 * 60 * 1000); // 7 minutes ago (exceeded 5m threshold)
+
+    const topics = [
+      { id: 't-active', topicKey: 'active-key', topic: 'Active In-Flight Job', language: BlogLanguage.en, status: TopicStatus.CLAIMED, attempts: 1, claimedAt: activeClaimTime, claimedBy: 'worker-1' },
+      { id: 't-expired', topicKey: 'expired-key', topic: 'Abandoned In-Flight Job', language: BlogLanguage.en, status: TopicStatus.CLAIMED, attempts: 1, claimedAt: expiredClaimTime, claimedBy: 'worker-dead' },
+    ];
+    const prisma = createMockPrisma({ topics });
+    // Add updateMany to mock prisma
+    prisma.blogTopic.updateMany = async ({ where = {}, data }) => {
+      let count = 0;
+      for (const t of topics) {
+        if (where.id && t.id !== where.id) continue;
+        if (where.status?.in && !where.status.in.includes(t.status)) continue;
+        const staleCond = where.OR?.find((c) => c.claimedAt?.lt)?.claimedAt?.lt;
+        const canClaim = !t.claimedAt || (staleCond && t.claimedAt < staleCond);
+        if (where.OR && !canClaim) continue;
+        Object.assign(t, data);
+        count++;
+      }
+      return { count };
+    };
+
+    const queueService = new BlogQueueService(prisma, { isLikelyDuplicateTopic: async () => false });
+
+    // Worker 2 attempts to claim the active job: MUST BE REJECTED (lease still valid)
+    const activeClaim = await queueService.claimTopicById('worker-2', { topicKey: 'active-key', language: BlogLanguage.en }, 3);
+    assert.equal(activeClaim, null, 'Active in-flight job must not be released or claimed prematurely');
+    assert.equal(topics[0].claimedBy, 'worker-1');
+
+    // Worker 2 attempts to claim the expired job: MUST SUCCEED (reclaimed atomically)
+    const expiredClaim = await queueService.claimTopicById('worker-2', { topicKey: 'expired-key', language: BlogLanguage.en }, 3);
+    assert.ok(expiredClaim, 'Abandoned job past lease must be reclaimable');
+    assert.equal(topics[1].claimedBy, 'worker-2');
+  });
 });

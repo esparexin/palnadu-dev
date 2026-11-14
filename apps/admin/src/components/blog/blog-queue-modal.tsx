@@ -117,7 +117,7 @@ export function BlogQueueModal({
                         )}
                         {health?.staleInFlight && (health.staleInFlight.te > 0 || health.staleInFlight.en > 0) && (
                           <p className="text-xs text-palnadu-warning mt-0.5">
-                            Notice: {health.staleInFlight.total ?? (health.staleInFlight.te + health.staleInFlight.en)} stale lease(s)
+                            Notice: {health.staleInFlight.total ?? (health.staleInFlight.te + health.staleInFlight.en)} in-flight task(s) exceeding normal duration (&gt;5m)
                           </p>
                         )}
                       </>
