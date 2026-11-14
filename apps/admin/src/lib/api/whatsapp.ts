@@ -4,6 +4,9 @@ import type {
   IndividualOutreachDispatchResult,
   IndividualOutreachMessageItem,
   WhatsAppTemplateDefinition,
+  WhatsAppConversation,
+  WhatsAppMessage,
+  WhatsAppConversationFilterParams,
 } from '@palnadu/types';
 
 export type {
@@ -11,6 +14,9 @@ export type {
   IndividualOutreachDispatchResult,
   IndividualOutreachMessageItem,
   WhatsAppTemplateDefinition,
+  WhatsAppConversation,
+  WhatsAppMessage,
+  WhatsAppConversationFilterParams,
 };
 
 export interface CampaignSummary {
@@ -126,6 +132,48 @@ export const whatsappApi = {
         {
           method: 'POST',
           body: JSON.stringify({ contacts }),
+        },
+      ),
+  },
+
+  conversations: {
+    list: (params?: WhatsAppConversationFilterParams) =>
+      adminApi<{
+        success: boolean;
+        data: WhatsAppConversation[];
+        total: number;
+        page: number;
+        limit: number;
+        totalPages: number;
+      }>('/api/admin/whatsapp/conversations', {
+        params: params
+          ? {
+              page: String(params.page || 1),
+              limit: String(params.limit || 20),
+              ...(params.humanTakeover !== undefined ? { humanTakeover: String(params.humanTakeover) } : {}),
+              ...(params.search ? { search: params.search } : {}),
+            }
+          : undefined,
+      }),
+    get: (phone: string) =>
+      adminApi<{
+        success: boolean;
+        data: { conversation: WhatsAppConversation | null; messages: WhatsAppMessage[] };
+      }>(`/api/admin/whatsapp/conversations/${encodeURIComponent(phone)}`),
+    toggleTakeover: (phone: string, enabled: boolean) =>
+      adminApi<{ success: boolean; data: WhatsAppConversation }>(
+        `/api/admin/whatsapp/conversations/${encodeURIComponent(phone)}/takeover`,
+        {
+          method: 'POST',
+          body: JSON.stringify({ enabled }),
+        },
+      ),
+    reply: (phone: string, text: string) =>
+      adminApi<{ success: boolean; data: WhatsAppMessage }>(
+        `/api/admin/whatsapp/conversations/${encodeURIComponent(phone)}/reply`,
+        {
+          method: 'POST',
+          body: JSON.stringify({ text }),
         },
       ),
   },

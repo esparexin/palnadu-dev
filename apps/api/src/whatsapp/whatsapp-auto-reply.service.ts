@@ -4,6 +4,9 @@ import { PrismaService } from '../prisma.service';
 import { WhatsAppApiClient } from './whatsapp-api.client';
 import { WhatsAppOptOutService } from './whatsapp-opt-out.service';
 import { isOptOutKeywordText } from './whatsapp-opt-out.util';
+import { isPrismaP2002 } from './whatsapp-outreach-reservation.util';
+import { maskPhone } from './whatsapp-api.util';
+import { acquireDispatchLock, releaseDispatchLock } from './whatsapp-dispatch-lock.util';
 import {
   Prisma,
   WhatsAppDeliveryStatus,
@@ -29,9 +32,9 @@ export class WhatsAppAutoReplyService {
   ) {}
 
   isEnabled(): boolean {
-    const enabledVal = this.config.get<string>(WHATSAPP_CONFIG_KEYS.AUTO_REPLY_ENABLED);
-    if (enabledVal === 'false' || enabledVal === '0') return false;
-    return this.apiClient.isConfigured();
+    const raw = this.config.get<string>(WHATSAPP_CONFIG_KEYS.AUTO_REPLY_ENABLED);
+    const val = raw ? raw.trim().toLowerCase() : '';
+    return val !== 'false' && val !== '0' && val !== 'off' && this.apiClient.isConfigured();
   }
 
   getCooldownHours(): number {
@@ -51,21 +54,20 @@ export class WhatsAppAutoReplyService {
   async handleAutoReply(
     inboundMessage: WhatsAppMessage,
   ): Promise<WhatsAppMessage | null> {
-    if (!this.isEnabled()) {
+    if (!this.isEnabled() || inboundMessage.direction !== WhatsAppMessageDirection.INBOUND) {
       return null;
     }
 
-    if (inboundMessage.direction !== WhatsAppMessageDirection.INBOUND) {
-      return null;
-    }
+    const recipientPhone = inboundMessage.from;
+    const maskedPhone = maskPhone(recipientPhone);
 
     if (isOptOutKeywordText(inboundMessage.body)) {
-      this.logger.log(`Auto-reply skipped for ${this.maskPhone(inboundMessage.from)}: inbound opt-out keyword.`);
+      this.logger.log(`Auto-reply skipped for ${maskedPhone}: inbound opt-out keyword.`);
       return null;
     }
 
-    if (this.optOutService && (await this.optOutService.isSuppressed(inboundMessage.from))) {
-      this.logger.log(`Auto-reply skipped for ${this.maskPhone(inboundMessage.from)}: recipient is opted out.`);
+    if (this.optOutService && (await this.optOutService.isSuppressed(recipientPhone))) {
+      this.logger.log(`Auto-reply skipped for ${maskedPhone}: recipient is opted out.`);
       return null;
     }
 
@@ -78,18 +80,12 @@ export class WhatsAppAutoReplyService {
     }
 
     this.inFlightReplies.add(inboundMessage.wamId);
-    const recipientPhone = inboundMessage.from;
-    const maskedPhone = this.maskPhone(recipientPhone);
 
     try {
       // 1. Verify message is within WhatsApp's 24-hour customer service window
       const messageTime = inboundMessage.statusTimestamp || inboundMessage.createdAt;
-      const windowAgeMs = Date.now() - new Date(messageTime).getTime();
-      const twentyFourHoursMs = 24 * 60 * 60 * 1000;
-      if (windowAgeMs > twentyFourHoursMs) {
-        this.logger.warn(
-          `Auto-reply skipped for ${maskedPhone}: inbound message is outside the 24-hour customer service window.`,
-        );
+      if (Date.now() - new Date(messageTime).getTime() > 24 * 3600000) {
+        this.logger.warn(`Auto-reply skipped for ${maskedPhone}: outside 24-hour window.`);
         return null;
       }
 
@@ -103,32 +99,25 @@ export class WhatsAppAutoReplyService {
       });
 
       if (existingReplyForMessage) {
-        this.logger.log(
-          `Auto-reply skipped for ${maskedPhone}: reply already dispatched for message ${inboundMessage.wamId}.`,
-        );
+        this.logger.log(`Auto-reply skipped for ${maskedPhone}: reply already dispatched.`);
         return null;
       }
 
       // 3. Prevent reply loops: Check cooldown window (configurable, default 24h)
       const cooldownHours = this.getCooldownHours();
       if (cooldownHours > 0) {
-        const cooldownMs = cooldownHours * 60 * 60 * 1000;
-        const cooldownThreshold = new Date(Date.now() - cooldownMs);
-
         const recentOutbound = await this.prisma.whatsAppMessage.findFirst({
           where: {
             to: recipientPhone,
             direction: WhatsAppMessageDirection.OUTBOUND,
             campaignId: null,
             status: { not: WhatsAppDeliveryStatus.FAILED },
-            createdAt: { gte: cooldownThreshold },
+            createdAt: { gte: new Date(Date.now() - cooldownHours * 3600000) },
           },
         });
 
         if (recentOutbound) {
-          this.logger.log(
-            `Auto-reply skipped for ${maskedPhone}: outbound message already sent within the cooldown window (last wamId: ${recentOutbound.wamId}).`,
-          );
+          this.logger.log(`Auto-reply skipped for ${maskedPhone}: sent within cooldown.`);
           return null;
         }
       }
@@ -151,83 +140,95 @@ export class WhatsAppAutoReplyService {
           },
         });
       } catch (claimErr: unknown) {
-        if (
-          claimErr &&
-          typeof claimErr === 'object' &&
-          'code' in claimErr &&
-          (claimErr as { code: string }).code === 'P2002'
-        ) {
-          this.logger.warn(
-            `Multi-instance concurrent auto-reply claim intercepted for ${inboundMessage.wamId}`,
-          );
+        if (isPrismaP2002(claimErr)) {
+          this.logger.warn(`Multi-instance concurrent auto-reply claim intercepted for ${inboundMessage.wamId}`);
           return null;
         }
         throw claimErr;
       }
 
-      // 5. Dispatch outbound acknowledgment to Meta API
-      const ackText = this.getAcknowledgmentMessage();
-      let sendResult;
-      try {
-        sendResult = await this.apiClient.sendTextMessage({
-          to: recipientPhone,
-          text: ackText,
-          replyToWamId: inboundMessage.wamId,
-        });
-      } catch (sendErr: unknown) {
-        await this.prisma.whatsAppMessage.update({
-          where: { id: claimRecord.id },
-          data: {
-            status: WhatsAppDeliveryStatus.FAILED,
-            errorMessage: sendErr instanceof Error ? sendErr.message : String(sendErr),
-          },
-        }).catch(() => null);
-        throw sendErr;
+      // 5. Acquire exclusive distributed dispatch lease
+      const workerId = `autoreply_${inboundMessage.wamId}_${Date.now()}`;
+      const lease = await acquireDispatchLock(this.prisma, recipientPhone, workerId);
+      if (!lease.acquired) {
+        this.logger.warn(`Auto-reply skipped for ${maskedPhone}: dispatch lease unavailable (${lease.reason}).`);
+        await this.prisma.whatsAppMessage?.delete?.({ where: { id: claimRecord.id } }).catch(() => null);
+        return null;
       }
 
-      const assignedWamId = sendResult.messages?.[0]?.id;
-      if (!assignedWamId) {
-        throw new Error('Meta API response did not contain an assigned message ID');
-      }
-
-      let createdOutbound: WhatsAppMessage;
       try {
-        createdOutbound = await this.prisma.whatsAppMessage.update({
-          where: { id: claimRecord.id },
-          data: {
-            wamId: assignedWamId,
-            status: WhatsAppDeliveryStatus.SENT,
-            body: ackText,
-            rawPayload: sendResult as unknown as Prisma.InputJsonValue,
-          },
+        // Re-verify human takeover under lease protection
+        const freshConv = await this.prisma.whatsAppConversation?.findUnique({
+          where: { customerPhone: recipientPhone },
+          select: { humanTakeover: true },
         });
-      } catch (updateErr: unknown) {
-        if (
-          updateErr &&
-          typeof updateErr === 'object' &&
-          'code' in updateErr &&
-          (updateErr as { code: string }).code === 'P2002'
-        ) {
-          this.logger.warn(`Delivery status webhook arrived before claim update for ${assignedWamId}, reconciling.`);
-          createdOutbound = await this.prisma.whatsAppMessage.update({
-            where: { wamId: assignedWamId },
+        if (freshConv?.humanTakeover) {
+          this.logger.warn(`Auto-reply aborted for ${maskedPhone}: takeover activated before dispatch.`);
+          await this.prisma.whatsAppMessage?.delete?.({ where: { id: claimRecord.id } }).catch(() => null);
+          return null;
+        }
+
+        // 6. Dispatch outbound acknowledgment to Meta API
+        const ackText = this.getAcknowledgmentMessage();
+        let sendResult;
+        try {
+          sendResult = await this.apiClient.sendTextMessage({
+            to: recipientPhone,
+            text: ackText,
+            replyToWamId: inboundMessage.wamId,
+          });
+        } catch (sendErr: unknown) {
+          await this.prisma.whatsAppMessage.update({
+            where: { id: claimRecord.id },
             data: {
+              status: WhatsAppDeliveryStatus.FAILED,
+              errorMessage: sendErr instanceof Error ? sendErr.message : String(sendErr),
+            },
+          }).catch(() => null);
+          throw sendErr;
+        }
+
+        const assignedWamId = sendResult.messages?.[0]?.id;
+        if (!assignedWamId) {
+          throw new Error('Meta API response did not contain an assigned message ID');
+        }
+
+        let createdOutbound: WhatsAppMessage;
+        try {
+          createdOutbound = await this.prisma.whatsAppMessage.update({
+            where: { id: claimRecord.id },
+            data: {
+              wamId: assignedWamId,
+              status: WhatsAppDeliveryStatus.SENT,
               body: ackText,
-              contextWamId: inboundMessage.wamId,
               rawPayload: sendResult as unknown as Prisma.InputJsonValue,
             },
           });
-          await this.prisma.whatsAppMessage.delete({ where: { id: claimRecord.id } }).catch(() => null);
-        } else {
-          throw updateErr;
+        } catch (updateErr: unknown) {
+          if (isPrismaP2002(updateErr)) {
+            this.logger.warn(`Delivery status webhook arrived before claim update for ${assignedWamId}, reconciling.`);
+            createdOutbound = await this.prisma.whatsAppMessage.update({
+              where: { wamId: assignedWamId },
+              data: {
+                body: ackText,
+                contextWamId: inboundMessage.wamId,
+                rawPayload: sendResult as unknown as Prisma.InputJsonValue,
+              },
+            });
+            await this.prisma.whatsAppMessage.delete({ where: { id: claimRecord.id } }).catch(() => null);
+          } else {
+            throw updateErr;
+          }
         }
+
+        this.logger.log(
+          `Automated acknowledgment persisted for ${maskedPhone} (outbound wamId: ${assignedWamId}, in reply to: ${inboundMessage.wamId})`,
+        );
+
+        return createdOutbound;
+      } finally {
+        await releaseDispatchLock(this.prisma, recipientPhone, workerId);
       }
-
-      this.logger.log(
-        `Automated acknowledgment persisted for ${maskedPhone} (outbound wamId: ${assignedWamId}, in reply to: ${inboundMessage.wamId})`,
-      );
-
-      return createdOutbound;
     } catch (sendErr: unknown) {
       const errMessage = sendErr instanceof Error ? sendErr.message : String(sendErr);
       this.logger.error(
@@ -237,10 +238,5 @@ export class WhatsAppAutoReplyService {
     } finally {
       this.inFlightReplies.delete(inboundMessage.wamId);
     }
-  }
-
-  private maskPhone(phone: string): string {
-    if (phone.length <= 4) return '****';
-    return phone.slice(0, 2) + '******' + phone.slice(-2);
   }
 }
