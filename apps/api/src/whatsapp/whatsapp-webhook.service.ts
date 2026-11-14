@@ -5,6 +5,8 @@ import { PrismaService } from '../prisma.service';
 import { WhatsAppMessageService } from './whatsapp-message.service';
 import { WhatsAppAutoReplyService } from './whatsapp-auto-reply.service';
 import { WhatsAppOptOutService } from './whatsapp-opt-out.service';
+import { WhatsAppAssistantService } from './whatsapp-assistant.service';
+import { extractMessageBody } from './whatsapp-conversation.util';
 import { isOptOutKeywordText } from './whatsapp-opt-out.util';
 import {
   verifyMetaWebhookSignature,
@@ -30,6 +32,7 @@ export class WhatsAppWebhookService {
     private readonly prisma: PrismaService,
     @Optional() private readonly autoReplyService?: WhatsAppAutoReplyService,
     @Optional() private readonly optOutService?: WhatsAppOptOutService,
+    @Optional() private readonly assistantService?: WhatsAppAssistantService,
   ) {}
 
   verifyHandshake(rawQuery: Record<string, unknown>): string {
@@ -126,7 +129,7 @@ export class WhatsAppWebhookService {
                 if (!msg.id || !msg.from) continue;
                 if (!primaryWamId) primaryWamId = msg.id;
 
-                const bodyText = this.extractMessageBody(msg as unknown as Record<string, unknown>);
+                const bodyText = extractMessageBody(msg as unknown as Record<string, unknown>);
                 const saved = await this.messageService.saveInboundMessage({
                   wamId: msg.id,
                   from: msg.from,
@@ -146,13 +149,22 @@ export class WhatsAppWebhookService {
                   ? await this.optOutService.handleInboundOptOut(msg.from, bodyText)
                   : isOptOutKeywordText(bodyText);
 
-                if (!isOptOut && this.autoReplyService) {
-                  setImmediate(() => {
-                    this.autoReplyService?.handleAutoReply(saved).catch((err: unknown) => {
-                      const msg = err instanceof Error ? err.message : String(err);
-                      this.logger.error(`Background auto-reply failed for ${saved.wamId}: ${msg}`);
+                if (!isOptOut) {
+                  if (this.assistantService?.isEnabled()) {
+                    setImmediate(() => {
+                      this.assistantService?.handleInboundMessage(saved).catch((err: unknown) => {
+                        const msg = err instanceof Error ? err.message : String(err);
+                        this.logger.error(`Background assistant failed for ${saved.wamId}: ${msg}`);
+                      });
                     });
-                  });
+                  } else if (this.autoReplyService) {
+                    setImmediate(() => {
+                      this.autoReplyService?.handleAutoReply(saved).catch((err: unknown) => {
+                        const msg = err instanceof Error ? err.message : String(err);
+                        this.logger.error(`Background auto-reply failed for ${saved.wamId}: ${msg}`);
+                      });
+                    });
+                  }
                 }
               }
             }
@@ -202,38 +214,6 @@ export class WhatsAppWebhookService {
       }
       throw err;
     }
-  }
-
-  private extractMessageBody(msg: Record<string, unknown>): string | undefined {
-    const textObj = msg.text as { body?: string } | undefined;
-    if (textObj?.body) return textObj.body;
-
-    const mediaObj = (msg.image || msg.document || msg.video) as { caption?: string } | undefined;
-    if (mediaObj?.caption) return mediaObj.caption;
-
-    const interactive = msg.interactive as
-      | { button_reply?: { title: string }; list_reply?: { title: string } }
-      | undefined;
-    if (interactive?.button_reply?.title) return `[Button: ${interactive.button_reply.title}]`;
-    if (interactive?.list_reply?.title) return `[Selected: ${interactive.list_reply.title}]`;
-
-    const button = msg.button as { text?: string } | undefined;
-    if (button?.text) return `[Button: ${button.text}]`;
-
-    const loc = msg.location as { name?: string; address?: string; latitude?: number; longitude?: number } | undefined;
-    if (loc) {
-      const parts = [loc.name, loc.address, loc.latitude && loc.longitude ? `(${loc.latitude}, ${loc.longitude})` : null].filter(Boolean);
-      return parts.length > 0 ? `[Location: ${parts.join(', ')}]` : '[Location]';
-    }
-
-    const reaction = msg.reaction as { emoji?: string } | undefined;
-    if (reaction?.emoji) return `[Reaction: ${reaction.emoji}]`;
-
-    if (msg.type === 'audio') return '[Audio Message]';
-    if (msg.type === 'video') return '[Video Message]';
-    if (msg.type === 'sticker') return '[Sticker]';
-
-    return undefined;
   }
 }
 

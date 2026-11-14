@@ -11,6 +11,10 @@ import { WhatsAppOptOutService } from './whatsapp-opt-out.service';
 import { WhatsAppCampaignService } from './whatsapp-campaign.service';
 import { WhatsAppContactService } from './whatsapp-contact.service';
 import { WhatsAppOutreachService } from './whatsapp-outreach.service';
+import { WhatsAppEnquiryService } from './whatsapp-enquiry.service';
+import { WhatsAppConversationService } from './whatsapp-conversation.service';
+import { WhatsAppAssistantService } from './whatsapp-assistant.service';
+import { WhatsAppTakeoverService } from './whatsapp-takeover.service';
 
 @Module({
   imports: [PrismaModule, NotificationsModule],
@@ -24,6 +28,10 @@ import { WhatsAppOutreachService } from './whatsapp-outreach.service';
     WhatsAppCampaignService,
     WhatsAppContactService,
     WhatsAppOutreachService,
+    WhatsAppEnquiryService,
+    WhatsAppConversationService,
+    WhatsAppAssistantService,
+    WhatsAppTakeoverService,
   ],
   exports: [
     WhatsAppWebhookService,
@@ -34,6 +42,10 @@ import { WhatsAppOutreachService } from './whatsapp-outreach.service';
     WhatsAppCampaignService,
     WhatsAppContactService,
     WhatsAppOutreachService,
+    WhatsAppEnquiryService,
+    WhatsAppConversationService,
+    WhatsAppAssistantService,
+    WhatsAppTakeoverService,
   ],
 })
 export class WhatsAppModule {}

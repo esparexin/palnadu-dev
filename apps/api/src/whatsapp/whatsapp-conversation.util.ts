@@ -150,3 +150,35 @@ export function findSuboptionByInput(
       (s.nameTe && s.nameTe.toLowerCase().includes(clean)),
   );
 }
+
+export function extractMessageBody(msg: Record<string, unknown>): string | undefined {
+  const textObj = msg.text as { body?: string } | undefined;
+  if (textObj?.body) return textObj.body;
+
+  const mediaObj = (msg.image || msg.document || msg.video) as { caption?: string } | undefined;
+  if (mediaObj?.caption) return mediaObj.caption;
+
+  const interactive = msg.interactive as
+    | { button_reply?: { title: string }; list_reply?: { title: string } }
+    | undefined;
+  if (interactive?.button_reply?.title) return `[Button: ${interactive.button_reply.title}]`;
+  if (interactive?.list_reply?.title) return `[Selected: ${interactive.list_reply.title}]`;
+
+  const button = msg.button as { text?: string } | undefined;
+  if (button?.text) return `[Button: ${button.text}]`;
+
+  const loc = msg.location as { name?: string; address?: string; latitude?: number; longitude?: number } | undefined;
+  if (loc) {
+    const parts = [loc.name, loc.address, loc.latitude && loc.longitude ? `(${loc.latitude}, ${loc.longitude})` : null].filter(Boolean);
+    return parts.length > 0 ? `[Location: ${parts.join(', ')}]` : '[Location]';
+  }
+
+  const reaction = msg.reaction as { emoji?: string } | undefined;
+  if (reaction?.emoji) return `[Reaction: ${reaction.emoji}]`;
+
+  if (msg.type === 'audio') return '[Audio Message]';
+  if (msg.type === 'video') return '[Video Message]';
+  if (msg.type === 'sticker') return '[Sticker]';
+
+  return undefined;
+}
