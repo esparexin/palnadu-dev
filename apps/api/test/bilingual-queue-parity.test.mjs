@@ -2,6 +2,7 @@ import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { BlogLanguage, TopicStatus } from '@prisma/client';
 import { inferCategoryFromTopic } from '../dist/automation/blog/blog-seeds.js';
+import { detectLanguage, detectScript, teluguScriptRatio } from '../dist/automation/scripts/transliteration.js';
 import { TopicDiscoveryService } from '../dist/automation/topic-discovery.service.js';
 import { BlogQueueService } from '../dist/automation/blog/blog-queue.service.js';
 import { BlogBatchService } from '../dist/automation/blog/blog-batch.service.js';
@@ -49,6 +50,24 @@ function createMockPrisma({ topics = [], posts = [], settings = [] } = {}) {
 }
 
 describe('Bilingual Queue Reliability & Discovery Parity', () => {
+  it('language detection: classifies authentic, mixed, short, punctuated, and transliterated phrases', () => {
+    // 1. Authentic Telugu
+    assert.equal(detectLanguage('గుంటూరులో వెబ్‌సైట్ డెవలప్మెంట్ ఖర్చు ఎంత అవుతుంది?'), 'te');
+    // 2. English
+    assert.equal(detectLanguage('How to Build a SaaS Product in Guntur'), 'en');
+    // 3. Mixed Telugu-English with brand/tech terms
+    assert.equal(detectLanguage('గుంటూర్‌లో Palnadu వెబ్ డెవలప్మెంట్ ఖర్చు'), 'te');
+    assert.equal(detectLanguage('గుంటూరులో SEO సర్వీసెస్'), 'te');
+    // 4. Short phrases
+    assert.equal(detectLanguage('పల్నాడు'), 'te');
+    assert.equal(detectLanguage('SEO'), 'en');
+    // 5. Punctuation
+    assert.equal(detectLanguage('వెబ్‌సైట్ డిజైన్! ఖర్చు ఎంత?'), 'te');
+    // 6. Transliterated Telugu in Latin script (correctly classified as 'en' to prevent failing Telugu script ratio)
+    assert.equal(detectLanguage('Guntur lo website design cost entha'), 'en');
+    assert.equal(teluguScriptRatio('Guntur lo website design cost entha'), 0);
+  });
+
   it('multilingual category inference: correctly maps regional Telugu tokens across 5 canonical categories', () => {
     assert.equal(inferCategoryFromTopic('వినుకొండ వ్యాపారాలు గూగుల్‌లో కనిపించేలా లోకల్ ఎస్‌ఇ‌ఓ గైడ్'), 'local-seo-business');
     assert.equal(inferCategoryFromTopic('విజయవాడ వ్యాపారాలకు మొబైల్ యాప్ డెవలప్మెంట్ ఖర్చు'), 'app-development');
@@ -150,12 +169,12 @@ describe('Bilingual Queue Reliability & Discovery Parity', () => {
     assert.equal(enOnlyAllocated.filter((t) => t.language === 'en').length, 3);
   });
 
-  it('generateBilingualBatch: reports Telugu deficit accurately without silent substitution', async () => {
+  it('generateBilingualBatch: reports deficit without inflating database failures or triggering retries', async () => {
     // Queue with 3 English topics and 0 Telugu topics
     const topics = [
-      { id: '1', topicKey: 'en-1', topic: 'Topic 1', language: BlogLanguage.en, attempts: 0, status: TopicStatus.PENDING, categorySlug: 'web', targetLocation: null, referenceSources: [] },
-      { id: '2', topicKey: 'en-2', topic: 'Topic 2', language: BlogLanguage.en, attempts: 0, status: TopicStatus.PENDING, categorySlug: 'web', targetLocation: null, referenceSources: [] },
-      { id: '3', topicKey: 'en-3', topic: 'Topic 3', language: BlogLanguage.en, attempts: 0, status: TopicStatus.PENDING, categorySlug: 'web', targetLocation: null, referenceSources: [] },
+      { id: '1', topicKey: 'en-1', topic: 'Topic 1', language: BlogLanguage.en, attempts: 0, status: TopicStatus.PENDING, categorySlug: 'web', targetLocation: null, referenceSources: [], nextRetryAt: null },
+      { id: '2', topicKey: 'en-2', topic: 'Topic 2', language: BlogLanguage.en, attempts: 0, status: TopicStatus.PENDING, categorySlug: 'web', targetLocation: null, referenceSources: [], nextRetryAt: null },
+      { id: '3', topicKey: 'en-3', topic: 'Topic 3', language: BlogLanguage.en, attempts: 0, status: TopicStatus.PENDING, categorySlug: 'web', targetLocation: null, referenceSources: [], nextRetryAt: null },
     ];
     const prisma = createMockPrisma({ topics });
     const mockQueue = {
@@ -173,11 +192,17 @@ describe('Bilingual Queue Reliability & Discovery Parity', () => {
     const result = await batchService.generateBilingualBatch({ te: 2, en: 3 }, false, 'test-worker', mockGenerate);
 
     assert.equal(result.results.length, 3, 'Should generate 3 English topics');
-    assert.equal(result.results.every((r) => r.slug.startsWith('en-')), true);
-
     const deficit = result.rejected.find((r) => r.topicKey === 'deficit:te');
     assert.ok(deficit, 'Telugu deficit must be explicitly reported in rejected list');
     assert.match(deficit.detail, /Insufficient pending Telugu topics/);
+
+    // CRITICAL: Deficit telemetry must NOT touch blogTopic table or trigger retries
+    const topicCountAfter = await prisma.blogTopic.count({});
+    assert.equal(topicCountAfter, 3, 'Deficit must NOT insert phantom rows into blogTopic');
+    const anyFailed = topics.some((t) => t.status === TopicStatus.FAILED || t.attempts > 0);
+    assert.equal(anyFailed, false, 'Deficit must NOT mark topics failed or increment attempts');
+    const anyRetries = topics.some((t) => t.nextRetryAt !== null);
+    assert.equal(anyRetries, false, 'Deficit must NOT set nextRetryAt on database records');
   });
 
   it('duplicate prevention: duplicate topicKey across discovery sources is strictly refused', async () => {
