@@ -108,7 +108,16 @@ export function BlogQueueModal({
                         </p>
                         {health && (
                           <p className={cn('text-xs font-medium mt-1', health.healthy ? 'text-palnadu-teal-dark' : 'text-palnadu-warning')}>
-                            {health.healthy ? '● Supply Healthy' : '▲ Low Stock: Auto-Replenish Active'}
+                            {health.healthy
+                              ? '● Supply Healthy'
+                              : health.supplyExhausted?.te || health.supplyExhausted?.en
+                                ? '▲ Low Stock: Seed Catalog Exhausted'
+                                : '▲ Low Stock: Auto-Replenish Active'}
+                          </p>
+                        )}
+                        {health?.staleInFlight && (health.staleInFlight.te > 0 || health.staleInFlight.en > 0) && (
+                          <p className="text-xs text-palnadu-warning mt-0.5">
+                            Notice: {health.staleInFlight.total ?? (health.staleInFlight.te + health.staleInFlight.en)} stale lease(s)
                           </p>
                         )}
                       </>

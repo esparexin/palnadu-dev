@@ -96,8 +96,10 @@ export interface QueueHealthBreakdown {
   pending: { te: number; en: number; total: number };
   failed: { te: number; en: number; total: number };
   inFlight: { te: number; en: number; total: number };
+  staleInFlight?: { te: number; en: number; total: number };
   healthy: boolean;
   replenishmentNeeded: { te: boolean; en: boolean };
+  supplyExhausted?: { te: boolean; en: boolean };
 }
 
 export interface AutomationStatus {

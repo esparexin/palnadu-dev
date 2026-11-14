@@ -33,6 +33,7 @@ function createMockPrisma({ topics = [], posts = [], settings = [] } = {}) {
           if (where.language && t.language !== where.language) return false;
           if (where.status && t.status !== where.status) return false;
           if (where.attempts?.lt !== undefined && t.attempts >= where.attempts.lt) return false;
+          if (where.claimedAt?.lt && (!t.claimedAt || t.claimedAt >= where.claimedAt.lt)) return false;
           return true;
         }).length,
       create: async ({ data }) => {
@@ -158,11 +159,13 @@ describe('Phase 4: Sustainable Bilingual Topic Supply & Queue Health', () => {
   });
 
   it('observable queue health: getStatus serializes language health and replenishment flags accurately', async () => {
+    const staleTime = new Date(Date.now() - 10 * 60 * 1000);
     const topics = [
       { id: '1', topicKey: 'te-1', language: BlogLanguage.te, status: TopicStatus.PENDING, attempts: 0 },
       { id: '2', topicKey: 'te-2', language: BlogLanguage.te, status: TopicStatus.PENDING, attempts: 0 },
       { id: '3', topicKey: 'en-1', language: BlogLanguage.en, status: TopicStatus.PENDING, attempts: 0 },
       { id: '4', topicKey: 'en-fail', language: BlogLanguage.en, status: TopicStatus.FAILED, attempts: 3 },
+      { id: '5', topicKey: 'te-stale', language: BlogLanguage.te, status: TopicStatus.CLAIMED, attempts: 1, claimedAt: staleTime },
     ];
     const prisma = createMockPrisma({ topics });
     const mockDiscovery = {
@@ -177,9 +180,28 @@ describe('Phase 4: Sustainable Bilingual Topic Supply & Queue Health', () => {
     assert.equal(status.queueHealth.pending.en, 1);
     assert.equal(status.queueHealth.failed.en, 1);
     assert.equal(status.queueHealth.failed.te, 0);
+    assert.equal(status.queueHealth.inFlight.te, 1);
+    assert.equal(status.queueHealth.staleInFlight?.te, 1, 'Detects 1 stale Telugu lease');
     assert.equal(status.queueHealth.healthy, false, 'healthy should be false when pending < 10');
     assert.equal(status.queueHealth.replenishmentNeeded.te, true);
     assert.equal(status.queueHealth.replenishmentNeeded.en, true);
+  });
+
+  it('exhausted catalog safety: never recycles published or failed topics, reports exhausted state', async () => {
+    const allTe = getAllTeluguSeeds();
+    // Simulate all Telugu seeds already published
+    const posts = allTe.map((s) => ({ topicKey: toTopicKey(s.topic), language: BlogLanguage.te, status: 'PUBLISHED' }));
+    const prisma = createMockPrisma({ topics: [], posts });
+    const queueService = new BlogQueueService(prisma, { isLikelyDuplicateTopic: async () => false });
+
+    // Replenishment returns 0 because all seeds are already consumed
+    const enqueued = await queueService.replenishQueueIfLow(10, 15, BlogLanguage.te);
+    assert.equal(enqueued, 0, 'Must not enqueue or recycle consumed topics');
+
+    const statusService = new BlogStatusService(prisma, { sourceStatuses: async () => [], coverageReport: async () => ({ topicsCovered: [], keywordsCovered: [], intentsCovered: {} }) });
+    const status = await statusService.getStatus();
+    assert.equal(status.queueHealth.supplyExhausted?.te, true, 'Honest supplyExhausted indicator');
+    assert.equal(status.queueHealth.healthy, false, 'Queue cannot be healthy when catalog is exhausted');
   });
 
   it('proactive batch replenishment: replenishes queue before claims if backlog is low', async () => {
