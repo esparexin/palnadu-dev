@@ -39,6 +39,7 @@ export class BlogQueueService {
       const done =
         row.status === TopicStatus.COMPLETED || generatedKeys.has(`${row.topicKey}::${row.language}`);
       return {
+        id: row.id,
         topicKey: row.topicKey,
         topic: row.topic,
         categorySlug: row.categorySlug,
@@ -57,6 +58,12 @@ export class BlogQueueService {
               ? ('FAILED' as const)
               : ('PENDING' as const),
         attempts: row.attempts,
+        lastError: row.lastError,
+        nextRetryAt: row.nextRetryAt ? row.nextRetryAt.toISOString() : null,
+        claimedAt: row.claimedAt ? row.claimedAt.toISOString() : null,
+        claimedBy: row.claimedBy,
+        createdAt: row.createdAt.toISOString(),
+        updatedAt: row.updatedAt.toISOString(),
       };
     });
   }

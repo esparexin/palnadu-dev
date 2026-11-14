@@ -5,6 +5,7 @@ import type { AutomationStatus, BilingualStatus, BlogTopic } from '@palnadu/type
 import { X, ListChecks, Sparkles, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { getQueueItemDiagnostic } from './blog-queue-diagnostics.util';
 
 interface BlogQueueModalProps {
   open: boolean;
@@ -154,16 +155,14 @@ export function BlogQueueModal({
                 {automationStatus.upcomingQueue && automationStatus.upcomingQueue.length > 0 ? (
                   <div className="space-y-2">
                     {automationStatus.upcomingQueue.map((item: BlogTopic, idx: number) => {
-                      const isCompleted = item.status === 'COMPLETED';
-                      const isClaimed = item.status === 'CLAIMED';
-                      const isFailed = item.status === 'FAILED';
+                      const diag = getQueueItemDiagnostic(item);
                       return (
-                        <div key={item.id || item.topicKey || idx} className="rounded-lg border border-palnadu-border bg-white p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
-                          <div className="space-y-1">
+                        <div key={item.id || item.topicKey || idx} className="rounded-lg border border-palnadu-border bg-white p-3 flex flex-col sm:flex-row sm:items-start justify-between gap-3 text-xs">
+                          <div className="space-y-1.5 flex-1 min-w-0">
                             <div className="flex flex-wrap items-center gap-2">
                               <span className="font-semibold text-palnadu-dark">{item.topic}</span>
-                              <span className={cn('px-2 py-0.5 rounded text-xs font-mono font-bold uppercase border', isCompleted ? 'bg-palnadu-teal/10 text-palnadu-teal-dark border-palnadu-teal/30' : isClaimed ? 'bg-palnadu-blue/10 text-palnadu-blue border-palnadu-blue/30' : isFailed ? 'bg-palnadu-error/10 text-palnadu-error border-palnadu-error/30' : 'bg-palnadu-warning/10 text-palnadu-warning border-palnadu-warning/30')}>
-                                {isCompleted ? 'Published' : isClaimed ? 'In-Flight' : isFailed ? 'Failed' : 'Pending'}
+                              <span className={cn('px-2 py-0.5 rounded text-xs font-mono font-bold uppercase border', diag.badgeClassName)}>
+                                {diag.badgeLabel}
                               </span>
                               <span className="px-1.5 py-0.5 rounded text-xs font-mono font-bold uppercase border bg-palnadu-light-blue text-palnadu-blue border-palnadu-blue/20">
                                 {item.language === 'te' ? 'Telugu' : 'English'}
@@ -171,13 +170,27 @@ export function BlogQueueModal({
                             </div>
                             <p className="text-xs text-palnadu-secondary">
                               Category: <span className="font-mono">{item.categorySlug}</span> • Target: {item.targetLocation || 'Global'}
-                              {item.attempts > 0 ? ` • Attempts: ${item.attempts}` : ''}
+                              {item.attempts > 0 ? ` • Attempts: ${item.attempts}/3` : ''}
+                              {diag.retryTimingText ? ` • ${diag.retryTimingText}` : ''}
                             </p>
+                            {diag.errorAnalysis && (
+                              <div className="rounded-md border border-palnadu-border/70 bg-palnadu-off-white/40 p-2 text-xs space-y-1">
+                                <div className="flex items-center gap-1.5">
+                                  <span className="font-mono font-bold text-xs uppercase px-1.5 py-0.5 rounded border bg-palnadu-warning/10 text-palnadu-warning border-palnadu-warning/30">
+                                    {diag.errorAnalysis.category}
+                                  </span>
+                                  <span className="text-palnadu-secondary font-medium">Last error report</span>
+                                </div>
+                                <p className="text-palnadu-body font-mono text-xs break-words line-clamp-2">
+                                  {diag.errorAnalysis.sanitizedMessage}
+                                </p>
+                              </div>
+                            )}
                           </div>
-                          {!isCompleted && !isClaimed && (
+                          {diag.canManuallyGenerate && (
                             <Button size="sm" variant="secondary" onClick={() => onGenerateFromTopic(item)} disabled={generatingAi} className="h-8 text-xs shrink-0 self-end sm:self-auto">
                               {generatingAi ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : null}
-                              Generate
+                              {diag.buttonLabel}
                             </Button>
                           )}
                         </div>
