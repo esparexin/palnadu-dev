@@ -75,6 +75,22 @@ export class BlogComposerService {
     );
     const llmProvider = draft.llmProvider ?? 'unknown';
 
+    if (existingSlugs.has(draft.slug)) {
+      let candidateSlug = categorySlug && !draft.slug.includes(categorySlug)
+        ? `${draft.slug}-${categorySlug}`
+        : `${draft.slug}-guide`;
+      let counter = 2;
+      while (existingSlugs.has(candidateSlug)) {
+        candidateSlug = `${draft.slug}-${counter++}`;
+      }
+      draft.slug = candidateSlug;
+    }
+    if (existingTitles.has(draft.title.toLowerCase().trim())) {
+      const loc = topicRow.targetLocation?.split(',')[0]?.trim();
+      const suffix = loc && !draft.title.includes(loc) ? ` in ${loc}` : ' - Technical Guide';
+      draft.title = `${draft.title}${suffix}`.slice(0, 120);
+    }
+
     const images = await this.imageService.sourceImagesForArticle(topic, categorySlug, 4);
     const fallbackCover =
       (FALLBACK_VAULT[categorySlug] || FALLBACK_VAULT['website-development'] || FALLBACK_VAULT['default'])[0]?.url;
