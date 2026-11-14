@@ -10,6 +10,7 @@ import { SearchIntent } from '../topic-identity';
 import { BlogLanguage } from '@prisma/client';
 import { ClaimedTopic } from './types';
 import { embedContextualBacklinks } from './backlink-policy';
+import { buildLanguageCanonicalUrl } from './blog-url.util';
 
 export interface ComposedArticle {
   draft: any;
@@ -74,6 +75,23 @@ export class BlogComposerService {
       language,
     );
     const llmProvider = draft.llmProvider ?? 'unknown';
+
+    if (existingSlugs.has(draft.slug)) {
+      let candidateSlug = categorySlug && !draft.slug.includes(categorySlug)
+        ? `${draft.slug}-${categorySlug}`
+        : `${draft.slug}-guide`;
+      let counter = 2;
+      while (existingSlugs.has(candidateSlug)) {
+        candidateSlug = `${draft.slug}-${counter++}`;
+      }
+      draft.slug = candidateSlug;
+      draft.canonicalUrl = buildLanguageCanonicalUrl(candidateSlug, topicRow.language);
+    }
+    if (existingTitles.has(draft.title.toLowerCase().trim())) {
+      const loc = topicRow.targetLocation?.split(',')[0]?.trim();
+      const suffix = loc && !draft.title.includes(loc) ? ` in ${loc}` : ' - Technical Guide';
+      draft.title = `${draft.title}${suffix}`.slice(0, 120);
+    }
 
     const images = await this.imageService.sourceImagesForArticle(topic, categorySlug, 4);
     const fallbackCover =

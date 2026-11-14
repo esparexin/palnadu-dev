@@ -54,6 +54,15 @@ export const SYNONYMS: Record<string, string> = {
   system: 'system', systems: 'system', platform: 'system', software: 'system',
   tool: 'system', solution: 'system', solutions: 'system', app: 'system',
   applications: 'system', portal: 'system',
+  // modernizing & transformation
+  modernize: 'modernize', modernizes: 'modernize', modernizing: 'modernize', modernization: 'modernize',
+  automate: 'automation', automates: 'automation', automating: 'automation',
+  transform: 'transform', transforms: 'transform', transforming: 'transform', transformation: 'transform',
+  optimize: 'optimize', optimizes: 'optimize', optimizing: 'optimize', optimization: 'optimize',
+  manage: 'management', manages: 'management', managing: 'management',
+  deliver: 'delivery', delivers: 'delivery', delivering: 'delivery',
+  track: 'tracking', tracks: 'tracking', tracking: 'tracking',
+  grow: 'growing', grows: 'growing', growing: 'growing',
   // store
   store: 'ecommerce', shop: 'ecommerce', online: 'ecommerce',
 };

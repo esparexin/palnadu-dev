@@ -97,7 +97,11 @@ export class BlogQueueService {
           categorySlug: candidate.categorySlug,
           targetLocation: candidate.targetLocation ?? null,
           searchIntent: candidate.searchIntent ?? canonical.intent,
-          primaryKeyword: candidate.primaryKeyword ?? canonical.normalizedTopic,
+          primaryKeyword:
+            candidate.primaryKeyword ??
+            (language === BlogLanguage.te
+              ? candidate.topic.replace(/[?।!,]/g, '').replace(/\s+/g, ' ').trim().slice(0, 70)
+              : canonical.normalizedTopic),
           keywords: candidate.keywords ?? [],
           referenceSources: candidate.referenceSources ?? [],
         },

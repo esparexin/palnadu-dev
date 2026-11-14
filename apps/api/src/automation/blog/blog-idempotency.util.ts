@@ -60,7 +60,7 @@ export async function recordSingleArticleFailure(params: {
 }): Promise<void> {
   const msg = params.err instanceof Error ? params.err.message : String(params.err);
   const exhausted = params.currentAttempts + 1 >= params.maxAttempts;
-  const permanent = msg.startsWith('validation:') || exhausted;
+  const permanent = exhausted;
   await params.prisma.blogTopic.update({
     where: { topicKey_language: { topicKey: params.topicKey, language: params.language } },
     data: {

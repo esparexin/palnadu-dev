@@ -84,7 +84,7 @@ export class BlogBatchService {
 
       const currentAttempts = (topic.attempts ?? 0) + 1;
       const exhausted = currentAttempts >= this.queueService.maxAttempts;
-      const permanent = reason === 'validation_failed' || exhausted;
+      const permanent = exhausted;
 
       await this.prisma.blogTopic.update({
         where: { topicKey_language: { topicKey, language: topic.language } },

@@ -10,6 +10,7 @@ import {
   REFERENCE_SOURCES,
   isViableTopicPhrase,
 } from './seo-sources';
+import { DISCOVERY_SEED_PHRASES } from './discovery-seeds';
 
 /**
  * Website intelligence + reference-source discovery.
@@ -28,20 +29,7 @@ export class TopicDiscoveryService {
   private readonly logger = new Logger(TopicDiscoveryService.name);
 
   /** Seeds used when no live source yields anything useful. */
-  private readonly seedPhrases = [
-    'website development guntur',
-    'mobile app development guntur',
-    'billing software andhra pradesh',
-    'school management software',
-    'local seo guntur',
-    'erp software palnadu',
-    'ecommerce website cost',
-    'custom software development andhra pradesh',
-    'startup website development andhra pradesh',
-    'entrepreneur digital solutions guntur',
-    'new business website palnadu',
-    'startup mvp development andhra pradesh',
-  ];
+  private readonly seedPhrases = DISCOVERY_SEED_PHRASES;
 
   constructor(
     private readonly prisma: PrismaService,

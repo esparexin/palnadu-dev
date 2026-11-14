@@ -7,7 +7,9 @@ export function checkKeywordRelevance(d: GeneratedBlogDraft): CheckResult {
   const body = d.content.toLowerCase();
   const title = (d.title ?? '').toLowerCase();
   const words = primary.split(/\s+/).filter((w) => w.length > 2);
-  const allWordsPresent = words.length > 0 && words.every((w) => body.includes(w) || title.includes(w));
+  const matchedWords = words.filter((w) => body.includes(w) || title.includes(w)).length;
+  const wordThreshold = words.length <= 4 ? words.length : Math.ceil(words.length * 0.7);
+  const allWordsPresent = words.length > 0 && matchedWords >= wordThreshold;
   const primaryInBody = primary.length > 0 && (body.includes(primary) || title.includes(primary) || allWordsPresent);
   const secondaryCount = d.secondaryKeywords?.length ?? 0;
 
@@ -35,7 +37,7 @@ export function checkContentOriginality(
   const occurrences = primary ? body.split(primary).length - 1 : 0;
   const density = wordCount > 0 ? occurrences / wordCount : 0;
   const stuffed = primary.length > 0 && density > 0.03;
-  const minWords = isTelugu ? 400 : 600;
+  const minWords = isTelugu ? 300 : 600;
   const tooShort = wordCount < minWords;
   const isTemplate = d.isTemplateFallback === true;
 
