@@ -48,13 +48,17 @@ export class BlogAutomationService {
     languages?: BlogLanguage[],
   ): Promise<{ discovered: number; enqueued: number; rejected: string[] }> {
     const targetLanguages = languages ?? (await this.resolveActiveLanguages());
-    return enqueueDiscoveredTopicsForLanguages({
+    const res = await enqueueDiscoveredTopicsForLanguages({
       logger: this.logger,
       discoveryService: this.discoveryService,
       enqueueTopic: (c) => this.queueService.enqueueTopic(c),
       languages: targetLanguages,
       limit,
     });
+    for (const lang of targetLanguages) {
+      await this.queueService.replenishQueueIfLow(10, 15, lang);
+    }
+    return res;
   }
 
   private async resolveActiveLanguages(): Promise<BlogLanguage[]> {
@@ -64,9 +68,7 @@ export class BlogAutomationService {
   }
 
   @Cron(DAILY_CRON_EXPRESSION)
-  handleDailyCron() {
-    return this.runDailyAutomation('cron');
-  }
+  handleDailyCron() { return this.runDailyAutomation('cron'); }
 
   runDailyAutomation(source: DailyCronTriggerSource = 'cron', force = false) {
     return runDailyCronBatch(this.prisma, this.logger, source, force, () =>
@@ -80,9 +82,7 @@ export class BlogAutomationService {
     );
   }
 
-  getDailyCronStatus() {
-    return readDailyCronStatus(this.prisma);
-  }
+  getDailyCronStatus() { return readDailyCronStatus(this.prisma); }
 
   private pipelineDeps() {
     return {
@@ -231,19 +231,8 @@ export class BlogAutomationService {
     );
   }
 
-  async readBilingualSwitch(): Promise<BilingualConfig> {
-    return this.bilingualService.readBilingualSwitch();
-  }
-
-  async getBilingualStatus(): Promise<BilingualConfig & { pending: { te: number; en: number } }> {
-    return this.bilingualService.getBilingualStatus();
-  }
-
-  async setBilingualConfig(input: { enabled?: boolean; te?: number; en?: number }): Promise<BilingualConfig> {
-    return this.bilingualService.setBilingualConfig(input);
-  }
-
-  async getStatus() {
-    return this.statusService.getStatus();
-  }
+  async readBilingualSwitch(): Promise<BilingualConfig> { return this.bilingualService.readBilingualSwitch(); }
+  async getBilingualStatus() { return this.bilingualService.getBilingualStatus(); }
+  async setBilingualConfig(input: { enabled?: boolean; te?: number; en?: number }) { return this.bilingualService.setBilingualConfig(input); }
+  async getStatus() { return this.statusService.getStatus(); }
 }

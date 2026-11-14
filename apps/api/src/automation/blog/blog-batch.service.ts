@@ -56,6 +56,29 @@ export class BlogBatchService {
     });
     const selected = allocateQuota(pending, quota);
 
+    const teSelected = selected.filter((t) => t.language === 'te').length;
+    const enSelected = selected.filter((t) => t.language === 'en').length;
+    if (teSelected < quota.te) {
+      const deficit = quota.te - teSelected;
+      this.logger.warn(`Telugu queue deficit: allocated ${teSelected}/${quota.te} (deficit: ${deficit})`);
+      rejected.push({
+        topicKey: 'deficit:te',
+        topic: `[Telugu Queue Deficit] Wanted ${quota.te}, only found ${teSelected}`,
+        reason: 'generation_failed',
+        detail: `Insufficient pending Telugu topics in queue (deficit: ${deficit}). Queue replenishment needed.`,
+      });
+    }
+    if (enSelected < quota.en) {
+      const deficit = quota.en - enSelected;
+      this.logger.warn(`English queue deficit: allocated ${enSelected}/${quota.en} (deficit: ${deficit})`);
+      rejected.push({
+        topicKey: 'deficit:en',
+        topic: `[English Queue Deficit] Wanted ${quota.en}, only found ${enSelected}`,
+        reason: 'generation_failed',
+        detail: `Insufficient pending English topics in queue (deficit: ${deficit}). Queue replenishment needed.`,
+      });
+    }
+
     for (const row of selected) {
       const topic = await this.queueService.claimTopicById(workerId, row, this.queueService.maxAttempts);
       if (!topic) continue;

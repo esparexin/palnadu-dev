@@ -23,10 +23,10 @@ export function getAllInitialSeeds(
 
 export function inferCategoryFromTopic(phrase: string, primaryKeyword = ''): string {
   const p = `${phrase} ${primaryKeyword}`.toLowerCase();
-  if (/\bseo\b/.test(p)) return 'local-seo-business';
-  if (/mobile app|android|ios|app development/.test(p)) return 'app-development';
-  if (/school|admission|fee portal/.test(p)) return 'school-websites';
-  if (/saas|mvp|startup|entrepreneur|new business|business launch|idea to/.test(p)) return 'startups';
+  if (/\bseo\b|ఎస్‌ఇ‌ఓ|ఎస్ఈఓ|మార్కెటింగ్|డిజిటల్ మార్కెటింగ్|సెర్చ్ ఇంజిన్/.test(p)) return 'local-seo-business';
+  if (/mobile app|android|ios|app development|మొబైల్ యాప్|యాప్ డెవలప్‌మెంట్|ఆండ్రాయిడ్/.test(p)) return 'app-development';
+  if (/school|admission|fee portal|పాఠశాల|కళాశాల|విద్యా సంస్థ/.test(p)) return 'school-websites';
+  if (/saas|mvp|startup|entrepreneur|new business|business launch|idea to|స్టార్టప్|సాస్|ఎమ్‌వీ‌పీ/.test(p)) return 'startups';
   return 'website-development';
 }
 

@@ -127,9 +127,14 @@ export function BlogQueueModal({
                     <p className={cn('text-xs font-bold mt-1', bilingualStatus?.enabled ? 'text-palnadu-teal-dark' : 'text-palnadu-secondary')}>
                       {bilingualStatus?.enabled ? 'Bilingual (Active)' : 'English Only'}
                     </p>
-                    <p className="text-xs text-palnadu-secondary mt-1">
-                      {bilingualStatus?.quota?.te ?? 2} TE / {bilingualStatus?.quota?.en ?? 3} EN
-                    </p>
+                    <div className="text-xs text-palnadu-secondary mt-1 space-y-0.5">
+                      <p>Quota: {bilingualStatus?.quota?.te ?? 2} TE / {bilingualStatus?.quota?.en ?? 3} EN</p>
+                      {bilingualStatus?.pending && (
+                        <p className="text-palnadu-dark font-medium">
+                          Queued: {bilingualStatus.pending.te} TE • {bilingualStatus.pending.en} EN
+                        </p>
+                      )}
+                    </div>
                   </div>
                   {canManageSettings && (
                     <Button type="button" size="sm" variant="outline" disabled={togglingBilingual || !bilingualStatus} onClick={onToggleBilingual} className="mt-2 h-7 text-xs w-full justify-center">
