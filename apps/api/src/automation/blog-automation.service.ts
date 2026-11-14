@@ -48,15 +48,26 @@ export class BlogAutomationService {
     languages?: BlogLanguage[],
   ): Promise<{ discovered: number; enqueued: number; rejected: string[] }> {
     const targetLanguages = languages ?? (await this.resolveActiveLanguages());
-    const res = await enqueueDiscoveredTopicsForLanguages({
-      logger: this.logger,
-      discoveryService: this.discoveryService,
-      enqueueTopic: (c) => this.queueService.enqueueTopic(c),
-      languages: targetLanguages,
-      limit,
-    });
+    let res = { discovered: 0, enqueued: 0, rejected: [] as string[] };
+    try {
+      res = await enqueueDiscoveredTopicsForLanguages({
+        logger: this.logger,
+        discoveryService: this.discoveryService,
+        enqueueTopic: (c) => this.queueService.enqueueTopic(c),
+        languages: targetLanguages,
+        limit,
+      });
+    } catch (err) {
+      this.logger.warn(`External discovery provider failure: ${String(err)}`);
+      res.rejected.push(`discovery_provider_error: ${String(err)}`);
+    }
+
     for (const lang of targetLanguages) {
-      await this.queueService.replenishQueueIfLow(10, 15, lang);
+      try {
+        await this.queueService.replenishQueueIfLow(10, 15, lang);
+      } catch (err) {
+        this.logger.warn(`Replenishment failed for ${lang}: ${String(err)}`);
+      }
     }
     return res;
   }
@@ -71,15 +82,11 @@ export class BlogAutomationService {
   handleDailyCron() { return this.runDailyAutomation('cron'); }
 
   runDailyAutomation(source: DailyCronTriggerSource = 'cron', force = false) {
-    return runDailyCronBatch(this.prisma, this.logger, source, force, () =>
-      executeDailyPipelineSteps(this.logger, source, this.pipelineDeps()),
-    );
+    return runDailyCronBatch(this.prisma, this.logger, source, force, () => executeDailyPipelineSteps(this.logger, source, this.pipelineDeps()));
   }
 
   startDailyAutomationInBackground(source: DailyCronTriggerSource = 'cron', force = false) {
-    return startDailyCronInBackground(this.prisma, this.logger, source, force, () =>
-      executeDailyPipelineSteps(this.logger, source, this.pipelineDeps()),
-    );
+    return startDailyCronInBackground(this.prisma, this.logger, source, force, () => executeDailyPipelineSteps(this.logger, source, this.pipelineDeps()));
   }
 
   getDailyCronStatus() { return readDailyCronStatus(this.prisma); }
@@ -87,27 +94,18 @@ export class BlogAutomationService {
   private pipelineDeps() {
     return {
       discoverAndEnqueue: () => this.discoverAndEnqueue(),
-      replenishQueueIfLow: async (min: number) =>
-        this.queueService.replenishQueueForLanguages(min, 15, await this.resolveActiveLanguages()),
+      replenishQueueIfLow: async (min: number) => this.queueService.replenishQueueForLanguages(min, 15, await this.resolveActiveLanguages()),
       readBilingualSwitch: () => this.readBilingualSwitch(),
       generateBilingualBatch: this.generateBilingualBatch.bind(this),
       generateBatch: this.generateBatch.bind(this),
     };
   }
 
-  async generateBatch(
-    count = 5,
-    forcePublish = false,
-    workerId = `manual:${process.pid}:${Date.now()}`,
-  ): Promise<{ results: GenerationResult[]; rejected: RejectedTopic[] }> {
+  async generateBatch(count = 5, forcePublish = false, workerId = `manual:${process.pid}:${Date.now()}`) {
     return this.batchService.generateBatch(count, forcePublish, workerId, (t, f, w) => this.generateForTopic(t, f, w));
   }
 
-  async generateBilingualBatch(
-    quota: BilingualQuota,
-    forcePublish = false,
-    workerId = `manual:${process.pid}:${Date.now()}`,
-  ): Promise<{ results: GenerationResult[]; rejected: RejectedTopic[] }> {
+  async generateBilingualBatch(quota: BilingualQuota, forcePublish = false, workerId = `manual:${process.pid}:${Date.now()}`) {
     return this.batchService.generateBilingualBatch(quota, forcePublish, workerId, (t, f, w) => this.generateForTopic(t, f, w));
   }
 

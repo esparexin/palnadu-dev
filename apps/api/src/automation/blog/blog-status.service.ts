@@ -15,6 +15,7 @@ export class BlogStatusService {
     const [
       totalPosts, draftPosts, publishedPosts, archivedPosts,
       failedTopics, claimedTopics, pendingTopics, completedTopics, activeQueue,
+      pendingTe, pendingEn, failedTe, failedEn, claimedTe, claimedEn,
     ] = await Promise.all([
       this.prisma.blogPost.count(),
       this.prisma.blogPost.count({ where: { status: 'DRAFT' } }),
@@ -29,6 +30,12 @@ export class BlogStatusService {
         orderBy: { createdAt: 'asc' },
         take: 50,
       }),
+      this.prisma.blogTopic.count({ where: { status: TopicStatus.PENDING, language: 'te' as any } }),
+      this.prisma.blogTopic.count({ where: { status: TopicStatus.PENDING, language: 'en' as any } }),
+      this.prisma.blogTopic.count({ where: { status: TopicStatus.FAILED, language: 'te' as any } }),
+      this.prisma.blogTopic.count({ where: { status: TopicStatus.FAILED, language: 'en' as any } }),
+      this.prisma.blogTopic.count({ where: { status: TopicStatus.CLAIMED, language: 'te' as any } }),
+      this.prisma.blogTopic.count({ where: { status: TopicStatus.CLAIMED, language: 'en' as any } }),
     ]);
 
     const queueRows =
@@ -38,6 +45,14 @@ export class BlogStatusService {
 
     const autoPublishSetting = await this.prisma.siteSetting.findUnique({ where: { key: 'auto_publish_blogs' } });
     const coverage = await this.discoveryService.coverageReport();
+
+    const queueHealth = {
+      pending: { te: pendingTe, en: pendingEn, total: pendingTopics },
+      failed: { te: failedTe, en: failedEn, total: failedTopics },
+      inFlight: { te: claimedTe, en: claimedEn, total: claimedTopics },
+      healthy: pendingTe >= 10 && pendingEn >= 10,
+      replenishmentNeeded: { te: pendingTe < 10, en: pendingEn < 10 },
+    };
 
     return {
       engineStatus: 'active',
@@ -55,6 +70,7 @@ export class BlogStatusService {
         intentsCovered: coverage.intentsCovered,
       },
       upcomingQueue: queueRows,
+      queueHealth,
     };
   }
 }

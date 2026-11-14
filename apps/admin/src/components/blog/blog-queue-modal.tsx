@@ -92,15 +92,25 @@ export function BlogQueueModal({
                 <div className="rounded-lg border border-palnadu-border bg-palnadu-off-white/40 p-3">
                   <p className="text-xs font-semibold text-palnadu-secondary uppercase tracking-wider">Queue Progress</p>
                   {(() => {
-                    const queueCompleted = automationStatus.statistics?.queueCompleted ?? 0;
-                    const queuePending = automationStatus.statistics?.queuePending ?? 0;
-                    const queueInFlight = automationStatus.statistics?.queueInFlight ?? 0;
-                    const queueFailed = automationStatus.statistics?.queueFailed ?? 0;
+                    const stats = automationStatus.statistics;
+                    const queueCompleted = stats?.queueCompleted ?? 0;
+                    const queuePending = stats?.queuePending ?? 0;
+                    const queueInFlight = stats?.queueInFlight ?? 0;
+                    const queueFailed = stats?.queueFailed ?? 0;
                     const totalQueue = queuePending + queueCompleted + queueInFlight + queueFailed;
+                    const health = automationStatus.queueHealth;
                     return (
                       <>
                         <p className="text-xs font-bold text-palnadu-dark mt-1">{queueCompleted} Done / {totalQueue} Total</p>
-                        <p className="text-xs text-palnadu-secondary mt-1">{queuePending} Pending • {queueInFlight} In-Flight</p>
+                        <p className="text-xs text-palnadu-secondary mt-1">
+                          {health ? `${health.pending.te} TE • ${health.pending.en} EN Pending` : `${queuePending} Pending`}
+                          {queueFailed > 0 ? ` • ${queueFailed} Failed` : ''}
+                        </p>
+                        {health && (
+                          <p className={cn('text-xs font-medium mt-1', health.healthy ? 'text-palnadu-teal-dark' : 'text-palnadu-warning')}>
+                            {health.healthy ? '● Supply Healthy' : '▲ Low Stock: Auto-Replenish Active'}
+                          </p>
+                        )}
                       </>
                     );
                   })()}

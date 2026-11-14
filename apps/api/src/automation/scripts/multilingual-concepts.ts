@@ -34,9 +34,9 @@ export const LOCATION_CONCEPTS: Record<ContentLanguage, Record<string, string>> 
   },
   te: {
     'గుంటూర్': 'guntur', 'గుంటూరు': 'guntur',
-    'పాలనాడు': 'palnadu',
+    'పాలనాడు': 'palnadu', 'పల్నాడు': 'palnadu',
     'నరసాపురం': 'narasaraopet', 'నరసారావుపేట': 'narasaraopet', 'నరసరావుపేట': 'narasaraopet',
-    'చిలకాలురిపేట': 'chilakaluripet',
+    'చిలకాలురిపేట': 'chilakaluripet', 'చిలకలూరిపేట': 'chilakaluripet',
     'వినుకొండ': 'vinukonda',
     'సత్తెనపల్లి': 'sattenapalle',
     'మచిర్ల': 'macherla', 'మాచేర్ల': 'macherla',

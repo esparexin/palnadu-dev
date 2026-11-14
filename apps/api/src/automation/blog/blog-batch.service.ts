@@ -23,6 +23,8 @@ export class BlogBatchService {
     const results: GenerationResult[] = [];
     const rejected: RejectedTopic[] = [];
 
+    await this.queueService.replenishQueueIfLow?.(10, 15, 'en' as any);
+
     for (let i = 0; i < count; i++) {
       const topic = await this.queueService.claimNextTopic(workerId, this.queueService.maxAttempts);
       if (!topic) break;
@@ -41,6 +43,9 @@ export class BlogBatchService {
     const results: GenerationResult[] = [];
     const rejected: RejectedTopic[] = [];
     const now = new Date();
+
+    await this.queueService.replenishQueueIfLow?.(10, 15, 'te' as any);
+    await this.queueService.replenishQueueIfLow?.(10, 15, 'en' as any);
 
     const pending = await this.prisma.blogTopic.findMany({
       where: {

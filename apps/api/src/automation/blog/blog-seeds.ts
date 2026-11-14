@@ -1,24 +1,17 @@
 import type { BlogLanguage } from '@prisma/client';
-import { CURATED_TOPIC_QUEUE, type QueueCandidate } from './types';
-import { TELUGU_CURATED_TOPIC_QUEUE } from './telugu-seeds';
+import type { QueueCandidate } from './types';
+import { getAllTeluguSeeds } from './telugu-matrix';
+import { getAllEnglishSeeds } from './english-matrix';
 
 export function getAllInitialSeeds(
-  _generatedKeys: Set<string>,
+  generatedKeys: Set<string> = new Set(),
   language: BlogLanguage = 'en' as BlogLanguage,
 ): QueueCandidate[] {
   if (language === ('te' as BlogLanguage)) {
-    return TELUGU_CURATED_TOPIC_QUEUE.map((t): QueueCandidate => ({
-      ...t,
-      language: 'te' as BlogLanguage,
-      source: 'curated-rotation',
-    }));
+    return getAllTeluguSeeds(generatedKeys);
   }
 
-  return CURATED_TOPIC_QUEUE.map((t): QueueCandidate => ({
-    ...t,
-    language: 'en' as BlogLanguage,
-    source: 'curated-rotation',
-  }));
+  return getAllEnglishSeeds(generatedKeys);
 }
 
 export function inferCategoryFromTopic(phrase: string, primaryKeyword = ''): string {
