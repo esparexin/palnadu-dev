@@ -13,9 +13,10 @@ import { OutreachGuideCard } from '@/components/campaigns/outreach-guide-card';
 import { IndividualOutreachModal } from '@/components/campaigns/individual-outreach-modal';
 import { IndividualOutreachTable } from '@/components/campaigns/individual-outreach-table';
 import { useCampaignData } from '@/components/campaigns/use-campaign-data';
+import { ConversationManager } from '@/components/campaigns/conversation-manager';
 
 export default function CampaignsPage() {
-  const [activeTab, setActiveTab] = useState<'outreach' | 'campaigns' | 'contacts'>('outreach');
+  const [activeTab, setActiveTab] = useState<'outreach' | 'campaigns' | 'contacts' | 'conversations'>('outreach');
   const [search, setSearch] = useState('');
   const [onlyNoWebsite, setOnlyNoWebsite] = useState(false);
 
@@ -92,6 +93,14 @@ export default function CampaignsPage() {
           >
             Business Contacts ({contacts.length})
           </button>
+          <button
+            onClick={() => setActiveTab('conversations')}
+            className={`rounded px-3 py-1 text-xs font-semibold transition-colors cursor-pointer ${
+              activeTab === 'conversations' ? 'bg-palnadu-white text-palnadu-dark shadow-sm' : 'text-palnadu-secondary hover:text-palnadu-dark'
+            }`}
+          >
+            Assistant Chats
+          </button>
         </div>
 
         {activeTab === 'contacts' && (
@@ -138,6 +147,10 @@ export default function CampaignsPage() {
 
       {activeTab === 'contacts' && (
         <ContactTable contacts={contacts} loading={loading} />
+      )}
+
+      {activeTab === 'conversations' && (
+        <ConversationManager />
       )}
 
       <IndividualOutreachModal

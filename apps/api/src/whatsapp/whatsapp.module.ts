@@ -3,6 +3,7 @@ import { PrismaModule } from '../prisma.module';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { WhatsAppWebhookController } from './whatsapp-webhook.controller';
 import { WhatsAppAdminController } from './whatsapp-admin.controller';
+import { WhatsAppConversationController } from './whatsapp-conversation.controller';
 import { WhatsAppWebhookService } from './whatsapp-webhook.service';
 import { WhatsAppMessageService } from './whatsapp-message.service';
 import { WhatsAppApiClient } from './whatsapp-api.client';
@@ -18,7 +19,11 @@ import { WhatsAppTakeoverService } from './whatsapp-takeover.service';
 
 @Module({
   imports: [PrismaModule, NotificationsModule],
-  controllers: [WhatsAppWebhookController, WhatsAppAdminController],
+  controllers: [
+    WhatsAppWebhookController,
+    WhatsAppAdminController,
+    WhatsAppConversationController,
+  ],
   providers: [
     WhatsAppWebhookService,
     WhatsAppMessageService,
