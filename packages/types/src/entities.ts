@@ -35,6 +35,7 @@ export interface Lead {
   whatsappConsentAt?: string;
   whatsappConsentSource?: string;
   whatsappConsentVersion?: string;
+  whatsappWamId?: string;
   status: LeadStatus;
   assignedTo?: string;
   notes?: string;

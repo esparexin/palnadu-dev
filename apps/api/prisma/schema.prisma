@@ -156,6 +156,7 @@ model Lead {
   whatsappConsentAt        DateTime?    @map("whatsapp_consent_at")
   whatsappConsentSource    String?      @map("whatsapp_consent_source")
   whatsappConsentVersion   String?      @map("whatsapp_consent_version")
+  whatsappWamId            String?      @unique @map("whatsapp_wam_id")
   status                   LeadStatus   @default(NEW)
   assignedToId       String?      @db.ObjectId
   assignedTo         User?        @relation("AssignedLeads", fields: [assignedToId], references: [id])
@@ -617,6 +618,30 @@ model WhatsAppWebhookLog {
   @@index([payloadHash])
   @@index([createdAt(sort: Desc)])
   @@map("whatsapp_webhook_logs")
+}
+
+model WhatsAppConversation {
+  id               String    @id @default(auto()) @map("_id") @db.ObjectId
+  customerPhone    String    @unique @map("customer_phone")
+  customerName     String?   @map("customer_name")
+  state            String    @default("IDLE")
+  selectedCategory String?   @map("selected_category")
+  selectedSubmenu  String?   @map("selected_submenu")
+  enquiryDraft     String?   @map("enquiry_draft")
+  humanTakeover    Boolean   @default(false) @map("human_takeover")
+  takenOverAt      DateTime? @map("taken_over_at")
+  takenOverById    String?   @map("taken_over_by_id")
+  takenOverByName  String?   @map("taken_over_by_name")
+  lastInboundWamId String?   @map("last_inbound_wam_id")
+  lastEnquiryWamId String?   @map("last_enquiry_wam_id")
+  lastInboundAt    DateTime? @map("last_inbound_at")
+  lastOutboundAt   DateTime? @map("last_outbound_at")
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  @@index([humanTakeover])
+  @@index([updatedAt(sort: Desc)])
+  @@map("whatsapp_conversations")
 }
 
 // ─── B2B Marketing Campaign Models ────────────────────────────
