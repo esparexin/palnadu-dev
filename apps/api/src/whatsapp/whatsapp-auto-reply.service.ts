@@ -32,8 +32,9 @@ export class WhatsAppAutoReplyService {
   ) {}
 
   isEnabled(): boolean {
-    const val = this.config.get<string>(WHATSAPP_CONFIG_KEYS.AUTO_REPLY_ENABLED);
-    return val !== 'false' && val !== '0' && this.apiClient.isConfigured();
+    const raw = this.config.get<string>(WHATSAPP_CONFIG_KEYS.AUTO_REPLY_ENABLED);
+    const val = raw ? raw.trim().toLowerCase() : '';
+    return val !== 'false' && val !== '0' && val !== 'off' && this.apiClient.isConfigured();
   }
 
   getCooldownHours(): number {

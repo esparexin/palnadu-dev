@@ -157,7 +157,7 @@ export class WhatsAppWebhookService {
                         this.logger.error(`Background assistant failed for ${saved.wamId}: ${msg}`);
                       });
                     });
-                  } else if (this.autoReplyService) {
+                  } else if (this.autoReplyService?.isEnabled()) {
                     setImmediate(() => {
                       this.autoReplyService?.handleAutoReply(saved).catch((err: unknown) => {
                         const msg = err instanceof Error ? err.message : String(err);
