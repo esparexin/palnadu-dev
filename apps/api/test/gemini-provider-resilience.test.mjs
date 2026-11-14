@@ -69,6 +69,28 @@ describe('Gemini Provider Resilience and Queue Recovery', () => {
       assert.equal(res.isUsableForGeneration, true);
       assert.equal(res.activeUsableModel, 'gemini-3.1-flash-lite');
     });
+
+    it('rejects MAX_TOKENS when candidate returns no usable text', async () => {
+      const mockFetch = async (url) => {
+        if (url.includes('/models?')) {
+          return {
+            ok: true, status: 200, headers: new Headers(),
+            json: async () => ({ models: [{ name: 'models/gemini-3.1-flash-lite', supportedGenerationMethods: ['generateContent'] }] }),
+          };
+        }
+        return {
+          ok: true, status: 200, headers: new Headers(),
+          json: async () => ({
+            candidates: [{ finishReason: 'MAX_TOKENS', content: { parts: [{ thought: 'thinking only...' }] } }],
+          }),
+        };
+      };
+
+      const service = new GeminiKeyVerificationService();
+      const res = await service.verifyKey('AIzaSyTestKeyMock1234567890', { fetchFn: mockFetch });
+      assert.equal(res.isUsableForGeneration, false);
+      assert.equal(res.models.tested[0].accessible, false);
+    });
   });
 
   describe('Google Error Classification', () => {
@@ -83,14 +105,20 @@ describe('Gemini Provider Resilience and Queue Recovery', () => {
       assert.equal(failure.stopAllModels, false);
     });
 
-    it('classifies 404 model not found as model-specific MODEL_ACCESS_DENIED without stopping other models', () => {
-      const failure = classifyGoogleError(404, {
+    it('distinguishes 404 model not found vs 403 genuine permission denial as non-retryable', () => {
+      const notFound = classifyGoogleError(404, {
         error: { status: 'NOT_FOUND', message: 'models/gemini-2.0-flash is not found for API version v1beta' },
       });
-      assert.equal(failure.code, 'MODEL_ACCESS_DENIED');
-      assert.equal(failure.isTemporary, false);
-      assert.equal(failure.modelSpecific, true);
-      assert.equal(failure.stopAllModels, false);
+      assert.equal(notFound.code, 'MODEL_ACCESS_DENIED');
+      assert.equal(notFound.retryable, false);
+      assert.ok(notFound.detail.includes('Model unavailable or unsupported'));
+
+      const forbidden = classifyGoogleError(403, {
+        error: { status: 'PERMISSION_DENIED', message: 'Caller does not have permission to access model' },
+      });
+      assert.equal(forbidden.code, 'MODEL_ACCESS_DENIED');
+      assert.equal(forbidden.retryable, false);
+      assert.ok(forbidden.detail.includes('Model access denied'));
     });
 
     it('classifies 401 invalid key as fatal and stops all models', () => {
@@ -103,7 +131,7 @@ describe('Gemini Provider Resilience and Queue Recovery', () => {
   });
 
   describe('Transient Queue Recovery and Replenishment', () => {
-    it('recognizes 503, timeout, and model configuration errors as transient', () => {
+    it('recognizes 503, timeout, and model configuration errors as transient while rejecting 403 permission denials', () => {
       assert.ok(isTransientFailureError('MODEL_OVERLOADED: 503 Service Unavailable'));
       assert.ok(isTransientFailureError('Model unavailable or unsupported: 404'));
       assert.ok(isTransientFailureError('Fetch failed: connection timeout'));
@@ -111,6 +139,8 @@ describe('Gemini Provider Resilience and Queue Recovery', () => {
       assert.equal(isTransientFailureError('INVALID_API_KEY: Google rejected'), false);
       assert.equal(isPermanentFailureError('validation: content_originality'), true);
       assert.equal(isPermanentFailureError('permission_denied'), true);
+      assert.equal(isPermanentFailureError('Model access denied: 403 Forbidden'), true);
+      assert.equal(isTransientFailureError('Model access denied: 403 Forbidden'), false);
     });
 
     it('recovers transient FAILED topics resetting attempts safely', async () => {

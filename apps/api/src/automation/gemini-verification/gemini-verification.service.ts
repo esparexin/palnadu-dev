@@ -137,9 +137,7 @@ export class GeminiKeyVerificationService {
         const text = Array.isArray(parts)
           ? parts.map((p: any) => (typeof p?.text === 'string' ? p.text : '')).filter(Boolean).join(' ').trim()
           : '';
-        const finishReason = candidate?.finishReason;
-        const hasContent = text.length > 0 || (candidate && ['STOP', 'MAX_TOKENS'].includes(finishReason));
-        if (hasContent) {
+        if (text.length > 0) {
           testedModels.push({
             model,
             accessible: true,
