@@ -65,6 +65,10 @@ export class WhatsAppTakeoverService {
     const cleanPhone = sanitizePhoneNumber(phone);
     if (!cleanPhone) throw new Error('Invalid recipient phone number');
 
+    // 1. Immediately activate human takeover BEFORE dispatching manual reply
+    // This atomically stops any in-flight or concurrent automated assistant/auto-reply from sending.
+    await this.setHumanTakeover(cleanPhone, true, admin);
+
     const sendResult = await this.apiClient.sendTextMessage({
       to: cleanPhone,
       text: text.trim(),
@@ -83,8 +87,6 @@ export class WhatsAppTakeoverService {
         rawPayload: sendResult as unknown as Prisma.InputJsonValue,
       },
     });
-
-    await this.setHumanTakeover(cleanPhone, true, admin);
 
     await this.prisma.whatsAppConversation.update({
       where: { customerPhone: cleanPhone },

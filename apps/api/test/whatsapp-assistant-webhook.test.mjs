@@ -48,6 +48,7 @@ describe('WhatsApp Webhook Assistant & Legacy Coordination', () => {
           if (rec) Object.assign(rec, data);
           return rec;
         },
+        delete: async () => null,
       },
       whatsAppConversation: {
         findUnique: async ({ where }) => conversations.get(where.customerPhone) || null,
@@ -61,6 +62,7 @@ describe('WhatsApp Webhook Assistant & Legacy Coordination', () => {
           if (rec) Object.assign(rec, data);
           return rec;
         },
+        delete: async () => null,
       },
       lead: { findUnique: async () => null, create: async ({ data }) => ({ id: 'lead_1', ...data }) },
     };

@@ -19,10 +19,7 @@ describe('WhatsApp Conversational Assistant - Comprehensive E2E Verification', (
 
     const mockPrisma = {
       lead: {
-        findUnique: async ({ where }) => {
-          if (where.whatsappWamId) return leads.get(where.whatsappWamId) || null;
-          return null;
-        },
+        findUnique: async ({ where }) => (where.whatsappWamId ? leads.get(where.whatsappWamId) || null : null),
         create: async ({ data }) => {
           const rec = { id: `lead_${Date.now()}`, ...data };
           leads.set(data.whatsappWamId, rec);
@@ -66,6 +63,7 @@ describe('WhatsApp Conversational Assistant - Comprehensive E2E Verification', (
           if (rec) Object.assign(rec, data);
           return rec;
         },
+        delete: async () => null,
       },
     };
 

@@ -4,6 +4,8 @@ import { PrismaService } from '../prisma.service';
 import { WhatsAppApiClient } from './whatsapp-api.client';
 import { WhatsAppConversationService } from './whatsapp-conversation.service';
 import { sanitizePhoneNumber, maskPhone } from './whatsapp-api.util';
+import { isOptOutKeywordText } from './whatsapp-opt-out.util';
+import { isPrismaP2002 } from './whatsapp-outreach-reservation.util';
 import { WHATSAPP_CONFIG_KEYS } from './whatsapp.constants';
 import {
   Prisma,
@@ -74,7 +76,21 @@ export class WhatsAppAssistantService {
     });
     if (existingReply) return null;
 
-    // 2. Load or initialize conversation
+    // 2. Opt-out keyword guard
+    if (isOptOutKeywordText(inboundMessage.body)) {
+      this.logger.log(`Bot reply skipped for ${masked}: inbound opt-out keyword.`);
+      return null;
+    }
+
+    // 3. 24-hour customer service window verification
+    const messageTime = inboundMessage.statusTimestamp || inboundMessage.createdAt;
+    const windowAgeMs = Date.now() - new Date(messageTime).getTime();
+    if (windowAgeMs > 24 * 60 * 60 * 1000) {
+      this.logger.warn(`Bot reply skipped for ${masked}: outside 24-hour window.`);
+      return null;
+    }
+
+    // 4. Load or initialize conversation
     let conv = await this.prisma.whatsAppConversation.findUnique({
       where: { customerPhone: phone },
     });
@@ -99,22 +115,9 @@ export class WhatsAppAssistantService {
       });
     }
 
-    // 3. Concurrency-safe human takeover verification
+    // 5. Concurrency-safe human takeover verification
     if (conv.humanTakeover) {
       this.logger.log(`Bot reply suppressed for ${masked}: human takeover is active.`);
-      return null;
-    }
-
-    // 4. Process state machine transition
-    const step = await this.conversationService.processCustomerMessage(inboundMessage, conv);
-
-    // 5. Pre-dispatch atomic re-verification: abort if takeover occurred during processing
-    const freshConv = await this.prisma.whatsAppConversation.findUnique({
-      where: { id: conv.id },
-      select: { humanTakeover: true },
-    });
-    if (freshConv?.humanTakeover) {
-      this.logger.warn(`Bot reply aborted for ${masked}: takeover activated right before send.`);
       return null;
     }
 
@@ -134,18 +137,31 @@ export class WhatsAppAssistantService {
         },
       });
     } catch (claimErr: unknown) {
-      if (
-        claimErr &&
-        typeof claimErr === 'object' &&
-        'code' in claimErr &&
-        (claimErr as { code: string }).code === 'P2002'
-      ) {
-        return null;
-      }
+      if (isPrismaP2002(claimErr)) return null;
       throw claimErr;
     }
 
-    // 7. Dispatch outbound WhatsApp message to Meta Cloud API
+    // 7. Process state machine transition
+    let step;
+    try {
+      step = await this.conversationService.processCustomerMessage(inboundMessage, conv);
+    } catch (stepErr: unknown) {
+      await this.prisma.whatsAppMessage?.delete?.({ where: { id: claimRecord.id } }).catch(() => null);
+      throw stepErr;
+    }
+
+    // 8. Pre-dispatch atomic re-verification: abort if takeover occurred during processing
+    const freshConv = await this.prisma.whatsAppConversation.findUnique({
+      where: { id: conv.id },
+      select: { humanTakeover: true },
+    });
+    if (freshConv?.humanTakeover) {
+      this.logger.warn(`Bot reply aborted for ${masked}: takeover activated before dispatch.`);
+      await this.prisma.whatsAppMessage?.delete?.({ where: { id: claimRecord.id } }).catch(() => null);
+      return null;
+    }
+
+    // 9. Dispatch outbound WhatsApp message to Meta Cloud API
     let sendResult;
     try {
       sendResult = await this.apiClient.sendTextMessage({
@@ -166,7 +182,7 @@ export class WhatsAppAssistantService {
 
     const assignedWamId = sendResult.messages?.[0]?.id || `wamid.bot.${Date.now()}`;
 
-    // 8. Update claim record and conversation state
+    // 10. Update claim record and conversation state
     const createdOutbound = await this.prisma.whatsAppMessage.update({
       where: { id: claimRecord.id },
       data: {

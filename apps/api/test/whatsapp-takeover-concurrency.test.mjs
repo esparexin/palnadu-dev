@@ -73,6 +73,7 @@ describe('WhatsApp Human Takeover, Concurrency & Feature Flags', () => {
           if (rec) Object.assign(rec, data);
           return rec;
         },
+        delete: async () => null,
         findMany: async () => Array.from(messages.values()),
       },
       lead: { findUnique: async () => null, create: async ({ data }) => ({ id: 'lead_1', ...data }) },

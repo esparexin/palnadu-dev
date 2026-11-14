@@ -4,6 +4,8 @@ import { PrismaService } from '../prisma.service';
 import { WhatsAppApiClient } from './whatsapp-api.client';
 import { WhatsAppOptOutService } from './whatsapp-opt-out.service';
 import { isOptOutKeywordText } from './whatsapp-opt-out.util';
+import { isPrismaP2002 } from './whatsapp-outreach-reservation.util';
+import { maskPhone } from './whatsapp-api.util';
 import {
   Prisma,
   WhatsAppDeliveryStatus,
@@ -29,9 +31,8 @@ export class WhatsAppAutoReplyService {
   ) {}
 
   isEnabled(): boolean {
-    const enabledVal = this.config.get<string>(WHATSAPP_CONFIG_KEYS.AUTO_REPLY_ENABLED);
-    if (enabledVal === 'false' || enabledVal === '0') return false;
-    return this.apiClient.isConfigured();
+    const val = this.config.get<string>(WHATSAPP_CONFIG_KEYS.AUTO_REPLY_ENABLED);
+    return val !== 'false' && val !== '0' && this.apiClient.isConfigured();
   }
 
   getCooldownHours(): number {
@@ -51,21 +52,30 @@ export class WhatsAppAutoReplyService {
   async handleAutoReply(
     inboundMessage: WhatsAppMessage,
   ): Promise<WhatsAppMessage | null> {
-    if (!this.isEnabled()) {
+    if (!this.isEnabled() || inboundMessage.direction !== WhatsAppMessageDirection.INBOUND) {
       return null;
     }
 
-    if (inboundMessage.direction !== WhatsAppMessageDirection.INBOUND) {
-      return null;
-    }
+    const recipientPhone = inboundMessage.from;
+    const maskedPhone = maskPhone(recipientPhone);
 
     if (isOptOutKeywordText(inboundMessage.body)) {
-      this.logger.log(`Auto-reply skipped for ${this.maskPhone(inboundMessage.from)}: inbound opt-out keyword.`);
+      this.logger.log(`Auto-reply skipped for ${maskedPhone}: inbound opt-out keyword.`);
       return null;
     }
 
-    if (this.optOutService && (await this.optOutService.isSuppressed(inboundMessage.from))) {
-      this.logger.log(`Auto-reply skipped for ${this.maskPhone(inboundMessage.from)}: recipient is opted out.`);
+    if (this.optOutService && (await this.optOutService.isSuppressed(recipientPhone))) {
+      this.logger.log(`Auto-reply skipped for ${maskedPhone}: recipient is opted out.`);
+      return null;
+    }
+
+    // Suppress legacy auto-reply if human takeover is active
+    const conversation = await this.prisma.whatsAppConversation?.findUnique({
+      where: { customerPhone: recipientPhone },
+      select: { humanTakeover: true },
+    });
+    if (conversation?.humanTakeover) {
+      this.logger.log(`Auto-reply skipped for ${maskedPhone}: human takeover is active.`);
       return null;
     }
 
@@ -78,8 +88,6 @@ export class WhatsAppAutoReplyService {
     }
 
     this.inFlightReplies.add(inboundMessage.wamId);
-    const recipientPhone = inboundMessage.from;
-    const maskedPhone = this.maskPhone(recipientPhone);
 
     try {
       // 1. Verify message is within WhatsApp's 24-hour customer service window
@@ -151,15 +159,8 @@ export class WhatsAppAutoReplyService {
           },
         });
       } catch (claimErr: unknown) {
-        if (
-          claimErr &&
-          typeof claimErr === 'object' &&
-          'code' in claimErr &&
-          (claimErr as { code: string }).code === 'P2002'
-        ) {
-          this.logger.warn(
-            `Multi-instance concurrent auto-reply claim intercepted for ${inboundMessage.wamId}`,
-          );
+        if (isPrismaP2002(claimErr)) {
+          this.logger.warn(`Multi-instance concurrent auto-reply claim intercepted for ${inboundMessage.wamId}`);
           return null;
         }
         throw claimErr;
@@ -202,12 +203,7 @@ export class WhatsAppAutoReplyService {
           },
         });
       } catch (updateErr: unknown) {
-        if (
-          updateErr &&
-          typeof updateErr === 'object' &&
-          'code' in updateErr &&
-          (updateErr as { code: string }).code === 'P2002'
-        ) {
+        if (isPrismaP2002(updateErr)) {
           this.logger.warn(`Delivery status webhook arrived before claim update for ${assignedWamId}, reconciling.`);
           createdOutbound = await this.prisma.whatsAppMessage.update({
             where: { wamId: assignedWamId },
@@ -237,10 +233,5 @@ export class WhatsAppAutoReplyService {
     } finally {
       this.inFlightReplies.delete(inboundMessage.wamId);
     }
-  }
-
-  private maskPhone(phone: string): string {
-    if (phone.length <= 4) return '****';
-    return phone.slice(0, 2) + '******' + phone.slice(-2);
   }
 }
