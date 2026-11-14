@@ -40,7 +40,6 @@ export class WhatsAppAssistantService {
 
     // Per-phone sequential locking prevents concurrent inbound webhooks from racing
     const currentLock = this.phoneLocks.get(phone) || Promise.resolve();
-    let lockPromise: Promise<void>;
     const task = currentLock
       .then(() => this.processMessageInternal(phone, inboundMessage))
       .catch((err: unknown) => {
@@ -49,7 +48,7 @@ export class WhatsAppAssistantService {
         return null;
       });
 
-    lockPromise = task
+    const lockPromise: Promise<void> = task
       .then(() => {})
       .finally(() => {
         if (this.phoneLocks.get(phone) === lockPromise) {
