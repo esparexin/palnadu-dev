@@ -10,6 +10,7 @@ import { SearchIntent } from '../topic-identity';
 import { BlogLanguage } from '@prisma/client';
 import { ClaimedTopic } from './types';
 import { embedContextualBacklinks } from './backlink-policy';
+import { buildLanguageCanonicalUrl } from './blog-url.util';
 
 export interface ComposedArticle {
   draft: any;
@@ -84,6 +85,7 @@ export class BlogComposerService {
         candidateSlug = `${draft.slug}-${counter++}`;
       }
       draft.slug = candidateSlug;
+      draft.canonicalUrl = buildLanguageCanonicalUrl(candidateSlug, topicRow.language);
     }
     if (existingTitles.has(draft.title.toLowerCase().trim())) {
       const loc = topicRow.targetLocation?.split(',')[0]?.trim();
