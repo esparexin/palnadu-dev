@@ -6,6 +6,7 @@ import { WhatsAppConversationService } from './whatsapp-conversation.service';
 import { sanitizePhoneNumber, maskPhone } from './whatsapp-api.util';
 import { isOptOutKeywordText } from './whatsapp-opt-out.util';
 import { isPrismaP2002 } from './whatsapp-outreach-reservation.util';
+import { acquireDispatchLock, releaseDispatchLock } from './whatsapp-dispatch-lock.util';
 import { WHATSAPP_CONFIG_KEYS } from './whatsapp.constants';
 import {
   Prisma,
@@ -141,69 +142,82 @@ export class WhatsAppAssistantService {
       throw claimErr;
     }
 
-    // 7. Process state machine transition
-    let step;
-    try {
-      step = await this.conversationService.processCustomerMessage(inboundMessage, conv);
-    } catch (stepErr: unknown) {
-      await this.prisma.whatsAppMessage?.delete?.({ where: { id: claimRecord.id } }).catch(() => null);
-      throw stepErr;
-    }
-
-    // 8. Pre-dispatch atomic re-verification: abort if takeover occurred during processing
-    const freshConv = await this.prisma.whatsAppConversation.findUnique({
-      where: { id: conv.id },
-      select: { humanTakeover: true },
-    });
-    if (freshConv?.humanTakeover) {
-      this.logger.warn(`Bot reply aborted for ${masked}: takeover activated before dispatch.`);
+    // 7. Acquire exclusive distributed dispatch lease
+    const workerId = `bot_${inboundMessage.wamId}_${Date.now()}`;
+    const lease = await acquireDispatchLock(this.prisma, phone, workerId);
+    if (!lease.acquired) {
+      this.logger.warn(`Bot reply skipped for ${masked}: dispatch lease unavailable (${lease.reason}).`);
       await this.prisma.whatsAppMessage?.delete?.({ where: { id: claimRecord.id } }).catch(() => null);
       return null;
     }
 
-    // 9. Dispatch outbound WhatsApp message to Meta Cloud API
-    let sendResult;
     try {
-      sendResult = await this.apiClient.sendTextMessage({
-        to: phone,
-        text: step.responseText,
-        replyToWamId: inboundMessage.wamId,
+      // 8. Process state machine transition
+      let step;
+      try {
+        step = await this.conversationService.processCustomerMessage(inboundMessage, conv);
+      } catch (stepErr: unknown) {
+        await this.prisma.whatsAppMessage?.delete?.({ where: { id: claimRecord.id } }).catch(() => null);
+        throw stepErr;
+      }
+
+      // 9. Pre-dispatch atomic re-verification under lease protection
+      const freshConv = await this.prisma.whatsAppConversation.findUnique({
+        where: { id: conv.id },
+        select: { humanTakeover: true },
       });
-    } catch (sendErr: unknown) {
-      await this.prisma.whatsAppMessage.update({
+      if (freshConv?.humanTakeover) {
+        this.logger.warn(`Bot reply aborted for ${masked}: takeover activated before dispatch.`);
+        await this.prisma.whatsAppMessage?.delete?.({ where: { id: claimRecord.id } }).catch(() => null);
+        return null;
+      }
+
+      // 10. Dispatch outbound WhatsApp message to Meta Cloud API
+      let sendResult;
+      try {
+        sendResult = await this.apiClient.sendTextMessage({
+          to: phone,
+          text: step.responseText,
+          replyToWamId: inboundMessage.wamId,
+        });
+      } catch (sendErr: unknown) {
+        await this.prisma.whatsAppMessage.update({
+          where: { id: claimRecord.id },
+          data: {
+            status: WhatsAppDeliveryStatus.FAILED,
+            errorMessage: sendErr instanceof Error ? sendErr.message : String(sendErr),
+          },
+        }).catch(() => null);
+        throw sendErr;
+      }
+
+      const assignedWamId = sendResult.messages?.[0]?.id || `wamid.bot.${Date.now()}`;
+
+      // 11. Update claim record and conversation state
+      const createdOutbound = await this.prisma.whatsAppMessage.update({
         where: { id: claimRecord.id },
         data: {
-          status: WhatsAppDeliveryStatus.FAILED,
-          errorMessage: sendErr instanceof Error ? sendErr.message : String(sendErr),
+          wamId: assignedWamId,
+          status: WhatsAppDeliveryStatus.SENT,
+          body: step.responseText,
+          rawPayload: sendResult as unknown as Prisma.InputJsonValue,
         },
-      }).catch(() => null);
-      throw sendErr;
+      });
+
+      await this.prisma.whatsAppConversation.update({
+        where: { id: conv.id },
+        data: {
+          state: step.nextState,
+          selectedCategory: step.selectedCategory !== undefined ? step.selectedCategory : conv.selectedCategory,
+          selectedSubmenu: step.selectedSubmenu !== undefined ? step.selectedSubmenu : conv.selectedSubmenu,
+          enquiryDraft: step.enquiryDraft !== undefined ? step.enquiryDraft : conv.enquiryDraft,
+          lastOutboundAt: new Date(),
+        },
+      });
+
+      return createdOutbound;
+    } finally {
+      await releaseDispatchLock(this.prisma, phone, workerId);
     }
-
-    const assignedWamId = sendResult.messages?.[0]?.id || `wamid.bot.${Date.now()}`;
-
-    // 10. Update claim record and conversation state
-    const createdOutbound = await this.prisma.whatsAppMessage.update({
-      where: { id: claimRecord.id },
-      data: {
-        wamId: assignedWamId,
-        status: WhatsAppDeliveryStatus.SENT,
-        body: step.responseText,
-        rawPayload: sendResult as unknown as Prisma.InputJsonValue,
-      },
-    });
-
-    await this.prisma.whatsAppConversation.update({
-      where: { id: conv.id },
-      data: {
-        state: step.nextState,
-        selectedCategory: step.selectedCategory !== undefined ? step.selectedCategory : conv.selectedCategory,
-        selectedSubmenu: step.selectedSubmenu !== undefined ? step.selectedSubmenu : conv.selectedSubmenu,
-        enquiryDraft: step.enquiryDraft !== undefined ? step.enquiryDraft : conv.enquiryDraft,
-        lastOutboundAt: new Date(),
-      },
-    });
-
-    return createdOutbound;
   }
 }

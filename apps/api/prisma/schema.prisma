@@ -636,10 +636,13 @@ model WhatsAppConversation {
   lastEnquiryWamId String?   @map("last_enquiry_wam_id")
   lastInboundAt    DateTime? @map("last_inbound_at")
   lastOutboundAt   DateTime? @map("last_outbound_at")
+  dispatchLockOwner     String?   @map("dispatch_lock_owner")
+  dispatchLockExpiresAt DateTime? @map("dispatch_lock_expires_at")
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
 
   @@index([humanTakeover])
+  @@index([dispatchLockExpiresAt])
   @@index([updatedAt(sort: Desc)])
   @@map("whatsapp_conversations")
 }

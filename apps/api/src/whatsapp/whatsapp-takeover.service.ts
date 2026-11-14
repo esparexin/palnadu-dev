@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
 import { WhatsAppApiClient } from './whatsapp-api.client';
 import { sanitizePhoneNumber } from './whatsapp-api.util';
+import { waitForDispatchDrain } from './whatsapp-dispatch-lock.util';
 import {
   Prisma,
   WhatsAppDeliveryStatus,
@@ -34,6 +35,7 @@ export class WhatsAppTakeoverService {
     const cleanPhone = sanitizePhoneNumber(phone) || phone;
     const actorLabel = admin.name || admin.email || admin.id;
 
+    // 1. Immediately persist human takeover in MongoDB to block new dispatch leases
     const conv = await this.prisma.whatsAppConversation.upsert({
       where: { customerPhone: cleanPhone },
       create: {
@@ -51,10 +53,19 @@ export class WhatsAppTakeoverService {
       },
     });
 
+    // 2. If enabling takeover: wait for any active in-flight automated dispatch to drain
+    if (enabled) {
+      await waitForDispatchDrain(this.prisma, cleanPhone);
+    }
+
     this.logger.log(
       `Human takeover ${enabled ? 'ENABLED' : 'RESUMED'} for ${cleanPhone} by ${actorLabel}`,
     );
-    return conv;
+
+    const fresh = await this.prisma.whatsAppConversation.findUnique({
+      where: { customerPhone: cleanPhone },
+    });
+    return fresh || conv;
   }
 
   async sendManualReply(
