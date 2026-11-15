@@ -51,6 +51,18 @@ export interface WhatsAppTemplateDefinition {
   requiredParameters: WhatsAppTemplateParameterSpec[];
 }
 
+export type WhatsAppOutreachPurpose =
+  | 'SALES_OUTREACH'
+  | 'QUOTATION'
+  | 'PROPOSAL'
+  | 'FOLLOW_UP'
+  | 'LEAD_GENERATION'
+  | 'NOTIFICATION';
+
+export type WhatsAppOutreachOrigin =
+  | 'HUMAN_SALES'
+  | 'AUTOMATED_NOTIFICATION';
+
 export interface SendIndividualOutreachInput {
   phone: string;
   businessName: string;
@@ -61,6 +73,8 @@ export interface SendIndividualOutreachInput {
   consentEvidence: WhatsAppConsentEvidence;
   idempotencyKey?: string;
   saveContact?: boolean;
+  outreachPurpose?: WhatsAppOutreachPurpose;
+  origin?: WhatsAppOutreachOrigin;
 }
 
 export interface IndividualOutreachDispatchResult {

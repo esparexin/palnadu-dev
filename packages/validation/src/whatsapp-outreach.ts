@@ -27,6 +27,20 @@ export const whatsAppConsentEvidenceSchema = z.object({
 
 export const PALNADU_CUSTOMER_ACKNOWLEDGEMENT_TEMPLATE = 'palnadu_customer_acknowledgement';
 
+export const whatsAppOutreachPurposeSchema = z.enum([
+  'SALES_OUTREACH',
+  'QUOTATION',
+  'PROPOSAL',
+  'FOLLOW_UP',
+  'LEAD_GENERATION',
+  'NOTIFICATION',
+]);
+
+export const whatsAppOutreachOriginSchema = z.enum([
+  'HUMAN_SALES',
+  'AUTOMATED_NOTIFICATION',
+]);
+
 export const sendIndividualOutreachSchema = z
   .object({
     phone: z
@@ -64,6 +78,8 @@ export const sendIndividualOutreachSchema = z
       .max(64, 'Idempotency key must not exceed 64 characters')
       .optional(),
     saveContact: z.boolean().default(false),
+    outreachPurpose: whatsAppOutreachPurposeSchema.optional().default('SALES_OUTREACH'),
+    origin: whatsAppOutreachOriginSchema.optional(),
   })
   .superRefine((data, ctx) => {
     if (data.templateName === PALNADU_CUSTOMER_ACKNOWLEDGEMENT_TEMPLATE) {

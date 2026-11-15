@@ -57,12 +57,13 @@ export class WhatsAppAdminController {
   async sendIndividualOutreach(
     @Body(new ZodValidationPipe(sendIndividualOutreachSchema))
     data: SendIndividualOutreachInput,
-    @Req() req?: { user?: { id?: string; sub?: string; email?: string } },
+    @Req() req?: { user?: { id?: string; sub?: string; email?: string; name?: string } },
   ) {
     if (!this.outreachService) throw new NotFoundException('Outreach service unavailable');
     const admin = {
       id: req?.user?.sub || req?.user?.id || 'admin',
       email: req?.user?.email || 'admin@palnadu.dev',
+      name: req?.user?.name,
     };
     const result = await this.outreachService.sendOutreach(data, admin);
     return { success: true, data: result };

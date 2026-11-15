@@ -2,11 +2,13 @@ import {
   Injectable,
   Logger,
   BadRequestException,
+  Optional,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../prisma.service';
 import { WhatsAppApiClient } from './whatsapp-api.client';
 import { WhatsAppOptOutService } from './whatsapp-opt-out.service';
+import { WhatsAppTakeoverService } from './whatsapp-takeover.service';
 import { sanitizePhoneNumber, maskPhone } from './whatsapp-api.util';
 import { validateTemplateAgainstMeta } from './whatsapp-template.util';
 import { buildTemplateComponents } from './whatsapp-template-params.util';
@@ -19,9 +21,14 @@ import {
   upsertOutreachContact,
   recordOutboundMessage,
   reconcileOutreachMessage,
-  formatOutreachHistoryItem,
+  listOutreachMessages,
 } from './whatsapp-outreach-persistence.util';
 import { handleOutreachDispatchFailure } from './whatsapp-outreach-reconciliation.util';
+import {
+  isHumanSalesOutreach,
+  activateOutreachTakeover,
+  updateOutreachConversation,
+} from './whatsapp-outreach-takeover.util';
 import { WHATSAPP_CONFIG_KEYS } from './whatsapp.constants';
 import type {
   SendIndividualOutreachInput,
@@ -42,6 +49,7 @@ export class WhatsAppOutreachService {
     private readonly config: ConfigService,
     private readonly apiClient: WhatsAppApiClient,
     private readonly optOutService: WhatsAppOptOutService,
+    @Optional() private readonly takeoverService?: WhatsAppTakeoverService,
   ) {}
 
   async sendOutreach(
@@ -90,6 +98,17 @@ export class WhatsAppOutreachService {
 
     const businessPhone =
       this.config.get<string>(WHATSAPP_CONFIG_KEYS.BUSINESS_PHONE)?.trim() || 'palnadu_business';
+
+    const isHumanSales = isHumanSalesOutreach(input);
+    if (isHumanSales) {
+      await activateOutreachTakeover(
+        this.prisma,
+        cleanPhone,
+        admin,
+        input,
+        this.takeoverService,
+      );
+    }
 
     let metaWamId: string;
     try {
@@ -149,6 +168,10 @@ export class WhatsAppOutreachService {
       },
     );
 
+    if (isHumanSales) {
+      await updateOutreachConversation(this.prisma, cleanPhone, admin);
+    }
+
     return {
       success: true,
       wamId: metaWamId,
@@ -161,40 +184,7 @@ export class WhatsAppOutreachService {
   }
 
   async listIndividualOutreachMessages(params: { page?: number; limit?: number } = {}) {
-    const page = Math.max(1, params.page || 1);
-    const limit = Math.min(100, Math.max(1, params.limit || 20));
-    const skip = (page - 1) * limit;
-
-    const where = {
-      campaignId: null,
-      direction: WhatsAppMessageDirection.OUTBOUND,
-      wamId: { not: { startsWith: 'resv:' } },
-    };
-
-    const [data, total] = await Promise.all([
-      this.prisma.whatsAppMessage.findMany({
-        where,
-        skip,
-        take: limit,
-        orderBy: { createdAt: 'desc' },
-        select: {
-          id: true,
-          wamId: true,
-          to: true,
-          status: true,
-          statusTimestamp: true,
-          body: true,
-          errorCode: true,
-          errorMessage: true,
-          createdAt: true,
-          rawPayload: true,
-        },
-      }),
-      this.prisma.whatsAppMessage.count({ where }),
-    ]);
-
-    const formatted: IndividualOutreachMessageItem[] = data.map(formatOutreachHistoryItem);
-    return { data: formatted, total, page, totalPages: Math.ceil(total / limit) || 1 };
+    return listOutreachMessages(this.prisma, params);
   }
 
   async reconcileOutreach(
