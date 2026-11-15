@@ -105,6 +105,8 @@ export function createAssistantTestHarness(options = {}) {
     get: (k) => {
       if (k === 'WHATSAPP_ASSISTANT_ENABLED') return assistantFlag;
       if (k === 'WHATSAPP_AUTO_REPLY_ENABLED') return autoReplyFlag;
+      if (k === 'WHATSAPP_BUSINESS_PHONE_NUMBER') return options.businessPhone || null;
+      if (k === 'WHATSAPP_OWNER_PHONE_NUMBER') return options.ownerPhone || null;
       return null;
     },
   };

@@ -20,7 +20,7 @@ import {
   createSubmenuStep,
   resolveInteractiveSelection,
 } from './whatsapp-conversation-step.util';
-import { isExplicitHumanRequest } from './whatsapp-choice.util';
+import { isExplicitHumanRequest, isGreetingText } from './whatsapp-choice.util';
 import type { WhatsAppConversationState, WhatsAppConversationMode } from '@palnadu/types';
 import type { WhatsAppConversation, WhatsAppMessage } from '@prisma/client';
 
@@ -68,11 +68,12 @@ export class WhatsAppConversationService {
         return this.handleAwaitingCategory(rawText, navCommand);
       case 'IDLE':
       default:
-        return this.handleIdleState(rawText, navCommand);
+        return this.handleIdleState(conversation, rawText, navCommand);
     }
   }
 
   private handleIdleState(
+    conversation: WhatsAppConversation,
     rawText?: string,
     navCommand?: 'BACK' | 'HOME' | null,
   ): ConversationStepResult {
@@ -84,6 +85,22 @@ export class WhatsAppConversationService {
         return { responseText: DIRECT_CONTACT_SUPPORT_MESSAGE, nextState: 'IDLE' };
       }
       return createSubmenuStep(matchedCat);
+    }
+
+    if (conversation.selectedCategory && isGreetingText(rawText)) {
+      const category = APPROVED_MAIN_MENU.find((c) => c.id === conversation.selectedCategory);
+      const suboption = category?.suboptions?.find((s) => s.id === conversation.selectedSubmenu);
+      if (category && suboption) {
+        return {
+          responseText:
+            `Welcome back! 👋 We noted your interest in *${suboption.buttonTitle || suboption.name}* (${category.title}).\n\n` +
+            `How can we assist you with this today? Please share your requirements, or type HOME to view the main menu.`,
+          nextState: 'AWAITING_REQUIREMENT',
+          selectedCategory: conversation.selectedCategory,
+          selectedSubmenu: conversation.selectedSubmenu,
+        };
+      }
+      if (category) return createSubmenuStep(category);
     }
 
     return createMainMenuStep();
@@ -168,6 +185,20 @@ export class WhatsAppConversationService {
     }
 
     if (navCommand === 'HOME') return createMainMenuStep();
+
+    if (isGreetingText(rawText)) {
+      const suboption = category?.suboptions?.find((s) => s.id === conversation.selectedSubmenu);
+      const serviceName = suboption?.buttonTitle || suboption?.name || category?.title || 'our services';
+      return {
+        responseText:
+          `Hello! 👋 You have selected *${serviceName}*.\n\n` +
+          `Please share your requirements or any questions you have, and our team will get back to you shortly.\n\n` +
+          `Type BACK to return to the options or HOME for the main menu.`,
+        nextState: 'AWAITING_REQUIREMENT',
+        selectedCategory: conversation.selectedCategory,
+        selectedSubmenu: conversation.selectedSubmenu,
+      };
+    }
 
     const requirementText = rawText || '[No text requirement provided]';
     const suboption = category?.suboptions?.find((s) => s.id === conversation.selectedSubmenu);

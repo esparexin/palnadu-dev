@@ -4,10 +4,12 @@ import { PrismaService } from '../prisma.service';
 import { WhatsAppApiClient } from './whatsapp-api.client';
 import { WhatsAppConversationService, type ConversationStepResult } from './whatsapp-conversation.service';
 import { sanitizePhoneNumber, maskPhone } from './whatsapp-api.util';
+import { isBusinessPhoneNumber, isOwnerPhoneNumber } from './whatsapp-choice.util';
 import { isOptOutKeywordText } from './whatsapp-opt-out.util';
 import { isPrismaP2002 } from './whatsapp-outreach-reservation.util';
 import { acquireDispatchLock, releaseDispatchLock } from './whatsapp-dispatch-lock.util';
-import { WHATSAPP_CONFIG_KEYS } from './whatsapp.constants';
+import { WHATSAPP_CONFIG_KEYS, DEFAULT_BUSINESS_PHONE_NUMBER } from './whatsapp.constants';
+import { dispatchAssistantStepToClient } from './whatsapp-assistant-dispatch.util';
 import {
   Prisma,
   WhatsAppDeliveryStatus,
@@ -48,13 +50,9 @@ export class WhatsAppAssistantService {
         return null;
       });
 
-    const lockPromise: Promise<void> = task
-      .then(() => {})
-      .finally(() => {
-        if (this.phoneLocks.get(phone) === lockPromise) {
-          this.phoneLocks.delete(phone);
-        }
-      });
+    const lockPromise: Promise<void> = task.then(() => {}).finally(() => {
+      if (this.phoneLocks.get(phone) === lockPromise) this.phoneLocks.delete(phone);
+    });
     this.phoneLocks.set(phone, lockPromise);
 
     return task;
@@ -65,6 +63,19 @@ export class WhatsAppAssistantService {
     inboundMessage: WhatsAppMessage,
   ): Promise<WhatsAppMessage | null> {
     const masked = maskPhone(phone);
+
+    const businessPhone =
+      this.config.get<string>(WHATSAPP_CONFIG_KEYS.BUSINESS_PHONE) || DEFAULT_BUSINESS_PHONE_NUMBER;
+    if (isBusinessPhoneNumber(phone, [businessPhone, inboundMessage.to])) {
+      this.logger.log(`Bot reply skipped for ${masked}: business self-message.`);
+      return null;
+    }
+
+    const ownerPhone = this.config.get<string>(WHATSAPP_CONFIG_KEYS.OWNER_PHONE);
+    if (isOwnerPhoneNumber(phone, ownerPhone)) {
+      this.logger.log(`Bot reply skipped for ${masked}: authorized internal owner number.`);
+      return null;
+    }
 
     const existingReply = await this.prisma.whatsAppMessage.findFirst({
       where: {
@@ -164,20 +175,24 @@ export class WhatsAppAssistantService {
 
       let sendResult: WhatsAppSendResponse;
       try {
-        sendResult = await this.dispatchAssistantStep(phone, masked, inboundMessage.wamId, step);
+        sendResult = await dispatchAssistantStepToClient(
+          this.apiClient,
+          this.logger,
+          phone,
+          masked,
+          inboundMessage.wamId,
+          step,
+        );
       } catch (sendErr: unknown) {
+        const errDetail = sendErr instanceof Error ? sendErr.message : String(sendErr);
         await this.prisma.whatsAppMessage.update({
           where: { id: claimRecord.id },
-          data: {
-            status: WhatsAppDeliveryStatus.FAILED,
-            errorMessage: sendErr instanceof Error ? sendErr.message : String(sendErr),
-          },
+          data: { status: WhatsAppDeliveryStatus.FAILED, errorMessage: errDetail },
         }).catch(() => null);
         throw sendErr;
       }
 
       const assignedWamId = sendResult.messages?.[0]?.id || `wamid.bot.${Date.now()}`;
-
       const createdOutbound = await this.prisma.whatsAppMessage.update({
         where: { id: claimRecord.id },
         data: {
@@ -210,30 +225,5 @@ export class WhatsAppAssistantService {
     } finally {
       await releaseDispatchLock(this.prisma, phone, workerId);
     }
-  }
-
-  private async dispatchAssistantStep(
-    phone: string,
-    masked: string,
-    inboundWamId: string,
-    step: ConversationStepResult,
-  ): Promise<WhatsAppSendResponse> {
-    if (step.interactive && typeof this.apiClient.sendInteractiveMessage === 'function') {
-      try {
-        return await this.apiClient.sendInteractiveMessage({
-          to: phone,
-          interactive: step.interactive,
-          replyToWamId: inboundWamId,
-        });
-      } catch (interactiveErr: unknown) {
-        const errDetail = interactiveErr instanceof Error ? interactiveErr.message : String(interactiveErr);
-        this.logger.warn(`Interactive dispatch failed for ${masked}, falling back to text: ${errDetail}`);
-      }
-    }
-    return this.apiClient.sendTextMessage({
-      to: phone,
-      text: step.responseText,
-      replyToWamId: inboundWamId,
-    });
   }
 }

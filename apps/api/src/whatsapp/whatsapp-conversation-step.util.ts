@@ -37,6 +37,8 @@ export function createMainMenuStep(): ConversationStepResult {
     responseText: formatMainMenuText(),
     interactive: buildMainMenuInteractiveList(),
     nextState: 'AWAITING_CATEGORY',
+    selectedCategory: null,
+    selectedSubmenu: null,
   };
 }
 

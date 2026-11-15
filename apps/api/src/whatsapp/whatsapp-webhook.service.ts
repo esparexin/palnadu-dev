@@ -8,6 +8,7 @@ import { WhatsAppOptOutService } from './whatsapp-opt-out.service';
 import { WhatsAppAssistantService } from './whatsapp-assistant.service';
 import { extractMessageBody } from './whatsapp-conversation.util';
 import { isOptOutKeywordText } from './whatsapp-opt-out.util';
+import { isBusinessPhoneNumber, isOwnerPhoneNumber } from './whatsapp-choice.util';
 import {
   verifyMetaWebhookSignature,
   verifyTokenConstantTime,
@@ -15,6 +16,7 @@ import {
 import {
   WHATSAPP_CONFIG_KEYS,
   WHATSAPP_WEBHOOK_MODE,
+  DEFAULT_BUSINESS_PHONE_NUMBER,
 } from './whatsapp.constants';
 import {
   whatsAppWebhookVerifySchema,
@@ -112,6 +114,9 @@ export class WhatsAppWebhookService {
             const value = change.value;
             const businessNumber =
               value.metadata?.display_phone_number || value.metadata?.phone_number_id || 'unknown';
+            const configuredBusinessPhone =
+              this.config.get<string>(WHATSAPP_CONFIG_KEYS.BUSINESS_PHONE) || DEFAULT_BUSINESS_PHONE_NUMBER;
+            const configuredOwnerPhone = this.config.get<string>(WHATSAPP_CONFIG_KEYS.OWNER_PHONE);
 
             // Map contact profile names
             const contactMap = new Map<string, string>();
@@ -128,6 +133,13 @@ export class WhatsAppWebhookService {
               for (const msg of value.messages) {
                 if (!msg.id || !msg.from) continue;
                 if (!primaryWamId) primaryWamId = msg.id;
+
+                const isBusinessSelfMessage = isBusinessPhoneNumber(msg.from, [
+                  configuredBusinessPhone,
+                  value.metadata?.display_phone_number,
+                  value.metadata?.phone_number_id,
+                ]);
+                const isOwnerMessage = isOwnerPhoneNumber(msg.from, configuredOwnerPhone);
 
                 const bodyText = extractMessageBody(msg as unknown as Record<string, unknown>);
                 const saved = await this.messageService.saveInboundMessage({
@@ -149,7 +161,7 @@ export class WhatsAppWebhookService {
                   ? await this.optOutService.handleInboundOptOut(msg.from, bodyText)
                   : isOptOutKeywordText(bodyText);
 
-                if (!isOptOut) {
+                if (!isOptOut && !isBusinessSelfMessage && !isOwnerMessage) {
                   if (this.assistantService?.isEnabled()) {
                     setImmediate(() => {
                       this.assistantService?.handleInboundMessage(saved).catch((err: unknown) => {
@@ -165,6 +177,10 @@ export class WhatsAppWebhookService {
                       });
                     });
                   }
+                } else if (isBusinessSelfMessage) {
+                  this.logger.log(`Ignoring business self-message or outbound echo for ${msg.id}`);
+                } else if (isOwnerMessage) {
+                  this.logger.log(`Ignoring customer-facing automation for authorized owner number ${msg.from}`);
                 }
               }
             }
