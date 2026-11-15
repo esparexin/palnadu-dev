@@ -159,6 +159,20 @@ export function buildIndividualOutreachPayload(input: {
   const consentRef = formData.consentEvidenceRef.trim();
   if (!consentRef) return { error: 'A verifiable consent reference ID is required.' };
 
+  if (formData.consentType === 'DIRECT_ADMIN_OUTREACH' && consentRef.length < 10) {
+    return {
+      error:
+        'Direct admin outreach requires a documented consent basis of at least 10 characters (e.g. meeting notes, referral context, or phone consent details).',
+    };
+  }
+
+  if (
+    (formData.consentType === 'WEBSITE_LEAD_FORM' || formData.consentType === 'VERIFIED_CRM_LEAD') &&
+    !/^[0-9a-fA-F]{24}$/.test(consentRef)
+  ) {
+    return { error: 'Website or CRM lead reference must be a valid 24-character hexadecimal ID.' };
+  }
+
   const consentWarning = getConsentCompatibilityWarning(targetTemplate.category, formData.consentType);
   if (consentWarning) return { error: consentWarning };
 

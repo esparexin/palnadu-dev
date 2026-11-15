@@ -7,3 +7,4 @@ export { BrandLogo, type BrandLogoProps } from './components/brand-logo';
 export { ConfirmDialog, type ConfirmDialogProps } from './components/confirm-dialog';
 export { ToastProvider, useToast, type ToastType, type ToastItem, type ToastContextValue } from './components/toast';
 export { SectionHeading, type SectionHeadingProps } from './components/section-heading';
+export { Checkbox, type CheckboxProps } from './components/checkbox';

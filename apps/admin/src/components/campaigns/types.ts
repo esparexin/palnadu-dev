@@ -57,7 +57,7 @@ export const initialOutreachFormData: IndividualOutreachFormData = {
   templateName: '',
   languageCode: '',
   parameters: {},
-  consentType: 'WEBSITE_LEAD_FORM',
+  consentType: 'DIRECT_ADMIN_OUTREACH',
   consentEvidenceRef: '',
   saveContact: false,
 };
