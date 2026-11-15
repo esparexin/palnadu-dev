@@ -57,6 +57,8 @@ export class WhatsAppTakeoverService {
         takenOverAt: enabled ? new Date() : null,
         takenOverById: enabled ? admin.id : null,
         takenOverByName: enabled ? actorLabel : null,
+        lastInitiatorId: admin.id,
+        lastInitiatorName: actorLabel,
         modeUpdatedAt: new Date(),
       },
       update: {
@@ -65,6 +67,8 @@ export class WhatsAppTakeoverService {
         takenOverAt: enabled ? new Date() : null,
         takenOverById: enabled ? admin.id : null,
         takenOverByName: enabled ? actorLabel : null,
+        lastInitiatorId: admin.id,
+        lastInitiatorName: actorLabel,
         modeUpdatedAt: new Date(),
       },
     });
@@ -92,42 +96,17 @@ export class WhatsAppTakeoverService {
     if (!cleanPhone) throw new Error('Invalid recipient phone number');
     const actorLabel = admin.name || admin.email || admin.id;
 
-    const existingConv = await this.prisma.whatsAppConversation.findUnique({
-      where: { customerPhone: cleanPhone },
-    });
+    // 1. Manually sent outbound messages IMMEDIATELY activate durable human takeover
+    await this.setHumanTakeover(cleanPhone, true, admin);
 
-    const isTakeover = Boolean(
-      existingConv?.humanTakeover || existingConv?.mode === 'HUMAN_TAKEOVER',
-    );
-    const targetMode = isTakeover ? 'HUMAN_TAKEOVER' : 'AWAITING_CUSTOMER_CHOICE';
-
-    await this.prisma.whatsAppConversation.upsert({
-      where: { customerPhone: cleanPhone },
-      create: {
-        customerPhone: cleanPhone,
-        mode: targetMode,
-        humanTakeover: isTakeover,
-        lastInitiatorId: admin.id,
-        lastInitiatorName: actorLabel,
-        modeUpdatedAt: new Date(),
-        lastOutboundAt: new Date(),
-      },
-      update: {
-        mode: targetMode,
-        humanTakeover: isTakeover,
-        lastInitiatorId: admin.id,
-        lastInitiatorName: actorLabel,
-        modeUpdatedAt: new Date(),
-        lastOutboundAt: new Date(),
-      },
-    }).catch(() => null);
-
+    // 2. Dispatch outbound text message via WhatsApp Cloud API
     const sendResult = await this.apiClient.sendTextMessage({
       to: cleanPhone,
       text: text.trim(),
     });
     const assignedWamId = sendResult.messages?.[0]?.id || `wamid.manual.${Date.now()}`;
 
+    // 3. Persist outbound message with trusted origin and admin metadata
     const auditPayload: Record<string, unknown> = {
       origin: 'MANUAL_ADMIN',
       adminId: admin.id,
@@ -148,6 +127,15 @@ export class WhatsAppTakeoverService {
         rawPayload: auditPayload as unknown as Prisma.InputJsonValue,
       },
     });
+
+    await this.prisma.whatsAppConversation.update({
+      where: { customerPhone: cleanPhone },
+      data: {
+        lastOutboundAt: new Date(),
+        lastInitiatorId: admin.id,
+        lastInitiatorName: actorLabel,
+      },
+    }).catch(() => null);
 
     return saved;
   }

@@ -1,11 +1,9 @@
 export type WhatsAppConversationMode =
-  | 'AWAITING_CUSTOMER_CHOICE'
   | 'AUTOMATED_ASSISTANCE'
   | 'HUMAN_TAKEOVER';
 
 export type WhatsAppConversationState =
   | 'IDLE'
-  | 'AWAITING_CUSTOMER_CHOICE'
   | 'AWAITING_CATEGORY'
   | 'AWAITING_SUBMENU'
   | 'AWAITING_REQUIREMENT';

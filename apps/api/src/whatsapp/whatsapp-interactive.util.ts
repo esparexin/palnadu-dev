@@ -124,38 +124,3 @@ export function buildSubmenuInteractiveButtons(
     },
   };
 }
-
-export const CUSTOMER_CHOICE_MESSAGE_TEXT =
-  'Hello! 👋\n\n' +
-  'Thank you for getting back to us.\n\n' +
-  'How would you like to continue?';
-
-export const CHOICE_AUTOMATED_ID = 'choice_automated';
-export const CHOICE_HUMAN_ID = 'choice_human';
-
-export function buildCustomerChoiceInteractiveButtons(): WhatsAppInteractiveButtonPayload {
-  return {
-    type: 'button',
-    body: {
-      text: CUSTOMER_CHOICE_MESSAGE_TEXT,
-    },
-    action: {
-      buttons: [
-        {
-          type: 'reply',
-          reply: {
-            id: CHOICE_AUTOMATED_ID,
-            title: 'Automated Assistance',
-          },
-        },
-        {
-          type: 'reply',
-          reply: {
-            id: CHOICE_HUMAN_ID,
-            title: 'Talk to Our Team',
-          },
-        },
-      ],
-    },
-  };
-}

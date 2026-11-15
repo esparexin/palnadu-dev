@@ -116,7 +116,7 @@ export function createAssistantTestHarness(options = {}) {
       return {
         messaging_product: 'whatsapp',
         contacts: [{ input: to, wa_id: to }],
-        messages: [{ id: `wamid.TXT_${Date.now()}` }],
+        messages: [{ id: `wamid.TXT_${Date.now()}_${Math.random().toString(36).slice(2, 8)}` }],
       };
     },
     sendInteractiveMessage: async ({ to, interactive, replyToWamId }) => {
@@ -127,7 +127,7 @@ export function createAssistantTestHarness(options = {}) {
       return {
         messaging_product: 'whatsapp',
         contacts: [{ input: to, wa_id: to }],
-        messages: [{ id: `wamid.INT_${Date.now()}` }],
+        messages: [{ id: `wamid.INT_${Date.now()}_${Math.random().toString(36).slice(2, 8)}` }],
       };
     },
   };

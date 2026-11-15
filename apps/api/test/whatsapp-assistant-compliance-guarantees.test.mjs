@@ -141,7 +141,7 @@ describe('WhatsApp Compliance, Concurrency & Takeover Guarantees', () => {
     assert.equal(env.dispatched.length, 0);
   });
 
-  it('3. sets AWAITING_CUSTOMER_CHOICE on sendManualReply without activating takeover, while explicit takeover activates first', async () => {
+  it('3. activates human takeover BEFORE external API dispatch in sendManualReply', async () => {
     const env = setupEnv('true');
     let takeoverStateAtSendTime = null;
     let modeAtSendTime = null;
@@ -157,17 +157,12 @@ describe('WhatsApp Compliance, Concurrency & Takeover Guarantees', () => {
 
     await env.takeover.sendManualReply(
       '919030787819',
-      'Team here, assisting directly.',
+      'Team here, sending quotation for your project.',
       { id: 'admin_1', name: 'Support Rep' },
     );
 
-    assert.equal(takeoverStateAtSendTime, false, 'Takeover must not be active on manual reply alone');
-    assert.equal(modeAtSendTime, 'AWAITING_CUSTOMER_CHOICE', 'Mode must be AWAITING_CUSTOMER_CHOICE');
-
-    await env.takeover.setHumanTakeover('919030787819', true, { id: 'admin_1', name: 'Support Rep' });
-    const conv = env.conversations.get('919030787819');
-    assert.equal(conv.humanTakeover, true);
-    assert.equal(conv.mode, 'HUMAN_TAKEOVER');
+    assert.equal(takeoverStateAtSendTime, true, 'Takeover must be active BEFORE sendTextMessage executes');
+    assert.equal(modeAtSendTime, 'HUMAN_TAKEOVER', 'Mode must be HUMAN_TAKEOVER BEFORE sendTextMessage executes');
   });
 
   it('4. suppresses legacy auto-reply when human takeover is active in conversation', async () => {

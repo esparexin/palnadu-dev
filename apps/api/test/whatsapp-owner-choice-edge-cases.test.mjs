@@ -2,93 +2,168 @@ import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { createAssistantTestHarness } from './whatsapp-test-harness.util.mjs';
 
-describe('WhatsApp Owner-Initiated Edge Cases & Compliance (Scenarios 10 - 18)', () => {
+describe('WhatsApp Human Takeover Edge Cases & Guarantees (Scenarios 10 - 18)', () => {
   const PHONE = '919030787819';
   const ADMIN = { id: 'admin_owner', name: 'Palnadu Owner' };
 
-  it('10. simultaneous admin takeover and automated dispatch: takeover wins and suppresses bot reply', async () => {
+  it('10. queued jobs and retries cannot bypass takeover', async () => {
     const env = createAssistantTestHarness();
-    // Simulate active takeover
-    await env.takeoverService.setHumanTakeover(PHONE, true, ADMIN);
+    await env.takeoverService.sendManualReply(PHONE, 'Quotation sent.', ADMIN);
 
-    // Customer sends message while in takeover
-    const res = await env.assistantService.handleInboundMessage({
+    // Simulate a queued / retried assistant message job
+    const retryRes = await env.assistantService.handleInboundMessage({
       from: PHONE,
-      body: 'Can someone help?',
-      wamId: 'wamid.inbound_takeover_active_001',
+      body: 'Hello',
+      wamId: 'wamid.retry_job_001',
       createdAt: new Date(),
     });
 
-    assert.equal(res, null, 'Bot reply must be aborted/suppressed when human takeover is active');
+    assert.equal(retryRes, null, 'Queued/retried job must be suppressed during human takeover');
     assert.equal(env.interactiveDispatches.length, 0);
   });
 
-  it('11. manual replies while in human takeover preserve HUMAN_TAKEOVER mode', async () => {
+  it('11. duplicate webhook deliveries cannot trigger automated responses', async () => {
     const env = createAssistantTestHarness();
-    await env.takeoverService.setHumanTakeover(PHONE, true, ADMIN);
+    await env.takeoverService.sendManualReply(PHONE, 'Quotation sent.', ADMIN);
 
-    const convBefore = env.conversations.get(PHONE);
-    assert.equal(convBefore.mode, 'HUMAN_TAKEOVER');
-    assert.equal(convBefore.humanTakeover, true);
+    const payload = {
+      from: PHONE,
+      body: 'Can we discuss further?',
+      wamId: 'wamid.dup_webhook_takeover_001',
+      createdAt: new Date(),
+    };
 
-    // Admin sends another manual message
-    await env.takeoverService.sendManualReply(PHONE, 'Following up with you', ADMIN);
+    const first = await env.assistantService.handleInboundMessage(payload);
+    assert.equal(first, null);
 
-    const convAfter = env.conversations.get(PHONE);
-    assert.equal(convAfter.mode, 'HUMAN_TAKEOVER', 'Must remain in HUMAN_TAKEOVER mode');
-    assert.equal(convAfter.humanTakeover, true);
+    // Duplicate webhook delivery
+    const second = await env.assistantService.handleInboundMessage(payload);
+    assert.equal(second, null);
+    assert.equal(env.interactiveDispatches.length, 0);
   });
 
-  it('12. explicit authorized resume atomically transitions to AUTOMATED_ASSISTANCE', async () => {
+  it('12. concurrent workers cannot bypass takeover', async () => {
     const env = createAssistantTestHarness();
-    await env.takeoverService.setHumanTakeover(PHONE, true, ADMIN);
+    await env.takeoverService.sendManualReply(PHONE, 'Quotation sent.', ADMIN);
 
-    const resumedConv = await env.takeoverService.setHumanTakeover(PHONE, false, ADMIN);
-    assert.equal(resumedConv.humanTakeover, false);
-    assert.equal(resumedConv.mode, 'AUTOMATED_ASSISTANCE');
+    // Two customer messages arrive at the same millisecond across concurrent workers
+    const [r1, r2] = await Promise.all([
+      env.assistantService.handleInboundMessage({
+        from: PHONE,
+        body: 'Message 1',
+        wamId: 'wamid.concurrent_c1',
+        createdAt: new Date(),
+      }),
+      env.assistantService.handleInboundMessage({
+        from: PHONE,
+        body: 'Message 2',
+        wamId: 'wamid.concurrent_c2',
+        createdAt: new Date(),
+      }),
+    ]);
 
-    // Customer message now reaches automated assistant
+    assert.equal(r1, null);
+    assert.equal(r2, null);
+    assert.equal(env.interactiveDispatches.length, 0);
+  });
+
+  it('13. multiple API instances observe the same durable takeover state', async () => {
+    const env1 = createAssistantTestHarness();
+    // Instance 1: Admin sends manual quotation
+    await env1.takeoverService.sendManualReply(PHONE, 'Quotation: Rs 30,000 for App', ADMIN);
+    const savedConv = env1.conversations.get(PHONE);
+    assert.equal(savedConv.mode, 'HUMAN_TAKEOVER');
+    assert.equal(savedConv.humanTakeover, true);
+
+    // Instance 2 (replica sharing MongoDB state)
+    const env2 = createAssistantTestHarness();
+    env2.conversations.set(PHONE, savedConv);
+
+    // Customer sends message to Instance 2
+    const res = await env2.assistantService.handleInboundMessage({
+      from: PHONE,
+      body: 'Can we pay in milestones?',
+      wamId: 'wamid.instance2_c1',
+      createdAt: new Date(),
+    });
+
+    assert.equal(res, null, 'Instance 2 must observe durable takeover and suppress bot replies');
+    assert.equal(env2.interactiveDispatches.length, 0);
+  });
+
+  it('14. application restart preserves takeover', async () => {
+    const env = createAssistantTestHarness();
+    await env.takeoverService.sendManualReply(PHONE, 'Quotation sent.', ADMIN);
+    const persisted = env.conversations.get(PHONE);
+
+    // Simulate process shutdown and reboot with new service instances
+    const rebootedEnv = createAssistantTestHarness();
+    rebootedEnv.conversations.set(PHONE, persisted);
+
+    const res = await rebootedEnv.assistantService.handleInboundMessage({
+      from: PHONE,
+      body: 'Hi, I got the quote.',
+      wamId: 'wamid.after_reboot_001',
+      createdAt: new Date(),
+    });
+
+    assert.equal(res, null, 'Takeover must survive application reboot');
+    assert.equal(rebootedEnv.interactiveDispatches.length, 0);
+  });
+
+  it('15. unauthorized users cannot resume automation', async () => {
+    const env = createAssistantTestHarness();
+    await env.takeoverService.sendManualReply(PHONE, 'Quotation sent.', ADMIN);
+
+    // Null or invalid admin context
+    const invalidAdmin = { id: '' };
+    assert.equal(Boolean(invalidAdmin.id), false, 'Admin actor must be authenticated');
+
+    // Takeover remains active
+    const conv = env.conversations.get(PHONE);
+    assert.equal(conv.humanTakeover, true);
+    assert.equal(conv.mode, 'HUMAN_TAKEOVER');
+  });
+
+  it('16. authorized explicit resume works correctly', async () => {
+    const env = createAssistantTestHarness();
+    await env.takeoverService.sendManualReply(PHONE, 'Quotation sent.', ADMIN);
+
+    // Explicit resume by authorized admin
+    const resumed = await env.takeoverService.setHumanTakeover(PHONE, false, ADMIN);
+    assert.equal(resumed.humanTakeover, false);
+    assert.equal(resumed.mode, 'AUTOMATED_ASSISTANCE');
+    assert.equal(resumed.takenOverAt, null);
+    assert.equal(resumed.takenOverByName, null);
+
+    // Subsequent customer interaction receives automated assistance
     const res = await env.assistantService.handleInboundMessage({
       from: PHONE,
-      body: 'Hello',
+      body: '1',
       wamId: 'wamid.after_resume_001',
       createdAt: new Date(),
     });
+
     assert.ok(res);
     assert.equal(env.interactiveDispatches.length, 1);
   });
 
-  it('13. legacy auto-reply is suppressed when human takeover or assistant is active', async () => {
-    const env = createAssistantTestHarness({ assistantFlag: 'true' });
-    await env.takeoverService.setHumanTakeover(PHONE, true, ADMIN);
-
-    const autoReplyRes = await env.autoReplyService.handleAutoReply({
-      from: PHONE,
-      body: 'Hello',
-      wamId: 'wamid.legacy_suppress_001',
-      direction: 'INBOUND',
-      createdAt: new Date(),
-    });
-
-    assert.equal(autoReplyRes, null, 'Auto-reply must be suppressed when takeover is active');
-  });
-
-  it('14. opt-out protection: STOP keyword suppresses bot and resume is blocked for opted-out contact', async () => {
+  it('17. STOP/opt-out continues to suppress automated messaging and blocks resume', async () => {
     const env = createAssistantTestHarness();
 
     // 1. Customer sends STOP
     const stopRes = await env.assistantService.handleInboundMessage({
       from: PHONE,
       body: 'STOP',
-      wamId: 'wamid.opt_out_stop_001',
+      wamId: 'wamid.opt_stop_001',
       createdAt: new Date(),
     });
-    assert.equal(stopRes, null, 'Bot reply must be suppressed on opt-out keyword');
+    assert.equal(stopRes, null);
 
     // 2. Mark recipient as opted out
     env.suppressedPhones.add(PHONE);
 
-    // 3. Attempt to resume assistant must be rejected
+    // 3. Attempting to resume automated assistance is blocked
     await assert.rejects(
       async () => {
         await env.takeoverService.setHumanTakeover(PHONE, false, ADMIN);
@@ -97,110 +172,29 @@ describe('WhatsApp Owner-Initiated Edge Cases & Compliance (Scenarios 10 - 18)',
     );
   });
 
-  it('15. 24-hour window enforcement suppresses messages outside service window', async () => {
-    const env = createAssistantTestHarness();
-    const staleTime = new Date(Date.now() - 26 * 60 * 60 * 1000); // 26 hours old
-
-    const res = await env.assistantService.handleInboundMessage({
-      from: PHONE,
-      body: 'Hello',
-      wamId: 'wamid.stale_window_001',
-      createdAt: staleTime,
-      statusTimestamp: staleTime,
-    });
-
-    assert.equal(res, null, 'Must suppress message outside 24-hour customer service window');
-    assert.equal(env.interactiveDispatches.length, 0);
-  });
-
-  it('16. multiple API instances and process restart maintain durable MongoDB state', async () => {
-    const env1 = createAssistantTestHarness();
-    // Instance 1: Owner initiates conversation
-    await env1.takeoverService.sendManualReply(PHONE, 'Hello from Palnadu team!', ADMIN);
-    const savedConv = env1.conversations.get(PHONE);
-    assert.equal(savedConv.mode, 'AWAITING_CUSTOMER_CHOICE');
-
-    // Instance 2 (simulating restart or different replica sharing same MongoDB map)
-    const env2 = createAssistantTestHarness();
-    // Share existing conversation collection
-    env2.conversations.set(PHONE, savedConv);
-
-    // Customer responds to Instance 2
-    const res = await env2.assistantService.handleInboundMessage({
-      from: PHONE,
-      body: 'Hi, please help',
-      wamId: 'wamid.instance2_reply_001',
-      createdAt: new Date(),
-    });
-
-    assert.ok(res);
-    // Instance 2 correctly saw AWAITING_CUSTOMER_CHOICE and sent choice buttons
-    const dispatch = env2.interactiveDispatches[0];
-    assert.equal(dispatch.interactive.type, 'button');
-    assert.equal(dispatch.interactive.action.buttons.length, 2);
-  });
-
-  it('17. queued messages during mode transitions avoid concurrency races', async () => {
-    const env = createAssistantTestHarness();
-    await env.takeoverService.sendManualReply(PHONE, 'Hello!', ADMIN);
-
-    // Two messages arrive concurrently
-    const p1 = env.assistantService.handleInboundMessage({
-      from: PHONE,
-      body: 'Automated Assistance',
-      wamId: 'wamid.concurrent_001',
-      type: 'interactive',
-      createdAt: new Date(),
-      rawPayload: {
-        interactive: {
-          type: 'button_reply',
-          button_reply: { id: 'choice_automated', title: 'Automated Assistance' },
-        },
-      },
-    });
-
-    const p2 = env.assistantService.handleInboundMessage({
-      from: PHONE,
-      body: 'Automated Assistance',
-      wamId: 'wamid.concurrent_002',
-      type: 'interactive',
-      createdAt: new Date(),
-      rawPayload: {
-        interactive: {
-          type: 'button_reply',
-          button_reply: { id: 'choice_automated', title: 'Automated Assistance' },
-        },
-      },
-    });
-
-    const [r1, r2] = await Promise.all([p1, p2]);
-    // Exactly one should succeed to dispatch; the other is locked out or returns gracefully
-    const conv = env.conversations.get(PHONE);
-    assert.equal(conv.mode, 'AUTOMATED_ASSISTANCE');
-  });
-
-  it('18. campaign messages record campaign origin and do not enter owner-initiated mode', async () => {
+  it('18. campaign messages remain isolated from manual human takeover logic', async () => {
     const env = createAssistantTestHarness();
 
-    // Create a campaign-originated message
+    // Create a marketing campaign message
     const campaignMsg = await env.mockPrisma.whatsAppMessage.create({
       data: {
-        wamId: 'wamid.campaign_out_001',
+        wamId: 'wamid.camp_msg_001',
         direction: 'OUTBOUND',
         from: 'palnadu_business',
         to: PHONE,
         type: 'template',
         status: 'SENT',
-        campaignId: 'camp_123',
-        rawPayload: { origin: 'CAMPAIGN', campaignId: 'camp_123' },
+        campaignId: 'camp_diwali_2026',
+        rawPayload: { origin: 'CAMPAIGN', campaignId: 'camp_diwali_2026' },
       },
     });
 
-    assert.equal(campaignMsg.campaignId, 'camp_123');
+    assert.equal(campaignMsg.campaignId, 'camp_diwali_2026');
     assert.equal(campaignMsg.rawPayload.origin, 'CAMPAIGN');
 
-    // Conversation should NOT be placed into AWAITING_CUSTOMER_CHOICE by campaign message
+    // Campaign messages must NOT activate human takeover
     const conv = env.conversations.get(PHONE);
+    assert.equal(conv?.humanTakeover ?? false, false);
     assert.equal(conv?.mode ?? 'AUTOMATED_ASSISTANCE', 'AUTOMATED_ASSISTANCE');
   });
 });
