@@ -99,7 +99,7 @@ export class WhatsAppOutreachService {
     const businessPhone =
       this.config.get<string>(WHATSAPP_CONFIG_KEYS.BUSINESS_PHONE)?.trim() || 'palnadu_business';
 
-    const isHumanSales = isHumanSalesOutreach(input);
+    const isHumanSales = isHumanSalesOutreach(input, admin);
     if (isHumanSales) {
       await activateOutreachTakeover(
         this.prisma,

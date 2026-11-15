@@ -79,7 +79,6 @@ export const sendIndividualOutreachSchema = z
       .optional(),
     saveContact: z.boolean().default(false),
     outreachPurpose: whatsAppOutreachPurposeSchema.optional().default('SALES_OUTREACH'),
-    origin: whatsAppOutreachOriginSchema.optional(),
   })
   .superRefine((data, ctx) => {
     if (data.templateName === PALNADU_CUSTOMER_ACKNOWLEDGEMENT_TEMPLATE) {

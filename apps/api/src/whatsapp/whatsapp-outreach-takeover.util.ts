@@ -20,12 +20,27 @@ const HUMAN_SALES_PURPOSES = new Set([
  * Determines whether an outreach request represents a human-managed sales interaction
  * that must trigger immediate, durable HUMAN_TAKEOVER.
  */
-export function isHumanSalesOutreach(input: {
-  outreachPurpose?: string;
-  origin?: string;
-}): boolean {
-  if (input.origin === 'AUTOMATED_NOTIFICATION') return false;
+export function isHumanSalesOutreach(
+  input: {
+    outreachPurpose?: string;
+    origin?: string;
+  },
+  admin?: { id: string; email?: string } | null,
+): boolean {
+  // 1. Authenticated human admin identity ALWAYS triggers human sales takeover
+  const isSystemWorker =
+    Boolean(admin?.id) &&
+    (['system', 'cron', 'automated'].includes(admin!.id.toLowerCase()) ||
+      admin!.id.toLowerCase().startsWith('system_') ||
+      admin!.id.toLowerCase().startsWith('cron_'));
+
+  if (admin && admin.id && !isSystemWorker) {
+    return true;
+  }
+  // 2. Explicit server-side origin bindings
   if (input.origin === 'HUMAN_SALES') return true;
+  if (input.origin === 'AUTOMATED_NOTIFICATION') return false;
+  // 3. Programmatic fallback for internal tasks
   if (input.outreachPurpose === 'NOTIFICATION') return false;
   if (!input.outreachPurpose) return true; // Default individual outreach is human sales
   return HUMAN_SALES_PURPOSES.has(input.outreachPurpose.toUpperCase().trim());
