@@ -6,8 +6,9 @@ import { WhatsAppOptOutService } from './whatsapp-opt-out.service';
 import { isOptOutKeywordText } from './whatsapp-opt-out.util';
 import { isPrismaP2002 } from './whatsapp-outreach-reservation.util';
 import { maskPhone } from './whatsapp-api.util';
-import { isBusinessPhoneNumber } from './whatsapp-choice.util';
+import { isBusinessPhoneNumber, isOwnerPhoneNumber } from './whatsapp-choice.util';
 import { acquireDispatchLock, releaseDispatchLock } from './whatsapp-dispatch-lock.util';
+import { finalizeAutoReplyOutbound } from './whatsapp-auto-reply-persistence.util';
 import {
   Prisma,
   WhatsAppDeliveryStatus,
@@ -18,6 +19,7 @@ import {
   WHATSAPP_CONFIG_KEYS,
   DEFAULT_ACK_MESSAGE,
   AUTO_REPLY_COOLDOWN_HOURS,
+  DEFAULT_BUSINESS_PHONE_NUMBER,
 } from './whatsapp.constants';
 
 @Injectable()
@@ -62,9 +64,16 @@ export class WhatsAppAutoReplyService {
     const recipientPhone = inboundMessage.from;
     const maskedPhone = maskPhone(recipientPhone);
 
-    const businessPhone = this.config.get<string>(WHATSAPP_CONFIG_KEYS.BUSINESS_PHONE);
+    const businessPhone =
+      this.config.get<string>(WHATSAPP_CONFIG_KEYS.BUSINESS_PHONE) || DEFAULT_BUSINESS_PHONE_NUMBER;
     if (isBusinessPhoneNumber(recipientPhone, [businessPhone, inboundMessage.to])) {
       this.logger.log(`Auto-reply skipped for ${maskedPhone}: business self-message.`);
+      return null;
+    }
+
+    const ownerPhone = this.config.get<string>(WHATSAPP_CONFIG_KEYS.OWNER_PHONE);
+    if (isOwnerPhoneNumber(recipientPhone, ownerPhone)) {
+      this.logger.log(`Auto-reply skipped for ${maskedPhone}: authorized internal owner number.`);
       return null;
     }
 
@@ -196,33 +205,15 @@ export class WhatsAppAutoReplyService {
           throw new Error('Meta API response did not contain an assigned message ID');
         }
 
-        let createdOutbound: WhatsAppMessage;
-        try {
-          createdOutbound = await this.prisma.whatsAppMessage.update({
-            where: { id: claimRecord.id },
-            data: {
-              wamId: assignedWamId,
-              status: WhatsAppDeliveryStatus.SENT,
-              body: ackText,
-              rawPayload: sendResult as unknown as Prisma.InputJsonValue,
-            },
-          });
-        } catch (updateErr: unknown) {
-          if (isPrismaP2002(updateErr)) {
-            this.logger.warn(`Delivery status webhook arrived before claim update for ${assignedWamId}, reconciling.`);
-            createdOutbound = await this.prisma.whatsAppMessage.update({
-              where: { wamId: assignedWamId },
-              data: {
-                body: ackText,
-                contextWamId: inboundMessage.wamId,
-                rawPayload: sendResult as unknown as Prisma.InputJsonValue,
-              },
-            });
-            await this.prisma.whatsAppMessage.delete({ where: { id: claimRecord.id } }).catch(() => null);
-          } else {
-            throw updateErr;
-          }
-        }
+        const createdOutbound = await finalizeAutoReplyOutbound(
+          this.prisma,
+          this.logger,
+          claimRecord.id,
+          assignedWamId,
+          inboundMessage.wamId,
+          ackText,
+          sendResult,
+        );
 
         this.logger.log(`Automated acknowledgment persisted for ${maskedPhone} (outbound: ${assignedWamId})`);
         return createdOutbound;

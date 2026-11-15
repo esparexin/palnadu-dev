@@ -70,3 +70,28 @@ export function isBusinessPhoneNumber(
   }
   return false;
 }
+
+export function isOwnerPhoneNumber(
+  phone: string | undefined | null,
+  configuredOwnerPhones: Array<string | undefined | null> | string | undefined | null,
+): boolean {
+  if (!phone || !configuredOwnerPhones) return false;
+  const cleanPhone = sanitizePhoneNumber(phone);
+  if (!cleanPhone) return false;
+
+  const rawList = typeof configuredOwnerPhones === 'string'
+    ? configuredOwnerPhones.split(',')
+    : Array.isArray(configuredOwnerPhones)
+      ? configuredOwnerPhones
+      : [configuredOwnerPhones];
+
+  for (const candidate of rawList) {
+    if (!candidate) continue;
+    const cleanCandidate = sanitizePhoneNumber(candidate.trim());
+    if (!cleanCandidate) continue;
+    if (cleanPhone === cleanCandidate || arePhoneNumbersEquivalent(cleanPhone, cleanCandidate)) {
+      return true;
+    }
+  }
+  return false;
+}
