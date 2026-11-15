@@ -138,8 +138,8 @@ describe('WhatsApp Outreach Service - Verifiable Consent, Idempotency & Rate Lim
   });
 
   it('validates WEBSITE_LEAD_FORM against database lead record', async () => {
-    leadsStore.set('lead_123', {
-      id: 'lead_123',
+    leadsStore.set('507f1f77bcf86cd799439011', {
+      id: '507f1f77bcf86cd799439011',
       phone: '919876543210',
       whatsappMarketingConsent: true,
       whatsappConsentPhone: '919876543210',
@@ -151,7 +151,7 @@ describe('WhatsApp Outreach Service - Verifiable Consent, Idempotency & Rate Lim
       ...baseInput,
       consentEvidence: {
         consentType: 'WEBSITE_LEAD_FORM',
-        consentEvidenceRef: 'lead_123',
+        consentEvidenceRef: '507f1f77bcf86cd799439011',
         consentTimestamp: new Date().toISOString(),
         recipientPhone: '+919876543210',
       },
@@ -165,7 +165,7 @@ describe('WhatsApp Outreach Service - Verifiable Consent, Idempotency & Rate Lim
       ...baseInput,
       consentEvidence: {
         consentType: 'WEBSITE_LEAD_FORM',
-        consentEvidenceRef: 'non_existent_lead',
+        consentEvidenceRef: '507f1f77bcf86cd799439099',
         consentTimestamp: new Date().toISOString(),
         recipientPhone: '+919876543210',
       },

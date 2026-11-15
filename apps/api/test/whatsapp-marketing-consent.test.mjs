@@ -35,7 +35,7 @@ describe('WhatsApp Marketing Consent, Strict Phone Match & Opt-Out Safety', () =
     };
     const baseEvidence = {
       consentType: 'WEBSITE_LEAD_FORM',
-      consentEvidenceRef: 'lead_no_optin',
+      consentEvidenceRef: '507f1f77bcf86cd799439011',
       consentTimestamp: new Date().toISOString(),
       recipientPhone: '+919876543210',
     };
@@ -49,7 +49,7 @@ describe('WhatsApp Marketing Consent, Strict Phone Match & Opt-Out Safety', () =
         findFirst: async () => ({ id: 'doc_no_phone', filename: 'agr.pdf', metadata: { authorizesWhatsAppMarketing: true } }),
       },
       lead: {
-        findUnique: async () => ({ id: 'lead_short', phone: '3210', whatsappMarketingConsent: true, createdAt: new Date() }),
+        findUnique: async () => ({ id: '507f1f77bcf86cd799439022', phone: '3210', whatsappMarketingConsent: true, createdAt: new Date() }),
       },
     };
     await assert.rejects(
@@ -64,7 +64,7 @@ describe('WhatsApp Marketing Consent, Strict Phone Match & Opt-Out Safety', () =
     await assert.rejects(
       () => verifyConsentEvidence(prisma, '919876543210', {
         consentType: 'WEBSITE_LEAD_FORM',
-        consentEvidenceRef: 'lead_short',
+        consentEvidenceRef: '507f1f77bcf86cd799439022',
         consentTimestamp: new Date().toISOString(),
         recipientPhone: '+919876543210',
       }, 'MARKETING'),
