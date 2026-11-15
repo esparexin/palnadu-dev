@@ -35,7 +35,7 @@ export function createAssistantTestHarness(options = {}) {
         (where.customerPhone ? conversations.get(where.customerPhone) : null) ||
         Array.from(conversations.values()).find((c) => c.id === where.id) || null,
       create: async ({ data }) => {
-        const rec = { id: `conv_${Date.now()}`, humanTakeover: false, state: 'IDLE', ...data };
+        const rec = { id: `conv_${Date.now()}`, humanTakeover: false, mode: 'AUTOMATED_ASSISTANCE', state: 'IDLE', ...data };
         conversations.set(data.customerPhone, rec);
         return rec;
       },
@@ -49,7 +49,7 @@ export function createAssistantTestHarness(options = {}) {
       upsert: async ({ where, create, update }) => {
         let rec = conversations.get(where.customerPhone);
         if (!rec) {
-          rec = { id: `conv_${Date.now()}`, ...create };
+          rec = { id: `conv_${Date.now()}`, humanTakeover: false, mode: 'AUTOMATED_ASSISTANCE', ...create };
           conversations.set(where.customerPhone, rec);
         } else {
           Object.assign(rec, update);
@@ -132,6 +132,15 @@ export function createAssistantTestHarness(options = {}) {
     },
   };
 
+  const suppressedPhones = new Set(options.suppressedPhones || []);
+  const optOutService = options.optOutService || {
+    isSuppressed: async (phone) => suppressedPhones.has(phone),
+    handleInboundOptOut: async (phone) => {
+      suppressedPhones.add(phone);
+      return true;
+    },
+  };
+
   const enquiryService = new WhatsAppEnquiryService(mockPrisma, mockNotifications);
   const conversationService = new WhatsAppConversationService(enquiryService);
   const assistantService = new WhatsAppAssistantService(
@@ -140,8 +149,13 @@ export function createAssistantTestHarness(options = {}) {
     mockApiClient,
     conversationService,
   );
-  const takeoverService = new WhatsAppTakeoverService(mockPrisma, mockApiClient);
-  const autoReplyService = new WhatsAppAutoReplyService(mockPrisma, mockConfig, mockApiClient);
+  const takeoverService = new WhatsAppTakeoverService(mockPrisma, mockApiClient, optOutService);
+  const autoReplyService = new WhatsAppAutoReplyService(
+    mockPrisma,
+    mockConfig,
+    mockApiClient,
+    optOutService,
+  );
 
   return {
     mockPrisma,
@@ -152,6 +166,8 @@ export function createAssistantTestHarness(options = {}) {
     assistantService,
     takeoverService,
     autoReplyService,
+    optOutService,
+    suppressedPhones,
     leads,
     notifications,
     conversations,

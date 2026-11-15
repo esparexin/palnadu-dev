@@ -14,17 +14,33 @@ import {
 import {
   buildMainMenuInteractiveList,
   buildSubmenuInteractiveButtons,
+  buildCustomerChoiceInteractiveButtons,
+  CUSTOMER_CHOICE_MESSAGE_TEXT,
 } from './whatsapp-interactive.util';
-import type { WhatsAppConversationState, WhatsAppInteractivePayload } from '@palnadu/types';
+import type {
+  WhatsAppConversationState,
+  WhatsAppConversationMode,
+  WhatsAppInteractivePayload,
+} from '@palnadu/types';
 import type { WhatsAppConversation } from '@prisma/client';
 
 export interface ConversationStepResult {
   responseText: string;
   nextState: WhatsAppConversationState;
+  nextMode?: WhatsAppConversationMode;
   selectedCategory?: string | null;
   selectedSubmenu?: string | null;
   enquiryDraft?: string | null;
   interactive?: WhatsAppInteractivePayload;
+}
+
+export function createCustomerChoiceStep(): ConversationStepResult {
+  return {
+    responseText: CUSTOMER_CHOICE_MESSAGE_TEXT,
+    interactive: buildCustomerChoiceInteractiveButtons(),
+    nextState: 'AWAITING_CUSTOMER_CHOICE',
+    nextMode: 'AWAITING_CUSTOMER_CHOICE',
+  };
 }
 
 export function createMainMenuStep(): ConversationStepResult {

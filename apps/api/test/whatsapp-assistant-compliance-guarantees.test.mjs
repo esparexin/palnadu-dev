@@ -22,7 +22,7 @@ describe('WhatsApp Compliance, Concurrency & Takeover Guarantees', () => {
           (where.customerPhone ? conversations.get(where.customerPhone) : null) ||
           Array.from(conversations.values()).find((c) => c.id === where.id) || null,
         create: async ({ data }) => {
-          const rec = { id: `conv_${Date.now()}`, humanTakeover: false, state: 'IDLE', ...data };
+          const rec = { id: `conv_${Date.now()}`, humanTakeover: false, mode: 'AUTOMATED_ASSISTANCE', state: 'IDLE', ...data };
           conversations.set(data.customerPhone, rec);
           return rec;
         },
@@ -35,7 +35,7 @@ describe('WhatsApp Compliance, Concurrency & Takeover Guarantees', () => {
         upsert: async ({ where, create, update }) => {
           let rec = conversations.get(where.customerPhone);
           if (!rec) {
-            rec = { id: `conv_${Date.now()}`, ...create };
+            rec = { id: `conv_${Date.now()}`, humanTakeover: false, mode: 'AUTOMATED_ASSISTANCE', ...create };
             conversations.set(where.customerPhone, rec);
           } else {
             Object.assign(rec, update);
@@ -141,15 +141,17 @@ describe('WhatsApp Compliance, Concurrency & Takeover Guarantees', () => {
     assert.equal(env.dispatched.length, 0);
   });
 
-  it('3. activates human takeover BEFORE external API dispatch in sendManualReply', async () => {
+  it('3. sets AWAITING_CUSTOMER_CHOICE on sendManualReply without activating takeover, while explicit takeover activates first', async () => {
     const env = setupEnv('true');
     let takeoverStateAtSendTime = null;
+    let modeAtSendTime = null;
 
     // Intercept sendTextMessage to inspect database state at the exact moment dispatch occurs
     const origSend = env.takeover['apiClient'].sendTextMessage;
     env.takeover['apiClient'].sendTextMessage = async (args) => {
       const conv = env.conversations.get('919030787819');
       takeoverStateAtSendTime = conv?.humanTakeover;
+      modeAtSendTime = conv?.mode;
       return origSend.call(env.takeover['apiClient'], args);
     };
 
@@ -159,7 +161,13 @@ describe('WhatsApp Compliance, Concurrency & Takeover Guarantees', () => {
       { id: 'admin_1', name: 'Support Rep' },
     );
 
-    assert.equal(takeoverStateAtSendTime, true, 'Takeover must be active BEFORE sendTextMessage executes');
+    assert.equal(takeoverStateAtSendTime, false, 'Takeover must not be active on manual reply alone');
+    assert.equal(modeAtSendTime, 'AWAITING_CUSTOMER_CHOICE', 'Mode must be AWAITING_CUSTOMER_CHOICE');
+
+    await env.takeover.setHumanTakeover('919030787819', true, { id: 'admin_1', name: 'Support Rep' });
+    const conv = env.conversations.get('919030787819');
+    assert.equal(conv.humanTakeover, true);
+    assert.equal(conv.mode, 'HUMAN_TAKEOVER');
   });
 
   it('4. suppresses legacy auto-reply when human takeover is active in conversation', async () => {

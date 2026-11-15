@@ -12,6 +12,7 @@ export const whatsAppConversationQuerySchema = z.object({
       return val;
     }, z.boolean().optional())
     .optional(),
+  mode: z.enum(['AWAITING_CUSTOMER_CHOICE', 'AUTOMATED_ASSISTANCE', 'HUMAN_TAKEOVER']).optional(),
   search: z.string().trim().optional(),
 });
 

@@ -1,6 +1,7 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Optional, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
 import { WhatsAppApiClient } from './whatsapp-api.client';
+import { WhatsAppOptOutService } from './whatsapp-opt-out.service';
 import { sanitizePhoneNumber } from './whatsapp-api.util';
 import { waitForDispatchDrain } from './whatsapp-dispatch-lock.util';
 import {
@@ -25,6 +26,7 @@ export class WhatsAppTakeoverService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly apiClient: WhatsAppApiClient,
+    @Optional() private readonly optOutService?: WhatsAppOptOutService,
   ) {}
 
   async setHumanTakeover(
@@ -35,25 +37,38 @@ export class WhatsAppTakeoverService {
     const cleanPhone = sanitizePhoneNumber(phone) || phone;
     const actorLabel = admin.name || admin.email || admin.id;
 
-    // 1. Immediately persist human takeover in MongoDB to block new dispatch leases
+    if (!enabled && this.optOutService) {
+      const isOptedOut = await this.optOutService.isSuppressed(cleanPhone);
+      if (isOptedOut) {
+        throw new BadRequestException(
+          'Cannot resume automated assistance for an opted-out contact',
+        );
+      }
+    }
+
+    const targetMode = enabled ? 'HUMAN_TAKEOVER' : 'AUTOMATED_ASSISTANCE';
+
     const conv = await this.prisma.whatsAppConversation.upsert({
       where: { customerPhone: cleanPhone },
       create: {
         customerPhone: cleanPhone,
+        mode: targetMode,
         humanTakeover: enabled,
         takenOverAt: enabled ? new Date() : null,
         takenOverById: enabled ? admin.id : null,
         takenOverByName: enabled ? actorLabel : null,
+        modeUpdatedAt: new Date(),
       },
       update: {
+        mode: targetMode,
         humanTakeover: enabled,
         takenOverAt: enabled ? new Date() : null,
         takenOverById: enabled ? admin.id : null,
         takenOverByName: enabled ? actorLabel : null,
+        modeUpdatedAt: new Date(),
       },
     });
 
-    // 2. If enabling takeover: wait for any active in-flight automated dispatch to drain
     if (enabled) {
       await waitForDispatchDrain(this.prisma, cleanPhone);
     }
@@ -75,16 +90,51 @@ export class WhatsAppTakeoverService {
   ): Promise<WhatsAppMessage> {
     const cleanPhone = sanitizePhoneNumber(phone);
     if (!cleanPhone) throw new Error('Invalid recipient phone number');
+    const actorLabel = admin.name || admin.email || admin.id;
 
-    // 1. Immediately activate human takeover BEFORE dispatching manual reply
-    // This atomically stops any in-flight or concurrent automated assistant/auto-reply from sending.
-    await this.setHumanTakeover(cleanPhone, true, admin);
+    const existingConv = await this.prisma.whatsAppConversation.findUnique({
+      where: { customerPhone: cleanPhone },
+    });
+
+    const isTakeover = Boolean(
+      existingConv?.humanTakeover || existingConv?.mode === 'HUMAN_TAKEOVER',
+    );
+    const targetMode = isTakeover ? 'HUMAN_TAKEOVER' : 'AWAITING_CUSTOMER_CHOICE';
+
+    await this.prisma.whatsAppConversation.upsert({
+      where: { customerPhone: cleanPhone },
+      create: {
+        customerPhone: cleanPhone,
+        mode: targetMode,
+        humanTakeover: isTakeover,
+        lastInitiatorId: admin.id,
+        lastInitiatorName: actorLabel,
+        modeUpdatedAt: new Date(),
+        lastOutboundAt: new Date(),
+      },
+      update: {
+        mode: targetMode,
+        humanTakeover: isTakeover,
+        lastInitiatorId: admin.id,
+        lastInitiatorName: actorLabel,
+        modeUpdatedAt: new Date(),
+        lastOutboundAt: new Date(),
+      },
+    }).catch(() => null);
 
     const sendResult = await this.apiClient.sendTextMessage({
       to: cleanPhone,
       text: text.trim(),
     });
     const assignedWamId = sendResult.messages?.[0]?.id || `wamid.manual.${Date.now()}`;
+
+    const auditPayload: Record<string, unknown> = {
+      origin: 'MANUAL_ADMIN',
+      adminId: admin.id,
+      adminName: admin.name,
+      adminEmail: admin.email,
+      metaResponse: sendResult,
+    };
 
     const saved = await this.prisma.whatsAppMessage.create({
       data: {
@@ -95,24 +145,20 @@ export class WhatsAppTakeoverService {
         type: 'text',
         body: text.trim(),
         status: WhatsAppDeliveryStatus.SENT,
-        rawPayload: sendResult as unknown as Prisma.InputJsonValue,
+        rawPayload: auditPayload as unknown as Prisma.InputJsonValue,
       },
     });
-
-    await this.prisma.whatsAppConversation.update({
-      where: { customerPhone: cleanPhone },
-      data: { lastOutboundAt: new Date() },
-    }).catch(() => null);
 
     return saved;
   }
 
   async listConversations(params: WhatsAppConversationFilterParams) {
-    const { page = 1, limit = 20, humanTakeover, search } = params;
+    const { page = 1, limit = 20, humanTakeover, mode, search } = params;
     const skip = (page - 1) * limit;
     const where: Prisma.WhatsAppConversationWhereInput = {};
 
     if (humanTakeover !== undefined) where.humanTakeover = humanTakeover;
+    if (mode !== undefined) where.mode = mode;
     if (search) {
       where.OR = [
         { customerPhone: { contains: search, mode: 'insensitive' } },

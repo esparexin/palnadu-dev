@@ -18,9 +18,14 @@ import {
   type ConversationStepResult,
   createMainMenuStep,
   createSubmenuStep,
+  createCustomerChoiceStep,
   resolveInteractiveSelection,
 } from './whatsapp-conversation-step.util';
-import type { WhatsAppConversationState } from '@palnadu/types';
+import {
+  isExplicitHumanRequest,
+  classifyCustomerChoice,
+} from './whatsapp-choice.util';
+import type { WhatsAppConversationState, WhatsAppConversationMode } from '@palnadu/types';
 import type { WhatsAppConversation, WhatsAppMessage } from '@prisma/client';
 
 export type { ConversationStepResult };
@@ -39,11 +44,28 @@ export class WhatsAppConversationService {
     const interactiveSel = extractInteractiveSelection(
       inboundMessage as unknown as Record<string, unknown>,
     );
+    const currentMode = (conversation.mode || 'AUTOMATED_ASSISTANCE') as WhatsAppConversationMode;
     const currentState = (conversation.state || 'IDLE') as WhatsAppConversationState;
     const navCommand = parseNavigationCommand(rawText);
 
+    if (currentMode === 'AWAITING_CUSTOMER_CHOICE') {
+      return this.handleAwaitingCustomerChoice(inboundMessage, conversation, rawText, interactiveSel);
+    }
+
     if (interactiveSel) {
       return resolveInteractiveSelection(interactiveSel.id, interactiveSel.title, conversation);
+    }
+
+    if (isExplicitHumanRequest(rawText)) {
+      await this.enquiryService.notifyCustomerRequestedTeam({
+        phone: inboundMessage.from,
+        name: conversation.customerName || inboundMessage.profileName,
+      });
+      return {
+        responseText: DIRECT_CONTACT_SUPPORT_MESSAGE,
+        nextState: 'IDLE',
+        nextMode: 'HUMAN_TAKEOVER',
+      };
     }
 
     switch (currentState) {
@@ -57,6 +79,34 @@ export class WhatsAppConversationService {
       default:
         return this.handleIdleState(rawText, navCommand);
     }
+  }
+
+  private async handleAwaitingCustomerChoice(
+    inboundMessage: WhatsAppMessage,
+    conversation: WhatsAppConversation,
+    rawText?: string,
+    interactiveSel?: { id: string; title: string } | null,
+  ): Promise<ConversationStepResult> {
+    const choice = classifyCustomerChoice(rawText, interactiveSel?.id || interactiveSel?.title);
+
+    if (choice === 'AUTOMATED') {
+      const step = createMainMenuStep();
+      return { ...step, nextMode: 'AUTOMATED_ASSISTANCE' };
+    }
+
+    if (choice === 'HUMAN') {
+      await this.enquiryService.notifyCustomerRequestedTeam({
+        phone: inboundMessage.from,
+        name: conversation.customerName || inboundMessage.profileName,
+      });
+      return {
+        responseText: DIRECT_CONTACT_SUPPORT_MESSAGE,
+        nextState: 'IDLE',
+        nextMode: 'HUMAN_TAKEOVER',
+      };
+    }
+
+    return createCustomerChoiceStep();
   }
 
   private handleIdleState(

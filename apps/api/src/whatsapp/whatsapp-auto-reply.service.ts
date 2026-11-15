@@ -160,9 +160,9 @@ export class WhatsAppAutoReplyService {
         // Re-verify human takeover under lease protection
         const freshConv = await this.prisma.whatsAppConversation?.findUnique({
           where: { customerPhone: recipientPhone },
-          select: { humanTakeover: true },
+          select: { humanTakeover: true, mode: true },
         });
-        if (freshConv?.humanTakeover) {
+        if (freshConv?.humanTakeover || freshConv?.mode === 'HUMAN_TAKEOVER') {
           this.logger.warn(`Auto-reply aborted for ${maskedPhone}: takeover activated before dispatch.`);
           await this.prisma.whatsAppMessage?.delete?.({ where: { id: claimRecord.id } }).catch(() => null);
           return null;

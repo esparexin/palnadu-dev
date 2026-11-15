@@ -111,7 +111,7 @@ export class WhatsAppAssistantService {
       });
     }
 
-    if (conv.humanTakeover) {
+    if (conv.humanTakeover || conv.mode === 'HUMAN_TAKEOVER') {
       this.logger.log(`Bot reply suppressed for ${masked}: human takeover is active.`);
       return null;
     }
@@ -154,9 +154,9 @@ export class WhatsAppAssistantService {
 
       const freshConv = await this.prisma.whatsAppConversation.findUnique({
         where: { id: conv.id },
-        select: { humanTakeover: true },
+        select: { humanTakeover: true, mode: true },
       });
-      if (freshConv?.humanTakeover) {
+      if (freshConv?.humanTakeover || freshConv?.mode === 'HUMAN_TAKEOVER') {
         this.logger.warn(`Bot reply aborted for ${masked}: takeover activated before dispatch.`);
         await this.prisma.whatsAppMessage?.delete?.({ where: { id: claimRecord.id } }).catch(() => null);
         return null;
@@ -188,10 +188,17 @@ export class WhatsAppAssistantService {
         },
       });
 
+      const isTakeoverNow = step.nextMode === 'HUMAN_TAKEOVER';
+      const isAutomatedNow = step.nextMode === 'AUTOMATED_ASSISTANCE';
+
       await this.prisma.whatsAppConversation.update({
         where: { id: conv.id },
         data: {
           state: step.nextState,
+          ...(step.nextMode ? { mode: step.nextMode, modeUpdatedAt: new Date() } : {}),
+          humanTakeover: isTakeoverNow ? true : isAutomatedNow ? false : conv.humanTakeover,
+          takenOverAt: isTakeoverNow ? new Date() : isAutomatedNow ? null : conv.takenOverAt,
+          takenOverByName: isTakeoverNow ? 'Customer Choice' : isAutomatedNow ? null : conv.takenOverByName,
           selectedCategory: step.selectedCategory !== undefined ? step.selectedCategory : conv.selectedCategory,
           selectedSubmenu: step.selectedSubmenu !== undefined ? step.selectedSubmenu : conv.selectedSubmenu,
           enquiryDraft: step.enquiryDraft !== undefined ? step.enquiryDraft : conv.enquiryDraft,

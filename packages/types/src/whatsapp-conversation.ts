@@ -1,5 +1,11 @@
+export type WhatsAppConversationMode =
+  | 'AWAITING_CUSTOMER_CHOICE'
+  | 'AUTOMATED_ASSISTANCE'
+  | 'HUMAN_TAKEOVER';
+
 export type WhatsAppConversationState =
   | 'IDLE'
+  | 'AWAITING_CUSTOMER_CHOICE'
   | 'AWAITING_CATEGORY'
   | 'AWAITING_SUBMENU'
   | 'AWAITING_REQUIREMENT';
@@ -9,6 +15,7 @@ export interface WhatsAppConversation {
   customerPhone: string;
   customerName?: string;
   state: WhatsAppConversationState;
+  mode: WhatsAppConversationMode;
   selectedCategory?: string;
   selectedSubmenu?: string;
   enquiryDraft?: string;
@@ -16,6 +23,9 @@ export interface WhatsAppConversation {
   takenOverAt?: string;
   takenOverById?: string;
   takenOverByName?: string;
+  lastInitiatorId?: string;
+  lastInitiatorName?: string;
+  modeUpdatedAt?: string;
   lastInboundWamId?: string;
   lastEnquiryWamId?: string;
   lastInboundAt?: string;
@@ -43,6 +53,7 @@ export interface WhatsAppConversationFilterParams {
   page?: number;
   limit?: number;
   humanTakeover?: boolean;
+  mode?: WhatsAppConversationMode;
   search?: string;
 }
 

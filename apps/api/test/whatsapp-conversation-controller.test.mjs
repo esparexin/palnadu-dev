@@ -140,7 +140,7 @@ describe('WhatsApp Admin Conversation Controller & Takeover API', () => {
     assert.equal(res.data.takenOverByName, 'Ramesh Admin');
   });
 
-  it('4. sends manual reply and ensures human takeover is persisted', async () => {
+  it('4. sends manual reply and sets AWAITING_CUSTOMER_CHOICE without activating takeover', async () => {
     const { controller, conversations, messages } = createMockHarness();
     conversations.set('919030787819', {
       id: 'c1',
@@ -160,6 +160,7 @@ describe('WhatsApp Admin Conversation Controller & Takeover API', () => {
     assert.equal(res.data.body, 'Hello! I am Ramesh from Palnadu team, assisting you directly.');
 
     const conv = conversations.get('919030787819');
-    assert.equal(conv.humanTakeover, true);
+    assert.equal(conv.humanTakeover, false);
+    assert.equal(conv.mode, 'AWAITING_CUSTOMER_CHOICE');
   });
 });
