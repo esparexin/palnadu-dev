@@ -1,32 +1,25 @@
 import type { BlogLanguage } from '@prisma/client';
-import { CURATED_TOPIC_QUEUE, type QueueCandidate } from './types';
-import { TELUGU_CURATED_TOPIC_QUEUE } from './telugu-seeds';
+import type { QueueCandidate } from './types';
+import { getAllTeluguSeeds } from './telugu-matrix';
+import { getAllEnglishSeeds } from './english-matrix';
 
 export function getAllInitialSeeds(
-  _generatedKeys: Set<string>,
+  generatedKeys: Set<string> = new Set(),
   language: BlogLanguage = 'en' as BlogLanguage,
 ): QueueCandidate[] {
   if (language === ('te' as BlogLanguage)) {
-    return TELUGU_CURATED_TOPIC_QUEUE.map((t): QueueCandidate => ({
-      ...t,
-      language: 'te' as BlogLanguage,
-      source: 'curated-rotation',
-    }));
+    return getAllTeluguSeeds(generatedKeys);
   }
 
-  return CURATED_TOPIC_QUEUE.map((t): QueueCandidate => ({
-    ...t,
-    language: 'en' as BlogLanguage,
-    source: 'curated-rotation',
-  }));
+  return getAllEnglishSeeds(generatedKeys);
 }
 
 export function inferCategoryFromTopic(phrase: string, primaryKeyword = ''): string {
   const p = `${phrase} ${primaryKeyword}`.toLowerCase();
-  if (/\bseo\b/.test(p)) return 'local-seo-business';
-  if (/mobile app|android|ios|app development/.test(p)) return 'app-development';
-  if (/school|admission|fee portal/.test(p)) return 'school-websites';
-  if (/saas|mvp|startup|entrepreneur|new business|business launch|idea to/.test(p)) return 'startups';
+  if (/\bseo\b|ఎస్‌ఇ‌ఓ|ఎస్ఈఓ|మార్కెటింగ్|డిజిటల్ మార్కెటింగ్|సెర్చ్ ఇంజిన్/.test(p)) return 'local-seo-business';
+  if (/mobile app|android|ios|app development|మొబైల్ యాప్|యాప్ డెవలప్‌మెంట్|ఆండ్రాయిడ్/.test(p)) return 'app-development';
+  if (/school|admission|fee portal|పాఠశాల|కళాశాల|విద్యా సంస్థ/.test(p)) return 'school-websites';
+  if (/saas|mvp|startup|entrepreneur|new business|business launch|idea to|స్టార్టప్|సాస్|ఎమ్‌వీ‌పీ/.test(p)) return 'startups';
   return 'website-development';
 }
 

@@ -121,7 +121,7 @@ export class GeminiKeyVerificationService {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             contents: [{ parts: [{ text: 'Reply with OK.' }] }],
-            generationConfig: { maxOutputTokens: 8, temperature: 0 },
+            generationConfig: { maxOutputTokens: 120, temperature: 0 },
           }),
         },
         stage: 'generate',
@@ -132,8 +132,12 @@ export class GeminiKeyVerificationService {
       identityCandidates.push({ headers: genOutcome.headers, body: genOutcome.body });
 
       if (genOutcome.ok) {
-        const text = genOutcome.body?.candidates?.[0]?.content?.parts?.[0]?.text;
-        if (typeof text === 'string' && text.trim().length > 0) {
+        const candidate = genOutcome.body?.candidates?.[0];
+        const parts = candidate?.content?.parts;
+        const text = Array.isArray(parts)
+          ? parts.map((p: any) => (typeof p?.text === 'string' ? p.text : '')).filter(Boolean).join(' ').trim()
+          : '';
+        if (text.length > 0) {
           testedModels.push({
             model,
             accessible: true,

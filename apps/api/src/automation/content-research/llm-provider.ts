@@ -69,9 +69,16 @@ export async function generateGeminiWithFallback(params: {
     });
 
     if (outcome.ok) {
-      const rawText = outcome.body?.candidates?.[0]?.content?.parts?.[0]?.text;
-      if (typeof rawText === 'string' && rawText.trim().length > 0) {
-        return { ok: true, text: rawText, model };
+      const parts = outcome.body?.candidates?.[0]?.content?.parts;
+      const combinedText = Array.isArray(parts)
+        ? parts
+            .map((p: any) => (typeof p?.text === 'string' ? p.text : ''))
+            .filter(Boolean)
+            .join('\n')
+            .trim()
+        : '';
+      if (combinedText.length > 0) {
+        return { ok: true, text: combinedText, model };
       }
       lastFailure = {
         code: 'TEMPORARY_PROVIDER_ERROR',

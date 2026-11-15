@@ -94,6 +94,31 @@ export async function acquireDailyCronLock(
     startedAt: now.toISOString(),
   };
 
+  const existing = await prisma.siteSetting.findUnique({ where: { key: lockKey } });
+  if (existing) {
+    const prev = (existing.value ?? undefined) as DailyCronRunRecord | undefined;
+    const alreadyCompleted = prev?.status === 'COMPLETED';
+    const freshRunning = prev?.status === 'RUNNING' && isLockFresh(prev?.startedAt, now);
+    if (!force && (alreadyCompleted || freshRunning)) {
+      return {
+        acquired: false,
+        reason: alreadyCompleted ? 'already_completed' : 'already_running',
+        dateKey,
+        lockKey,
+        record: prev,
+      };
+    }
+
+    const claim = await prisma.siteSetting.updateMany({
+      where: { key: lockKey, updatedAt: existing.updatedAt },
+      data: { value: nextRecord as any, updatedBy: `cron:${source}` },
+    });
+    if (claim.count !== 1) {
+      return { acquired: false, reason: 'already_running', dateKey, lockKey, record: prev };
+    }
+    return { acquired: true, dateKey, lockKey, record: nextRecord };
+  }
+
   try {
     await prisma.siteSetting.create({
       data: {
@@ -108,33 +133,9 @@ export async function acquireDailyCronLock(
     if (!isUniqueConstraintError(err)) throw err;
   }
 
-  const existing = await prisma.siteSetting.findUnique({ where: { key: lockKey } });
-  const prev = (existing?.value ?? undefined) as DailyCronRunRecord | undefined;
-  if (!existing) {
-    return { acquired: false, reason: 'already_running', dateKey, lockKey, record: prev };
-  }
-
-  const alreadyCompleted = prev?.status === 'COMPLETED';
-  const freshRunning = prev?.status === 'RUNNING' && isLockFresh(prev.startedAt, now);
-  if (!force && (alreadyCompleted || freshRunning)) {
-    return {
-      acquired: false,
-      reason: alreadyCompleted ? 'already_completed' : 'already_running',
-      dateKey,
-      lockKey,
-      record: prev,
-    };
-  }
-
-  const claim = await prisma.siteSetting.updateMany({
-    where: { key: lockKey, updatedAt: existing.updatedAt },
-    data: { value: nextRecord as any, updatedBy: `cron:${source}` },
-  });
-  if (claim.count !== 1) {
-    return { acquired: false, reason: 'already_running', dateKey, lockKey, record: prev };
-  }
-
-  return { acquired: true, dateKey, lockKey, record: nextRecord };
+  const race = await prisma.siteSetting.findUnique({ where: { key: lockKey } });
+  const racePrev = (race?.value ?? undefined) as DailyCronRunRecord | undefined;
+  return { acquired: false, reason: 'already_running', dateKey, lockKey, record: racePrev };
 }
 
 /** Records finalized outcome for the active lock holder and updates latest run telemetry. */

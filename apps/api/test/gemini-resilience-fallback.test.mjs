@@ -86,9 +86,9 @@ describe('Phase 6 Gemini Resilience, Classification & Pending Preservation', () 
     assert.equal(res.isUsableForGeneration, true);
     assert.equal(res.verificationCode, 'VERIFIED');
     assert.equal(res.fallbackUsed, true);
-    assert.equal(res.activeUsableModel, 'gemini-3.6-flash');
+    assert.equal(res.activeUsableModel, 'gemini-3.1-flash-lite');
     assert.equal(attemptsByModel.get('gemini-3.8-flash'), 2);
-    assert.equal(attemptsByModel.get('gemini-3.6-flash'), 1);
+    assert.equal(attemptsByModel.get('gemini-3.1-flash-lite'), 1);
     assert.equal(res.models.tested[0].failureCategory, 'MODEL_OVERLOADED');
     assert.equal(res.models.tested[0].isTemporary, true);
     assert.equal(res.models.tested[1].accessible, true);
@@ -239,11 +239,10 @@ describe('Phase 6 Gemini Resilience, Classification & Pending Preservation', () 
       },
       retry: { maxRetries: 2, baseDelayMs: 500, sleepFn: noopSleep, nowFn: () => fakeNow },
     });
-    assert.deepEqual(probed, ['gemini-3.8-flash']);
+    assert.deepEqual(probed, ['gemini-3.1-flash-lite']);
     assert.equal(res.verificationCode, 'MODEL_OVERLOADED');
     assert.equal(res.isTemporary, true);
     assert.equal(INTERACTIVE_VERIFY_OVERALL_TIMEOUT_MS, 26000);
-    assert.equal(INTERACTIVE_VERIFY_RETRY.timeoutMs, 7000);
-    assert.equal(INTERACTIVE_VERIFY_RETRY.maxRetries, 1);
+    assert.equal(INTERACTIVE_VERIFY_RETRY.timeoutMs, 7000); assert.equal(INTERACTIVE_VERIFY_RETRY.maxRetries, 1);
   });
 });

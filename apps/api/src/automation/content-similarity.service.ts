@@ -68,6 +68,8 @@ export class ContentSimilarityService {
    *
    * Language-aware: a same-topicKey match in another language is a translation
    * candidate, not a duplicate — it must not block enqueueing.
+   *
+   * Verifies against BOTH published posts (blogPost) and active queue items (blogTopic).
    */
   async isLikelyDuplicateTopic(
     topic: string,
@@ -78,30 +80,60 @@ export class ContentSimilarityService {
     const key = candidateCanonical.topicKey;
     if (knownTopicKeys.has(key)) return true;
 
-    const existing = await this.loadExisting();
-    return existing.some((post) => {
-      if (!post.topicKey) return false;
-      if (post.topicKey === key) {
-        // Same key, other language → translation candidate, not a duplicate.
-        if (language && post.language && post.language !== language) return false;
+    const existingPosts = await this.loadExisting();
+    const activeTopics =
+      (await this.prisma.blogTopic?.findMany?.({
+        where: {
+          language: language ? (language as any) : undefined,
+          status: { in: ['PENDING', 'CLAIMED', 'FAILED'] as any },
+        },
+        select: { topicKey: true, topic: true, language: true },
+      })) ?? [];
+
+    const corpus = [
+      ...existingPosts.map((p) => ({ topicKey: p.topicKey, topic: p.topic ?? p.title, language: p.language })),
+      ...activeTopics.map((t) => ({ topicKey: t.topicKey, topic: t.topic, language: t.language })),
+    ];
+
+    return corpus.some((item) => {
+      if (!item.topicKey) return false;
+      if (item.topicKey === key) {
+        if (language && item.language && item.language !== language) return false;
         return true;
       }
-      // Cross-language text overlap is script noise; only same-language (or
-      // unknown-language) text counts.
-      if (language && post.language && post.language !== language) return false;
+      if (language && item.language && item.language !== language) return false;
 
-      // If both topics specify distinct, non-matching geographical locations,
-      // they represent distinct regional landing topics and are not duplicates.
-      const postCanonical = canonicalizeTopic(post.topic ?? post.title);
+      const itemCanonical = canonicalizeTopic(item.topic);
+      // Legitimate regional variation: different locations are NEVER duplicates
       if (
         candidateCanonical.location &&
-        postCanonical.location &&
-        candidateCanonical.location !== postCanonical.location
+        itemCanonical.location &&
+        candidateCanonical.location !== itemCanonical.location
       ) {
         return false;
       }
 
-      return topicTokenOverlap(topic, post.topic ?? post.title) >= DEFAULT_THRESHOLDS.topicOverlap;
+      // Check 1: Token overlap >= threshold
+      if (topicTokenOverlap(topic, item.topic) >= DEFAULT_THRESHOLDS.topicOverlap) {
+        return true;
+      }
+
+      // Check 2: Same location + same core concept pair (subject + aspect) + same intent
+      if (
+        candidateCanonical.location &&
+        itemCanonical.location &&
+        candidateCanonical.location === itemCanonical.location &&
+        candidateCanonical.intent === itemCanonical.intent &&
+        candidateCanonical.concepts.length > 0 &&
+        itemCanonical.concepts.length > 0
+      ) {
+        const shared = candidateCanonical.concepts.filter((c) => itemCanonical.concepts.includes(c));
+        if (shared.some((c) => c.startsWith('subject:')) && shared.some((c) => c.startsWith('aspect:'))) {
+          return true;
+        }
+      }
+
+      return false;
     });
   }
 }

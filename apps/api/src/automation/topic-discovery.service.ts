@@ -11,6 +11,7 @@ import {
   isViableTopicPhrase,
 } from './seo-sources';
 import { DISCOVERY_SEED_PHRASES } from './discovery-seeds';
+import { detectLanguage } from './script-utils';
 
 /**
  * Website intelligence + reference-source discovery.
@@ -150,11 +151,17 @@ export class TopicDiscoveryService {
         .map((t) => t.topicKey),
     );
 
-    const fresh = candidates.filter((c) => !alreadyGenerated.has(c.topicKey) && !queued.has(c.topicKey));
+    const expectedLang = language === BlogLanguage.te ? 'te' : 'en';
+    const fresh = candidates.filter(
+      (c) =>
+        detectLanguage(c.phrase) === expectedLang &&
+        !alreadyGenerated.has(c.topicKey) &&
+        !queued.has(c.topicKey),
+    );
 
     this.logger.log(
       `discovered ${candidates.length} candidate topics from ${this.sources.filter((s) => s.isConfigured()).length} sources; ` +
-        `${fresh.length} are new [${language}] after dedup`,
+        `${fresh.length} are new [${language}] after dedup & script check`,
     );
 
     return fresh.slice(0, limit);
