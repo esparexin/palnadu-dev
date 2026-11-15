@@ -1,29 +1,41 @@
 import { z } from 'zod';
 
 export const whatsAppConsentTypeSchema = z.enum([
+  'DIRECT_ADMIN_OUTREACH',
   'WEBSITE_LEAD_FORM',
   'INBOUND_WHATSAPP_INQUIRY',
   'SIGNED_AGREEMENT',
   'VERIFIED_CRM_LEAD',
 ]);
 
-export const whatsAppConsentEvidenceSchema = z.object({
-  consentType: whatsAppConsentTypeSchema,
-  consentEvidenceRef: z
-    .string()
-    .trim()
-    .min(3, 'Consent evidence reference must be at least 3 characters')
-    .max(100, 'Consent evidence reference must not exceed 100 characters'),
-  consentTimestamp: z
-    .string()
-    .datetime({ message: 'Consent timestamp must be a valid ISO datetime' }),
-  recipientPhone: z
-    .string()
-    .trim()
-    .min(8, 'Consent recipient phone number must be at least 8 digits')
-    .max(20, 'Consent recipient phone number must not exceed 20 digits'),
-  consentPurpose: z.enum(['MARKETING', 'CUSTOMER_SERVICE']).optional(),
-});
+export const whatsAppConsentEvidenceSchema = z
+  .object({
+    consentType: whatsAppConsentTypeSchema,
+    consentEvidenceRef: z
+      .string()
+      .trim()
+      .min(3, 'Consent evidence reference must be at least 3 characters')
+      .max(100, 'Consent evidence reference must not exceed 100 characters'),
+    consentTimestamp: z
+      .string()
+      .datetime({ message: 'Consent timestamp must be a valid ISO datetime' }),
+    recipientPhone: z
+      .string()
+      .trim()
+      .min(8, 'Consent recipient phone number must be at least 8 digits')
+      .max(20, 'Consent recipient phone number must not exceed 20 digits'),
+    consentPurpose: z.enum(['MARKETING', 'CUSTOMER_SERVICE']).optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (data.consentType === 'DIRECT_ADMIN_OUTREACH' && data.consentEvidenceRef.trim().length < 10) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['consentEvidenceRef'],
+        message:
+          'Direct admin outreach requires a documented consent basis of at least 10 characters (e.g. meeting notes, referral context, or phone consent details).',
+      });
+    }
+  });
 
 export const PALNADU_CUSTOMER_ACKNOWLEDGEMENT_TEMPLATE = 'palnadu_customer_acknowledgement';
 
