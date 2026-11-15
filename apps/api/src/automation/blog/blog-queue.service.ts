@@ -36,8 +36,11 @@ export class BlogQueueService {
     const rows = await this.prisma.blogTopic.findMany({ orderBy: { createdAt: 'asc' } });
 
     return rows.map((row) => {
+      const canonicalKey = toTopicKey(row.topic);
       const done =
-        row.status === TopicStatus.COMPLETED || generatedKeys.has(`${row.topicKey}::${row.language}`);
+        row.status === TopicStatus.COMPLETED ||
+        generatedKeys.has(`${row.topicKey}::${row.language}`) ||
+        generatedKeys.has(`${canonicalKey}::${row.language}`);
       return {
         id: row.id,
         topicKey: row.topicKey,
