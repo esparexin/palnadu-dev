@@ -77,8 +77,12 @@ export function useBlogAutomation(
       const res = await api.automation.discover(40);
       if (res.success) {
         toast.success(res.message);
-        const updated = await api.automation.status();
+        const [updated, bilingualUpdated] = await Promise.all([
+          api.automation.status(),
+          api.automation.getBilingual().catch(() => null),
+        ]);
         if (updated.success) setAutomationStatus(updated.data);
+        if (bilingualUpdated?.success) setBilingualStatus(bilingualUpdated.data);
       }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to discover topics');

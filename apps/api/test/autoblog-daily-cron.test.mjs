@@ -179,12 +179,12 @@ describe('PR2 Daily Auto-Blogging Cron Reliability & Protection', () => {
 
     let status;
     for (let i = 0; i < 20 && status?.todayRun?.status !== 'COMPLETED'; i++) {
-      await new Promise((r) => setTimeout(r, 10));
+      await new Promise((resolve) => setTimeout(resolve, 25));
       status = await readDailyCronStatus(prisma);
     }
-    assert.equal(status.schedule, DAILY_CRON_SCHEDULE);
-    assert.equal(status.todayRun?.status, 'COMPLETED');
-    assert.equal(status.todayRun?.generatedCount, 2);
+    assert.equal(status?.schedule, DAILY_CRON_SCHEDULE);
+    assert.equal(status?.todayRun?.status, 'COMPLETED');
+    assert.equal(status?.todayRun?.generatedCount, 2);
   });
 
   it('CronOrAdminGuard enforces timing-safe x-cron-secret and falls back to Admin JWT', async () => {

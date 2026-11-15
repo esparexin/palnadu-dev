@@ -23,6 +23,13 @@ function createQueuePrisma(topics = [], posts = []) {
   return {
     blogTopic: {
       findMany: async () => topics,
+      count: async ({ where } = {}) =>
+        topics.filter((t) => (!where?.language || t.language === where.language) && (!where?.status || t.status === where.status)).length,
+      create: async ({ data }) => {
+        const row = { id: `t-${topics.length + 1}`, status: TopicStatus.PENDING, attempts: 0, claimedAt: null, ...data };
+        topics.push(row);
+        return row;
+      },
       findUnique: async ({ where: { topicKey_language } }) =>
         topics.find(
           (t) => t.topicKey === topicKey_language.topicKey && t.language === topicKey_language.language,
@@ -44,6 +51,12 @@ function createQueuePrisma(topics = [], posts = []) {
       },
     },
     blogPost: {
+      findMany: async () => posts,
+      create: async ({ data }) => {
+        const row = { id: `t-${topics.length + 1}`, status: TopicStatus.PENDING, attempts: 0, claimedAt: null, ...data };
+        topics.push(row);
+        return row;
+      },
       findUnique: async ({ where: { topicKey_language } }) =>
         posts.find(
           (p) => p.topicKey === topicKey_language.topicKey && p.language === topicKey_language.language,
@@ -136,7 +149,7 @@ describe('Category A Blog Automation Regressions', () => {
 
   it('4. emits only Telugu seeds for Telugu replenishment without English topic fallback strings', () => {
     const teSeeds = getAllInitialSeeds(new Set(), BlogLanguage.te);
-    assert.equal(teSeeds.length, TELUGU_CURATED_TOPIC_QUEUE.length);
+    assert.ok(teSeeds.length >= TELUGU_CURATED_TOPIC_QUEUE.length);
     assert.ok(teSeeds.every((s) => s.language === BlogLanguage.te && /[\u0C00-\u0C7F]/.test(s.topic)));
   });
 

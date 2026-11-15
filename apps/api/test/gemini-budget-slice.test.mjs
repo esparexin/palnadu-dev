@@ -55,6 +55,7 @@ describe('Gemini Interactive Per-Model Budget Slicing', () => {
 
     const result = await verifier.verifyKey('AIzaSyBudgetFairnessTestKey123456', {
       overallTimeoutMs: 26000,
+      testModels: ['gemini-3.8-flash', 'gemini-3.6-flash', 'gemini-3.5-flash', 'gemini-3.1-flash-lite'],
       fetchFn,
       retry: { timeoutMs: 7000, maxRetries: 1, baseDelayMs: 300, sleepFn: async () => {}, nowFn: () => fakeNow },
     });

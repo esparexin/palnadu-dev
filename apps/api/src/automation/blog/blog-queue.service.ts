@@ -39,6 +39,7 @@ export class BlogQueueService {
       const done =
         row.status === TopicStatus.COMPLETED || generatedKeys.has(`${row.topicKey}::${row.language}`);
       return {
+        id: row.id,
         topicKey: row.topicKey,
         topic: row.topic,
         categorySlug: row.categorySlug,
@@ -57,6 +58,12 @@ export class BlogQueueService {
               ? ('FAILED' as const)
               : ('PENDING' as const),
         attempts: row.attempts,
+        lastError: row.lastError,
+        nextRetryAt: row.nextRetryAt ? row.nextRetryAt.toISOString() : null,
+        claimedAt: row.claimedAt ? row.claimedAt.toISOString() : null,
+        claimedBy: row.claimedBy,
+        createdAt: row.createdAt.toISOString(),
+        updatedAt: row.updatedAt.toISOString(),
       };
     });
   }
@@ -189,33 +196,35 @@ export class BlogQueueService {
     maxToEnqueue = 15,
     language: BlogLanguage = BlogLanguage.en,
   ): Promise<number> {
-    const pendingCount = await this.prisma.blogTopic.count({
-      where: { status: TopicStatus.PENDING, attempts: { lt: this.maxAttempts }, language },
-    });
-    if (pendingCount >= minPending) return 0;
-
-    const deficit = minPending - pendingCount;
     const recovered = await recoverTransientFailedTopics(this.prisma, {
       language,
       maxAttempts: this.maxAttempts,
-      limit: Math.min(deficit, 3),
+      limit: 3,
     });
 
-    const remainingNeeded = deficit - recovered;
-    let enqueued = 0;
-    if (remainingNeeded > 0) {
-      const limit = Math.min(remainingNeeded + 5, maxToEnqueue);
-      const generatedKeys = new Set(
-        (await this.prisma.blogPost.findMany({ where: { language }, select: { topicKey: true, language: true } })).map(
-          (p) => `${p.topicKey}::${p.language}`,
-        ),
-      );
-
-      for (const seed of getAllInitialSeeds(generatedKeys, language)) {
-        if (enqueued >= limit) break;
-        const res = await this.enqueueTopic(seed);
-        if (res.enqueued) enqueued += 1;
+    const pendingCount = await this.prisma.blogTopic.count({
+      where: { status: TopicStatus.PENDING, attempts: { lt: this.maxAttempts }, language },
+    });
+    if (pendingCount >= minPending) {
+      if (recovered > 0) {
+        this.logger.log(`Recovered ${recovered} transient [${language}] topics (pending=${pendingCount})`);
       }
+      return recovered;
+    }
+
+    const deficit = minPending - pendingCount;
+    let enqueued = 0;
+    const limit = Math.min(deficit + 5, maxToEnqueue);
+    const generatedKeys = new Set(
+      (await this.prisma.blogPost.findMany({ where: { language }, select: { topicKey: true, language: true } })).map(
+        (p) => `${p.topicKey}::${p.language}`,
+      ),
+    );
+
+    for (const seed of getAllInitialSeeds(generatedKeys, language)) {
+      if (enqueued >= limit) break;
+      const res = await this.enqueueTopic(seed);
+      if (res.enqueued) enqueued += 1;
     }
 
     if (recovered > 0 || enqueued > 0) {
