@@ -18,10 +18,11 @@ const {
 } = require('../dist/whatsapp/whatsapp-menu.constants.js');
 
 describe('WhatsApp Conversation Utilities & Menu Formatting', () => {
-  it('formats main menu with all approved 6 categories and bilingual text', () => {
+  it('formats main menu with all approved 6 categories in pure English without Telugu', () => {
     const text = formatMainMenuText();
     assert.match(text, /Welcome to Palnadu\.dev/);
-    assert.match(text, /పాలనాడు\.డెవ్ కు స్వాగతం/);
+    assert.match(text, /We help businesses grow with technology/);
+    assert.doesNotMatch(text, /[\u0C00-\u0C7F]/, 'Main menu text must not contain Telugu characters');
     assert.match(text, /1\. Website & Web Applications/);
     assert.match(text, /2\. Mobile App Development/);
     assert.match(text, /3\. Business Automation & Integrations/);
@@ -30,24 +31,27 @@ describe('WhatsApp Conversation Utilities & Menu Formatting', () => {
     assert.match(text, /6\. Talk to Our Team/);
   });
 
-  it('formats submenus with approved options and BACK hint', () => {
+  it('formats submenus with approved options and BACK hint in English', () => {
     const cat1 = APPROVED_MAIN_MENU[0];
     const text1 = formatSubmenuText(cat1);
     assert.match(text1, /Business \/ Corporate Website/);
     assert.match(text1, /E-commerce \/ Web Application/);
     assert.match(text1, /Contact Support/);
     assert.match(text1, /Type BACK to return/);
+    assert.doesNotMatch(text1, /[\u0C00-\u0C7F]/, 'Submenu text must not contain Telugu characters');
 
     const cat2 = APPROVED_MAIN_MENU[1];
     const text2 = formatSubmenuText(cat2);
     assert.match(text2, /Android & iOS App/);
     assert.match(text2, /Contact Support/);
+    assert.doesNotMatch(text2, /[\u0C00-\u0C7F]/, 'Submenu text must not contain Telugu characters');
   });
 
-  it('contains accurate support phone number and direct contact message', () => {
+  it('contains accurate support phone number and direct contact message in English', () => {
     assert.equal(PALNADU_SUPPORT_PHONE, '+91 90307 87819');
     assert.match(DIRECT_CONTACT_SUPPORT_MESSAGE, /\+91 90307 87819/);
     assert.match(DIRECT_CONTACT_SUPPORT_MESSAGE, /Don't hesitate to reach out to us anytime!/);
+    assert.doesNotMatch(DIRECT_CONTACT_SUPPORT_MESSAGE, /[\u0C00-\u0C7F]/, 'Support message must be pure English');
   });
 
   it('parses navigation commands in English and Telugu', () => {

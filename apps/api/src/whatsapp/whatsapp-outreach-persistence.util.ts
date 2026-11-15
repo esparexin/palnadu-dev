@@ -1,6 +1,9 @@
 import { BadRequestException } from '@nestjs/common';
 import type { PrismaService } from '../prisma.service';
-import type { SendIndividualOutreachInput } from '@palnadu/types';
+import type {
+  SendIndividualOutreachInput,
+  IndividualOutreachMessageItem,
+} from '@palnadu/types';
 import {
   Prisma,
   WhatsAppDeliveryStatus,
@@ -10,11 +13,15 @@ import { STATUS_PROGRESSION_RANK } from './whatsapp.constants';
 import { buildPhoneVariants } from './whatsapp-api.util';
 import type { VerifiedConsentRecord } from './whatsapp-outreach-consent.util';
 import { isPrismaP2002 } from './whatsapp-outreach-reservation.util';
+import {
+  reconcileOutreachMessage,
+  formatOutreachHistoryItem,
+} from './whatsapp-outreach-reconciliation.util';
 
 export {
   reconcileOutreachMessage,
   formatOutreachHistoryItem,
-} from './whatsapp-outreach-reconciliation.util';
+};
 
 export interface OutboundTemplateRecordMeta {
   templateName: string;
@@ -132,6 +139,12 @@ export async function recordOutboundMessage(
       : {}),
     adminId: admin.id,
     adminEmail: admin.email,
+    outreachPurpose: input.outreachPurpose || 'SALES_OUTREACH',
+    origin:
+      input.origin ||
+      (input.outreachPurpose === 'NOTIFICATION'
+        ? 'AUTOMATED_NOTIFICATION'
+        : 'MANUAL_ADMIN_OUTREACH'),
   };
 
   try {
@@ -178,4 +191,43 @@ export async function recordOutboundMessage(
     where: { id: resId },
     data: { rawPayload: { dispatchedWamId: metaWamId, completedAt: new Date().toISOString() } },
   });
+}
+
+export async function listOutreachMessages(
+  prisma: PrismaService,
+  params: { page?: number; limit?: number } = {},
+) {
+  const page = Math.max(1, params.page || 1);
+  const limit = Math.min(100, Math.max(1, params.limit || 20));
+  const skip = (page - 1) * limit;
+  const where = {
+    campaignId: null,
+    direction: WhatsAppMessageDirection.OUTBOUND,
+    wamId: { not: { startsWith: 'resv:' } },
+  };
+
+  const [data, total] = await Promise.all([
+    prisma.whatsAppMessage.findMany({
+      where,
+      skip,
+      take: limit,
+      orderBy: { createdAt: 'desc' },
+      select: {
+        id: true,
+        wamId: true,
+        to: true,
+        status: true,
+        statusTimestamp: true,
+        body: true,
+        errorCode: true,
+        errorMessage: true,
+        createdAt: true,
+        rawPayload: true,
+      },
+    }),
+    prisma.whatsAppMessage.count({ where }),
+  ]);
+
+  const formatted: IndividualOutreachMessageItem[] = data.map(formatOutreachHistoryItem);
+  return { data: formatted, total, page, totalPages: Math.ceil(total / limit) || 1 };
 }

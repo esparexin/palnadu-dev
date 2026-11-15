@@ -2,7 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../prisma.service';
 import { WhatsAppApiClient } from './whatsapp-api.client';
-import { WhatsAppConversationService } from './whatsapp-conversation.service';
+import { WhatsAppConversationService, type ConversationStepResult } from './whatsapp-conversation.service';
 import { sanitizePhoneNumber, maskPhone } from './whatsapp-api.util';
 import { isOptOutKeywordText } from './whatsapp-opt-out.util';
 import { isPrismaP2002 } from './whatsapp-outreach-reservation.util';
@@ -14,6 +14,7 @@ import {
   WhatsAppMessageDirection,
   type WhatsAppMessage,
 } from '@prisma/client';
+import type { WhatsAppSendResponse } from '@palnadu/types';
 
 @Injectable()
 export class WhatsAppAssistantService {
@@ -38,7 +39,6 @@ export class WhatsAppAssistantService {
     const phone = sanitizePhoneNumber(inboundMessage.from);
     if (!phone) return null;
 
-    // Per-phone sequential locking prevents concurrent inbound webhooks from racing
     const currentLock = this.phoneLocks.get(phone) || Promise.resolve();
     const task = currentLock
       .then(() => this.processMessageInternal(phone, inboundMessage))
@@ -66,7 +66,6 @@ export class WhatsAppAssistantService {
   ): Promise<WhatsAppMessage | null> {
     const masked = maskPhone(phone);
 
-    // 1. Deduplication guard against Meta webhook retries
     const existingReply = await this.prisma.whatsAppMessage.findFirst({
       where: {
         contextWamId: inboundMessage.wamId,
@@ -76,13 +75,11 @@ export class WhatsAppAssistantService {
     });
     if (existingReply) return null;
 
-    // 2. Opt-out keyword guard
     if (isOptOutKeywordText(inboundMessage.body)) {
       this.logger.log(`Bot reply skipped for ${masked}: inbound opt-out keyword.`);
       return null;
     }
 
-    // 3. 24-hour customer service window verification
     const messageTime = inboundMessage.statusTimestamp || inboundMessage.createdAt;
     const windowAgeMs = Date.now() - new Date(messageTime).getTime();
     if (windowAgeMs > 24 * 60 * 60 * 1000) {
@@ -90,7 +87,6 @@ export class WhatsAppAssistantService {
       return null;
     }
 
-    // 4. Load or initialize conversation
     let conv = await this.prisma.whatsAppConversation.findUnique({
       where: { customerPhone: phone },
     });
@@ -115,13 +111,11 @@ export class WhatsAppAssistantService {
       });
     }
 
-    // 5. Concurrency-safe human takeover verification
-    if (conv.humanTakeover) {
+    if (conv.humanTakeover || conv.mode === 'HUMAN_TAKEOVER') {
       this.logger.log(`Bot reply suppressed for ${masked}: human takeover is active.`);
       return null;
     }
 
-    // 6. Multi-instance atomic claim guard
     const claimWamId = `bot_claim:${inboundMessage.wamId}`;
     let claimRecord: WhatsAppMessage;
     try {
@@ -141,7 +135,6 @@ export class WhatsAppAssistantService {
       throw claimErr;
     }
 
-    // 7. Acquire exclusive distributed dispatch lease
     const workerId = `bot_${inboundMessage.wamId}_${Date.now()}`;
     const lease = await acquireDispatchLock(this.prisma, phone, workerId);
     if (!lease.acquired) {
@@ -151,8 +144,7 @@ export class WhatsAppAssistantService {
     }
 
     try {
-      // 8. Process state machine transition
-      let step;
+      let step: ConversationStepResult;
       try {
         step = await this.conversationService.processCustomerMessage(inboundMessage, conv);
       } catch (stepErr: unknown) {
@@ -160,25 +152,19 @@ export class WhatsAppAssistantService {
         throw stepErr;
       }
 
-      // 9. Pre-dispatch atomic re-verification under lease protection
       const freshConv = await this.prisma.whatsAppConversation.findUnique({
         where: { id: conv.id },
-        select: { humanTakeover: true },
+        select: { humanTakeover: true, mode: true },
       });
-      if (freshConv?.humanTakeover) {
+      if (freshConv?.humanTakeover || freshConv?.mode === 'HUMAN_TAKEOVER') {
         this.logger.warn(`Bot reply aborted for ${masked}: takeover activated before dispatch.`);
         await this.prisma.whatsAppMessage?.delete?.({ where: { id: claimRecord.id } }).catch(() => null);
         return null;
       }
 
-      // 10. Dispatch outbound WhatsApp message to Meta Cloud API
-      let sendResult;
+      let sendResult: WhatsAppSendResponse;
       try {
-        sendResult = await this.apiClient.sendTextMessage({
-          to: phone,
-          text: step.responseText,
-          replyToWamId: inboundMessage.wamId,
-        });
+        sendResult = await this.dispatchAssistantStep(phone, masked, inboundMessage.wamId, step);
       } catch (sendErr: unknown) {
         await this.prisma.whatsAppMessage.update({
           where: { id: claimRecord.id },
@@ -192,7 +178,6 @@ export class WhatsAppAssistantService {
 
       const assignedWamId = sendResult.messages?.[0]?.id || `wamid.bot.${Date.now()}`;
 
-      // 11. Update claim record and conversation state
       const createdOutbound = await this.prisma.whatsAppMessage.update({
         where: { id: claimRecord.id },
         data: {
@@ -203,10 +188,17 @@ export class WhatsAppAssistantService {
         },
       });
 
+      const isTakeoverNow = step.nextMode === 'HUMAN_TAKEOVER';
+      const isAutomatedNow = step.nextMode === 'AUTOMATED_ASSISTANCE';
+
       await this.prisma.whatsAppConversation.update({
         where: { id: conv.id },
         data: {
           state: step.nextState,
+          ...(step.nextMode ? { mode: step.nextMode, modeUpdatedAt: new Date() } : {}),
+          humanTakeover: isTakeoverNow ? true : isAutomatedNow ? false : conv.humanTakeover,
+          takenOverAt: isTakeoverNow ? new Date() : isAutomatedNow ? null : conv.takenOverAt,
+          takenOverByName: isTakeoverNow ? 'Customer Choice' : isAutomatedNow ? null : conv.takenOverByName,
           selectedCategory: step.selectedCategory !== undefined ? step.selectedCategory : conv.selectedCategory,
           selectedSubmenu: step.selectedSubmenu !== undefined ? step.selectedSubmenu : conv.selectedSubmenu,
           enquiryDraft: step.enquiryDraft !== undefined ? step.enquiryDraft : conv.enquiryDraft,
@@ -218,5 +210,30 @@ export class WhatsAppAssistantService {
     } finally {
       await releaseDispatchLock(this.prisma, phone, workerId);
     }
+  }
+
+  private async dispatchAssistantStep(
+    phone: string,
+    masked: string,
+    inboundWamId: string,
+    step: ConversationStepResult,
+  ): Promise<WhatsAppSendResponse> {
+    if (step.interactive && typeof this.apiClient.sendInteractiveMessage === 'function') {
+      try {
+        return await this.apiClient.sendInteractiveMessage({
+          to: phone,
+          interactive: step.interactive,
+          replyToWamId: inboundWamId,
+        });
+      } catch (interactiveErr: unknown) {
+        const errDetail = interactiveErr instanceof Error ? interactiveErr.message : String(interactiveErr);
+        this.logger.warn(`Interactive dispatch failed for ${masked}, falling back to text: ${errDetail}`);
+      }
+    }
+    return this.apiClient.sendTextMessage({
+      to: phone,
+      text: step.responseText,
+      replyToWamId: inboundWamId,
+    });
   }
 }

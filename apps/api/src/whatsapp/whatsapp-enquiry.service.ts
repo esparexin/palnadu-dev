@@ -109,6 +109,25 @@ export class WhatsAppEnquiryService {
     return lead;
   }
 
+  async notifyCustomerRequestedTeam(params: { phone: string; name?: string | null }): Promise<void> {
+    const cleanPhone = sanitizePhoneNumber(params.phone) || params.phone;
+    const contactName = params.name?.trim() || cleanPhone;
+    try {
+      await this.notifications.create({
+        title: 'Customer Requested Team Assistance',
+        message: `${contactName} (${cleanPhone}) selected "Talk to Our Team" on WhatsApp. Human takeover is active.`,
+        type: 'NEW_LEAD',
+        data: {
+          phone: cleanPhone,
+          requestedAt: new Date().toISOString(),
+        },
+      });
+    } catch (notifErr: unknown) {
+      const msg = notifErr instanceof Error ? notifErr.message : String(notifErr);
+      this.logger.error(`Failed to dispatch team notification for ${cleanPhone}: ${msg}`);
+    }
+  }
+
   private mapCategoryToProjectStage(categoryId: string): ProjectStage {
     switch (categoryId) {
       case '1':

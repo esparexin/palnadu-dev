@@ -1,5 +1,6 @@
 import {
   APPROVED_MAIN_MENU,
+  MAIN_MENU_WELCOME_TEXT,
   type MainMenuCategory,
   type MenuSubOption,
 } from './whatsapp-menu.constants';
@@ -47,21 +48,17 @@ export function extractNumericChoice(rawText?: string): string | null {
   if (!rawText) return null;
   let text = rawText.trim().toLowerCase();
 
-  // Strip button/selection wrapper if present, e.g. [Button: 1] or [Selected: 2]
   const buttonMatch = text.match(/^\[(?:button|selected):\s*(.*?)]$/i);
   if (buttonMatch?.[1]) {
     text = buttonMatch[1].trim().toLowerCase();
   }
 
-  // Check word numbers
   if (WORD_TO_DIGIT[text]) {
     return WORD_TO_DIGIT[text];
   }
 
-  // Convert Telugu digits
   text = text.replace(/[౦-౯]/g, (ch) => TELUGU_TO_ASCII_DIGITS[ch] || ch);
 
-  // Extract leading digits or standalone number
   const numMatch = text.match(/^(\d+)/);
   if (numMatch?.[1]) {
     return numMatch[1];
@@ -72,83 +69,112 @@ export function extractNumericChoice(rawText?: string): string | null {
 
 export function formatMainMenuText(): string {
   const lines: string[] = [
-    `Welcome to Palnadu.dev! 🙏`,
-    `పాలనాడు.డెవ్ కు స్వాగతం!`,
-    ``,
-    `Please select an option by replying with a number (1-6):`,
-    `(దయచేసి 1 నుండి 6 సంఖ్యతో ఎంచుకోండి):`,
-    ``,
+    MAIN_MENU_WELCOME_TEXT,
+    '',
+    'Please select a service (1-6):',
   ];
 
   for (const cat of APPROVED_MAIN_MENU) {
     lines.push(`${cat.id}. ${cat.title}`);
-    if (cat.titleTe) {
-      lines.push(`   (${cat.titleTe})`);
-    }
   }
 
-  lines.push(``);
-  lines.push(`Type HOME anytime to return here.`);
+  lines.push('');
+  lines.push('Type HOME anytime to return to the main menu.');
   return lines.join('\n');
 }
 
 export function formatSubmenuText(category: MainMenuCategory): string {
   const lines: string[] = [
     `*${category.title}*`,
-    category.titleTe ? `(${category.titleTe})` : '',
-    ``,
-    `Please choose a specific service:`,
-    `(దయచేసి ఒక ఎంపికను ఎంచుకోండి):`,
-    ``,
-  ].filter(Boolean);
+    '',
+    'Please choose a specific service:',
+  ];
 
   if (category.suboptions) {
     for (const sub of category.suboptions) {
       lines.push(`${sub.id}. ${sub.name}`);
-      if (sub.nameTe) {
-        lines.push(`   (${sub.nameTe})`);
-      }
     }
   }
 
-  lines.push(``);
-  lines.push(`Type BACK to return to main menu.`);
+  lines.push('');
+  lines.push('Type BACK to return to the main menu.');
   return lines.join('\n');
 }
 
-export function findCategoryByInput(rawText?: string): MainMenuCategory | undefined {
+export function findCategoryByInput(
+  rawText?: string,
+  interactiveId?: string,
+): MainMenuCategory | undefined {
+  if (interactiveId) {
+    const directMatch = APPROVED_MAIN_MENU.find(
+      (c) => c.stableId === interactiveId || c.id === interactiveId,
+    );
+    if (directMatch) return directMatch;
+  }
+
   if (!rawText) return undefined;
+  const clean = rawText.trim().toLowerCase();
+
+  const stableMatch = APPROVED_MAIN_MENU.find((c) => c.stableId.toLowerCase() === clean);
+  if (stableMatch) return stableMatch;
+
   const num = extractNumericChoice(rawText);
   if (num) {
     const found = APPROVED_MAIN_MENU.find((c) => c.id === num);
     if (found) return found;
   }
 
-  const clean = rawText.trim().toLowerCase();
   return APPROVED_MAIN_MENU.find(
     (c) =>
       c.title.toLowerCase().includes(clean) ||
-      (c.titleTe && c.titleTe.toLowerCase().includes(clean)),
+      (c.rowTitle && c.rowTitle.toLowerCase().includes(clean)),
   );
 }
 
 export function findSuboptionByInput(
   category: MainMenuCategory,
   rawText?: string,
+  interactiveId?: string,
 ): MenuSubOption | undefined {
-  if (!rawText || !category.suboptions) return undefined;
+  if (!category.suboptions) return undefined;
+
+  if (interactiveId) {
+    const directMatch = category.suboptions.find(
+      (s) => s.stableId === interactiveId || s.id === interactiveId,
+    );
+    if (directMatch) return directMatch;
+  }
+
+  if (!rawText) return undefined;
+  const clean = rawText.trim().toLowerCase();
+
+  const stableMatch = category.suboptions.find((s) => s.stableId.toLowerCase() === clean);
+  if (stableMatch) return stableMatch;
+
   const num = extractNumericChoice(rawText);
   if (num) {
     const found = category.suboptions.find((s) => s.id === num);
     if (found) return found;
   }
 
-  const clean = rawText.trim().toLowerCase();
   return category.suboptions.find(
     (s) =>
       s.name.toLowerCase().includes(clean) ||
-      (s.nameTe && s.nameTe.toLowerCase().includes(clean)),
+      (s.buttonTitle && s.buttonTitle.toLowerCase().includes(clean)),
   );
+}
+
+export function findSuboptionGlobally(
+  interactiveId?: string,
+  rawText?: string,
+): { category: MainMenuCategory; suboption: MenuSubOption } | undefined {
+  for (const cat of APPROVED_MAIN_MENU) {
+    const sub = findSuboptionByInput(cat, rawText, interactiveId);
+    if (sub) {
+      return { category: cat, suboption: sub };
+    }
+  }
+  return undefined;
 }
 
 export function extractMessageBody(msg: Record<string, unknown>): string | undefined {

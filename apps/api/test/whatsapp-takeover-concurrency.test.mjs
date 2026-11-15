@@ -196,6 +196,9 @@ describe('WhatsApp Human Takeover, Concurrency & Feature Flags', () => {
   it('4. allows human agent to send manual replies and keeps takeover active', async () => {
     const env = createMockEnvironment('true');
 
+    // Put into takeover first
+    await env.takeoverService.setHumanTakeover('919030787819', true, { id: 'admin_1' });
+
     const reply = await env.takeoverService.sendManualReply(
       '919030787819',
       'Hello from Palnadu team! How can we help you directly?',
@@ -210,6 +213,7 @@ describe('WhatsApp Human Takeover, Concurrency & Feature Flags', () => {
     const conv = env.conversations.get('919030787819');
     assert.ok(conv);
     assert.equal(conv.humanTakeover, true);
+    assert.equal(conv.mode, 'HUMAN_TAKEOVER');
   });
 
   it('5. resumes bot replies when explicit resume action is performed', async () => {

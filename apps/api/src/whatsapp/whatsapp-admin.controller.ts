@@ -25,12 +25,13 @@ import { WhatsAppContactService, type ImportContactItem } from './whatsapp-conta
 import { WhatsAppOutreachService } from './whatsapp-outreach.service';
 import { WhatsAppApiClient } from './whatsapp-api.client';
 import { mapMetaTemplatesToDefinitions } from './whatsapp-template.util';
+import type { SendIndividualOutreachInput } from '@palnadu/types';
 import {
   createMarketingCampaignSchema,
   sendIndividualOutreachSchema,
   reconcileOutreachSchema,
   type CreateMarketingCampaignInput,
-  type SendIndividualOutreachInput,
+  type SendIndividualOutreachInput as SendIndividualOutreachDTO,
   type ReconcileOutreachInput,
 } from '@palnadu/validation';
 import { CampaignStatus, ContactOptInStatus } from '@prisma/client';
@@ -56,15 +57,20 @@ export class WhatsAppAdminController {
   @HttpCode(HttpStatus.OK)
   async sendIndividualOutreach(
     @Body(new ZodValidationPipe(sendIndividualOutreachSchema))
-    data: SendIndividualOutreachInput,
-    @Req() req?: { user?: { id?: string; sub?: string; email?: string } },
+    data: SendIndividualOutreachDTO,
+    @Req() req?: { user?: { id?: string; sub?: string; email?: string; name?: string } },
   ) {
     if (!this.outreachService) throw new NotFoundException('Outreach service unavailable');
     const admin = {
       id: req?.user?.sub || req?.user?.id || 'admin',
       email: req?.user?.email || 'admin@palnadu.dev',
+      name: req?.user?.name,
     };
-    const result = await this.outreachService.sendOutreach(data, admin);
+    const trustedPayload: SendIndividualOutreachInput = {
+      ...data,
+      origin: 'HUMAN_SALES',
+    };
+    const result = await this.outreachService.sendOutreach(trustedPayload, admin);
     return { success: true, data: result };
   }
 

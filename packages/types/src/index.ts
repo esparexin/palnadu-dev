@@ -6,4 +6,5 @@ export * from './analytics';
 export * from './whatsapp';
 export * from './whatsapp-outreach';
 export * from './whatsapp-conversation';
+export * from './whatsapp-interactive';
 export * from './gemini';
