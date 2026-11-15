@@ -4,6 +4,7 @@ import { PrismaService } from '../prisma.service';
 import { WhatsAppApiClient } from './whatsapp-api.client';
 import { WhatsAppConversationService, type ConversationStepResult } from './whatsapp-conversation.service';
 import { sanitizePhoneNumber, maskPhone } from './whatsapp-api.util';
+import { isBusinessPhoneNumber } from './whatsapp-choice.util';
 import { isOptOutKeywordText } from './whatsapp-opt-out.util';
 import { isPrismaP2002 } from './whatsapp-outreach-reservation.util';
 import { acquireDispatchLock, releaseDispatchLock } from './whatsapp-dispatch-lock.util';
@@ -48,13 +49,9 @@ export class WhatsAppAssistantService {
         return null;
       });
 
-    const lockPromise: Promise<void> = task
-      .then(() => {})
-      .finally(() => {
-        if (this.phoneLocks.get(phone) === lockPromise) {
-          this.phoneLocks.delete(phone);
-        }
-      });
+    const lockPromise: Promise<void> = task.then(() => {}).finally(() => {
+      if (this.phoneLocks.get(phone) === lockPromise) this.phoneLocks.delete(phone);
+    });
     this.phoneLocks.set(phone, lockPromise);
 
     return task;
@@ -65,6 +62,12 @@ export class WhatsAppAssistantService {
     inboundMessage: WhatsAppMessage,
   ): Promise<WhatsAppMessage | null> {
     const masked = maskPhone(phone);
+
+    const businessPhone = this.config.get<string>(WHATSAPP_CONFIG_KEYS.BUSINESS_PHONE);
+    if (isBusinessPhoneNumber(phone, [businessPhone, inboundMessage.to])) {
+      this.logger.log(`Bot reply skipped for ${masked}: business self-message.`);
+      return null;
+    }
 
     const existingReply = await this.prisma.whatsAppMessage.findFirst({
       where: {
@@ -166,18 +169,15 @@ export class WhatsAppAssistantService {
       try {
         sendResult = await this.dispatchAssistantStep(phone, masked, inboundMessage.wamId, step);
       } catch (sendErr: unknown) {
+        const errDetail = sendErr instanceof Error ? sendErr.message : String(sendErr);
         await this.prisma.whatsAppMessage.update({
           where: { id: claimRecord.id },
-          data: {
-            status: WhatsAppDeliveryStatus.FAILED,
-            errorMessage: sendErr instanceof Error ? sendErr.message : String(sendErr),
-          },
+          data: { status: WhatsAppDeliveryStatus.FAILED, errorMessage: errDetail },
         }).catch(() => null);
         throw sendErr;
       }
 
       const assignedWamId = sendResult.messages?.[0]?.id || `wamid.bot.${Date.now()}`;
-
       const createdOutbound = await this.prisma.whatsAppMessage.update({
         where: { id: claimRecord.id },
         data: {

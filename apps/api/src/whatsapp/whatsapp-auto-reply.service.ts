@@ -6,6 +6,7 @@ import { WhatsAppOptOutService } from './whatsapp-opt-out.service';
 import { isOptOutKeywordText } from './whatsapp-opt-out.util';
 import { isPrismaP2002 } from './whatsapp-outreach-reservation.util';
 import { maskPhone } from './whatsapp-api.util';
+import { isBusinessPhoneNumber } from './whatsapp-choice.util';
 import { acquireDispatchLock, releaseDispatchLock } from './whatsapp-dispatch-lock.util';
 import {
   Prisma,
@@ -61,6 +62,12 @@ export class WhatsAppAutoReplyService {
     const recipientPhone = inboundMessage.from;
     const maskedPhone = maskPhone(recipientPhone);
 
+    const businessPhone = this.config.get<string>(WHATSAPP_CONFIG_KEYS.BUSINESS_PHONE);
+    if (isBusinessPhoneNumber(recipientPhone, [businessPhone, inboundMessage.to])) {
+      this.logger.log(`Auto-reply skipped for ${maskedPhone}: business self-message.`);
+      return null;
+    }
+
     if (isOptOutKeywordText(inboundMessage.body)) {
       this.logger.log(`Auto-reply skipped for ${maskedPhone}: inbound opt-out keyword.`);
       return null;
@@ -90,15 +97,11 @@ export class WhatsAppAutoReplyService {
       }
 
       // 2. Prevent duplicate replies to the exact same message
-      const existingReplyForMessage = await this.prisma.whatsAppMessage.findFirst({
-        where: {
-          contextWamId: inboundMessage.wamId,
-          direction: WhatsAppMessageDirection.OUTBOUND,
-          status: { not: WhatsAppDeliveryStatus.FAILED },
-        },
+      const existingReply = await this.prisma.whatsAppMessage.findFirst({
+        where: { contextWamId: inboundMessage.wamId, direction: WhatsAppMessageDirection.OUTBOUND, status: { not: WhatsAppDeliveryStatus.FAILED } },
       });
 
-      if (existingReplyForMessage) {
+      if (existingReply) {
         this.logger.log(`Auto-reply skipped for ${maskedPhone}: reply already dispatched.`);
         return null;
       }
@@ -221,19 +224,14 @@ export class WhatsAppAutoReplyService {
           }
         }
 
-        this.logger.log(
-          `Automated acknowledgment persisted for ${maskedPhone} (outbound wamId: ${assignedWamId}, in reply to: ${inboundMessage.wamId})`,
-        );
-
+        this.logger.log(`Automated acknowledgment persisted for ${maskedPhone} (outbound: ${assignedWamId})`);
         return createdOutbound;
       } finally {
         await releaseDispatchLock(this.prisma, recipientPhone, workerId);
       }
     } catch (sendErr: unknown) {
       const errMessage = sendErr instanceof Error ? sendErr.message : String(sendErr);
-      this.logger.error(
-        `Failed to send automated WhatsApp acknowledgment to ${maskedPhone}: ${errMessage}`,
-      );
+      this.logger.error(`Failed to send automated WhatsApp acknowledgment to ${maskedPhone}: ${errMessage}`);
       return null;
     } finally {
       this.inFlightReplies.delete(inboundMessage.wamId);

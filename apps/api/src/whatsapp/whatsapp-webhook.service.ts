@@ -8,6 +8,7 @@ import { WhatsAppOptOutService } from './whatsapp-opt-out.service';
 import { WhatsAppAssistantService } from './whatsapp-assistant.service';
 import { extractMessageBody } from './whatsapp-conversation.util';
 import { isOptOutKeywordText } from './whatsapp-opt-out.util';
+import { isBusinessPhoneNumber } from './whatsapp-choice.util';
 import {
   verifyMetaWebhookSignature,
   verifyTokenConstantTime,
@@ -112,6 +113,7 @@ export class WhatsAppWebhookService {
             const value = change.value;
             const businessNumber =
               value.metadata?.display_phone_number || value.metadata?.phone_number_id || 'unknown';
+            const configuredBusinessPhone = this.config.get<string>(WHATSAPP_CONFIG_KEYS.BUSINESS_PHONE);
 
             // Map contact profile names
             const contactMap = new Map<string, string>();
@@ -128,6 +130,12 @@ export class WhatsAppWebhookService {
               for (const msg of value.messages) {
                 if (!msg.id || !msg.from) continue;
                 if (!primaryWamId) primaryWamId = msg.id;
+
+                const isBusinessSelfMessage = isBusinessPhoneNumber(msg.from, [
+                  configuredBusinessPhone,
+                  value.metadata?.display_phone_number,
+                  value.metadata?.phone_number_id,
+                ]);
 
                 const bodyText = extractMessageBody(msg as unknown as Record<string, unknown>);
                 const saved = await this.messageService.saveInboundMessage({
@@ -149,7 +157,7 @@ export class WhatsAppWebhookService {
                   ? await this.optOutService.handleInboundOptOut(msg.from, bodyText)
                   : isOptOutKeywordText(bodyText);
 
-                if (!isOptOut) {
+                if (!isOptOut && !isBusinessSelfMessage) {
                   if (this.assistantService?.isEnabled()) {
                     setImmediate(() => {
                       this.assistantService?.handleInboundMessage(saved).catch((err: unknown) => {
@@ -165,6 +173,8 @@ export class WhatsAppWebhookService {
                       });
                     });
                   }
+                } else if (isBusinessSelfMessage) {
+                  this.logger.log(`Ignoring business self-message or outbound echo for ${msg.id}`);
                 }
               }
             }
