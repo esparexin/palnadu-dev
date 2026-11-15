@@ -11,11 +11,18 @@ import { BlogBilingualService } from './blog/blog-bilingual.service';
 import { BlogStatusService } from './blog/blog-status.service';
 import { DAILY_CRON_EXPRESSION, type DailyCronTriggerSource, readDailyCronStatus } from './blog/blog-cron-lock.util';
 import { executeDailyPipelineSteps, runDailyCronBatch, startDailyCronInBackground } from './blog/blog-cron-runner.util';
+import { executeSingleArticleWorkflow } from './blog/blog-single-runner.util';
 import { BlogBatchService } from './blog/blog-batch.service';
 import { resolveOrEnsureCategory } from './blog/blog-seeds';
 import { enqueueDiscoveredTopicsForLanguages } from './blog/blog-queue-recovery.util';
 import { ClaimedTopic, GenerationResult, QueueCandidate, RejectedTopic } from './blog/types';
-import { syncExistingTopicPost, toGenerationResultFromPost, recordSingleArticleFailure } from './blog/blog-idempotency.util';
+import {
+  syncExistingTopicPost,
+  toGenerationResultFromPost,
+  recordSingleArticleFailure,
+  findExistingPostForTopic,
+  resolveDuplicateValidationPost,
+} from './blog/blog-idempotency.util';
 
 export * from './blog/types';
 export * from './blog/blog-queue.service';
@@ -116,56 +123,16 @@ export class BlogAutomationService {
     forcePublish = false,
     language: BlogLanguage = BlogLanguage.en,
   ): Promise<GenerationResult> {
-    const enqueued = await this.queueService.enqueueTopic({
-      categorySlug,
+    return executeSingleArticleWorkflow({
+      prisma: this.prisma,
+      queueService: this.queueService,
       topic,
+      categorySlug,
       targetLocation,
-      source: 'manual',
+      forcePublish,
       language,
+      generateFn: (target, force, workerId) => this.generateForTopic(target, force, workerId),
     });
-
-    const topicKey = enqueued.topicKey;
-    if (!enqueued.enqueued) {
-      if (!topicKey) throw new Error('Cannot generate an unnamed topic.');
-      const existing = await this.prisma.blogPost.findUnique({
-        where: { topicKey_language: { topicKey, language } },
-      });
-      if (existing) return toGenerationResultFromPost(existing, categorySlug);
-      if (enqueued.reason !== 'already queued') {
-        throw new Error(`Topic refused: ${enqueued.reason}.`);
-      }
-    }
-
-    const workerId = `manual:${process.pid}:${Date.now()}`;
-    const claimed = await this.queueService.claimTopicByKey(workerId, topicKey, language);
-    if (!claimed) {
-      const donePost = await this.prisma.blogPost.findUnique({
-        where: { topicKey_language: { topicKey, language } },
-      });
-      if (donePost) return toGenerationResultFromPost(donePost, categorySlug);
-      throw new Error(`Topic ${topicKey} (${language}) is already claimed by another worker.`);
-    }
-
-    const target = {
-      ...claimed,
-      categorySlug: categorySlug || claimed.categorySlug,
-      targetLocation: targetLocation ?? claimed.targetLocation,
-    };
-
-    try {
-      return await this.generateForTopic(target, forcePublish, workerId);
-    } catch (err) {
-      await recordSingleArticleFailure({
-        prisma: this.prisma,
-        topicKey,
-        language,
-        currentAttempts: claimed.attempts ?? 0,
-        maxAttempts: this.queueService.maxAttempts,
-        retryDelayMs: this.queueService.retryDelayMs,
-        err,
-      });
-      throw err;
-    }
   }
 
   async generateForTopic(
@@ -186,11 +153,13 @@ export class BlogAutomationService {
     });
     if (!author) throw new Error('No admin author found in database for blog generation.');
 
-    const existingForTopic = await this.prisma.blogPost.findUnique({
-      where: { topicKey_language: { topicKey, language } },
-    });
+    const existingForTopic = await findExistingPostForTopic(this.prisma, topicKey, topic, language);
     if (existingForTopic) {
       this.logger.log(`Idempotent retry skip: post already exists for topicKey="${topicKey}" [${language}]`);
+      await this.prisma.blogTopic.update({
+        where: { id: topicRow.id },
+        data: { status: 'COMPLETED' as any, postId: existingForTopic.id, claimedAt: null, claimedBy: null },
+      }).catch(() => undefined);
       return syncExistingTopicPost(this.prisma, existingForTopic, category.name);
     }
 
@@ -212,6 +181,14 @@ export class BlogAutomationService {
         composed.validation.forceDraft &&
         composed.validation.failures.every((f: { name: string }) => f.name === 'content_originality');
       if (!isTemplateOnly) {
+        const resolved = await resolveDuplicateValidationPost(
+          this.prisma,
+          topicRow.id,
+          composed,
+          category.name,
+          this.logger,
+        );
+        if (resolved) return resolved;
         throw new Error(`validation: ${composed.validation.failures.map((f: { name: string; detail?: string }) => (f.detail ? `${f.name} (${f.detail})` : f.name)).join('; ')}`);
       }
     }

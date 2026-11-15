@@ -18,10 +18,15 @@ let cachedMod;
 export function getAutomationModules() {
   if (cachedMod) return cachedMod;
   const outDir = mkdtempSync(join(tmpdir(), 'seo-engine-test-'));
+  const tscBin = [
+    join(process.cwd(), 'node_modules/.bin/tsc'),
+    join(process.cwd(), 'apps/api/node_modules/.bin/tsc'),
+    join(process.cwd(), '../../node_modules/.bin/tsc'),
+  ].find((p) => existsSync(p)) ?? 'tsc';
+
   execFileSync(
-    'npx',
+    tscBin,
     [
-      'tsc',
       ...SOURCES.map((s) => `src/automation/${s}`),
       '--outDir',
       outDir,
@@ -35,7 +40,7 @@ export function getAutomationModules() {
       '--esModuleInterop',
       '--experimentalDecorators',
     ],
-    { cwd: process.cwd(), stdio: 'pipe' },
+    { cwd: existsSync(join(process.cwd(), 'src/automation')) ? process.cwd() : join(process.cwd(), 'apps/api'), stdio: 'pipe' },
   );
 
   const req = (name) => {

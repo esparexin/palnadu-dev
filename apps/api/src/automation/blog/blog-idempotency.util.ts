@@ -1,5 +1,8 @@
 import { BlogLanguage, PublishStatus, TopicStatus } from '@prisma/client';
+import { Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma.service';
+import { toTopicKey } from '../topic-identity';
+import type { ComposedArticle } from './blog-composer.service';
 import type { GenerationResult } from './types';
 
 export interface ExistingBlogPostLike {
@@ -29,6 +32,92 @@ export function toGenerationResultFromPost(
     url: post.language === BlogLanguage.te ? `/te/blog/${post.slug}` : `/blog/${post.slug}`,
     topicKey: post.topicKey,
   };
+}
+
+export async function findExistingPostForTopic(
+  prisma: PrismaService,
+  topicKey: string,
+  topic: string,
+  language: BlogLanguage,
+): Promise<ExistingBlogPostLike | null> {
+  const direct = await prisma.blogPost.findUnique({
+    where: { topicKey_language: { topicKey, language } },
+    select: {
+      id: true,
+      title: true,
+      slug: true,
+      content: true,
+      status: true,
+      language: true,
+      topicKey: true,
+      imageMetadata: true,
+    },
+  });
+  if (direct) return direct;
+
+  const canonicalKey = toTopicKey(topic);
+  if (canonicalKey && canonicalKey !== topicKey) {
+    const canonicalMatch = await prisma.blogPost.findUnique({
+      where: { topicKey_language: { topicKey: canonicalKey, language } },
+      select: {
+        id: true,
+        title: true,
+        slug: true,
+        content: true,
+        status: true,
+        language: true,
+        topicKey: true,
+        imageMetadata: true,
+      },
+    });
+    if (canonicalMatch) return canonicalMatch;
+  }
+
+  return null;
+}
+
+export async function resolveDuplicateValidationPost(
+  prisma: PrismaService,
+  topicRowId: string,
+  composed: ComposedArticle,
+  categoryName: string,
+  logger: Logger,
+): Promise<GenerationResult | null> {
+  const isDuplicateSimilarity = composed.validation.failures.some(
+    (f) => f.name === 'content_similarity' && composed.similarity?.nearest?.postId,
+  );
+  if (!isDuplicateSimilarity || !composed.similarity?.nearest?.postId) return null;
+
+  const matched = await prisma.blogPost.findUnique({
+    where: { id: composed.similarity.nearest.postId },
+    select: {
+      id: true,
+      title: true,
+      slug: true,
+      content: true,
+      status: true,
+      language: true,
+      topicKey: true,
+      imageMetadata: true,
+    },
+  });
+  if (!matched) return null;
+
+  logger.log(
+    `Duplicate detected during validation: resolving to existing post "${matched.title}" (${matched.id})`,
+  );
+  await prisma.blogTopic.update({
+    where: { id: topicRowId },
+    data: {
+      status: TopicStatus.COMPLETED,
+      postId: matched.id,
+      lastError: null,
+      claimedAt: null,
+      claimedBy: null,
+    },
+  }).catch(() => undefined);
+
+  return toGenerationResultFromPost(matched, categoryName);
 }
 
 export async function syncExistingTopicPost(
