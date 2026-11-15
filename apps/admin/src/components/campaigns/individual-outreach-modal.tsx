@@ -5,6 +5,7 @@ import { X, Send, ShieldAlert, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
 import type {
   IndividualOutreachFormData,
   SendIndividualOutreachInput,
@@ -17,6 +18,7 @@ import {
   getConsentCompatibilityWarning,
   resolveActiveTemplate,
 } from './outreach-template.util';
+import { getConsentFieldInfo, OUTREACH_SELECT_CLASSES } from './outreach-consent.util';
 import { IndividualOutreachTemplateSection } from './individual-outreach-template-section';
 
 interface IndividualOutreachModalProps {
@@ -25,9 +27,6 @@ interface IndividualOutreachModalProps {
   onSubmit: (_data: SendIndividualOutreachInput) => Promise<void>;
   templates: WhatsAppTemplateDefinition[];
 }
-
-const SELECT_CLASSES =
-  'flex h-9 w-full rounded-md border border-palnadu-border bg-palnadu-white px-3 py-1.5 text-xs text-palnadu-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer';
 
 export function IndividualOutreachModal({
   open,
@@ -44,6 +43,7 @@ export function IndividualOutreachModal({
   const activeTemplate = resolveActiveTemplate(templates, formData.templateName, formData.languageCode);
   const consentWarning = getConsentCompatibilityWarning(activeTemplate?.category, formData.consentType);
   const isMarketing = (activeTemplate?.category || 'MARKETING').toUpperCase() === 'MARKETING';
+  const consentInfo = getConsentFieldInfo(formData.consentType);
 
   const handleTemplateChange = (nextTemplateName: string) => {
     const picked = resolveActiveTemplate(templates, nextTemplateName, activeTemplate?.languageCode);
@@ -120,7 +120,7 @@ export function IndividualOutreachModal({
             selectedLanguageCode={formData.languageCode}
             businessName={formData.businessName}
             parameters={formData.parameters}
-            selectClasses={SELECT_CLASSES}
+            selectClasses={OUTREACH_SELECT_CLASSES}
             onTemplateChange={handleTemplateChange}
             onLanguageChange={(languageCode) =>
               setFormData((prev) => ({
@@ -146,8 +146,9 @@ export function IndividualOutreachModal({
                 onChange={(e) =>
                   setFormData({ ...formData, consentType: e.target.value as WhatsAppConsentType })
                 }
-                className={SELECT_CLASSES}
+                className={OUTREACH_SELECT_CLASSES}
               >
+                <option value="DIRECT_ADMIN_OUTREACH">Direct Admin Outreach (Verified Opt-In)</option>
                 <option value="SIGNED_AGREEMENT">Signed Agreement / Order</option>
                 <option value="WEBSITE_LEAD_FORM">Website Lead Form</option>
                 <option value="INBOUND_WHATSAPP_INQUIRY">Inbound WhatsApp Inquiry (Utility Only)</option>
@@ -155,13 +156,13 @@ export function IndividualOutreachModal({
               </select>
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="ind-consent-ref">Evidence Reference ID *</Label>
+              <Label htmlFor="ind-consent-ref">{consentInfo.label}</Label>
               <Input
                 id="ind-consent-ref"
                 required
                 value={formData.consentEvidenceRef}
                 onChange={(e) => setFormData({ ...formData, consentEvidenceRef: e.target.value })}
-                placeholder="Lead ID, Inbound WamID, or Media ID"
+                placeholder={consentInfo.placeholder}
                 className="font-mono"
               />
             </div>
@@ -172,6 +173,8 @@ export function IndividualOutreachModal({
               <AlertTriangle className="h-4 w-4 shrink-0 text-palnadu-warning" />
               <span>{consentWarning}</span>
             </div>
+          ) : consentInfo.guidance ? (
+            <p className="text-xs text-palnadu-secondary">{consentInfo.guidance}</p>
           ) : (
             isMarketing && (
               <p className="text-xs text-palnadu-secondary">
@@ -181,12 +184,10 @@ export function IndividualOutreachModal({
           )}
 
           <div className="flex items-center gap-2 pt-1">
-            <input
-              type="checkbox"
+            <Checkbox
               id="ind-save-contact"
               checked={formData.saveContact}
               onChange={(e) => setFormData({ ...formData, saveContact: e.target.checked })}
-              className="h-4 w-4 rounded border-palnadu-border text-palnadu-teal focus:ring-palnadu-teal cursor-pointer"
             />
             <Label htmlFor="ind-save-contact" className="font-normal cursor-pointer">
               Save or update this contact in directory for future campaigns

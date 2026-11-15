@@ -86,6 +86,13 @@ export async function fetchMetaApprovedTemplates(
   }
 }
 
+export const OUTREACH_ELIGIBLE_CATEGORIES = new Set(['MARKETING', 'UTILITY']);
+
+export function isEligibleOutreachCategory(category?: string): boolean {
+  if (!category) return false;
+  return OUTREACH_ELIGIBLE_CATEGORIES.has(category.trim().toUpperCase());
+}
+
 export function validateTemplateAgainstMeta(
   templateName: string,
   languageCode: string,
@@ -102,6 +109,21 @@ export function validateTemplateAgainstMeta(
     );
   }
 
+  const categoryUpper = (match.category || 'MARKETING').toUpperCase();
+  if (categoryUpper === 'AUTHENTICATION') {
+    throw new WhatsAppApiException(
+      `Template "${templateName}" is an AUTHENTICATION template and cannot be used for business outreach.`,
+      400,
+    );
+  }
+
+  if (match.category && !isEligibleOutreachCategory(match.category)) {
+    throw new WhatsAppApiException(
+      `Template "${templateName}" has category "${match.category}" which is not eligible for business outreach. Only MARKETING and UTILITY templates are supported.`,
+      400,
+    );
+  }
+
   return match;
 }
 
@@ -109,7 +131,7 @@ export function mapMetaTemplatesToDefinitions(
   approvedTemplates: WhatsAppMetaTemplate[],
 ): WhatsAppTemplateDefinition[] {
   return approvedTemplates
-    .filter((t) => t.status === 'APPROVED')
+    .filter((t) => t.status === 'APPROVED' && (!t.category || isEligibleOutreachCategory(t.category)))
     .map((tmpl) => {
       const spec = WHATSAPP_TEMPLATE_PARAMETER_SPECS[tmpl.name];
       const bodyText = tmpl.components?.find((c) => c.type === 'BODY')?.text || '';

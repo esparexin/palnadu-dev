@@ -42,15 +42,40 @@ export async function verifyConsentEvidence(
     );
   }
 
+  if (evidence.consentType === 'DIRECT_ADMIN_OUTREACH') {
+    const trimmedRef = evidence.consentEvidenceRef?.trim();
+    if (!trimmedRef || trimmedRef.length < 10) {
+      throw new BadRequestException(
+        'Direct admin outreach requires a documented consent basis of at least 10 characters (e.g. meeting notes, referral context, or phone consent details).',
+      );
+    }
+    return {
+      consentType: 'DIRECT_ADMIN_OUTREACH',
+      consentEvidenceRef: trimmedRef,
+      consentTimestamp: new Date(consentTime),
+      consentSource: 'DIRECT_ADMIN_OUTREACH',
+      consentVersion: 'v1',
+    };
+  }
+
   if (evidence.consentType === 'INBOUND_WHATSAPP_INQUIRY') {
     if (isMarketing) {
       throw new BadRequestException(
         'Inbound customer enquiry authorizes customer service response only, not promotional marketing templates. Promotional outreach requires explicit marketing opt-in consent.',
       );
     }
-    const inbound = await prisma.whatsAppMessage.findUnique({
-      where: { wamId: evidence.consentEvidenceRef },
-    });
+    const trimmedRef = evidence.consentEvidenceRef?.trim();
+    if (!trimmedRef) {
+      throw new BadRequestException('Inbound consent reference ID cannot be blank.');
+    }
+    let inbound;
+    try {
+      inbound = await prisma.whatsAppMessage.findUnique({
+        where: { wamId: trimmedRef },
+      });
+    } catch {
+      throw new BadRequestException('Referenced inbound WhatsApp consent interaction not found.');
+    }
     if (!inbound || inbound.direction !== WhatsAppMessageDirection.INBOUND) {
       throw new BadRequestException('Referenced inbound WhatsApp consent interaction not found.');
     }
@@ -65,14 +90,25 @@ export async function verifyConsentEvidence(
     }
     return {
       consentType: evidence.consentType,
-      consentEvidenceRef: evidence.consentEvidenceRef,
+      consentEvidenceRef: trimmedRef,
       consentTimestamp: new Date(inboundTime),
       consentSource: 'INBOUND_WHATSAPP_INQUIRY',
     };
   }
 
   if (evidence.consentType === 'WEBSITE_LEAD_FORM' || evidence.consentType === 'VERIFIED_CRM_LEAD') {
-    const lead = await prisma.lead.findUnique({ where: { id: evidence.consentEvidenceRef } });
+    const trimmedRef = evidence.consentEvidenceRef?.trim();
+    if (!trimmedRef || !/^[0-9a-fA-F]{24}$/.test(trimmedRef)) {
+      throw new BadRequestException(
+        'Referenced consent lead record ID must be a valid 24-character hexadecimal ID.',
+      );
+    }
+    let lead;
+    try {
+      lead = await prisma.lead.findUnique({ where: { id: trimmedRef } });
+    } catch {
+      throw new BadRequestException('Referenced consent lead record not found.');
+    }
     if (!lead) throw new BadRequestException('Referenced consent lead record not found.');
 
     const consentPhone = lead.whatsappConsentPhone || lead.phone || '';
@@ -99,7 +135,7 @@ export async function verifyConsentEvidence(
     const dbConsentTime = validateConsentWindow(rawLeadTime, 'Referenced lead consent timestamp');
     return {
       consentType: evidence.consentType,
-      consentEvidenceRef: evidence.consentEvidenceRef,
+      consentEvidenceRef: trimmedRef,
       consentTimestamp: new Date(dbConsentTime),
       consentSource: lead.whatsappConsentSource || evidence.consentType,
       consentVersion: lead.whatsappConsentVersion || undefined,
@@ -107,17 +143,26 @@ export async function verifyConsentEvidence(
   }
 
   if (evidence.consentType === 'SIGNED_AGREEMENT') {
-    const isObjectId = /^[0-9a-fA-F]{24}$/.test(evidence.consentEvidenceRef);
-    const doc = isObjectId
-      ? await prisma.media.findUnique({ where: { id: evidence.consentEvidenceRef } })
-      : await prisma.media.findFirst({
-          where: {
-            OR: [
-              { filename: evidence.consentEvidenceRef },
-              { originalName: evidence.consentEvidenceRef },
-            ],
-          },
-        });
+    const trimmedRef = evidence.consentEvidenceRef?.trim();
+    if (!trimmedRef) {
+      throw new BadRequestException('Signed agreement reference cannot be blank.');
+    }
+    const isObjectId = /^[0-9a-fA-F]{24}$/.test(trimmedRef);
+    let doc;
+    try {
+      doc = isObjectId
+        ? await prisma.media.findUnique({ where: { id: trimmedRef } })
+        : await prisma.media.findFirst({
+            where: {
+              OR: [
+                { filename: trimmedRef },
+                { originalName: trimmedRef },
+              ],
+            },
+          });
+    } catch {
+      throw new BadRequestException('Referenced signed agreement document not found in stored documents.');
+    }
     if (!doc) {
       throw new BadRequestException('Referenced signed agreement document not found in stored documents.');
     }

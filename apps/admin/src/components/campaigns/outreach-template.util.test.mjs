@@ -204,4 +204,35 @@ describe('Admin Individual Outreach Template Helpers', () => {
     assert.equal(allowedUtility.error, undefined);
     assert.equal(allowedUtility.payload.languageCode, 'en_US');
   });
+
+  it('7. validates DIRECT_ADMIN_OUTREACH and checks consent reference length & hex format', () => {
+    const validDirect = buildIndividualOutreachPayload({
+      formData: baseForm({
+        consentType: 'DIRECT_ADMIN_OUTREACH',
+        consentEvidenceRef: 'In-person meeting at mill; authorized WhatsApp brochure',
+      }),
+      templates: MOCK_TEMPLATES,
+    });
+    assert.equal(validDirect.error, undefined);
+    assert.equal(validDirect.payload.consentEvidence.consentType, 'DIRECT_ADMIN_OUTREACH');
+    assert.equal(sendIndividualOutreachSchema.safeParse(validDirect.payload).success, true);
+
+    const shortDirect = buildIndividualOutreachPayload({
+      formData: baseForm({
+        consentType: 'DIRECT_ADMIN_OUTREACH',
+        consentEvidenceRef: 'Short',
+      }),
+      templates: MOCK_TEMPLATES,
+    });
+    assert.match(shortDirect.error, /at least 10 characters/);
+
+    const invalidLeadRef = buildIndividualOutreachPayload({
+      formData: baseForm({
+        consentType: 'WEBSITE_LEAD_FORM',
+        consentEvidenceRef: 'not-a-24-hex-id',
+      }),
+      templates: MOCK_TEMPLATES,
+    });
+    assert.match(invalidLeadRef.error, /24-character hexadecimal/);
+  });
 });

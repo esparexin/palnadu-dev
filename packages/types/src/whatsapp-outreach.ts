@@ -1,4 +1,5 @@
 export type WhatsAppConsentType =
+  | 'DIRECT_ADMIN_OUTREACH'
   | 'WEBSITE_LEAD_FORM'
   | 'INBOUND_WHATSAPP_INQUIRY'
   | 'SIGNED_AGREEMENT'

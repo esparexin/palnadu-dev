@@ -149,8 +149,8 @@ describe('WhatsApp palnadu_customer_acknowledgement - Mapping, Language & Consen
 
   it('7. enforces marketing consent and rejects CUSTOMER_SERVICE purpose or phoneless lead', async () => {
     await assert.rejects(() => service.sendOutreach(makeInput({ consentEvidence: { ...makeInput().consentEvidence, consentPurpose: 'CUSTOMER_SERVICE' } }), { id: 'admin1', email: 'a@palnadu.dev' }), /Customer-service consent/);
-    stores.leadsStore.set('lead_no_phone', { id: 'lead_no_phone', phone: '' });
-    await assert.rejects(() => service.sendOutreach(makeInput({ consentEvidence: { consentType: 'WEBSITE_LEAD_FORM', consentEvidenceRef: 'lead_no_phone', consentTimestamp: new Date().toISOString(), recipientPhone: '+919876543210' } }), { id: 'admin1', email: 'a@palnadu.dev' }), /valid phone number/);
+    stores.leadsStore.set('507f1f77bcf86cd799439033', { id: '507f1f77bcf86cd799439033', phone: '' });
+    await assert.rejects(() => service.sendOutreach(makeInput({ consentEvidence: { consentType: 'WEBSITE_LEAD_FORM', consentEvidenceRef: '507f1f77bcf86cd799439033', consentTimestamp: new Date().toISOString(), recipientPhone: '+919876543210' } }), { id: 'admin1', email: 'a@palnadu.dev' }), /valid phone number/);
   });
 
   it('8. rejects INBOUND_WHATSAPP_INQUIRY for marketing template and keeps utility saveContact UNVERIFIED', async () => {

@@ -90,7 +90,7 @@ describe('WhatsApp Outreach - Stored Document Consent, Safe Reconciliation & Cle
 
     mockApiClient = {
       fetchApprovedTemplates: async () => [
-        { name: 'b2b_website_outreach_v1', language: 'en_US', status: 'APPROVED', components: [] },
+        { name: 'b2b_website_outreach_v1', category: 'MARKETING', language: 'en_US', status: 'APPROVED', components: [] },
       ],
       sendTemplateMessage: async (payload) => {
         metaDispatchCalls++;
