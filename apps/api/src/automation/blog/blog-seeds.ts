@@ -88,12 +88,12 @@ export const CANONICAL_CATEGORY_INTERNAL_LINKS: Record<
   'app-development': {
     en: [
       { anchor: 'Android App Development', url: '/services/android-app-development' },
-      { anchor: 'Mobile Applications Services', url: '/services/mobile-app-development' },
+      { anchor: 'iOS App Development Services', url: '/services/ios-app-development' },
       { anchor: 'Contact Us', url: '/contact' },
     ],
     te: [
       { anchor: 'ఆండ్రాయిడ్ యాప్ డెవలప్‌మెంట్', url: '/services/android-app-development' },
-      { anchor: 'మొబైల్ అప్లికేషన్ల సేవలు', url: '/services/mobile-app-development' },
+      { anchor: 'ఐఓఎస్ యాప్ డెవలప్‌మెంట్ సేవలు', url: '/services/ios-app-development' },
       { anchor: 'మమ్మల్ని సంప్రదించండి', url: '/contact' },
     ],
   },

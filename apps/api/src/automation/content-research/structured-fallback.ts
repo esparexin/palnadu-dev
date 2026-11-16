@@ -3,6 +3,40 @@ import { buildLanguageCanonicalUrl } from '../blog/blog-url.util';
 import { GeneratedBlogDraft } from './types';
 
 /**
+ * Safely truncates a text string at the last complete word boundary without chopping words.
+ */
+export function truncateAtWordBoundary(text: string, maxLength: number): string {
+  const clean = text.trim().replace(/\s+/g, ' ');
+  if (clean.length <= maxLength) return clean;
+  const sliced = clean.slice(0, maxLength);
+  const lastSpace = sliced.lastIndexOf(' ');
+  const result = (lastSpace > 0 ? sliced.slice(0, lastSpace) : sliced)
+    .trim()
+    .replace(/[:,\s-]+$/, '');
+  return result;
+}
+
+/**
+ * Builds a clean, compliant meta title for fallback drafts without mid-word truncation.
+ */
+export function buildFallbackMetaTitle(topicTitle: string, brand = 'Palnadu.dev'): string {
+  const brandSuffix = ` | ${brand}`;
+  const maxTitleLen = 60 - brandSuffix.length;
+  if (topicTitle.length + brandSuffix.length <= 60) {
+    return `${topicTitle}${brandSuffix}`;
+  }
+  const clean = truncateAtWordBoundary(topicTitle, maxTitleLen);
+  return `${clean}${brandSuffix}`;
+}
+
+/**
+ * Builds a clean, compliant meta description for fallback drafts without mid-word truncation.
+ */
+export function buildFallbackMetaDescription(text: string, maxLen = 155): string {
+  return truncateAtWordBoundary(text, maxLen);
+}
+
+/**
  * Ensures title is an editorial-grade, compliant headline between 15 and 120 characters.
  */
 export function buildFallbackTitle(topicTitle: string, locationContext: string): string {
@@ -114,8 +148,8 @@ Explore our [Web Application Development Services](/services/web-development), l
 
   const excerpt = `Discover how modern web applications and business automation eliminate operational bottlenecks, spreadsheet errors, and WhatsApp chaos for growing enterprises in ${locationContext}.`;
 
-  const metaTitle = `${topicTitle.slice(0, 45)} | Palnadu.dev`;
-  const metaDescription = excerpt.slice(0, 155);
+  const metaTitle = buildFallbackMetaTitle(topicTitle);
+  const metaDescription = buildFallbackMetaDescription(excerpt, 155);
 
   return {
     isTemplateFallback: true,

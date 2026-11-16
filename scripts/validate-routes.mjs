@@ -27,7 +27,7 @@ if (!fs.existsSync(webManifestPath)) {
     '/locations/palnadu',
     '/locations/narasaraopet',
     '/services/website-development',
-    '/services/mobile-app-development',
+    '/services/android-app-development',
     '/privacy',
     '/terms',
     '/data-deletion',

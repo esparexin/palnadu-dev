@@ -9,7 +9,6 @@ export const VALID_INTERNAL_DESTINATIONS = new Set<string>([
   '/services/custom-software',
   '/services/business-automation',
   '/services/android-app-development',
-  '/services/mobile-app-development',
   '/services/ios-app-development',
   '/services/mvp-development',
   '/services/idea-validation',

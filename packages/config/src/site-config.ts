@@ -96,13 +96,6 @@ export const services = [
     icon: 'Code',
   },
   {
-    title: 'Mobile Applications',
-    slug: 'mobile-app-development',
-    shortDescription:
-      'Build iOS, Android, and cross-platform mobile applications.',
-    icon: 'Smartphone',
-  },
-  {
     title: 'Android App Development',
     slug: 'android-app-development',
     shortDescription:

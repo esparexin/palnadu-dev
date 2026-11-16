@@ -8,7 +8,6 @@ Palnadu.dev is a full-service technology studio engineering high-performance web
 - [Website Development & UI/UX Design](https://www.palnadu.dev/services/website-development): High-performance corporate websites, modern UI/UX design, and institutional portals engineered with Next.js.
 - [Web Applications & Full-Stack Development](https://www.palnadu.dev/services/web-development): Scalable SaaS products, commercial portals, dashboards, and custom web applications.
 - [Custom Software Engineering](https://www.palnadu.dev/services/custom-software): Tailored software designed around specific business workflows, godown operations, and inventory.
-- [Mobile Applications](https://www.palnadu.dev/services/mobile-app-development): Production iOS, Android, and cross-platform mobile apps.
 - [Android App Development](https://www.palnadu.dev/services/android-app-development): Native and cross-platform Android mobile applications for regional commerce.
 - [iOS App Development](https://www.palnadu.dev/services/ios-app-development): Premium iOS mobile applications built for iPhone and iPad.
 - [Advanced Digital Marketing & Content Strategy](https://www.palnadu.dev/services/digital-marketing): Data-driven digital marketing, content strategy, and commercial lead funnels.

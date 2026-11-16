@@ -9,11 +9,6 @@ export const actualServiceDetails: Record<string, { summary: string; deliverable
       'Custom web platforms, customer dashboards, internal operations portals, and software tools built with Next.js and TypeScript for businesses that have outgrown generic software.',
     deliverables: ['SaaS Products', 'Operations Portals', 'Client Dashboards', 'REST APIs'],
   },
-  'mobile-app-development': {
-    summary:
-      'Cross-platform iOS and Android mobile applications designed around straightforward daily workflows for regional businesses, field staff, and everyday customers.',
-    deliverables: ['iOS Apps', 'Android Apps', 'Offline Data Sync', 'App Store Release'],
-  },
   'android-app-development': {
     summary:
       'Native Android applications engineered for regional business operations, offline data recording, and direct deployment to the Google Play Store.',
@@ -83,12 +78,6 @@ export const products = [
     link: '/services/web-development',
     thumbnail:
       'https://cdn.21st.dev/assets/mirror/a9/a9e66d34a03bb780d87a046622415fe66996e805d1a55af26e3fbb0c6d161df5.png',
-  },
-  {
-    title: 'Mobile Applications',
-    link: '/services/mobile-app-development',
-    thumbnail:
-      'https://cdn.21st.dev/assets/mirror/14/14a2ca44971e7a57f400fb4234791307dc8a884480f088d55c93f1da810bec1b.png',
   },
   {
     title: 'Android App Development',

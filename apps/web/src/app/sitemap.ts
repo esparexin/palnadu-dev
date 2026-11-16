@@ -12,11 +12,13 @@ import { industrySectors } from './industries/industries-data';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = siteConfig.url;
+  // Stable baseline date for static resources to prevent arbitrary churn across bot requests
+  const staticLastModified = new Date('2026-11-09T00:00:00.000Z');
 
   // ── Static pages (auto-synced from @palnadu/config registry) ──
   const staticPages: MetadataRoute.Sitemap = sitemapPages.map((page) => ({
     url: `${baseUrl}${page.path}`,
-    lastModified: new Date(),
+    lastModified: staticLastModified,
     changeFrequency: page.changeFrequency,
     priority: page.priority,
     // The Telugu blog index alternates with the English one; both always
@@ -38,7 +40,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const teBlogIndex: MetadataRoute.Sitemap = [
     {
       url: `${baseUrl}/te/blog`,
-      lastModified: new Date(),
+      lastModified: staticLastModified,
       changeFrequency: 'weekly' as const,
       priority: 0.8,
       alternates: {
@@ -51,10 +53,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     },
   ];
 
-  // ── Dynamic: individual service pages ──
+  // ── Dynamic: individual service pages (canonical non-redirecting only) ──
   const servicePages: MetadataRoute.Sitemap = services.map((service) => ({
     url: `${baseUrl}/services/${service.slug}`,
-    lastModified: new Date(),
+    lastModified: staticLastModified,
     changeFrequency: 'monthly' as const,
     priority: 0.8,
   }));
@@ -62,7 +64,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // ── Industry sector pages ──
   const industryPages: MetadataRoute.Sitemap = industrySectors.map((sector) => ({
     url: `${baseUrl}/industries/${sector.slug}`,
-    lastModified: new Date(),
+    lastModified: staticLastModified,
     changeFrequency: 'monthly' as const,
     priority: 0.7,
   }));
@@ -70,7 +72,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // ── Dynamic & Verified case studies ──
   const staticCaseStudyEntries: MetadataRoute.Sitemap = caseStudies.map((study) => ({
     url: `${baseUrl}/work/${study.slug}`,
-    lastModified: new Date(),
+    lastModified: staticLastModified,
     changeFrequency: 'monthly' as const,
     priority: 0.8,
   }));

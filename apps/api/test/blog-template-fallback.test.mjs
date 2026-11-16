@@ -4,9 +4,12 @@ import { execFileSync } from 'node:child_process';
 import { mkdtempSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
 
 const require = createRequire(import.meta.url);
+const apiDir = join(fileURLToPath(import.meta.url), '../../');
+const apiSrc = (rel) => join(apiDir, rel);
 
 /**
  * Template-fallback detection.
@@ -22,8 +25,8 @@ const require = createRequire(import.meta.url);
 let source;
 before(() => {
   source =
-    readFileSync('src/automation/content-research.service.ts', 'utf8') +
-    readFileSync('src/automation/content-research/structured-fallback.ts', 'utf8');
+    readFileSync(apiSrc('src/automation/content-research.service.ts'), 'utf8') +
+    readFileSync(apiSrc('src/automation/content-research/structured-fallback.ts'), 'utf8');
 });
 
 /** Extract the fallback template body from the real source. */
@@ -77,8 +80,8 @@ describe('fallback template is a single shared body', () => {
 describe('template output cannot auto-publish', () => {
   it('publish step honours forceDraft over the auto-publish setting', () => {
     const service =
-      readFileSync('src/automation/blog-automation.service.ts', 'utf8') +
-      readFileSync('src/automation/blog/blog-publisher.service.ts', 'utf8');
+      readFileSync(apiSrc('src/automation/blog-automation.service.ts'), 'utf8') +
+      readFileSync(apiSrc('src/automation/blog/blog-publisher.service.ts'), 'utf8');
 
     // The publish decision must reference forceDraft and downgrade to DRAFT.
     assert.match(
@@ -100,8 +103,8 @@ describe('template output cannot auto-publish', () => {
 
   it('raises a distinct alert so the operator knows to rewrite', () => {
     const service =
-      readFileSync('src/automation/blog-automation.service.ts', 'utf8') +
-      readFileSync('src/automation/blog/blog-publisher.service.ts', 'utf8');
+      readFileSync(apiSrc('src/automation/blog-automation.service.ts'), 'utf8') +
+      readFileSync(apiSrc('src/automation/blog/blog-publisher.service.ts'), 'utf8');
     assert.match(
       service,
       /Automated Blog Needs Rewriting \(LLM Fallback\)/,
@@ -111,13 +114,27 @@ describe('template output cannot auto-publish', () => {
   });
 
   it('validation treats template output as a blocking originality failure', () => {
-    const rules = readFileSync('src/automation/seo-validation-rules.ts', 'utf8');
-    const contentChecks = readFileSync('src/automation/seo-validation-content.ts', 'utf8');
+    const rules = readFileSync(apiSrc('src/automation/seo-validation-rules.ts'), 'utf8');
+    const contentChecks = readFileSync(apiSrc('src/automation/seo-validation-content.ts'), 'utf8');
     assert.match(rules, /\bcheckContentOriginality\(/, 'validate() should delegate to checkContentOriginality');
     assert.match(
       contentChecks,
       /passed: !tooShort && !stuffed && !isTemplate/,
       'content_originality must fail for template output',
+    );
+  });
+
+  it('truncates metaTitle and metaDescription cleanly at word boundaries without chopping words', () => {
+    assert.match(source, /\btruncateAtWordBoundary\(/, 'should define truncateAtWordBoundary helper');
+    assert.match(source, /\bbuildFallbackMetaTitle\(/, 'should define buildFallbackMetaTitle helper');
+    assert.match(source, /\bbuildFallbackMetaDescription\(/, 'should define buildFallbackMetaDescription helper');
+    assert.ok(
+      !source.includes('topicTitle.slice(0, 45)'),
+      'should not use hardcoded mid-word slice(0, 45) for metaTitle',
+    );
+    assert.ok(
+      !source.includes('excerpt.slice(0, 155)'),
+      'should not use hardcoded mid-word slice(0, 155) for metaDescription',
     );
   });
 });

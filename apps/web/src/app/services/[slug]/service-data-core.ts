@@ -146,36 +146,4 @@ export const coreServiceContent: Record<string, ServiceDetailData> = {
       },
     ],
   },
-  'mobile-app-development': {
-    content: [
-      'Mobile devices are the central nervous system of everyday business in Andhra Pradesh. Whether it is field sales agents booking orders in rural mandis, delivery drivers updating transport milestones on NH-16, or patients booking doctor consultations, a seamless mobile experience is essential.',
-      'Palnadu.dev designs and develops iOS, Android, and cross-platform mobile applications that solve tangible operational problems without unnecessary complexity or bloated file sizes.',
-      'We help you determine whether your business genuinely requires a standalone native mobile application, a cross-platform solution (React Native), or an ultra-fast Progressive Web App (PWA). We evaluate factors like offline data synchronization, camera barcode scanning, push notifications, and development budget before recommending an architectural path.',
-      'Our mobile applications emphasize intuitive usability, fast startup times, offline resilience under spotty connectivity, and reliable background synchronization with your centralized cloud database.',
-    ],
-    deliverables: [
-      'Cross-Platform iOS & Android Apps: Single codebase reducing development cost.',
-      'Progressive Web Applications (PWA): App-like experience without app store downloads.',
-      'Offline-First Data Synchronization: Work reliably in areas with low cell coverage.',
-      'Push Notifications & Alerts: Keep customers and staff informed automatically.',
-      'Hardware Integrations: Camera barcode/QR scanning, GPS location tracking, and camera uploads.',
-      'App Store & Play Store Deployment: Complete handling of publishing and store guidelines.',
-    ],
-    architecture: [
-      'React Native & Expo for cross-platform delivery',
-      'SQLite / WatermelonDB for local offline caching',
-      'Secure JWT authentication & biometric logins',
-      'Background workers for seamless cloud synchronization',
-    ],
-    faq: [
-      {
-        q: 'Should our business build a native app or a Progressive Web App (PWA)?',
-        a: 'If you need deep hardware integration (Bluetooth printers, background GPS) or public app store presence, a cross-platform mobile app is best. For internal workflows and fast customer portals, a PWA often saves 50% in development costs while offering app-like speed.',
-      },
-      {
-        q: 'How do you handle poor internet connectivity in rural areas?',
-        a: 'We architect offline-first data stores. Staff can enter orders or update stock without signal; the app automatically queues and syncs transactions the moment connectivity is restored.',
-      },
-    ],
-  },
 };

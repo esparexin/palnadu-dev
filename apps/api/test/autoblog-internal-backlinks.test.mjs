@@ -21,7 +21,7 @@ describe('Mandatory Internal Backlink Policy & Publishing Gate', () => {
     it('provides relevant canonical service links for each category', () => {
       const appLinks = getCategoryInternalLinks('app-development', 'en');
       assert.ok(appLinks.some((l) => l.url === '/services/android-app-development'));
-      assert.ok(appLinks.some((l) => l.url === '/services/mobile-app-development'));
+      assert.ok(appLinks.some((l) => l.url === '/services/ios-app-development'));
 
       const startupLinks = getCategoryInternalLinks('startups', 'en');
       assert.ok(startupLinks.some((l) => l.url === '/services/mvp-development'));
@@ -179,7 +179,7 @@ describe('Mandatory Internal Backlink Policy & Publishing Gate', () => {
     it('uses Telugu prose for Telugu drafts', () => {
       const composer = new BlogComposerService(null, null, null, null);
       const raw = '## 1. పరిచయం\n\nవివరాలు ఇక్కడ ఉన్నాయి.\n\n## 2. సాంకేతిక విధానం\n\nమరిన్ని వివరాలు.';
-      const links = [{ anchor: 'మొబైల్ యాప్ సేవలు', url: '/services/mobile-app-development' }];
+      const links = [{ anchor: 'ఆండ్రాయిడ్ యాప్ డెవలప్‌మెంట్', url: '/services/android-app-development' }];
 
       const enriched = composer.enrichContent(raw, [], links, BlogLanguage.te, 'test-te-slug', 'app-development');
       assert.ok(enriched.includes('/services/'));
