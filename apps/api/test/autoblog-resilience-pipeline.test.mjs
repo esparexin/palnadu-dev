@@ -19,7 +19,7 @@ function validLlmDraftPayload(language = 'en') {
   const isTe = language === 'te';
   const body = isTe
     ? Array.from({ length: 16 }, () => 'గుంటూర్ మరియు పల్నాడు వ్యాపారాల కోసం వెబ్ మరియు మొబైల్ సాఫ్ట్‌వేర్ నిర్మాణం గురించి సమగ్ర వివరాలు. ').join('') +
-      '\n\n## 1. సాంకేతిక నిర్మాణం\n\nమా [మొబైల్ యాప్ సేవలు](/services/mobile-app-development) చూడండి.\n\n## 2. అమలు విధానం\n\nసంప్రదించండి [సంప్రదింపు పేజీ](/contact).'
+      '\n\n## 1. సాంకేతిక నిర్మాణం\n\nమా [మొబైల్ యాప్ సేవలు](/services/android-app-development) చూడండి.\n\n## 2. అమలు విధానం\n\nసంప్రదించండి [సంప్రదింపు పేజీ](/contact).'
     : Array.from({ length: 58 }, () => 'Modern enterprise web engineering in Guntur and Palnadu removes manual operational bottlenecks across teams. ').join('') +
       '\n\n## Architecture Blueprint\n\nExplore our [Website Development](/services/website-development) engineering practice.\n\n## Regional Rollout\n\nReach out via [Contact Us](/contact).';
   return JSON.stringify({
@@ -36,7 +36,7 @@ function validLlmDraftPayload(language = 'en') {
     secondaryKeywords: [isTe ? 'గుంటూర్ టెక్నాలజీ' : 'guntur software'],
     h2Headings: isTe ? ['సాంకేతిక నిర్మాణం', 'అమలు విధానం'] : ['Architecture Blueprint', 'Regional Rollout'],
     internalLinks: [
-      { anchor: isTe ? 'మొబైల్ యాప్ సేవలు' : 'Website Development', url: isTe ? '/services/mobile-app-development' : '/services/website-development' },
+      { anchor: isTe ? 'మొబైల్ యాప్ సేవలు' : 'Website Development', url: isTe ? '/services/android-app-development' : '/services/website-development' },
       { anchor: isTe ? 'సంప్రదింపు పేజీ' : 'Contact Us', url: '/contact' },
     ],
     faq: [{ q: 'How long does MVP delivery take?', a: 'Typically 4 to 6 weeks.' }],

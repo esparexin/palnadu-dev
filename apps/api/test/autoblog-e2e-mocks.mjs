@@ -4,7 +4,7 @@ export function validLlmDraftPayload(lang = 'en') {
   const isTe = lang === 'te';
   const body = isTe
     ? Array.from({ length: 36 }, () => 'గుంటూర్ మరియు పల్నాడు వ్యాపారాల కోసం వెబ్ మరియు మొబైల్ సాఫ్ట్‌వేర్ నిర్మాణం గురించి సమగ్ర సాంకేతిక వివరాలు మరియు పరిష్కారాలు అందుబాటులో ఉన్నాయి. ').join('') +
-      '\n\n## 1. సాంకేతిక నిర్మాణం\n\nమా [మొబైల్ యాప్ సేవలు](/services/mobile-app-development) చూడండి.\n\n## 2. అమలు విధానం\n\nసంప్రదించండి [సంప్రదింపు పేజీ](/contact).'
+      '\n\n## 1. సాంకేతిక నిర్మాణం\n\nమా [మొబైల్ యాప్ సేవలు](/services/android-app-development) చూడండి.\n\n## 2. అమలు విధానం\n\nసంప్రదించండి [సంప్రదింపు పేజీ](/contact).'
     : Array.from({ length: 58 }, () => 'Modern enterprise software in Guntur and Palnadu removes manual bottlenecks across teams. ').join('') +
       '\n\n## Architecture Blueprint\n\nExplore our [Website Development](/services/website-development) practice.\n\n## Regional Rollout\n\nReach out via [Contact Us](/contact).';
   return JSON.stringify({
@@ -19,7 +19,7 @@ export function validLlmDraftPayload(lang = 'en') {
     secondaryKeywords: [isTe ? 'గుంటూరు టెక్నాలజీ' : 'guntur software'],
     h2Headings: isTe ? ['సాంకేతిక నిర్మాణం', 'అమలు విధానం'] : ['Architecture Blueprint', 'Regional Rollout'],
     internalLinks: [
-      { anchor: isTe ? 'మొబైల్ యాప్ సేవలు' : 'Website Development', url: isTe ? '/services/mobile-app-development' : '/services/website-development' },
+      { anchor: isTe ? 'మొబైల్ యాప్ సేవలు' : 'Website Development', url: isTe ? '/services/android-app-development' : '/services/website-development' },
       { anchor: isTe ? 'సంప్రదింపు పేజీ' : 'Contact Us', url: '/contact' },
     ],
     faq: [{ q: 'Timeline?', a: '4-6 weeks.' }],
