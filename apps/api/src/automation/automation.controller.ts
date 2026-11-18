@@ -18,6 +18,7 @@ import { PrismaService } from '../prisma.service';
 import { inferCategoryFromTopic } from './blog/blog-seeds';
 import { TELUGU_CURATED_TOPIC_QUEUE } from './blog/telugu-seeds';
 import { ZodValidationPipe } from '../common/pipes/zod-validation.pipe';
+import { mapAutomationGenerationError } from './automation-error.util';
 import {
   automationGenerateSchema,
   automationSettingsSchema,
@@ -160,9 +161,8 @@ export class AutomationController {
         message: `Article generated successfully (${result.wordCount} words, ${result.imagesCount} licensed images).`,
         data: result,
       };
-    } catch (err: any) {
-      const msg = err instanceof Error ? err.message : String(err);
-      throw new BadRequestException(msg || 'Failed to generate article.');
+    } catch (err: unknown) {
+      mapAutomationGenerationError(err);
     }
   }
 
