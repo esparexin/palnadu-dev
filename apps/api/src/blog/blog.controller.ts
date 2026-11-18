@@ -19,7 +19,8 @@ import {
   type CreateBlogCategoryInput,
   type LinkTranslationsInput,
 } from '@palnadu/validation';
-import { BlogService, parseLanguage } from './blog.service';
+import { BlogService } from './blog.service';
+import { parseLanguage, parsePublishStatus } from './blog-prisma.util';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
@@ -48,7 +49,7 @@ export class BlogController {
       limit: limit ? parseInt(limit) : 12,
       categorySlug: category,
       search,
-      status: status as PublishStatus | undefined,
+      status: parsePublishStatus(status),
       includeArchived: includeArchived === 'true' || includeArchived === '1',
       language: parseLanguage(language),
     });
@@ -86,7 +87,7 @@ export class BlogController {
     const result = await this.blogService.findAllAdmin({
       page: page ? parseInt(page) : 1,
       limit: limit ? parseInt(limit) : 10,
-      status: status as PublishStatus | undefined,
+      status: parsePublishStatus(status),
       categorySlug: category,
       search,
       language: parseLanguage(language),

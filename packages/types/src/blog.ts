@@ -28,7 +28,7 @@ export interface BlogPost {
   coverImage?: string;
   categoryId?: string;
   category?: BlogCategory;
-  authorId: string;
+  authorId?: string;
   author?: User;
   seoTitle?: string;
   seoDescription?: string;

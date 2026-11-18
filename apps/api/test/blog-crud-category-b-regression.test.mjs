@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 import { BlogLanguage, PublishStatus } from '@prisma/client';
 import { linkTranslationsSchema } from '@palnadu/validation';
+import { parsePublishStatus } from '../dist/blog/blog-prisma.util.js';
 import { BlogService } from '../dist/blog/blog.service.js';
 import { BlogController } from '../dist/blog/blog.controller.js';
 import { ZodValidationPipe } from '../dist/common/pipes/zod-validation.pipe.js';
@@ -201,6 +202,36 @@ describe('Category B Regression — Blog CRUD Service, Controller & Validation',
       postIds: ['507f1f77bcf86cd799439011', '507f1f77bcf86cd799439012'],
       groupId: 'tg_custom',
     });
+  });
+
+  it('normalizes publish status and validates invalid values', () => {
+    assert.equal(parsePublishStatus('DRAFT'), PublishStatus.DRAFT);
+    assert.equal(parsePublishStatus('draft'), PublishStatus.DRAFT);
+    assert.equal(parsePublishStatus('PUBLISHED'), PublishStatus.PUBLISHED);
+    assert.equal(parsePublishStatus(''), undefined);
+    assert.equal(parsePublishStatus(undefined), undefined);
+    assert.throws(() => parsePublishStatus('UNKNOWN'), BadRequestException);
+  });
+
+  it('recovers gracefully in findAllAdmin if author relation fails in MongoDB', async () => {
+    let callCount = 0;
+    const mockPrisma = {
+      blogPost: {
+        findMany: async (args) => {
+          callCount++;
+          if (args.include?.author) {
+            throw new Error('Null constraint violation on fields: (author)');
+          }
+          return [{ id: 'post-draft-1', title: 'Draft Post', status: PublishStatus.DRAFT }];
+        },
+        count: async () => 1,
+      },
+    };
+    const service = new BlogService(mockPrisma);
+    const result = await service.findAllAdmin({ status: PublishStatus.DRAFT, page: 1, limit: 10 });
+    assert.equal(result.data.length, 1);
+    assert.equal(result.data[0].id, 'post-draft-1');
+    assert.equal(callCount, 2);
   });
 });
 

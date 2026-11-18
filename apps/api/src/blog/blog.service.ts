@@ -1,25 +1,21 @@
-import { Injectable, ConflictException, BadRequestException, NotFoundException } from '@nestjs/common';
+import { Injectable, ConflictException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
 import { Prisma, PublishStatus, BlogLanguage } from '@prisma/client';
-import { parseLanguageValue } from './blog-translations';
 import { assertCanJoinGroup, linkBlogTranslations } from './blog-translation-manager';
 import {
   BLOG_MUTATION_INCLUDE,
   PUBLIC_READ_STATUSES,
   buildBlogPostWhere,
   fetchPostSlugCompanions,
+  findAllAdminBlogPosts,
+  findOneAdminBlogPost,
+  findPublishedBlogPosts,
   isPrismaErrorCode,
   mapBlogPostPrismaError,
+  parseLanguage,
 } from './blog-prisma.util';
 
-/** Languages the API accepts. Anything else is a client error, not a silent default. */
-export function parseLanguage(value: unknown): BlogLanguage | undefined {
-  const parsed = parseLanguageValue(value);
-  if (parsed !== undefined && typeof parsed === 'object') {
-    throw new BadRequestException(`Invalid language '${parsed.invalid}'. Expected 'en' or 'te'.`);
-  }
-  return parsed as BlogLanguage | undefined;
-}
+export { parseLanguage };
 
 @Injectable()
 export class BlogService {
@@ -74,16 +70,7 @@ export class BlogService {
     });
 
     const [posts, total] = await Promise.all([
-      this.prisma.blogPost.findMany({
-        where,
-        skip,
-        take: limit,
-        orderBy: [{ publishDate: 'desc' }, { createdAt: 'desc' }],
-        include: {
-          author: { select: { id: true, name: true, avatar: true } },
-          category: { select: { id: true, name: true, slug: true } },
-        },
-      }),
+      findPublishedBlogPosts(this.prisma, { where, skip, limit }),
       this.prisma.blogPost.count({ where }),
     ]);
 
@@ -128,16 +115,7 @@ export class BlogService {
         : [{ createdAt: 'desc' }, { publishDate: 'desc' }];
 
     const [posts, total] = await Promise.all([
-      this.prisma.blogPost.findMany({
-        where,
-        skip,
-        take: limit,
-        orderBy,
-        include: {
-          author: { select: { id: true, name: true } },
-          category: { select: { id: true, name: true, slug: true } },
-        },
-      }),
+      findAllAdminBlogPosts(this.prisma, { where, skip, limit, orderBy }),
       this.prisma.blogPost.count({ where }),
     ]);
 
@@ -148,10 +126,7 @@ export class BlogService {
   }
 
   async findOneAdmin(id: string) {
-    return this.prisma.blogPost.findUnique({
-      where: { id },
-      include: { author: true, category: true },
-    });
+    return findOneAdminBlogPost(this.prisma, id);
   }
 
   async update(id: string, data: Prisma.BlogPostUpdateInput & { translationGroupId?: string | null }) {
