@@ -1,6 +1,27 @@
-import { ConflictException, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
 import { BlogLanguage, Prisma, PublishStatus } from '@prisma/client';
 import { PrismaService } from '../prisma.service';
+import { parseLanguageValue } from './blog-translations';
+
+/** Languages the API accepts. Anything else is a client error, not a silent default. */
+export function parseLanguage(value: unknown): BlogLanguage | undefined {
+  const parsed = parseLanguageValue(value);
+  if (parsed !== undefined && typeof parsed === 'object') {
+    throw new BadRequestException(`Invalid language '${parsed.invalid}'. Expected 'en' or 'te'.`);
+  }
+  return parsed as BlogLanguage | undefined;
+}
+
+/** Publication statuses the API accepts. Invalid non-empty status is a 400 client error. */
+export function parsePublishStatus(value: unknown): PublishStatus | undefined {
+  if (value === undefined || value === null || value === '') return undefined;
+  if (typeof value !== 'string') return undefined;
+  const upper = value.toUpperCase();
+  if (upper in PublishStatus) {
+    return upper as PublishStatus;
+  }
+  throw new BadRequestException(`Invalid status '${value}'. Expected DRAFT, PUBLISHED, or ARCHIVED.`);
+}
 
 export const PUBLIC_READ_STATUSES: PublishStatus[] = [
   PublishStatus.PUBLISHED,
@@ -121,4 +142,99 @@ export async function fetchPostSlugCompanions(
     : [];
 
   return { relatedPosts, translations };
+}
+
+/** Fallback runner for queries that may fail due to orphaned MongoDB author relations. */
+async function resilientPostQuery<T>(
+  queryWithAuthor: () => Promise<T>,
+  queryFallback: () => Promise<T>,
+): Promise<T> {
+  try {
+    return await queryWithAuthor();
+  } catch {
+    return await queryFallback();
+  }
+}
+
+/** Queries published posts with resilience against orphaned author relations in MongoDB. */
+export async function findPublishedBlogPosts(
+  prisma: PrismaService,
+  params: { where: Prisma.BlogPostWhereInput; skip: number; limit: number },
+) {
+  const { where, skip, limit } = params;
+  return resilientPostQuery(
+    () =>
+      prisma.blogPost.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: [{ publishDate: 'desc' }, { createdAt: 'desc' }],
+        include: {
+          author: { select: { id: true, name: true, avatar: true } },
+          category: { select: { id: true, name: true, slug: true } },
+        },
+      }),
+    () =>
+      prisma.blogPost.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: [{ publishDate: 'desc' }, { createdAt: 'desc' }],
+        include: {
+          category: { select: { id: true, name: true, slug: true } },
+        },
+      }),
+  );
+}
+
+/** Queries admin posts with resilience against orphaned author relations in MongoDB. */
+export async function findAllAdminBlogPosts(
+  prisma: PrismaService,
+  params: {
+    where: Prisma.BlogPostWhereInput;
+    skip: number;
+    limit: number;
+    orderBy: Prisma.BlogPostOrderByWithRelationInput[];
+  },
+) {
+  const { where, skip, limit, orderBy } = params;
+  return resilientPostQuery(
+    () =>
+      prisma.blogPost.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy,
+        include: {
+          author: { select: { id: true, name: true } },
+          category: { select: { id: true, name: true, slug: true } },
+        },
+      }),
+    () =>
+      prisma.blogPost.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy,
+        include: {
+          category: { select: { id: true, name: true, slug: true } },
+        },
+      }),
+  );
+}
+
+/** Fetches one admin post with resilience against orphaned author relations. */
+export async function findOneAdminBlogPost(prisma: PrismaService, id: string) {
+  return resilientPostQuery(
+    () =>
+      prisma.blogPost.findUnique({
+        where: { id },
+        include: { author: true, category: true },
+      }),
+    () =>
+      prisma.blogPost.findUnique({
+        where: { id },
+        include: { category: true },
+      }),
+  );
 }

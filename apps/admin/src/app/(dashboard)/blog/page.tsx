@@ -42,7 +42,6 @@ export default function BlogAdminPage() {
 
   const onSuccessDraft = () => {
     blogPosts.setStatusFilter('DRAFT');
-    blogPosts.fetchPosts();
   };
 
   const automation = useBlogAutomation(onSuccessDraft, blogPosts.fetchCounts);

@@ -11,6 +11,8 @@ const SEARCH_DEBOUNCE_MS = 300;
 
 export function useBlogPosts() {
   const { toast } = useToast();
+  const toastRef = useRef(toast);
+  toastRef.current = toast;
   const [posts, setPosts] = useState<BlogPost[]>([]);
   const [categories, setCategories] = useState<CategoryOption[]>([]);
   const [loading, setLoading] = useState(true);
@@ -40,6 +42,16 @@ export function useBlogPosts() {
     }).catch(() => {});
   }, []);
 
+  const fetchCategories = useCallback(() => {
+    api.blog
+      .categories()
+      .then((catRes) => {
+        const res = (catRes ?? {}) as { data?: CategoryOption[] };
+        setCategories(res.data || []);
+      })
+      .catch(() => {});
+  }, []);
+
   const fetchPosts = useCallback(() => {
     const requestId = ++requestSeqRef.current;
     setLoading(true);
@@ -49,26 +61,25 @@ export function useBlogPosts() {
     if (categoryFilter) params.category = categoryFilter;
     if (languageFilter) params.language = languageFilter;
 
-    Promise.all([api.blog.list(params), api.blog.categories()])
+    api.blog
+      .list(params)
       .then((results) => {
         if (requestId !== requestSeqRef.current) return;
-        const postsRes = (results[0] ?? {}) as { data?: BlogPost[]; meta?: { total?: number; totalPages?: number } };
-        const catRes = (results[1] ?? {}) as { data?: CategoryOption[] };
+        const postsRes = (results ?? {}) as { data?: BlogPost[]; meta?: { total?: number; totalPages?: number } };
         setPosts(postsRes.data || []);
         if (postsRes.meta) {
           setTotalPosts(postsRes.meta.total || 0);
           setTotalPages(postsRes.meta.totalPages || 1);
         }
-        setCategories(catRes.data || []);
       })
       .catch((err) => {
         if (requestId !== requestSeqRef.current) return;
-        toast.error(err instanceof Error ? err.message : 'Failed to load articles');
+        toastRef.current.error(err instanceof Error ? err.message : 'Failed to load articles');
       })
       .finally(() => {
         if (requestId === requestSeqRef.current) setLoading(false);
       });
-  }, [currentPage, pageSize, debouncedSearch, statusFilter, categoryFilter, languageFilter, toast]);
+  }, [currentPage, pageSize, debouncedSearch, statusFilter, categoryFilter, languageFilter]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -82,9 +93,19 @@ export function useBlogPosts() {
 
   useEffect(() => { fetchPosts(); }, [fetchPosts]);
   useEffect(() => { fetchCounts(); }, [fetchCounts]);
+  useEffect(() => { fetchCategories(); }, [fetchCategories]);
 
   const setSearch = useCallback((value: string) => setSearchState(value), []);
-  const setStatusFilter = useCallback((value: string) => { setStatusFilterState(value); setCurrentPage(1); }, []);
+  const setStatusFilter = useCallback((value: string) => {
+    setStatusFilterState((prev) => {
+      if (prev === value) {
+        fetchPosts();
+        return prev;
+      }
+      setCurrentPage(1);
+      return value;
+    });
+  }, [fetchPosts]);
   const setCategoryFilter = useCallback((value: string) => { setCategoryFilterState(value); setCurrentPage(1); }, []);
   const setLanguageFilter = useCallback((value: string) => { setLanguageFilterState(value); setCurrentPage(1); }, []);
   const setPageSize = useCallback((value: number) => { setPageSizeState(value); setCurrentPage(1); }, []);
