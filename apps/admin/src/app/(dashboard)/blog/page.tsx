@@ -3,16 +3,15 @@
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
 import type { BlogPost } from '@palnadu/types';
-import { Plus, Sparkles, Loader2, Compass, ListChecks } from 'lucide-react';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { useToast } from '@/components/ui/toast';
-import { Button } from '@/components/ui/button';
 import { BlogFormData, initialFormData } from '@/components/blog/types';
 import {
   canManageBlogAdminControls,
   getBlogSaveSuccessMessage,
   readStoredAdminRole,
 } from '@/components/blog/blog-admin.util';
+import { BlogPageHeader } from '@/components/blog/blog-page-header';
 import { BlogKpiCards } from '@/components/blog/blog-kpi-cards';
 import { BlogFilters } from '@/components/blog/blog-filters';
 import { BlogTable } from '@/components/blog/blog-table';
@@ -45,7 +44,7 @@ export default function BlogAdminPage() {
   };
 
   const automation = useBlogAutomation(onSuccessDraft, blogPosts.fetchCounts);
-  const keywords = useBlogKeywords(onSuccessDraft, automation.setGeneratingAi, blogPosts.fetchCounts);
+  const keywords = useBlogKeywords(onSuccessDraft, blogPosts.fetchCounts, automation.isGenerating);
 
   const openCreateModal = () => {
     setEditingPost(null);
@@ -125,32 +124,17 @@ export default function BlogAdminPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-extrabold tracking-tight text-palnadu-dark">Blog & Articles</h1>
-          <p className="text-xs text-palnadu-secondary mt-0.5">
-            Publish technical guides, engineering case breakdowns, and manage SEO search metadata.
-          </p>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <Button variant="outline" size="sm" onClick={() => { keywords.setKeywordModalOpen(true); if (keywords.discoveredKeywords.length === 0) keywords.fetchKeywords(); }} title="Discover real Google search terms for Andhra Pradesh & Palnadu">
-            <Compass className="h-4 w-4 mr-1.5 text-palnadu-blue" />
-            <span>SEO Keywords</span>
-          </Button>
-          <Button variant="outline" size="sm" onClick={automation.fetchAutomationStatus} title="View scheduled blog queue & rotation status">
-            <ListChecks className="h-4 w-4 mr-1.5 text-palnadu-teal" />
-            <span>Queue Status</span>
-          </Button>
-          <Button variant="secondary" size="sm" onClick={automation.triggerAiGenerate} disabled={automation.generatingAi} title="Generate next scheduled AI blog draft from queue">
-            {automation.generatingAi ? <Loader2 className="h-4 w-4 mr-1.5 animate-spin" /> : <Sparkles className="h-4 w-4 mr-1.5" />}
-            <span>{automation.generatingAi ? 'Generating Draft...' : 'Generate AI Blog Draft'}</span>
-          </Button>
-          <Button variant="default" size="sm" onClick={openCreateModal}>
-            <Plus className="h-4 w-4 mr-1.5" />
-            <span>New Article</span>
-          </Button>
-        </div>
-      </div>
+      <BlogPageHeader
+        onOpenKeywords={() => {
+          keywords.setKeywordModalOpen(true);
+          if (keywords.discoveredKeywords.length === 0) keywords.fetchKeywords();
+        }}
+        onOpenQueue={automation.fetchAutomationStatus}
+        onGenerateDraft={automation.triggerAiGenerate}
+        onOpenCreate={openCreateModal}
+        generatingGeneralDraft={automation.generatingGeneralDraft}
+        isGenerating={automation.isGenerating}
+      />
 
       <BlogKpiCards
         loading={blogPosts.loading}
@@ -220,7 +204,8 @@ export default function BlogAdminPage() {
         onKeywordLocationChange={keywords.setKeywordLocation}
         discoveredKeywords={keywords.discoveredKeywords}
         searchingKeywords={keywords.searchingKeywords}
-        generatingAi={automation.generatingAi}
+        generatingKeyword={keywords.generatingKeyword}
+        isGenerating={automation.isGenerating}
         copiedKw={keywords.copiedKw}
         onFetchKeywords={keywords.fetchKeywords}
         onCopyKeyword={keywords.copyKeyword}
@@ -236,7 +221,8 @@ export default function BlogAdminPage() {
         updatingSettings={automation.updatingSettings}
         togglingBilingual={automation.togglingBilingual}
         discoveringTopics={automation.discoveringTopics}
-        generatingAi={automation.generatingAi}
+        generatingTopicId={automation.generatingTopicId}
+        isGenerating={automation.isGenerating}
         canManageSettings={canManageAdminSettings}
         onToggleAutoPublish={automation.toggleAutoPublish}
         onToggleBilingual={automation.toggleBilingual}

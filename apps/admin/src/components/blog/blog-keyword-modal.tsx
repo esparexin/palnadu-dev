@@ -17,7 +17,8 @@ interface BlogKeywordModalProps {
   onKeywordLocationChange: (_loc: string) => void;
   discoveredKeywords: KeywordResult[];
   searchingKeywords: boolean;
-  generatingAi: boolean;
+  generatingKeyword?: string | null;
+  isGenerating?: boolean;
   copiedKw: string | null;
   onFetchKeywords: () => void;
   onCopyKeyword: (_kw: string) => void;
@@ -33,7 +34,8 @@ export function BlogKeywordModal({
   onKeywordLocationChange,
   discoveredKeywords,
   searchingKeywords,
-  generatingAi,
+  generatingKeyword = null,
+  isGenerating = false,
   copiedKw,
   onFetchKeywords,
   onCopyKeyword,
@@ -142,6 +144,9 @@ export function BlogKeywordModal({
                     ? 'bg-palnadu-light-blue text-palnadu-blue border-palnadu-blue/30'
                     : 'bg-palnadu-off-white text-palnadu-dark border-palnadu-border';
 
+                const isThisKwGenerating = generatingKeyword === kw.keyword;
+                const isActionDisabled = isGenerating || Boolean(generatingKeyword);
+
                 return (
                   <div key={idx} className="rounded-lg border border-palnadu-border bg-white p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:border-palnadu-blue transition-all">
                     <div className="space-y-1">
@@ -170,9 +175,19 @@ export function BlogKeywordModal({
                       >
                         {copiedKw === kw.keyword ? <Check className="h-3.5 w-3.5 text-palnadu-teal" aria-hidden="true" /> : <Copy className="h-3.5 w-3.5" aria-hidden="true" />}
                       </Button>
-                      <Button type="button" size="sm" variant="secondary" onClick={() => onGenerateFromKeyword(kw.keyword)} disabled={generatingAi}>
-                        <Sparkles className="h-3.5 w-3.5 mr-1" aria-hidden="true" />
-                        <span>Draft Post</span>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="secondary"
+                        onClick={() => onGenerateFromKeyword(kw.keyword)}
+                        disabled={isActionDisabled}
+                      >
+                        {isThisKwGenerating ? (
+                          <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" aria-hidden="true" />
+                        ) : (
+                          <Sparkles className="h-3.5 w-3.5 mr-1" aria-hidden="true" />
+                        )}
+                        <span>{isThisKwGenerating ? 'Drafting...' : 'Draft Post'}</span>
                       </Button>
                     </div>
                   </div>

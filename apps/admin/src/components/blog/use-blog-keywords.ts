@@ -7,8 +7,8 @@ import { KeywordResult } from './types';
 
 export function useBlogKeywords(
   onSuccessDraft: () => void,
-  setGeneratingAi: (_loading: boolean) => void,
   fetchCounts?: () => void,
+  isGlobalGenerating = false,
 ) {
   const { toast } = useToast();
   const [keywordModalOpen, setKeywordModalOpen] = useState(false);
@@ -16,6 +16,7 @@ export function useBlogKeywords(
   const [keywordLocation, setKeywordLocation] = useState('Guntur & Palnadu');
   const [discoveredKeywords, setDiscoveredKeywords] = useState<KeywordResult[]>([]);
   const [searchingKeywords, setSearchingKeywords] = useState(false);
+  const [generatingKeyword, setGeneratingKeyword] = useState<string | null>(null);
   const [copiedKw, setCopiedKw] = useState<string | null>(null);
   const copyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -39,7 +40,8 @@ export function useBlogKeywords(
   };
 
   const generateFromKeyword = async (kw: string) => {
-    setGeneratingAi(true);
+    if (generatingKeyword || isGlobalGenerating) return;
+    setGeneratingKeyword(kw);
     toast.info(`Generating draft for "${kw}"...`);
     try {
       const res = await api.automation.generate({ topic: kw, targetLocation: keywordLocation });
@@ -53,7 +55,7 @@ export function useBlogKeywords(
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to generate blog draft');
     } finally {
-      setGeneratingAi(false);
+      setGeneratingKeyword(null);
     }
   };
 
@@ -82,6 +84,7 @@ export function useBlogKeywords(
     setKeywordLocation,
     discoveredKeywords,
     searchingKeywords,
+    generatingKeyword,
     copiedKw,
     fetchKeywords,
     generateFromKeyword,
