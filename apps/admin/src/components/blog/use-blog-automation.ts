@@ -17,7 +17,10 @@ export function useBlogAutomation(
   const [updatingSettings, setUpdatingSettings] = useState(false);
   const [discoveringTopics, setDiscoveringTopics] = useState(false);
   const [togglingBilingual, setTogglingBilingual] = useState(false);
-  const [generatingAi, setGeneratingAi] = useState(false);
+  const [generatingTopicId, setGeneratingTopicId] = useState<string | null>(null);
+  const [generatingGeneralDraft, setGeneratingGeneralDraft] = useState(false);
+
+  const isGenerating = Boolean(generatingTopicId || generatingGeneralDraft);
 
   const fetchAutomationStatus = async () => {
     setLoadingStatus(true);
@@ -92,7 +95,9 @@ export function useBlogAutomation(
   };
 
   const generateFromTopic = async (topicItem: BlogTopic) => {
-    setGeneratingAi(true);
+    if (isGenerating) return;
+    const topicId = topicItem.id || topicItem.topicKey || topicItem.topic;
+    setGeneratingTopicId(topicId);
     toast.info(`Generating draft for "${topicItem.topic.slice(0, 32)}..."`);
     try {
       const res = await api.automation.generate({
@@ -114,12 +119,13 @@ export function useBlogAutomation(
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to generate blog draft');
     } finally {
-      setGeneratingAi(false);
+      setGeneratingTopicId(null);
     }
   };
 
   const triggerAiGenerate = async () => {
-    setGeneratingAi(true);
+    if (isGenerating) return;
+    setGeneratingGeneralDraft(true);
     toast.info('Generating 1,200+ word draft with licensed images...');
     try {
       const res = await api.automation.generate();
@@ -135,7 +141,7 @@ export function useBlogAutomation(
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to generate blog draft');
     } finally {
-      setGeneratingAi(false);
+      setGeneratingGeneralDraft(false);
     }
   };
 
@@ -148,8 +154,10 @@ export function useBlogAutomation(
     updatingSettings,
     discoveringTopics,
     togglingBilingual,
-    generatingAi,
-    setGeneratingAi,
+    generatingTopicId,
+    generatingGeneralDraft,
+    isGenerating,
+    generatingAi: isGenerating,
     fetchAutomationStatus,
     toggleAutoPublish,
     toggleBilingual,
