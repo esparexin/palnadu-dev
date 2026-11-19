@@ -2,7 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import { PrismaService } from '../prisma.service';
 import { TopicDiscoveryService } from './topic-discovery.service';
-import { BlogLanguage } from '@prisma/client';
+import { BlogLanguage, PublishStatus } from '@prisma/client';
 import { allocateQuota, BilingualConfig, BilingualQuota } from './bilingual-quota';
 import { BlogQueueService } from './blog/blog-queue.service';
 import { BlogComposerService } from './blog/blog-composer.service';
@@ -176,24 +176,25 @@ export class BlogAutomationService {
       false,
     );
 
+    const hasOriginalityFailure = composed.validation.failures.some(
+      (f: { name: string }) => f.name === 'content_originality',
+    );
+    const shouldForceDraft = composed.validation.forceDraft || hasOriginalityFailure || !composed.validation.passed;
+
     if (!composed.validation.passed) {
-      const isTemplateOnly =
-        composed.validation.forceDraft &&
-        composed.validation.failures.every((f: { name: string }) => f.name === 'content_originality');
-      if (!isTemplateOnly) {
-        const resolved = await resolveDuplicateValidationPost(
-          this.prisma,
-          topicRow.id,
-          composed,
-          category.name,
-          this.logger,
-        );
-        if (resolved) return resolved;
-        throw new Error(`validation: ${composed.validation.failures.map((f: { name: string; detail?: string }) => (f.detail ? `${f.name} (${f.detail})` : f.name)).join('; ')}`);
-      }
+      const resolved = await resolveDuplicateValidationPost(
+        this.prisma,
+        topicRow.id,
+        composed,
+        category.name,
+        this.logger,
+      );
+      if (resolved) return resolved;
     }
 
-    const publishStatus = await this.publisherService.decidePublishStatus(forcePublish, composed.validation);
+    const publishStatus = shouldForceDraft
+      ? PublishStatus.DRAFT
+      : await this.publisherService.decidePublishStatus(forcePublish, composed.validation);
 
     return this.publisherService.persistAndNotify(
       topicRow,

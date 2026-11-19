@@ -158,76 +158,9 @@ export async function fetchPostSlugCompanions(
   return { relatedPosts, translations };
 }
 
-/** Fallback runner for queries that may fail due to orphaned MongoDB author relations. */
-export async function resilientPostQuery<T>(
-  queryWithAuthor: () => Promise<T>,
-  queryFallback: () => Promise<T>,
-): Promise<T> {
-  try {
-    return await queryWithAuthor();
-  } catch {
-    return await queryFallback();
-  }
-}
-
-/** Queries published posts with resilience against orphaned author relations in MongoDB. */
-export async function findPublishedBlogPosts(
-  prisma: PrismaService,
-  params: { where: Prisma.BlogPostWhereInput; skip: number; limit: number },
-) {
-  const { where, skip, limit } = params;
-  const baseArgs = {
-    where,
-    skip,
-    take: limit,
-    orderBy: [{ publishDate: 'desc' }, { createdAt: 'desc' }] as Prisma.BlogPostOrderByWithRelationInput[],
-  };
-  return resilientPostQuery(
-    () => prisma.blogPost.findMany({
-      ...baseArgs,
-      include: {
-        author: { select: { id: true, name: true, avatar: true } },
-        category: { select: { id: true, name: true, slug: true } },
-      },
-    }),
-    () => prisma.blogPost.findMany({
-      ...baseArgs,
-      include: { category: { select: { id: true, name: true, slug: true } } },
-    }),
-  );
-}
-
-/** Queries admin posts with resilience against orphaned author relations in MongoDB. */
-export async function findAllAdminBlogPosts(
-  prisma: PrismaService,
-  params: {
-    where: Prisma.BlogPostWhereInput;
-    skip: number;
-    limit: number;
-    orderBy: Prisma.BlogPostOrderByWithRelationInput[];
-  },
-) {
-  const { where, skip, limit, orderBy } = params;
-  const baseArgs = { where, skip, take: limit, orderBy };
-  return resilientPostQuery(
-    () => prisma.blogPost.findMany({
-      ...baseArgs,
-      include: {
-        author: { select: { id: true, name: true } },
-        category: { select: { id: true, name: true, slug: true } },
-      },
-    }),
-    () => prisma.blogPost.findMany({
-      ...baseArgs,
-      include: { category: { select: { id: true, name: true, slug: true } } },
-    }),
-  );
-}
-
-/** Fetches one admin post with resilience against orphaned author relations. */
-export async function findOneAdminBlogPost(prisma: PrismaService, id: string) {
-  return resilientPostQuery(
-    () => prisma.blogPost.findUnique({ where: { id }, include: { author: true, category: true } }),
-    () => prisma.blogPost.findUnique({ where: { id }, include: { category: true } }),
-  );
-}
+export {
+  resilientPostQuery,
+  findPublishedBlogPosts,
+  findAllAdminBlogPosts,
+  findOneAdminBlogPost,
+} from './blog-query.util';
