@@ -2,6 +2,7 @@ import { Injectable, ConflictException, NotFoundException } from '@nestjs/common
 import { PrismaService } from '../prisma.service';
 import { Prisma, PublishStatus, BlogLanguage } from '@prisma/client';
 import { assertCanJoinGroup, linkBlogTranslations } from './blog-translation-manager';
+import { resolveUniqueManualTopicKey } from './blog-topic-key.util';
 import {
   BLOG_MUTATION_INCLUDE,
   PUBLIC_READ_STATUSES,
@@ -20,6 +21,10 @@ export { parseLanguage };
 @Injectable()
 export class BlogService {
   constructor(private prisma: PrismaService) {}
+
+  async resolveUniqueTopicKey(title: string, slug: string, language: BlogLanguage = BlogLanguage.en): Promise<string> {
+    return resolveUniqueManualTopicKey(this.prisma, title, slug, language);
+  }
 
   async create(data: Prisma.BlogPostCreateInput & { translationGroupId?: string | null }) {
     const language = (data.language ?? BlogLanguage.en) as BlogLanguage;

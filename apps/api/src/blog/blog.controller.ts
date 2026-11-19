@@ -25,7 +25,6 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { PublishStatus, BlogLanguage } from '@prisma/client';
-import { toTopicKey } from '../automation/topic-identity';
 import { ZodValidationPipe } from '../common/pipes/zod-validation.pipe';
 
 @Controller()
@@ -111,12 +110,15 @@ export class BlogController {
     @Body(new ZodValidationPipe(createBlogPostSchema)) valid: CreateBlogPostInput,
     @Request() req: any,
   ) {
+    const language = (valid.language as BlogLanguage) || BlogLanguage.en;
+    const topicKey = await this.blogService.resolveUniqueTopicKey(valid.title, valid.slug, language);
+
     const post = await this.blogService.create({
-      topicKey: toTopicKey(valid.title),
+      topicKey,
       topic: valid.title,
       title: valid.title,
       slug: valid.slug,
-      language: (valid.language as BlogLanguage) || BlogLanguage.en,
+      language,
       translationGroupId: valid.translationGroupId || undefined,
       excerpt: valid.excerpt || undefined,
       content: valid.content,
