@@ -36,6 +36,7 @@ export const BLOG_MUTATION_INCLUDE = {
 interface PrismaErrorLike {
   code?: string;
   meta?: { target?: unknown };
+  message?: string;
 }
 
 /** Checks whether an unknown error matches a Prisma known error code (e.g. P2002, P2025). */
@@ -43,6 +44,13 @@ export function isPrismaErrorCode(err: unknown, code: string): boolean {
   return Boolean(
     err && typeof err === 'object' && 'code' in err && (err as PrismaErrorLike).code === code,
   );
+}
+
+/** Checks whether an error is due to an orphaned/null author relation in MongoDB. */
+export function isAuthorRelationError(err: unknown): boolean {
+  if (!err || typeof err !== 'object') return false;
+  const msg = 'message' in err ? String((err as PrismaErrorLike).message) : '';
+  return /author/i.test(msg) && (/null constraint/i.test(msg) || /p2025/i.test(msg));
 }
 
 function targetsTopicKey(err: unknown): boolean {
@@ -68,8 +76,14 @@ export function mapBlogPostPrismaError(
       `Article with slug '${context.slug ?? ''}' already exists in '${context.language}'`,
     );
   }
-  if (isPrismaErrorCode(err, 'P2025') && context.id) {
-    throw new NotFoundException(`Article '${context.id}' not found`);
+  if (isPrismaErrorCode(err, 'P2025')) {
+    if (context.id) {
+      throw new NotFoundException(`Article '${context.id}' not found`);
+    }
+    throw new NotFoundException('Referenced record was not found');
+  }
+  if (isAuthorRelationError(err)) {
+    throw new NotFoundException('Author record referenced by article was not found');
   }
   throw err;
 }
@@ -145,6 +159,7 @@ export async function fetchPostSlugCompanions(
 }
 
 export {
+  resilientPostQuery,
   findPublishedBlogPosts,
   findAllAdminBlogPosts,
   findOneAdminBlogPost,

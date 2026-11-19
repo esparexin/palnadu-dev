@@ -88,7 +88,12 @@ export default function BlogAdminPage() {
         seoTitle: formData.seoTitle || undefined,
         seoDescription: formData.seoDescription || undefined,
         ogImage: formData.ogImage || formData.coverImage || undefined,
-        publishDate: editingPost?.publishDate ? editingPost.publishDate : formData.status === 'PUBLISHED' ? new Date().toISOString() : undefined,
+        publishDate:
+          formData.status === 'PUBLISHED'
+            ? editingPost?.publishDate || new Date().toISOString()
+            : editingPost
+            ? null
+            : undefined,
       };
       if (editingPost) {
         await api.blog.update(editingPost.id, payload);

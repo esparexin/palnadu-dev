@@ -7,18 +7,21 @@ import { PrismaService } from '../prisma.service';
  * Tier 2: If author relation fails (orphaned authorId), query with { category } only.
  * Tier 3: If category also fails (orphaned categoryId), query raw posts without includes.
  */
-async function resilientPostQuery<T>(
+export async function resilientPostQuery<T>(
   primary: () => Promise<T>,
   fallbackWithoutAuthor: () => Promise<T>,
-  fallbackRaw: () => Promise<T>,
+  fallbackRaw?: () => Promise<T>,
 ): Promise<T> {
   try {
     return await primary();
   } catch {
     try {
       return await fallbackWithoutAuthor();
-    } catch {
-      return await fallbackRaw();
+    } catch (err) {
+      if (fallbackRaw) {
+        return await fallbackRaw();
+      }
+      throw err;
     }
   }
 }

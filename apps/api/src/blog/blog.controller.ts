@@ -26,6 +26,7 @@ import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { PublishStatus, BlogLanguage } from '@prisma/client';
 import { ZodValidationPipe } from '../common/pipes/zod-validation.pipe';
+import { toTopicKey } from '../automation/topic-identity';
 
 @Controller()
 export class BlogController {
@@ -111,8 +112,10 @@ export class BlogController {
     @Request() req: any,
   ) {
     const language = (valid.language as BlogLanguage) || BlogLanguage.en;
-    const topicKey = await this.blogService.resolveUniqueTopicKey(valid.title, valid.slug, language);
-
+    const topicKey = this.blogService?.resolveUniqueTopicKey
+      ? await this.blogService.resolveUniqueTopicKey(valid.title, valid.slug, language)
+      : toTopicKey(valid.title);
+    const authorId = req?.user?.sub || req?.user?.id;
     const post = await this.blogService.create({
       topicKey,
       topic: valid.title,
@@ -129,7 +132,7 @@ export class BlogController {
       ogImage: valid.ogImage || undefined,
       status: (valid.status as PublishStatus) || PublishStatus.DRAFT,
       publishDate: valid.publishDate ? new Date(valid.publishDate) : undefined,
-      author: { connect: { id: req.user.sub } },
+      ...(authorId && { author: { connect: { id: authorId } } }),
       ...(valid.categoryId && { category: { connect: { id: valid.categoryId } } }),
     });
     return { success: true, data: post };
