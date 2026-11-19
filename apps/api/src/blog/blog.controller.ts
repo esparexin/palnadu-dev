@@ -111,6 +111,7 @@ export class BlogController {
     @Body(new ZodValidationPipe(createBlogPostSchema)) valid: CreateBlogPostInput,
     @Request() req: any,
   ) {
+    const authorId = req.user?.sub || req.user?.id;
     const post = await this.blogService.create({
       topicKey: toTopicKey(valid.title),
       topic: valid.title,
@@ -127,7 +128,7 @@ export class BlogController {
       ogImage: valid.ogImage || undefined,
       status: (valid.status as PublishStatus) || PublishStatus.DRAFT,
       publishDate: valid.publishDate ? new Date(valid.publishDate) : undefined,
-      author: { connect: { id: req.user.sub } },
+      ...(authorId && { author: { connect: { id: authorId } } }),
       ...(valid.categoryId && { category: { connect: { id: valid.categoryId } } }),
     });
     return { success: true, data: post };
