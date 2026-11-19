@@ -3,6 +3,12 @@ import { PrismaService } from '../prisma.service';
 import { Prisma, PublishStatus, BlogLanguage } from '@prisma/client';
 import { assertCanJoinGroup, linkBlogTranslations } from './blog-translation-manager';
 import {
+  executeResilientCreate,
+  executeResilientUpdate,
+  resolveSafeAuthorConnect,
+  verifyCategoryConnect,
+} from './blog-mutation.util';
+import {
   BLOG_MUTATION_INCLUDE,
   PUBLIC_READ_STATUSES,
   buildBlogPostWhere,
@@ -11,8 +17,8 @@ import {
   findOneAdminBlogPost,
   findPublishedBlogPosts,
   isPrismaErrorCode,
-  mapBlogPostPrismaError,
   parseLanguage,
+  resilientPostQuery,
 } from './blog-prisma.util';
 
 export { parseLanguage };
@@ -41,14 +47,14 @@ export class BlogService {
         ? new Date()
         : rest.publishDate;
 
-    try {
-      return await this.prisma.blogPost.create({
-        data: { ...rest, publishDate, language, translationGroupId: translationGroupId ?? undefined },
-        include: BLOG_MUTATION_INCLUDE,
-      });
-    } catch (err) {
-      return mapBlogPostPrismaError(err, { slug: rest.slug, topicKey: rest.topicKey, language });
-    }
+    const author = await resolveSafeAuthorConnect(this.prisma, rest.author);
+    await verifyCategoryConnect(this.prisma, rest.category);
+
+    return executeResilientCreate(
+      this.prisma,
+      { ...rest, author, publishDate, language, translationGroupId: translationGroupId ?? undefined },
+      { slug: rest.slug, topicKey: rest.topicKey, language },
+    );
   }
 
   async findPublished(params: {
@@ -81,14 +87,18 @@ export class BlogService {
   }
 
   async findBySlug(slug: string, language: BlogLanguage = BlogLanguage.en) {
-    const post = await this.prisma.blogPost.findFirst({
-      where: {
-        slug,
-        language,
-        status: { in: PUBLIC_READ_STATUSES },
-      },
-      include: BLOG_MUTATION_INCLUDE,
-    });
+    const post = await resilientPostQuery(
+      () =>
+        this.prisma.blogPost.findFirst({
+          where: { slug, language, status: { in: PUBLIC_READ_STATUSES } },
+          include: BLOG_MUTATION_INCLUDE,
+        }),
+      () =>
+        this.prisma.blogPost.findFirst({
+          where: { slug, language, status: { in: PUBLIC_READ_STATUSES } },
+          include: { category: true },
+        }),
+    );
 
     if (!post) return null;
 
@@ -155,26 +165,20 @@ export class BlogService {
       await assertCanJoinGroup(this.prisma, nextGroup, { id, language: nextLanguage });
     }
 
+    await verifyCategoryConnect(this.prisma, rest.category);
+
     let nextPublishDate = rest.publishDate;
     if (rest.status === PublishStatus.PUBLISHED && !existing.publishDate && nextPublishDate === undefined) {
       nextPublishDate = new Date();
     }
 
     const groupUpdate = requestedGroup === undefined ? undefined : nextGroup;
-    try {
-      return await this.prisma.blogPost.update({
-        where: { id },
-        data: { ...rest, publishDate: nextPublishDate, translationGroupId: groupUpdate },
-        include: BLOG_MUTATION_INCLUDE,
-      });
-    } catch (err) {
-      return mapBlogPostPrismaError(err, {
-        id,
-        slug: nextSlug,
-        topicKey: existing.topicKey,
-        language: nextLanguage,
-      });
-    }
+    return executeResilientUpdate(
+      this.prisma,
+      id,
+      { ...rest, publishDate: nextPublishDate, translationGroupId: groupUpdate },
+      { id, slug: nextSlug, topicKey: existing.topicKey, language: nextLanguage },
+    );
   }
 
   async delete(id: string) {
